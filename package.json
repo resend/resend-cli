@@ -1,0 +1,30 @@
+{
+  "name": "@resend/cli",
+  "version": "0.1.0",
+  "description": "Resend CLI — email for developers",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/resend/resend-cli"
+  },
+  "homepage": "https://github.com/resend/resend-cli#readme",
+  "keywords": ["cli", "resend", "email", "api"],
+  "type": "module",
+  "bin": { "resend": "./src/cli.ts" },
+  "scripts": {
+    "dev": "bun run src/cli.ts",
+    "dev:watch": "bun --watch src/cli.ts",
+    "build": "bun build --compile --minify --sourcemap --bytecode src/cli.ts --outfile dist/resend"
+  },
+  "dependencies": {
+    "commander": "^14.0.0",
+    "@commander-js/extra-typings": "^14.0.0",
+    "resend": "^6.9.2",
+    "@clack/prompts": "^1.0.1",
+    "unicode-animations": "latest"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "@types/bun": "latest"
+  }
+}

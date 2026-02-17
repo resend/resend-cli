@@ -1,0 +1,241 @@
+import { Command } from '@commander-js/extra-typings';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { homedir } from 'node:os';
+import { Resend } from 'resend';
+import { resolveApiKey } from '../lib/config';
+import { createSpinner } from '../lib/spinner';
+import { outputResult } from '../lib/output';
+import { isInteractive } from '../lib/tty';
+import { VERSION, PACKAGE_NAME } from '../lib/version';
+
+type CheckStatus = 'pass' | 'warn' | 'fail';
+
+interface CheckResult {
+  name: string;
+  status: CheckStatus;
+  message: string;
+  detail?: string;
+}
+
+const statusIcons: Record<CheckStatus, string> = {
+  pass: '\x1B[32m✔\x1B[0m',
+  warn: '\x1B[33m!\x1B[0m',
+  fail: '\x1B[31m✗\x1B[0m',
+};
+
+function maskKey(key: string): string {
+  if (key.length <= 7) return key.slice(0, 3) + '...';
+  return key.slice(0, 3) + '...' + key.slice(-4);
+}
+
+async function checkCliVersion(): Promise<CheckResult> {
+  try {
+    const encodedName = encodeURIComponent(PACKAGE_NAME);
+    const res = await fetch(`https://registry.npmjs.org/${encodedName}/latest`, {
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!res.ok) {
+      return { name: 'CLI Version', status: 'warn', message: `v${VERSION} (could not check for updates)` };
+    }
+    const data = (await res.json()) as { version?: string };
+    const latest = data.version ?? 'unknown';
+    if (latest === VERSION) {
+      return { name: 'CLI Version', status: 'pass', message: `v${VERSION} (latest)` };
+    }
+    return {
+      name: 'CLI Version',
+      status: 'warn',
+      message: `v${VERSION} (latest: v${latest})`,
+      detail: 'Update available',
+    };
+  } catch {
+    return { name: 'CLI Version', status: 'warn', message: `v${VERSION} (could not check for updates)` };
+  }
+}
+
+function checkApiKeyPresence(): CheckResult {
+  const resolved = resolveApiKey();
+  if (!resolved) {
+    return {
+      name: 'API Key',
+      status: 'fail',
+      message: 'No API key found',
+      detail: 'Run: resend auth login',
+    };
+  }
+  return {
+    name: 'API Key',
+    status: 'pass',
+    message: `${maskKey(resolved.key)} (source: ${resolved.source})`,
+  };
+}
+
+async function checkApiValidationAndDomains(): Promise<CheckResult> {
+  const resolved = resolveApiKey();
+  if (!resolved) {
+    return {
+      name: 'API Validation',
+      status: 'fail',
+      message: 'Skipped — no API key',
+    };
+  }
+
+  try {
+    const resend = new Resend(resolved.key);
+    const { data, error } = await resend.domains.list();
+
+    if (error) {
+      return {
+        name: 'API Validation',
+        status: 'fail',
+        message: `API key invalid: ${error.message}`,
+      };
+    }
+
+    const domains = data?.data ?? [];
+    const verified = domains.filter((d) => d.status === 'verified');
+    const pending = domains.filter((d) => d.status !== 'verified');
+
+    if (domains.length === 0) {
+      return {
+        name: 'Domains',
+        status: 'warn',
+        message: 'No domains configured',
+        detail: 'Add a domain at https://resend.com/domains',
+      };
+    }
+
+    if (verified.length === 0) {
+      return {
+        name: 'Domains',
+        status: 'warn',
+        message: `${pending.length} domain(s) pending verification`,
+        detail: domains.map((d) => `${d.name} (${d.status})`).join(', '),
+      };
+    }
+
+    return {
+      name: 'Domains',
+      status: 'pass',
+      message: `${verified.length} verified, ${pending.length} pending`,
+      detail: domains.map((d) => `${d.name} (${d.status})`).join(', '),
+    };
+  } catch (err) {
+    return {
+      name: 'API Validation',
+      status: 'fail',
+      message: err instanceof Error ? err.message : 'Failed to validate API key',
+    };
+  }
+}
+
+function checkAgentDetection(): CheckResult {
+  const home = homedir();
+  const agents: { name: string; found: boolean }[] = [];
+
+  // OpenClaw
+  agents.push({ name: 'OpenClaw', found: existsSync(join(home, 'clawd', 'skills')) });
+
+  // Cursor
+  agents.push({ name: 'Cursor', found: existsSync(join(home, '.cursor')) });
+
+  // Claude Desktop
+  const claudeConfigPaths =
+    process.platform === 'darwin'
+      ? [join(home, 'Library', 'Application Support', 'Claude', 'claude_desktop_config.json')]
+      : process.platform === 'win32'
+        ? [join(process.env.APPDATA ?? '', 'Claude', 'claude_desktop_config.json')]
+        : [join(home, '.config', 'Claude', 'claude_desktop_config.json')];
+  agents.push({ name: 'Claude Desktop', found: claudeConfigPaths.some(existsSync) });
+
+  // VS Code MCP
+  agents.push({ name: 'VS Code', found: existsSync(join(process.cwd(), '.vscode', 'mcp.json')) });
+
+  const detected = agents.filter((a) => a.found);
+
+  if (detected.length === 0) {
+    return {
+      name: 'AI Agents',
+      status: 'pass',
+      message: 'No AI agents detected',
+    };
+  }
+
+  return {
+    name: 'AI Agents',
+    status: 'pass',
+    message: `Detected: ${detected.map((a) => a.name).join(', ')}`,
+    detail: 'Future: run `resend setup <agent>` to configure integration',
+  };
+}
+
+export const doctorCommand = new Command('doctor')
+  .description('Check your Resend CLI environment')
+  .action(async (_opts, cmd) => {
+    const globalOpts = cmd.optsWithGlobals() as { json?: boolean };
+    const checks: CheckResult[] = [];
+    const interactive = isInteractive() && !globalOpts.json;
+
+    if (interactive) {
+      console.log('\n  Resend Doctor\n');
+    }
+
+    // Check 1: CLI Version
+    let spinner = interactive ? createSpinner('Checking CLI version...', 'orbit') : null;
+    const versionCheck = await checkCliVersion();
+    checks.push(versionCheck);
+    if (versionCheck.status === 'warn') {
+      spinner?.warn(versionCheck.message);
+    } else {
+      spinner?.stop(versionCheck.message);
+    }
+
+    // Check 2: API Key
+    spinner = interactive ? createSpinner('Checking API key...', 'scan') : null;
+    const keyCheck = checkApiKeyPresence();
+    checks.push(keyCheck);
+    if (keyCheck.status === 'fail') {
+      spinner?.fail(keyCheck.message);
+    } else {
+      spinner?.stop(keyCheck.message);
+    }
+
+    // Check 3: API Validation + Domains
+    spinner = interactive ? createSpinner('Validating API key & domains...', 'scan') : null;
+    const domainCheck = await checkApiValidationAndDomains();
+    checks.push(domainCheck);
+    if (domainCheck.status === 'fail') {
+      spinner?.fail(domainCheck.message);
+    } else if (domainCheck.status === 'warn') {
+      spinner?.warn(domainCheck.message);
+    } else {
+      spinner?.stop(domainCheck.message);
+    }
+
+    // Check 4: Agent Detection
+    spinner = interactive ? createSpinner('Detecting AI agents...', 'scan') : null;
+    const agentCheck = checkAgentDetection();
+    checks.push(agentCheck);
+    spinner?.stop(agentCheck.message);
+
+    const hasFails = checks.some((c) => c.status === 'fail');
+
+    if (globalOpts.json || !process.stdout.isTTY) {
+      outputResult({ ok: !hasFails, checks }, { json: true });
+    } else {
+      console.log('');
+      for (const check of checks) {
+        const icon = statusIcons[check.status];
+        console.log(`  ${icon} ${check.name}: ${check.message}`);
+        if (check.detail) {
+          console.log(`    ${check.detail}`);
+        }
+      }
+      console.log('');
+    }
+
+    if (hasFails) {
+      process.exit(1);
+    }
+  });
