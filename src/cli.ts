@@ -2,6 +2,7 @@
 import { Command } from '@commander-js/extra-typings';
 import { authCommand } from './commands/auth/index';
 import { emailsCommand } from './commands/emails/index';
+import { domainsCommand } from './commands/domains/index';
 import { doctorCommand } from './commands/doctor';
 import { VERSION } from './lib/version';
 
@@ -28,6 +29,7 @@ Examples:
   $ resend doctor --json`)
   .addCommand(authCommand)
   .addCommand(emailsCommand)
+  .addCommand(domainsCommand)
   .addCommand(doctorCommand);
 
 program.parse();
