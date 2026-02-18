@@ -5,7 +5,7 @@ import { homedir } from 'node:os';
 import { Resend } from 'resend';
 import { resolveApiKey } from '../lib/config';
 import { createSpinner } from '../lib/spinner';
-import { outputResult } from '../lib/output';
+import { outputResult, errorMessage } from '../lib/output';
 import { isInteractive } from '../lib/tty';
 import { VERSION, PACKAGE_NAME } from '../lib/version';
 
@@ -125,7 +125,7 @@ async function checkApiValidationAndDomains(): Promise<CheckResult> {
     return {
       name: 'API Validation',
       status: 'fail',
-      message: err instanceof Error ? err.message : 'Failed to validate API key',
+      message: errorMessage(err, 'Failed to validate API key'),
     };
   }
 }
@@ -171,7 +171,33 @@ function checkAgentDetection(): CheckResult {
 }
 
 export const doctorCommand = new Command('doctor')
-  .description('Check your Resend CLI environment')
+  .description('Check CLI version, API key, domain status, and AI agent detection')
+  .addHelpText('after', `
+Checks performed:
+  CLI Version    Is the installed version up to date?
+  API Key        Is a key present (--api-key, RESEND_API_KEY, or credentials file)?
+  API Validation Is the key valid and accepted by the Resend API?
+  AI Agents      Detected: Claude Desktop, Cursor, VS Code MCP, OpenClaw
+
+Global options (defined on root):
+  --json  Force JSON output
+
+Output (--json or piped):
+  {
+    "ok": true,
+    "checks": [
+      {"name":"CLI Version","status":"pass","message":"v0.1.0 (latest)"},
+      {"name":"API Key","status":"pass","message":"re_...abcd (source: env)"},
+      {"name":"Domains","status":"pass","message":"1 verified, 0 pending"},
+      {"name":"AI Agents","status":"pass","message":"Detected: Claude Desktop"}
+    ]
+  }
+  status values: "pass" | "warn" | "fail"
+  Exit code 1 if any check has status "fail"
+
+Examples:
+  $ resend doctor
+  $ resend doctor --json`)
   .action(async (_opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as { json?: boolean };
     const checks: CheckResult[] = [];
