@@ -2,9 +2,9 @@ import { Command } from '@commander-js/extra-typings';
 import { readFileSync } from 'node:fs';
 import type { Resend } from 'resend';
 import { createClient } from '../../lib/client';
-import { promptForMissing } from '../../lib/prompts';
+import { promptForMissing, cancelAndExit } from '../../lib/prompts';
 import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult } from '../../lib/output';
+import { outputError, outputResult, errorMessage } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import * as p from '@clack/prompts';
 
@@ -31,7 +31,7 @@ async function promptForFromAddress(domains: string[]): Promise<string> {
       message: 'Select a verified domain',
       options: domains.map((d) => ({ value: d, label: d })),
     });
-    if (p.isCancel(result)) { p.cancel('Send cancelled.'); process.exit(0); }
+    if (p.isCancel(result)) cancelAndExit('Send cancelled.');
     domain = result;
   }
 
@@ -45,7 +45,7 @@ async function promptForFromAddress(domains: string[]): Promise<string> {
     message: `From address (@${domain})`,
     options,
   });
-  if (p.isCancel(result)) { p.cancel('Send cancelled.'); process.exit(0); }
+  if (p.isCancel(result)) cancelAndExit('Send cancelled.');
 
   if (result === null) {
     const custom = await p.text({
@@ -53,7 +53,7 @@ async function promptForFromAddress(domains: string[]): Promise<string> {
       placeholder: `you@${domain}`,
       validate: (v) => (!v || !v.includes('@') ? 'Enter a valid email address' : undefined),
     });
-    if (p.isCancel(custom)) { p.cancel('Send cancelled.'); process.exit(0); }
+    if (p.isCancel(custom)) cancelAndExit('Send cancelled.');
     return custom;
   }
 
@@ -62,15 +62,33 @@ async function promptForFromAddress(domains: string[]): Promise<string> {
 
 export const sendCommand = new Command('send')
   .description('Send an email')
-  .option('--from <address>', 'Sender email address')
-  .option('--to <addresses...>', 'Recipient email address(es)')
-  .option('--subject <subject>', 'Email subject')
+  .option('--from <address>', 'Sender address (required)')
+  .option('--to <addresses...>', 'Recipient address(es) (required)')
+  .option('--subject <subject>', 'Email subject (required)')
   .option('--html <html>', 'HTML body')
-  .option('--html-file <path>', 'Path to HTML file for body')
-  .option('--text <text>', 'Plain text body')
+  .option('--html-file <path>', 'Path to an HTML file for the body')
+  .option('--text <text>', 'Plain-text body')
   .option('--cc <addresses...>', 'CC recipients')
   .option('--bcc <addresses...>', 'BCC recipients')
   .option('--reply-to <address>', 'Reply-to address')
+  .addHelpText('after', `
+Required: --from, --to, --subject, and one of --text | --html | --html-file
+
+Global options (defined on root):
+  --api-key <key>  API key (or set RESEND_API_KEY env var)
+  --json           Force JSON output (also auto-enabled when stdout is piped)
+
+Output (--json or piped):
+  {"id":"<email-id>"}
+
+Errors (exit code 1):
+  {"error":{"message":"<message>","code":"<code>"}}
+
+Examples:
+  $ resend emails send --from you@domain.com --to user@example.com --subject "Hello" --text "Hi"
+  $ resend emails send --from you@domain.com --to a@example.com --to b@example.com --subject "Hi" --html "<b>Hi</b>" --json
+  $ resend emails send --from you@domain.com --to user@example.com --subject "Hi" --html-file ./email.html --json
+  $ RESEND_API_KEY=re_123 resend emails send --from you@domain.com --to user@example.com --subject "Hi" --text "Hi"`)
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as { apiKey?: string; json?: boolean };
 
@@ -79,10 +97,9 @@ export const sendCommand = new Command('send')
       resend = createClient(globalOpts.apiKey);
     } catch (err) {
       outputError(
-        { message: err instanceof Error ? err.message : 'Failed to create client', code: 'auth_error' },
+        { message: errorMessage(err, 'Failed to create client'), code: 'auth_error' },
         { json: globalOpts.json }
       );
-      return; // unreachable, but TypeScript can't prove outputError exits inside catch
     }
 
     // Only fetch verified domains in interactive mode — non-interactive
@@ -115,7 +132,6 @@ export const sendCommand = new Command('send')
           { message: `Failed to read HTML file: ${opts.htmlFile}`, code: 'file_read_error' },
           { json: globalOpts.json }
         );
-        return;
       }
     }
 
@@ -132,10 +148,7 @@ export const sendCommand = new Command('send')
         placeholder: 'Type your message...',
         validate: (v) => (!v || v.length === 0 ? 'Body is required' : undefined),
       });
-      if (p.isCancel(bodyResult)) {
-        p.cancel('Send cancelled.');
-        process.exit(0);
-      }
+      if (p.isCancel(bodyResult)) cancelAndExit('Send cancelled.');
       body = bodyResult;
     }
 
@@ -160,7 +173,6 @@ export const sendCommand = new Command('send')
           { message: result.error.message, code: result.error.name },
           { json: globalOpts.json }
         );
-        return;
       }
 
       spinner.stop('Email sent');
@@ -168,7 +180,7 @@ export const sendCommand = new Command('send')
     } catch (err) {
       spinner.fail('Failed to send email');
       outputError(
-        { message: err instanceof Error ? err.message : 'Unknown error', code: 'send_error' },
+        { message: errorMessage(err, 'Unknown error'), code: 'send_error' },
         { json: globalOpts.json }
       );
     }
