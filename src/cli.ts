@@ -5,6 +5,7 @@ import { emailsCommand } from './commands/emails/index';
 import { domainsCommand } from './commands/domains/index';
 import { apiKeysCommand } from './commands/api-keys/index';
 import { broadcastsCommand } from './commands/broadcasts/index';
+import { contactsCommand } from './commands/contacts/index';
 import { doctorCommand } from './commands/doctor';
 import { VERSION } from './lib/version';
 
@@ -34,6 +35,7 @@ Examples:
   .addCommand(domainsCommand)
   .addCommand(apiKeysCommand)
   .addCommand(broadcastsCommand)
+  .addCommand(contactsCommand)
   .addCommand(doctorCommand);
 
 program.parse();

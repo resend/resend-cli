@@ -1,0 +1,60 @@
+import type { Segment, ContactTopic, ContactSegmentsBaseOptions } from 'resend';
+import type { GlobalOpts } from '../../lib/client';
+import { outputError } from '../../lib/output';
+import { renderTable } from '../../lib/table';
+
+// ─── Table renderers ─────────────────────────────────────────────────────────
+
+export function renderContactsTable(
+  contacts: Array<{ id: string; email: string; first_name: string | null; last_name: string | null; unsubscribed: boolean }>
+): string {
+  const rows = contacts.map((c) => [c.email, c.first_name ?? '', c.last_name ?? '', c.unsubscribed ? 'yes' : 'no', c.id]);
+  return renderTable(['Email', 'First Name', 'Last Name', 'Unsubscribed', 'ID'], rows, '(no contacts)');
+}
+
+export function renderSegmentsTable(segments: Segment[]): string {
+  const rows = segments.map((s) => [s.name, s.id, s.created_at]);
+  return renderTable(['Name', 'ID', 'Created'], rows, '(no segments)');
+}
+
+export function renderTopicsTable(topics: ContactTopic[]): string {
+  const rows = topics.map((t) => [t.name, t.subscription, t.id, t.description ?? '']);
+  return renderTable(['Name', 'Subscription', 'ID', 'Description'], rows, '(no topic subscriptions)');
+}
+
+// ─── Contact identifier helpers ───────────────────────────────────────────────
+//
+// The Resend SDK uses two different discriminated-union shapes depending on
+// the API surface:
+//
+//   • contactIdentifier  — produces { id } | { email } for endpoints that
+//     accept SelectingField (update, get, remove) or { id?, email? }
+//     (topics list/update).
+//
+//   • segmentContactIdentifier — produces { contactId } | { email } for the
+//     contacts.segments.* endpoints, which use ContactSegmentsBaseOptions.
+//
+// Centralising the `str.includes('@')` check here prevents it from drifting
+// across six separate command files.
+
+export function contactIdentifier(id: string): { id: string } | { email: string } {
+  return id.includes('@') ? { email: id } : { id };
+}
+
+export function segmentContactIdentifier(id: string): ContactSegmentsBaseOptions {
+  return id.includes('@') ? { email: id } : { contactId: id };
+}
+
+// ─── JSON flag helpers ────────────────────────────────────────────────────────
+
+export function parsePropertiesJson(
+  raw: string | undefined,
+  globalOpts: GlobalOpts
+): Record<string, string | number | null> | undefined {
+  if (!raw) return undefined;
+  try {
+    return JSON.parse(raw) as Record<string, string | number | null>;
+  } catch {
+    outputError({ message: 'Invalid --properties JSON.', code: 'invalid_properties' }, { json: globalOpts.json });
+  }
+}
