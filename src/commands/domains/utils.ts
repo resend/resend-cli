@@ -2,7 +2,6 @@ import type { DomainRecords } from 'resend';
 import { renderTable } from '../../lib/table';
 
 export function renderDnsRecordsTable(records: DomainRecords[], domainName: string): string {
-  if (records.length === 0) return '(no DNS records)';
   const rows = records.map((r) => {
     const displayName = r.name
       ? r.name.includes('.')
@@ -11,15 +10,14 @@ export function renderDnsRecordsTable(records: DomainRecords[], domainName: stri
       : domainName;
     return [r.type, displayName, r.ttl, r.value];
   });
-  return renderTable(['Type', 'Name', 'TTL', 'Value'], rows);
+  return renderTable(['Type', 'Name', 'TTL', 'Value'], rows, '(no DNS records)');
 }
 
 export function renderDomainsTable(
   domains: Array<{ id: string; name: string; status: string; region: string }>
 ): string {
-  if (domains.length === 0) return '(no domains)';
   const rows = domains.map((d) => [d.name, d.status, d.region, d.id]);
-  return renderTable(['Name', 'Status', 'Region', 'ID'], rows);
+  return renderTable(['Name', 'Status', 'Region', 'ID'], rows, '(no domains)');
 }
 
 export function statusIndicator(status: string): string {

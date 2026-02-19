@@ -3,6 +3,7 @@ import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
 import { createSpinner } from '../../lib/spinner';
 import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { parseLimitOpt, buildPaginationOpts } from '../../lib/pagination';
 import { isInteractive } from '../../lib/tty';
 import { renderBroadcastsTable } from './utils';
 
@@ -38,21 +39,12 @@ Examples:
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const resend = requireClient(globalOpts);
 
+    const limit = parseLimitOpt(opts.limit, globalOpts);
+    const paginationOpts = buildPaginationOpts(limit, opts.after, opts.before);
+
     const spinner = createSpinner('Fetching broadcasts...', 'braille');
 
     try {
-      const limit = parseInt(opts.limit, 10);
-      if (isNaN(limit) || limit < 1 || limit > 100) {
-        outputError(
-          { message: '--limit must be an integer between 1 and 100', code: 'invalid_limit' },
-          { json: globalOpts.json }
-        );
-      }
-      const paginationOpts = opts.after
-        ? { limit, after: opts.after }
-        : opts.before
-          ? { limit, before: opts.before }
-          : { limit };
       const { data, error } = await resend.broadcasts.list(paginationOpts);
 
       if (error) {

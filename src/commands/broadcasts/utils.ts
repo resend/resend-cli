@@ -21,7 +21,6 @@ export function renderBroadcastsTable(
     created_at: string;
   }>
 ): string {
-  if (broadcasts.length === 0) return '(no broadcasts)';
   const rows = broadcasts.map((b) => [b.name ?? '(untitled)', b.status, b.created_at, b.id]);
-  return renderTable(['Name', 'Status', 'Created', 'ID'], rows);
+  return renderTable(['Name', 'Status', 'Created', 'ID'], rows, '(no broadcasts)');
 }
