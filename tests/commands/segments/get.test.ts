@@ -1,6 +1,5 @@
 import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
 import {
-  ExitError,
   setNonInteractive,
   mockExitThrow,
   captureTestEnv,
