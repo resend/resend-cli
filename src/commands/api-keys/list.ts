@@ -32,7 +32,7 @@ Examples:
 
     const resend = requireClient(globalOpts);
 
-    const spinner = createSpinner('Fetching API keys...', 'braille');
+    const spinner = createSpinner('Fetching API keys...');
 
     try {
       const { data, error } = await resend.apiKeys.list();
@@ -44,10 +44,11 @@ Examples:
 
       spinner.stop('API keys fetched');
 
+      const list = data!;
       if (!globalOpts.json && isInteractive()) {
-        console.log(renderApiKeysTable(data!.data));
+        console.log(renderApiKeysTable(list.data));
       } else {
-        outputResult(data, { json: globalOpts.json });
+        outputResult(list, { json: globalOpts.json });
       }
     } catch (err) {
       spinner.fail('Failed to list API keys');

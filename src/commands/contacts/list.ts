@@ -44,7 +44,7 @@ Examples:
     const limit = parseLimitOpt(opts.limit, globalOpts);
     const paginationOpts = buildPaginationOpts(limit, opts.after, opts.before);
 
-    const spinner = createSpinner('Fetching contacts...', 'braille');
+    const spinner = createSpinner('Fetching contacts...');
 
     try {
       const { data, error } = await resend.contacts.list(paginationOpts);
@@ -56,14 +56,15 @@ Examples:
 
       spinner.stop('Contacts fetched');
 
+      const list = data!;
       if (!globalOpts.json && isInteractive()) {
-        console.log(renderContactsTable(data!.data));
-        if (data!.has_more && data!.data.length > 0) {
-          const last = data!.data[data!.data.length - 1];
+        console.log(renderContactsTable(list.data));
+        if (list.has_more && list.data.length > 0) {
+          const last = list.data[list.data.length - 1];
           console.log(`\nMore results available. Use --after ${last.id} to fetch the next page.`);
         }
       } else {
-        outputResult(data, { json: globalOpts.json });
+        outputResult(list, { json: globalOpts.json });
       }
     } catch (err) {
       spinner.fail('Failed to list contacts');

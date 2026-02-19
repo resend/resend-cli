@@ -34,7 +34,7 @@ Examples:
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const resend = requireClient(globalOpts);
 
-    const spinner = createSpinner('Fetching segments...', 'braille');
+    const spinner = createSpinner('Fetching segments...');
 
     try {
       const { data, error } = await resend.contacts.segments.list(segmentContactIdentifier(id));
@@ -46,10 +46,11 @@ Examples:
 
       spinner.stop('Segments fetched');
 
+      const list = data!;
       if (!globalOpts.json && isInteractive()) {
-        console.log(renderSegmentsTable(data!.data));
+        console.log(renderSegmentsTable(list.data));
       } else {
-        outputResult(data, { json: globalOpts.json });
+        outputResult(list, { json: globalOpts.json });
       }
     } catch (err) {
       spinner.fail('Failed to list segments');

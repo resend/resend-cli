@@ -80,7 +80,7 @@ Examples:
       permission = permissionResult;
     }
 
-    const spinner = createSpinner('Creating API key...', 'braille');
+    const spinner = createSpinner('Creating API key...');
 
     try {
       const { data, error } = await resend.apiKeys.create({
@@ -96,14 +96,15 @@ Examples:
 
       spinner.stop('API key created');
 
+      const d = data!;
       if (!globalOpts.json && isInteractive()) {
         console.log('\nAPI key created!\n');
         console.log(`  Name:    ${name}`);
-        console.log(`  ID:      ${data!.id}`);
-        console.log(`  Token:   ${data!.token}`);
+        console.log(`  ID:      ${d.id}`);
+        console.log(`  Token:   ${d.token}`);
         console.log('\n⚠  Store this token now — it cannot be retrieved again.');
       } else {
-        outputResult(data, { json: globalOpts.json });
+        outputResult(d, { json: globalOpts.json });
       }
     } catch (err) {
       spinner.fail('Failed to create API key');

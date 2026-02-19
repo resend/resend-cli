@@ -39,7 +39,7 @@ Examples:
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const resend = requireClient(globalOpts);
 
-    const spinner = createSpinner('Fetching topic subscriptions...', 'braille');
+    const spinner = createSpinner('Fetching topic subscriptions...');
 
     try {
       // ListContactTopicsBaseOptions uses optional { id?, email? } (not a discriminated
@@ -53,10 +53,11 @@ Examples:
 
       spinner.stop('Topic subscriptions fetched');
 
+      const list = data!;
       if (!globalOpts.json && isInteractive()) {
-        console.log(renderTopicsTable(data!.data));
+        console.log(renderTopicsTable(list.data));
       } else {
-        outputResult(data, { json: globalOpts.json });
+        outputResult(list, { json: globalOpts.json });
       }
     } catch (err) {
       spinner.fail('Failed to list topic subscriptions');

@@ -34,7 +34,7 @@ Examples:
 
     const resend = requireClient(globalOpts);
 
-    const spinner = createSpinner('Fetching domain...', 'braille');
+    const spinner = createSpinner('Fetching domain...');
 
     try {
       const { data, error } = await resend.domains.get(id);
@@ -46,17 +46,18 @@ Examples:
 
       spinner.stop('Domain fetched');
 
+      const d = data!;
       if (!globalOpts.json && isInteractive()) {
-        console.log(`\n${data!.name} — ${statusIndicator(data!.status)}`);
-        console.log(`ID: ${data!.id}`);
-        console.log(`Region: ${data!.region}`);
-        console.log(`Created: ${data!.created_at}`);
-        if (data!.records.length > 0) {
+        console.log(`\n${d.name} — ${statusIndicator(d.status)}`);
+        console.log(`ID: ${d.id}`);
+        console.log(`Region: ${d.region}`);
+        console.log(`Created: ${d.created_at}`);
+        if (d.records.length > 0) {
           console.log('\nDNS Records:');
-          console.log(renderDnsRecordsTable(data!.records, data!.name));
+          console.log(renderDnsRecordsTable(d.records, d.name));
         }
       } else {
-        outputResult(data, { json: globalOpts.json });
+        outputResult(d, { json: globalOpts.json });
       }
     } catch (err) {
       spinner.fail('Failed to fetch domain');

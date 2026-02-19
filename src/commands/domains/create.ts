@@ -70,7 +70,7 @@ Examples:
       name = result;
     }
 
-    const spinner = createSpinner('Creating domain...', 'braille');
+    const spinner = createSpinner('Creating domain...');
 
     try {
       const { data, error } = await resend.domains.create({
@@ -92,13 +92,14 @@ Examples:
 
       spinner.stop('Domain created');
 
+      const d = data!;
       if (!globalOpts.json && isInteractive()) {
-        console.log(`\nDomain created: ${data!.name} (id: ${data!.id})`);
+        console.log(`\nDomain created: ${d.name} (id: ${d.id})`);
         console.log('\nDNS Records to configure:');
-        console.log(renderDnsRecordsTable(data!.records, data!.name));
-        console.log(`\nRun \`resend domains verify ${data!.id}\` after configuring DNS.`);
+        console.log(renderDnsRecordsTable(d.records, d.name));
+        console.log(`\nRun \`resend domains verify ${d.id}\` after configuring DNS.`);
       } else {
-        outputResult(data, { json: globalOpts.json });
+        outputResult(d, { json: globalOpts.json });
       }
     } catch (err) {
       spinner.fail('Failed to create domain');
