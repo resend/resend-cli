@@ -1,11 +1,11 @@
 import { Command } from '@commander-js/extra-typings';
-import { readFileSync } from 'node:fs';
 import type { Resend } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
 import { promptForMissing, cancelAndExit } from '../../lib/prompts';
 import { createSpinner } from '../../lib/spinner';
 import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { readHtmlFile } from '../../lib/files';
 import { isInteractive } from '../../lib/tty';
 import * as p from '@clack/prompts';
 
@@ -118,14 +118,7 @@ Examples:
     const text = opts.text;
 
     if (opts.htmlFile) {
-      try {
-        html = readFileSync(opts.htmlFile, 'utf-8');
-      } catch (err) {
-        outputError(
-          { message: `Failed to read HTML file: ${opts.htmlFile}`, code: 'file_read_error' },
-          { json: globalOpts.json }
-        );
-      }
+      html = readHtmlFile(opts.htmlFile, globalOpts);
     }
 
     let body: string | undefined = text;
@@ -147,10 +140,10 @@ Examples:
 
     const toAddresses = opts.to ?? [filled.to!];
 
-    const spinner = createSpinner('Sending email...', 'helix');
+    const spinner = createSpinner('Sending email...', 'braille');
 
     try {
-      const result = await resend.emails.send({
+      const { data, error } = await resend.emails.send({
         from: filled.from!,
         to: toAddresses,
         subject: filled.subject!,
@@ -160,16 +153,16 @@ Examples:
         ...(opts.replyTo && { replyTo: opts.replyTo }),
       });
 
-      if (result.error) {
+      if (error) {
         spinner.fail('Failed to send email');
         outputError(
-          { message: result.error.message, code: result.error.name },
+          { message: error.message, code: 'send_error' },
           { json: globalOpts.json }
         );
       }
 
       spinner.stop('Email sent');
-      outputResult(result.data, { json: globalOpts.json });
+      outputResult(data, { json: globalOpts.json });
     } catch (err) {
       spinner.fail('Failed to send email');
       outputError(
