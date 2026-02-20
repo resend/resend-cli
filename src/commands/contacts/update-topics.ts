@@ -6,7 +6,7 @@ import { cancelAndExit } from '../../lib/prompts';
 import { createSpinner } from '../../lib/spinner';
 import { outputError, outputResult, errorMessage } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
-import { contactIdentifier } from './utils';
+import { contactIdentifier, parseTopicsJson } from './utils';
 
 export const updateContactTopicsCommand = new Command('update-topics')
   .description("Update a contact's topic subscription statuses")
@@ -63,20 +63,14 @@ Examples:
       topicsJson = result;
     }
 
-    let topics: Array<{ id: string; subscription: 'opt_in' | 'opt_out' }>;
-    try {
-      topics = JSON.parse(topicsJson);
-      if (!Array.isArray(topics)) throw new Error('Not an array');
-    } catch {
-      outputError({ message: 'Invalid --topics JSON. Expected an array of {id, subscription} objects.', code: 'invalid_topics' }, { json: globalOpts.json });
-    }
+    const topics = parseTopicsJson(topicsJson, globalOpts);
 
     const spinner = createSpinner('Updating topic subscriptions...');
 
     try {
       // contactIdentifier's result is directly assignable: UpdateContactTopicsBaseOptions
       // uses optional { id?, email? } (not a discriminated union).
-      const { data, error } = await resend.contacts.topics.update({ ...contactIdentifier(id), topics: topics! });
+      const { data, error } = await resend.contacts.topics.update({ ...contactIdentifier(id), topics });
 
       if (error) {
         spinner.fail('Failed to update topic subscriptions');
@@ -84,7 +78,11 @@ Examples:
       }
 
       spinner.stop('Topic subscriptions updated');
-      outputResult(data, { json: globalOpts.json });
+      if (!globalOpts.json && isInteractive()) {
+        console.log(`Topic subscriptions updated for contact: ${id}`);
+      } else {
+        outputResult(data!, { json: globalOpts.json });
+      }
     } catch (err) {
       spinner.fail('Failed to update topic subscriptions');
       outputError({ message: errorMessage(err, 'Unknown error'), code: 'update_topics_error' }, { json: globalOpts.json });

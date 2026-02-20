@@ -42,6 +42,22 @@ export function segmentContactIdentifier(id: string): ContactSegmentsBaseOptions
 
 // ─── JSON flag helpers ────────────────────────────────────────────────────────
 
+export function parseTopicsJson(
+  raw: string,
+  globalOpts: GlobalOpts
+): Array<{ id: string; subscription: 'opt_in' | 'opt_out' }> {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    outputError({ message: 'Invalid --topics JSON. Expected an array of {id, subscription} objects.', code: 'invalid_topics' }, { json: globalOpts.json });
+  }
+  if (!Array.isArray(parsed)) {
+    outputError({ message: 'Invalid --topics JSON. Expected an array of {id, subscription} objects.', code: 'invalid_topics' }, { json: globalOpts.json });
+  }
+  return parsed as Array<{ id: string; subscription: 'opt_in' | 'opt_out' }>;
+}
+
 export function parsePropertiesJson(
   raw: string | undefined,
   globalOpts: GlobalOpts
