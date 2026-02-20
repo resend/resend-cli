@@ -5,6 +5,7 @@ import { createSpinner } from '../../lib/spinner';
 import { outputError, outputResult, errorMessage } from '../../lib/output';
 import { parseLimitOpt, buildPaginationOpts, printPaginationHint } from '../../lib/pagination';
 import { isInteractive } from '../../lib/tty';
+import { buildHelpText } from '../../lib/help-text';
 import { renderDomainsTable } from './utils';
 
 export const listDomainsCommand = new Command('list')
@@ -14,23 +15,15 @@ export const listDomainsCommand = new Command('list')
   .option('--before <cursor>', 'Return domains before this cursor (previous page)')
   .addHelpText(
     'after',
-    `
-Global options (defined on root):
-  --api-key <key>  API key (or set RESEND_API_KEY env var)
-  --json           Force JSON output (also auto-enabled when stdout is piped)
-
-Output (--json or piped):
-  {"object":"list","data":[...],"has_more":true}
-  The list response does not include DNS records — use "resend domains get <id>" for that.
-
-Errors (exit code 1):
-  {"error":{"message":"<message>","code":"<code>"}}
-  Codes: auth_error | invalid_limit | list_error
-
-Examples:
-  $ resend domains list
-  $ resend domains list --limit 25 --json
-  $ resend domains list --after <cursor> --json`
+    buildHelpText({
+      output: '  {"object":"list","data":[...],"has_more":true}',
+      errorCodes: ['auth_error', 'invalid_limit', 'list_error'],
+      examples: [
+        'resend domains list',
+        'resend domains list --limit 25 --json',
+        'resend domains list --after <cursor> --json',
+      ],
+    })
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;

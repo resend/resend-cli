@@ -5,6 +5,7 @@ import { requireClient } from '../../lib/client';
 import { createSpinner } from '../../lib/spinner';
 import { outputError, outputResult, errorMessage } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
+import { buildHelpText } from '../../lib/help-text';
 
 export const updateDomainCommand = new Command('update')
   .description('Update domain settings: TLS mode, open tracking, and click tracking')
@@ -18,22 +19,15 @@ export const updateDomainCommand = new Command('update')
   .option('--no-click-tracking', 'Disable click tracking')
   .addHelpText(
     'after',
-    `
-Global options (defined on root):
-  --api-key <key>  API key (or set RESEND_API_KEY env var)
-  --json           Force JSON output (also auto-enabled when stdout is piped)
-
-Output (--json or piped):
-  {"object":"domain","id":"<id>"}
-
-Errors (exit code 1):
-  {"error":{"message":"<message>","code":"<code>"}}
-  Codes: auth_error | no_changes | update_error
-
-Examples:
-  $ resend domains update <id> --tls enforced
-  $ resend domains update <id> --open-tracking --click-tracking
-  $ resend domains update <id> --no-open-tracking --json`
+    buildHelpText({
+      output: '  {"object":"domain","id":"<id>"}',
+      errorCodes: ['auth_error', 'no_changes', 'update_error'],
+      examples: [
+        'resend domains update <id> --tls enforced',
+        'resend domains update <id> --open-tracking --click-tracking',
+        'resend domains update <id> --no-open-tracking --json',
+      ],
+    })
   )
   .action(async (id, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;

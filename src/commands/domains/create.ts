@@ -6,6 +6,7 @@ import { cancelAndExit } from '../../lib/prompts';
 import { createSpinner } from '../../lib/spinner';
 import { outputError, outputResult, errorMessage } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
+import { buildHelpText } from '../../lib/help-text';
 import { renderDnsRecordsTable } from './utils';
 
 export const createDomainCommand = new Command('create')
@@ -29,25 +30,17 @@ export const createDomainCommand = new Command('create')
   .option('--receiving', 'Enable receiving capability (default: disabled)')
   .addHelpText(
     'after',
-    `
-Non-interactive: --name is required (no prompts when stdin/stdout is not a TTY)
-
-Global options (defined on root):
-  --api-key <key>  API key (or set RESEND_API_KEY env var)
-  --json           Force JSON output (also auto-enabled when stdout is piped)
-
-Output (--json or piped):
-  Full domain object with DNS records array to configure in your DNS provider.
-
-Errors (exit code 1):
-  {"error":{"message":"<message>","code":"<code>"}}
-  Codes: auth_error | missing_name | create_error
-
-Examples:
-  $ resend domains create --name example.com
-  $ resend domains create --name example.com --region eu-west-1 --tls enforced
-  $ resend domains create --name example.com --receiving --json
-  $ resend domains create --name example.com --sending --receiving --json`
+    buildHelpText({
+      context: 'Non-interactive: --name is required (no prompts when stdin/stdout is not a TTY)',
+      output: '  Full domain object with DNS records array to configure in your DNS provider.',
+      errorCodes: ['auth_error', 'missing_name', 'create_error'],
+      examples: [
+        'resend domains create --name example.com',
+        'resend domains create --name example.com --region eu-west-1 --tls enforced',
+        'resend domains create --name example.com --receiving --json',
+        'resend domains create --name example.com --sending --receiving --json',
+      ],
+    })
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;

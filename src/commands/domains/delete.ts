@@ -5,6 +5,7 @@ import { confirmDelete } from '../../lib/prompts';
 import { createSpinner } from '../../lib/spinner';
 import { outputError, outputResult, errorMessage } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
+import { buildHelpText } from '../../lib/help-text';
 
 export const deleteDomainCommand = new Command('delete')
   .description('Delete a domain')
@@ -12,23 +13,15 @@ export const deleteDomainCommand = new Command('delete')
   .option('--yes', 'Skip confirmation prompt')
   .addHelpText(
     'after',
-    `
-Non-interactive: --yes is required to confirm deletion when stdin/stdout is not a TTY.
-
-Global options (defined on root):
-  --api-key <key>  API key (or set RESEND_API_KEY env var)
-  --json           Force JSON output (also auto-enabled when stdout is piped)
-
-Output (--json or piped):
-  {"object":"domain","id":"<id>","deleted":true}
-
-Errors (exit code 1):
-  {"error":{"message":"<message>","code":"<code>"}}
-  Codes: auth_error | confirmation_required | delete_error
-
-Examples:
-  $ resend domains delete 4dd369bc-aa82-4ff3-97de-514ae3000ee0 --yes
-  $ resend domains delete 4dd369bc-aa82-4ff3-97de-514ae3000ee0 --yes --json`
+    buildHelpText({
+      context: 'Non-interactive: --yes is required to confirm deletion when stdin/stdout is not a TTY.',
+      output: '  {"object":"domain","id":"<id>","deleted":true}',
+      errorCodes: ['auth_error', 'confirmation_required', 'delete_error'],
+      examples: [
+        'resend domains delete 4dd369bc-aa82-4ff3-97de-514ae3000ee0 --yes',
+        'resend domains delete 4dd369bc-aa82-4ff3-97de-514ae3000ee0 --yes --json',
+      ],
+    })
   )
   .action(async (id, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
