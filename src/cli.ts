@@ -10,6 +10,7 @@ import { contactPropertiesCommand } from './commands/contact-properties/index';
 import { segmentsCommand } from './commands/segments/index';
 import { audiencesCommand } from './commands/audiences/index';
 import { topicsCommand } from './commands/topics/index';
+import { webhooksCommand } from './commands/webhooks/index';
 import { doctorCommand } from './commands/doctor';
 import { VERSION } from './lib/version';
 
@@ -44,6 +45,7 @@ Examples:
   .addCommand(segmentsCommand)
   .addCommand(audiencesCommand)
   .addCommand(topicsCommand)
+  .addCommand(webhooksCommand)
   .addCommand(doctorCommand);
 
 program.parse();
