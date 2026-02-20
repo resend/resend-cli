@@ -4,30 +4,23 @@ import { requireClient } from '../../lib/client';
 import { createSpinner } from '../../lib/spinner';
 import { outputError, outputResult, errorMessage } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
+import { buildHelpText } from '../../lib/help-text';
 
 export const getWebhookCommand = new Command('get')
   .description('Retrieve a webhook endpoint configuration by ID')
   .argument('<id>', 'Webhook UUID')
   .addHelpText(
     'after',
-    `
-Note: The signing_secret is not returned by the get endpoint.
-To rotate secrets, delete the webhook and recreate it.
-
-Global options (defined on root):
-  --api-key <key>  API key (or set RESEND_API_KEY env var)
-  --json           Force JSON output (also auto-enabled when stdout is piped)
-
-Output (--json or piped):
-  {"object":"webhook","id":"<uuid>","endpoint":"<url>","events":["<event>"],"status":"enabled|disabled","created_at":"<iso-date>","signing_secret":"<whsec_...>"}
-
-Errors (exit code 1):
-  {"error":{"message":"<message>","code":"<code>"}}
-  Codes: auth_error | fetch_error
-
-Examples:
-  $ resend webhooks get wh_abc123
-  $ resend webhooks get wh_abc123 --json`
+    buildHelpText({
+      context: `Note: The signing_secret is not returned by the get endpoint.
+To rotate secrets, delete the webhook and recreate it.`,
+      output: `  {"object":"webhook","id":"<uuid>","endpoint":"<url>","events":["<event>"],"status":"enabled|disabled","created_at":"<iso-date>","signing_secret":"<whsec_...>"}`,
+      errorCodes: ['auth_error', 'fetch_error'],
+      examples: [
+        'resend webhooks get wh_abc123',
+        'resend webhooks get wh_abc123 --json',
+      ],
+    })
   )
   .action(async (id, _opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;

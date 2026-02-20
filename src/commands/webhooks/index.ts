@@ -1,4 +1,5 @@
 import { Command } from '@commander-js/extra-typings';
+import { buildHelpText } from '../../lib/help-text';
 import { createWebhookCommand } from './create';
 import { getWebhookCommand } from './get';
 import { listWebhooksCommand } from './list';
@@ -9,8 +10,8 @@ export const webhooksCommand = new Command('webhooks')
   .description('Manage webhook endpoints for real-time event notifications')
   .addHelpText(
     'after',
-    `
-Webhooks let you receive real-time event notifications from Resend at an HTTPS endpoint.
+    buildHelpText({
+      context: `Webhooks let you receive real-time event notifications from Resend at an HTTPS endpoint.
 Payloads are signed with Svix headers for verification.
 
 As of January 2026, webhook events fire per-recipient. A batch email to 3 recipients
@@ -26,18 +27,15 @@ Event categories (17 total):
 
 Signature verification (Svix):
   Each delivery includes headers: svix-id, svix-timestamp, svix-signature
-  Verify payloads in your application using: resend.webhooks.verify({ payload, headers, webhookSecret })
-
-Global options (defined on root):
-  --api-key <key>  API key (or set RESEND_API_KEY env var)
-  --json           Force JSON output (also auto-enabled when stdout is piped)
-
-Examples:
-  $ resend webhooks list
-  $ resend webhooks create --endpoint https://app.example.com/hooks/resend --events all
-  $ resend webhooks get wh_abc123
-  $ resend webhooks update wh_abc123 --status disabled
-  $ resend webhooks delete wh_abc123 --yes`
+  Verify payloads in your application using: resend.webhooks.verify({ payload, headers, webhookSecret })`,
+      examples: [
+        'resend webhooks list',
+        'resend webhooks create --endpoint https://app.example.com/hooks/resend --events all',
+        'resend webhooks get wh_abc123',
+        'resend webhooks update wh_abc123 --status disabled',
+        'resend webhooks delete wh_abc123 --yes',
+      ],
+    })
   )
   .addCommand(createWebhookCommand)
   .addCommand(getWebhookCommand)

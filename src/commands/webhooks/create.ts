@@ -7,6 +7,7 @@ import { cancelAndExit } from '../../lib/prompts';
 import { createSpinner } from '../../lib/spinner';
 import { outputError, outputResult, errorMessage } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
+import { buildHelpText } from '../../lib/help-text';
 import { ALL_WEBHOOK_EVENTS } from './utils';
 
 export const createWebhookCommand = new Command('create')
@@ -15,8 +16,8 @@ export const createWebhookCommand = new Command('create')
   .option('--events <events...>', 'Event types to subscribe to. Use "all" as shorthand for all 17 events.')
   .addHelpText(
     'after',
-    `
-Webhooks deliver real-time event notifications to your HTTPS endpoint.
+    buildHelpText({
+      context: `Webhooks deliver real-time event notifications to your HTTPS endpoint.
 Events fire per-recipient: a batch email to 3 recipients generates 3 email.sent events.
 
 --endpoint must use HTTPS.
@@ -36,23 +37,15 @@ The signing_secret in the response is shown ONCE — save it immediately to veri
 webhook payloads using Svix signature headers (svix-id, svix-timestamp, svix-signature).
 Use resend.webhooks.verify() in your application to validate incoming payloads.
 
-Non-interactive: --endpoint and --events are required.
-
-Global options (defined on root):
-  --api-key <key>  API key (or set RESEND_API_KEY env var)
-  --json           Force JSON output (also auto-enabled when stdout is piped)
-
-Output (--json or piped):
-  {"object":"webhook","id":"<uuid>","signing_secret":"<whsec_...>"}
-
-Errors (exit code 1):
-  {"error":{"message":"<message>","code":"<code>"}}
-  Codes: auth_error | missing_endpoint | missing_events | create_error
-
-Examples:
-  $ resend webhooks create --endpoint https://app.example.com/hooks/resend --events all
-  $ resend webhooks create --endpoint https://app.example.com/hooks/resend --events email.sent email.bounced
-  $ resend webhooks create --endpoint https://app.example.com/hooks/resend --events all --json`
+Non-interactive: --endpoint and --events are required.`,
+      output: `  {"object":"webhook","id":"<uuid>","signing_secret":"<whsec_...>"}`,
+      errorCodes: ['auth_error', 'missing_endpoint', 'missing_events', 'create_error'],
+      examples: [
+        'resend webhooks create --endpoint https://app.example.com/hooks/resend --events all',
+        'resend webhooks create --endpoint https://app.example.com/hooks/resend --events email.sent email.bounced',
+        'resend webhooks create --endpoint https://app.example.com/hooks/resend --events all --json',
+      ],
+    })
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;

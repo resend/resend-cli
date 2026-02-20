@@ -5,6 +5,7 @@ import { confirmDelete } from '../../lib/prompts';
 import { createSpinner } from '../../lib/spinner';
 import { outputError, outputResult, errorMessage } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
+import { buildHelpText } from '../../lib/help-text';
 
 export const deleteWebhookCommand = new Command('delete')
   .description('Delete a webhook endpoint and stop all event deliveries to it')
@@ -12,28 +13,20 @@ export const deleteWebhookCommand = new Command('delete')
   .option('--yes', 'Skip the confirmation prompt (required in non-interactive mode)')
   .addHelpText(
     'after',
-    `
-⚠ Deleting a webhook immediately stops event delivery to the endpoint.
+    buildHelpText({
+      context: `Warning: Deleting a webhook immediately stops event delivery to the endpoint.
   In-flight events may still be attempted once before the deletion takes effect.
   To temporarily pause delivery without losing configuration, use:
     resend webhooks update <id> --status disabled
 
-Non-interactive: --yes is required to confirm deletion when stdin/stdout is not a TTY.
-
-Global options (defined on root):
-  --api-key <key>  API key (or set RESEND_API_KEY env var)
-  --json           Force JSON output (also auto-enabled when stdout is piped)
-
-Output (--json or piped):
-  {"object":"webhook","id":"<uuid>","deleted":true}
-
-Errors (exit code 1):
-  {"error":{"message":"<message>","code":"<code>"}}
-  Codes: auth_error | confirmation_required | delete_error
-
-Examples:
-  $ resend webhooks delete wh_abc123 --yes
-  $ resend webhooks delete wh_abc123 --yes --json`
+Non-interactive: --yes is required to confirm deletion when stdin/stdout is not a TTY.`,
+      output: `  {"object":"webhook","id":"<uuid>","deleted":true}`,
+      errorCodes: ['auth_error', 'confirmation_required', 'delete_error'],
+      examples: [
+        'resend webhooks delete wh_abc123 --yes',
+        'resend webhooks delete wh_abc123 --yes --json',
+      ],
+    })
   )
   .action(async (id, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;

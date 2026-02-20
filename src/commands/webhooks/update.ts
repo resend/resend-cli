@@ -5,6 +5,7 @@ import { requireClient } from '../../lib/client';
 import { createSpinner } from '../../lib/spinner';
 import { outputError, outputResult, errorMessage } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
+import { buildHelpText } from '../../lib/help-text';
 import { ALL_WEBHOOK_EVENTS } from './utils';
 
 export const updateWebhookCommand = new Command('update')
@@ -18,33 +19,25 @@ export const updateWebhookCommand = new Command('update')
   )
   .addHelpText(
     'after',
-    `
-At least one of --endpoint, --events, or --status must be provided.
+    buildHelpText({
+      context: `At least one of --endpoint, --events, or --status must be provided.
 
 --events replaces the entire event list (it is not additive).
 Use "all" as a shorthand for all 17 event types.
 
 --status controls whether events are delivered to this endpoint:
   enabled   Events are delivered (default on creation)
-  disabled  Events are suppressed without deleting the webhook
-
-Global options (defined on root):
-  --api-key <key>  API key (or set RESEND_API_KEY env var)
-  --json           Force JSON output (also auto-enabled when stdout is piped)
-
-Output (--json or piped):
-  {"object":"webhook","id":"<uuid>"}
-
-Errors (exit code 1):
-  {"error":{"message":"<message>","code":"<code>"}}
-  Codes: auth_error | no_changes | update_error
-
-Examples:
-  $ resend webhooks update wh_abc123 --endpoint https://new-app.example.com/hooks/resend
-  $ resend webhooks update wh_abc123 --events email.sent email.bounced
-  $ resend webhooks update wh_abc123 --events all
-  $ resend webhooks update wh_abc123 --status disabled
-  $ resend webhooks update wh_abc123 --endpoint https://new-app.example.com/hooks/resend --events all --json`
+  disabled  Events are suppressed without deleting the webhook`,
+      output: `  {"object":"webhook","id":"<uuid>"}`,
+      errorCodes: ['auth_error', 'no_changes', 'update_error'],
+      examples: [
+        'resend webhooks update wh_abc123 --endpoint https://new-app.example.com/hooks/resend',
+        'resend webhooks update wh_abc123 --events email.sent email.bounced',
+        'resend webhooks update wh_abc123 --events all',
+        'resend webhooks update wh_abc123 --status disabled',
+        'resend webhooks update wh_abc123 --endpoint https://new-app.example.com/hooks/resend --events all --json',
+      ],
+    })
   )
   .action(async (id, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
