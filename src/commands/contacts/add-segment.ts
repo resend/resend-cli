@@ -61,6 +61,6 @@ Non-interactive: --segment-id is required.`,
     if (!globalOpts.json && isInteractive()) {
       console.log(`Contact added to segment: ${segmentId}`);
     } else {
-      outputResult(data!, { json: globalOpts.json });
+      outputResult(data, { json: globalOpts.json });
     }
   });

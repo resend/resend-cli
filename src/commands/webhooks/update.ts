@@ -68,6 +68,6 @@ Use "all" as a shorthand for all 17 event types.
     if (!globalOpts.json && isInteractive()) {
       console.log(`Webhook updated: ${id}`);
     } else {
-      outputResult(data!, { json: globalOpts.json });
+      outputResult(data, { json: globalOpts.json });
     }
   });

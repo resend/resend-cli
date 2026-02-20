@@ -72,6 +72,6 @@ Non-interactive: --name is required.`,
     if (!globalOpts.json && isInteractive()) {
       console.log(`\nTopic created: ${data.id}`);
     } else {
-      outputResult(data!, { json: globalOpts.json });
+      outputResult(data, { json: globalOpts.json });
     }
   });

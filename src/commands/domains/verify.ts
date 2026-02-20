@@ -37,6 +37,6 @@ Poll the status with: resend domains get <id>`,
     if (!globalOpts.json && isInteractive()) {
       console.log(`Domain verification started. Check status with resend domains get ${id}.`);
     } else {
-      outputResult(data!, { json: globalOpts.json });
+      outputResult(data, { json: globalOpts.json });
     }
   });

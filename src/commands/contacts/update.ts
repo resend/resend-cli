@@ -61,6 +61,6 @@ Properties: --properties merges the given JSON object with existing properties.
     if (!globalOpts.json && isInteractive()) {
       console.log(`Contact updated: ${id}`);
     } else {
-      outputResult(data!, { json: globalOpts.json });
+      outputResult(data, { json: globalOpts.json });
     }
   });

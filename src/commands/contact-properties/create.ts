@@ -103,6 +103,6 @@ built-in contact fields and may cause unexpected behavior in broadcasts.`,
     if (!globalOpts.json && isInteractive()) {
       console.log(`\nContact property created: ${data.id}`);
     } else {
-      outputResult(data!, { json: globalOpts.json });
+      outputResult(data, { json: globalOpts.json });
     }
   });

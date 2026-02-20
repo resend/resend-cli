@@ -43,6 +43,6 @@ The <segmentId> argument must be a segment UUID (not an email).`,
     if (!globalOpts.json && isInteractive()) {
       console.log(`Contact removed from segment: ${segmentId}`);
     } else {
-      outputResult(data!, { json: globalOpts.json });
+      outputResult(data, { json: globalOpts.json });
     }
   });

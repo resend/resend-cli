@@ -36,6 +36,6 @@ export const getSegmentCommand = new Command('get')
       console.log(`ID: ${data.id}`);
       console.log(`Created: ${data.created_at}`);
     } else {
-      outputResult(data!, { json: globalOpts.json });
+      outputResult(data, { json: globalOpts.json });
     }
   });

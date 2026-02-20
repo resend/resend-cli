@@ -95,6 +95,6 @@ Unsubscribed: setting --unsubscribed is a team-wide opt-out from all broadcasts,
     if (!globalOpts.json && isInteractive()) {
       console.log(`\nContact created: ${data.id}`);
     } else {
-      outputResult(data!, { json: globalOpts.json });
+      outputResult(data, { json: globalOpts.json });
     }
   });

@@ -38,6 +38,6 @@ export const getTopicCommand = new Command('get')
       console.log(`Default subscription: ${data.default_subscription}`);
       console.log(`Created: ${data.created_at}`);
     } else {
-      outputResult(data!, { json: globalOpts.json });
+      outputResult(data, { json: globalOpts.json });
     }
   });

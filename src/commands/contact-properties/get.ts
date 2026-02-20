@@ -44,6 +44,6 @@ export const getContactPropertyCommand = new Command('get')
       console.log(`Created: ${data.createdAt}`);
       console.log(`Fallback value: ${data.fallbackValue ?? '(none)'}`);
     } else {
-      outputResult(data!, { json: globalOpts.json });
+      outputResult(data, { json: globalOpts.json });
     }
   });

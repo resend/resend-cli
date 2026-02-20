@@ -56,6 +56,6 @@ Non-interactive: --name is required.`,
       console.log(`\nSegment created: ${data.id}`);
       console.log(`Name: ${data.name}`);
     } else {
-      outputResult(data!, { json: globalOpts.json });
+      outputResult(data, { json: globalOpts.json });
     }
   });

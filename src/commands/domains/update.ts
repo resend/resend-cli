@@ -61,6 +61,6 @@ export const updateDomainCommand = new Command('update')
     if (!globalOpts.json && isInteractive()) {
       console.log(`Domain updated: ${id}`);
     } else {
-      outputResult(data!, { json: globalOpts.json });
+      outputResult(data, { json: globalOpts.json });
     }
   });

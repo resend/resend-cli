@@ -155,6 +155,6 @@ export const sendCommand = new Command('send')
     if (!globalOpts.json && isInteractive()) {
       console.log(`\nEmail sent: ${data.id}`);
     } else {
-      outputResult(data!, { json: globalOpts.json });
+      outputResult(data, { json: globalOpts.json });
     }
   });

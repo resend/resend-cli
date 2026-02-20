@@ -70,6 +70,6 @@ Topics not included in the array are left unchanged.`,
     if (!globalOpts.json && isInteractive()) {
       console.log(`Topic subscriptions updated for contact: ${id}`);
     } else {
-      outputResult(data!, { json: globalOpts.json });
+      outputResult(data, { json: globalOpts.json });
     }
   });

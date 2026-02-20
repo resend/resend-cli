@@ -46,6 +46,6 @@ export const getContactCommand = new Command('get')
         }
       }
     } else {
-      outputResult(data!, { json: globalOpts.json });
+      outputResult(data, { json: globalOpts.json });
     }
   });

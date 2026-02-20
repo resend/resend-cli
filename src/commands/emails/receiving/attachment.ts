@@ -45,6 +45,6 @@ export const getAttachmentCommand = new Command('attachment')
       console.log(`Download URL: ${d.download_url}`);
       console.log(`Expires:      ${d.expires_at}`);
     } else {
-      outputResult(data!, { json: globalOpts.json });
+      outputResult(data, { json: globalOpts.json });
     }
   });

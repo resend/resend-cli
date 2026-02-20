@@ -65,6 +65,6 @@ The fallback value is used in broadcast template interpolation when a contact ha
     if (!globalOpts.json && isInteractive()) {
       console.log(`Contact property updated: ${id}`);
     } else {
-      outputResult(data!, { json: globalOpts.json });
+      outputResult(data, { json: globalOpts.json });
     }
   });

@@ -49,6 +49,6 @@ export const getReceivingCommand = new Command('get')
         console.log('\n(HTML body only — use --json to view or pipe to a browser)');
       }
     } else {
-      outputResult(data!, { json: globalOpts.json });
+      outputResult(data, { json: globalOpts.json });
     }
   });

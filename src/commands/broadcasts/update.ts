@@ -67,6 +67,6 @@ Variable interpolation:
     if (!globalOpts.json && isInteractive()) {
       console.log(`\nBroadcast updated: ${data.id}`);
     } else {
-      outputResult(data!, { json: globalOpts.json });
+      outputResult(data, { json: globalOpts.json });
     }
   });

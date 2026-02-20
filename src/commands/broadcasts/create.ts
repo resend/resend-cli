@@ -135,6 +135,6 @@ Scheduling:
         console.log(`\nSend it with: resend broadcasts send ${d.id}`);
       }
     } else {
-      outputResult(data!, { json: globalOpts.json });
+      outputResult(data, { json: globalOpts.json });
     }
   });

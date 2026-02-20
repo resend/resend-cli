@@ -51,6 +51,6 @@ To change the default subscription, delete the topic and recreate it.`,
     if (!globalOpts.json && isInteractive()) {
       console.log(`Topic updated: ${id}`);
     } else {
-      outputResult(data!, { json: globalOpts.json });
+      outputResult(data, { json: globalOpts.json });
     }
   });
