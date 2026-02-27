@@ -7,7 +7,12 @@ import { outputError, outputResult, errorMessage } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
 
-const SKILL_CONTENT = `# Resend CLI
+const SKILL_CONTENT = `---
+name: resend
+description: Use when working with the Resend email platform — sending emails, managing domains, contacts, segments, broadcasts, and API keys.
+---
+
+# Resend CLI
 
 Send transactional emails, manage domains, contacts, segments, broadcasts, and API keys.
 
@@ -97,8 +102,8 @@ resend domains list | jq '.data[].name'
 `;
 
 export async function setupOpenclaw(globalOpts: GlobalOpts): Promise<void> {
-  const skillDir = join(homedir(), 'clawd', 'skills');
-  const skillPath = join(skillDir, 'resend.md');
+  const skillDir = join(homedir(), '.openclaw', 'skills', 'resend');
+  const skillPath = join(skillDir, 'SKILL.md');
 
   try {
     mkdirSync(skillDir, { recursive: true });
@@ -118,14 +123,14 @@ export async function setupOpenclaw(globalOpts: GlobalOpts): Promise<void> {
 }
 
 export const openclawCommand = new Command('openclaw')
-  .description('Create ~/clawd/skills/resend.md skill file for OpenClaw')
+  .description('Create ~/.openclaw/skills/resend/SKILL.md skill file for OpenClaw')
   .addHelpText('after', buildHelpText({
     setup: true,
     context: `What it does:
-  Creates ~/clawd/skills/resend.md — a skill file that teaches the OpenClaw agent
+  Creates ~/.openclaw/skills/resend/SKILL.md — a skill file that teaches the OpenClaw agent
   how to authenticate and use the Resend CLI for sending email and managing resources.
 
-Skill file path: ~/clawd/skills/resend.md
+Skill file path: ~/.openclaw/skills/resend/SKILL.md
 
 The skill file covers:
   - Authentication via RESEND_API_KEY or \`resend auth login\`
@@ -133,7 +138,7 @@ The skill file covers:
   - Managing domains, contacts, segments, and broadcasts
   - JSON output format for scripting
   - Health check via \`resend doctor\``,
-    output: `  {"configured":true,"tool":"openclaw","config_path":"~/clawd/skills/resend.md"}`,
+    output: `  {"configured":true,"tool":"openclaw","config_path":"~/.openclaw/skills/resend/SKILL.md"}`,
     errorCodes: ['config_write_error'],
     examples: [
       'resend setup openclaw',

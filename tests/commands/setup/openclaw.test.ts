@@ -22,15 +22,15 @@ describe('setupOpenclaw', () => {
     mockMkdirSync.mockClear();
   });
 
-  test('writes skill file to ~/clawd/skills/resend.md', async () => {
+  test('writes skill file to ~/.openclaw/skills/resend/SKILL.md', async () => {
     const { restore } = setupOutputSpies();
     try {
       const { setupOpenclaw } = await import('../../../src/commands/setup/openclaw');
       await setupOpenclaw({ json: true });
 
-      expect(mockMkdirSync).toHaveBeenCalledWith(expect.stringContaining('clawd/skills'), { recursive: true });
+      expect(mockMkdirSync).toHaveBeenCalledWith(expect.stringContaining('.openclaw/skills/resend'), { recursive: true });
       expect(mockWriteFileSync).toHaveBeenCalledWith(
-        expect.stringContaining('resend.md'),
+        expect.stringContaining('SKILL.md'),
         expect.stringContaining('# Resend CLI'),
         'utf8',
       );
@@ -39,13 +39,14 @@ describe('setupOpenclaw', () => {
     }
   });
 
-  test('skill content contains key commands and authentication instructions', async () => {
+  test('skill content contains YAML frontmatter and key sections', async () => {
     const { restore } = setupOutputSpies();
     try {
       const { setupOpenclaw } = await import('../../../src/commands/setup/openclaw');
       await setupOpenclaw({ json: true });
 
       const content = mockWriteFileSync.mock.calls[0][1] as string;
+      expect(content).toContain('name: resend');
       expect(content).toContain('RESEND_API_KEY');
       expect(content).toContain('resend emails send');
       expect(content).toContain('resend doctor');
@@ -54,7 +55,7 @@ describe('setupOpenclaw', () => {
     }
   });
 
-  test('outputs JSON with config_path containing resend.md', async () => {
+  test('outputs JSON with config_path containing SKILL.md', async () => {
     const { logSpy, restore } = setupOutputSpies();
     try {
       const { setupOpenclaw } = await import('../../../src/commands/setup/openclaw');
@@ -63,7 +64,7 @@ describe('setupOpenclaw', () => {
       const output = JSON.parse(logSpy.mock.calls[0][0] as string);
       expect(output.configured).toBe(true);
       expect(output.tool).toBe('openclaw');
-      expect(output.config_path).toContain('resend.md');
+      expect(output.config_path).toContain('.openclaw/skills/resend/SKILL.md');
     } finally {
       restore();
     }
