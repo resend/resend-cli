@@ -1,10 +1,7 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../../lib/client';
-import { requireClient } from '../../../lib/client';
-import { withSpinner } from '../../../lib/spinner';
-import { outputResult } from '../../../lib/output';
+import { runList } from '../../../lib/actions';
 import { parseLimitOpt, buildPaginationOpts, printPaginationHint } from '../../../lib/pagination';
-import { isInteractive } from '../../../lib/tty';
 import { buildHelpText } from '../../../lib/help-text';
 import { renderReceivingEmailsTable } from './utils';
 
@@ -30,22 +27,16 @@ export const listReceivingCommand = new Command('list')
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const resend = requireClient(globalOpts);
 
     const limit = parseLimitOpt(opts.limit, globalOpts);
     const paginationOpts = buildPaginationOpts(limit, opts.after, opts.before);
 
-    const list = await withSpinner(
-      { loading: 'Fetching received emails...', success: 'Received emails fetched', fail: 'Failed to list received emails' },
-      () => resend.emails.receiving.list(paginationOpts),
-      'list_error',
-      globalOpts,
-    );
-
-    if (!globalOpts.json && isInteractive()) {
-      console.log(renderReceivingEmailsTable(list.data));
-      printPaginationHint(list);
-    } else {
-      outputResult(list, { json: globalOpts.json });
-    }
+    await runList({
+      spinner: { loading: 'Fetching received emails...', success: 'Received emails fetched', fail: 'Failed to list received emails' },
+      sdkCall: (resend) => resend.emails.receiving.list(paginationOpts),
+      onInteractive: (list) => {
+        console.log(renderReceivingEmailsTable(list.data));
+        printPaginationHint(list);
+      },
+    }, globalOpts);
   });

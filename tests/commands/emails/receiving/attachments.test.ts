@@ -121,7 +121,7 @@ describe('emails receiving attachments command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with fetch_error when SDK returns an error', async () => {
+  test('errors with list_error when SDK returns an error', async () => {
     setNonInteractive();
     mockList.mockResolvedValueOnce({ data: null, error: { message: 'Not found', name: 'not_found' } } as any);
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
@@ -132,6 +132,6 @@ describe('emails receiving attachments command', () => {
     await expectExit1(() => listAttachmentsCommand.parseAsync(['rcv_nonexistent'], { from: 'user' }));
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
-    expect(output).toContain('fetch_error');
+    expect(output).toContain('list_error');
   });
 });

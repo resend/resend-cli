@@ -1,10 +1,7 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../../lib/client';
-import { requireClient } from '../../../lib/client';
-import { withSpinner } from '../../../lib/spinner';
-import { outputResult } from '../../../lib/output';
+import { runList } from '../../../lib/actions';
 import { parseLimitOpt, buildPaginationOpts, printPaginationHint } from '../../../lib/pagination';
-import { isInteractive } from '../../../lib/tty';
 import { buildHelpText } from '../../../lib/help-text';
 import { renderAttachmentsTable } from './utils';
 
@@ -21,7 +18,7 @@ export const listAttachmentsCommand = new Command('attachments')
         'Each attachment has a download_url (signed, expires ~1 hour).\nUse the attachment sub-command to retrieve a single attachment with its download URL:\n  resend emails receiving attachment <emailId> <attachmentId>\n\ncontent_disposition: "inline" means the attachment is embedded in the HTML body (e.g. an image).\ncontent_disposition: "attachment" means it is a standalone file download.',
       output:
         '  {"object":"list","has_more":false,"data":[{"id":"<uuid>","filename":"invoice.pdf","size":51200,"content_type":"application/pdf","content_disposition":"attachment","content_id":null,"download_url":"<url>","expires_at":"<iso-date>"}]}',
-      errorCodes: ['auth_error', 'invalid_limit', 'fetch_error'],
+      errorCodes: ['auth_error', 'invalid_limit', 'list_error'],
       examples: [
         'resend emails receiving attachments <email-id>',
         'resend emails receiving attachments <email-id> --json',
@@ -31,22 +28,16 @@ export const listAttachmentsCommand = new Command('attachments')
   )
   .action(async (emailId, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const resend = requireClient(globalOpts);
 
     const limit = parseLimitOpt(opts.limit, globalOpts);
     const paginationOpts = buildPaginationOpts(limit, opts.after, opts.before);
 
-    const list = await withSpinner(
-      { loading: 'Fetching attachments...', success: 'Attachments fetched', fail: 'Failed to list attachments' },
-      () => resend.emails.receiving.attachments.list({ emailId, ...paginationOpts }),
-      'fetch_error',
-      globalOpts,
-    );
-
-    if (!globalOpts.json && isInteractive()) {
-      console.log(renderAttachmentsTable(list.data));
-      printPaginationHint(list);
-    } else {
-      outputResult(list, { json: globalOpts.json });
-    }
+    await runList({
+      spinner: { loading: 'Fetching attachments...', success: 'Attachments fetched', fail: 'Failed to list attachments' },
+      sdkCall: (resend) => resend.emails.receiving.attachments.list({ emailId, ...paginationOpts }),
+      onInteractive: (list) => {
+        console.log(renderAttachmentsTable(list.data));
+        printPaginationHint(list);
+      },
+    }, globalOpts);
   });
