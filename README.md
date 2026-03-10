@@ -4,25 +4,62 @@ Command-line interface for the [Resend](https://resend.com) email API. Works for
 
 ## Install
 
-**macOS / Linux** (no Node.js required):
-
 ```bash
 curl -fsSL https://resend.com/install.sh | bash
 ```
 
-Install a specific version:
+## Local development
+
+Use this when you want to change the CLI and run your build locally.
+
+### Prerequisites
+
+- [Bun](https://bun.sh) (runtime and package manager)
+
+### Setup
+
+1. **Clone the repo**
+
+   ```bash
+   git clone https://github.com/resend/resend-cli.git
+   cd resend-cli
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   bun install
+   ```
+
+3. **Build locally**
+
+   ```bash
+   bun run build
+   ```
+
+   Output: `./dist/resend`
+
+### Running the CLI locally
+
+Use the built binary directly:
 
 ```bash
-curl -fsSL https://resend.com/install.sh | bash -s v0.1.0
+./dist/resend --version
 ```
 
-**From source** (requires [Bun](https://bun.sh)):
+Or add the project to your `PATH`:
 
 ```bash
-git clone https://github.com/resend/resend-cli.git
-cd resend-cli
-bun install
-bun run build  # outputs ./dist/resend
+export PATH="$(pwd)/dist:$PATH"
+resend doctor
+```
+
+### Making changes
+
+After editing source files, rebuild:
+
+```bash
+bun run build
 ```
 
 ## Quick start
