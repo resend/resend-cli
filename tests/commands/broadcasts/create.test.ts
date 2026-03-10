@@ -12,6 +12,7 @@ import {
   captureTestEnv,
   expectExit1,
   mockExitThrow,
+  mockSdkError,
   setNonInteractive,
   setupOutputSpies,
 } from '../../helpers';
@@ -76,7 +77,7 @@ describe('broadcasts create command', () => {
     );
 
     expect(mockCreate).toHaveBeenCalledTimes(1);
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.from).toBe('hello@domain.com');
     expect(args.subject).toBe('Weekly Update');
     expect(args.segmentId).toBe('seg_123');
@@ -129,7 +130,7 @@ describe('broadcasts create command', () => {
       { from: 'user' },
     );
 
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.send).toBe(true);
   });
 
@@ -156,7 +157,7 @@ describe('broadcasts create command', () => {
       { from: 'user' },
     );
 
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.scheduledAt).toBe('in 1 hour');
   });
 
@@ -188,7 +189,7 @@ describe('broadcasts create command', () => {
       { from: 'user' },
     );
 
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.name).toBe('Q1 Newsletter');
     expect(args.replyTo).toBe('reply@domain.com');
     expect(args.previewText).toBe('Read the news');
@@ -324,10 +325,9 @@ describe('broadcasts create command', () => {
 
   test('errors with create_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockCreate.mockResolvedValueOnce({
-      data: null,
-      error: { message: 'Segment not found', name: 'not_found' },
-    } as any);
+    mockCreate.mockResolvedValueOnce(
+      mockSdkError('Segment not found', 'not_found'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
@@ -392,7 +392,7 @@ describe('broadcasts create command', () => {
     );
 
     expect(readFileSpy).toHaveBeenCalledTimes(1);
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.html).toBe('<p>From file</p>');
   });
 

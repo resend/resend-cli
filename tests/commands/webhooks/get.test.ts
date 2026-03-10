@@ -11,6 +11,7 @@ import {
   captureTestEnv,
   expectExit1,
   mockExitThrow,
+  mockSdkError,
   setNonInteractive,
   setupOutputSpies,
 } from '../../helpers';
@@ -20,7 +21,7 @@ const mockGet = mock(async () => ({
     object: 'webhook' as const,
     id: 'wh_abc123',
     endpoint: 'https://app.example.com/hooks/resend',
-    events: ['email.sent', 'email.bounced'] as any,
+    events: ['email.sent', 'email.bounced'] as string[],
     status: 'enabled' as const,
     created_at: '2026-01-01T00:00:00.000Z',
     signing_secret: 'whsec_test1234',
@@ -106,10 +107,7 @@ describe('webhooks get command', () => {
 
   test('errors with fetch_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockGet.mockResolvedValueOnce({
-      data: null,
-      error: { message: 'Not found', name: 'not_found' },
-    } as any);
+    mockGet.mockResolvedValueOnce(mockSdkError('Not found', 'not_found'));
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();

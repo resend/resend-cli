@@ -69,6 +69,13 @@ export function setupOutputSpies() {
  * Asserts that fn throws ExitError with code 1.
  * Eliminates the expect(true).toBe(false) anti-pattern in error-path tests.
  */
+/**
+ * Returns a properly-typed SDK error response without needing `as any`.
+ */
+export function mockSdkError(message: string, name = 'error') {
+  return { data: null, error: { message, name }, headers: null };
+}
+
 export async function expectExit1(fn: () => Promise<unknown>): Promise<void> {
   let threw = false;
   try {

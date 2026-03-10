@@ -11,6 +11,7 @@ import {
   captureTestEnv,
   expectExit1,
   mockExitThrow,
+  mockSdkError,
   setNonInteractive,
   setupOutputSpies,
 } from '../../helpers';
@@ -63,7 +64,7 @@ describe('contacts update command', () => {
     );
 
     expect(mockUpdate).toHaveBeenCalledTimes(1);
-    const args = mockUpdate.mock.calls[0][0] as any;
+    const args = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.id).toBe('contact_abc123');
     expect(args.unsubscribed).toBe(true);
   });
@@ -79,7 +80,7 @@ describe('contacts update command', () => {
       { from: 'user' },
     );
 
-    const args = mockUpdate.mock.calls[0][0] as any;
+    const args = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.email).toBe('jane@example.com');
     expect(args.unsubscribed).toBe(false);
   });
@@ -95,7 +96,7 @@ describe('contacts update command', () => {
       { from: 'user' },
     );
 
-    const args = mockUpdate.mock.calls[0][0] as any;
+    const args = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.properties).toEqual({ plan: 'pro' });
   });
 
@@ -107,7 +108,7 @@ describe('contacts update command', () => {
     );
     await updateContactCommand.parseAsync(['contact_abc123'], { from: 'user' });
 
-    const args = mockUpdate.mock.calls[0][0] as any;
+    const args = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.unsubscribed).toBeUndefined();
   });
 
@@ -169,10 +170,9 @@ describe('contacts update command', () => {
 
   test('errors with update_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockUpdate.mockResolvedValueOnce({
-      data: null,
-      error: { message: 'Contact not found', name: 'not_found' },
-    } as any);
+    mockUpdate.mockResolvedValueOnce(
+      mockSdkError('Contact not found', 'not_found'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();

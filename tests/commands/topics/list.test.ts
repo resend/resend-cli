@@ -11,6 +11,7 @@ import {
   captureTestEnv,
   expectExit1,
   mockExitThrow,
+  mockSdkError,
   setNonInteractive,
   setupOutputSpies,
 } from '../../helpers';
@@ -105,10 +106,9 @@ describe('topics list command', () => {
 
   test('errors with list_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockList.mockResolvedValueOnce({
-      data: null,
-      error: { message: 'Server error', name: 'server_error' },
-    } as any);
+    mockList.mockResolvedValueOnce(
+      mockSdkError('Server error', 'server_error'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();

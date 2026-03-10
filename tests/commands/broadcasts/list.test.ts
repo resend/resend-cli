@@ -11,6 +11,7 @@ import {
   captureTestEnv,
   expectExit1,
   mockExitThrow,
+  mockSdkError,
   setNonInteractive,
   setupOutputSpies,
 } from '../../helpers';
@@ -100,7 +101,7 @@ describe('broadcasts list command', () => {
     );
     await listBroadcastsCommand.parseAsync(['--limit', '5'], { from: 'user' });
 
-    const opts = mockList.mock.calls[0][0] as any;
+    const opts = mockList.mock.calls[0][0] as Record<string, unknown>;
     expect(opts.limit).toBe(5);
   });
 
@@ -114,7 +115,7 @@ describe('broadcasts list command', () => {
       from: 'user',
     });
 
-    const opts = mockList.mock.calls[0][0] as any;
+    const opts = mockList.mock.calls[0][0] as Record<string, unknown>;
     expect(opts.after).toBe('bcast_cursor');
   });
 
@@ -128,7 +129,7 @@ describe('broadcasts list command', () => {
       from: 'user',
     });
 
-    const opts = mockList.mock.calls[0][0] as any;
+    const opts = mockList.mock.calls[0][0] as Record<string, unknown>;
     expect(opts.before).toBe('bcast_cursor');
   });
 
@@ -169,10 +170,9 @@ describe('broadcasts list command', () => {
 
   test('errors with list_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockList.mockResolvedValueOnce({
-      data: null,
-      error: { message: 'Internal server error', name: 'server_error' },
-    } as any);
+    mockList.mockResolvedValueOnce(
+      mockSdkError('Internal server error', 'server_error'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();

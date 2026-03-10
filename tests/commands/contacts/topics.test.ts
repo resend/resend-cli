@@ -11,6 +11,7 @@ import {
   captureTestEnv,
   expectExit1,
   mockExitThrow,
+  mockSdkError,
   setNonInteractive,
   setupOutputSpies,
 } from '../../helpers';
@@ -75,7 +76,7 @@ describe('contacts topics command', () => {
     });
 
     expect(mockListTopics).toHaveBeenCalledTimes(1);
-    const args = mockListTopics.mock.calls[0][0] as any;
+    const args = mockListTopics.mock.calls[0][0] as Record<string, unknown>;
     expect(args.id).toBe('contact_abc123');
   });
 
@@ -89,7 +90,7 @@ describe('contacts topics command', () => {
       from: 'user',
     });
 
-    const args = mockListTopics.mock.calls[0][0] as any;
+    const args = mockListTopics.mock.calls[0][0] as Record<string, unknown>;
     expect(args.email).toBe('jane@example.com');
   });
 
@@ -130,10 +131,9 @@ describe('contacts topics command', () => {
 
   test('errors with list_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockListTopics.mockResolvedValueOnce({
-      data: null,
-      error: { message: 'Not found', name: 'not_found' },
-    } as any);
+    mockListTopics.mockResolvedValueOnce(
+      mockSdkError('Not found', 'not_found'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();

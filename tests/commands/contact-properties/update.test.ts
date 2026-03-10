@@ -11,6 +11,7 @@ import {
   captureTestEnv,
   expectExit1,
   mockExitThrow,
+  mockSdkError,
   setNonInteractive,
   setupOutputSpies,
 } from '../../helpers';
@@ -63,7 +64,7 @@ describe('contact-properties update command', () => {
     );
 
     expect(mockUpdate).toHaveBeenCalledTimes(1);
-    const args = mockUpdate.mock.calls[0][0] as any;
+    const args = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.id).toBe('prop_abc123');
     expect(args.fallbackValue).toBe('Acme Corp');
   });
@@ -79,7 +80,7 @@ describe('contact-properties update command', () => {
       { from: 'user' },
     );
 
-    const args = mockUpdate.mock.calls[0][0] as any;
+    const args = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.id).toBe('prop_abc123');
     expect(args.fallbackValue).toBeNull();
   });
@@ -178,10 +179,9 @@ describe('contact-properties update command', () => {
 
   test('errors with update_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockUpdate.mockResolvedValueOnce({
-      data: null,
-      error: { message: 'Property not found', name: 'not_found' },
-    } as any);
+    mockUpdate.mockResolvedValueOnce(
+      mockSdkError('Property not found', 'not_found'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();

@@ -11,6 +11,7 @@ import {
   captureTestEnv,
   expectExit1,
   mockExitThrow,
+  mockSdkError,
   setNonInteractive,
   setupOutputSpies,
 } from '../../helpers';
@@ -23,7 +24,7 @@ const mockList = mock(async () => ({
       {
         id: 'wh_abc123',
         endpoint: 'https://app.example.com/hooks/resend',
-        events: ['email.sent', 'email.bounced'] as any,
+        events: ['email.sent', 'email.bounced'] as string[],
         status: 'enabled' as const,
         created_at: '2026-01-01T00:00:00.000Z',
       },
@@ -72,7 +73,7 @@ describe('webhooks list command', () => {
     await listWebhooksCommand.parseAsync([], { from: 'user' });
 
     expect(mockList).toHaveBeenCalledTimes(1);
-    const args = mockList.mock.calls[0][0] as any;
+    const args = mockList.mock.calls[0][0] as Record<string, unknown>;
     expect(args.limit).toBe(10);
   });
 
@@ -84,7 +85,7 @@ describe('webhooks list command', () => {
     );
     await listWebhooksCommand.parseAsync(['--limit', '5'], { from: 'user' });
 
-    const args = mockList.mock.calls[0][0] as any;
+    const args = mockList.mock.calls[0][0] as Record<string, unknown>;
     expect(args.limit).toBe(5);
   });
 
@@ -98,7 +99,7 @@ describe('webhooks list command', () => {
       from: 'user',
     });
 
-    const args = mockList.mock.calls[0][0] as any;
+    const args = mockList.mock.calls[0][0] as Record<string, unknown>;
     expect(args.after).toBe('wh_cursor123');
   });
 
@@ -156,10 +157,9 @@ describe('webhooks list command', () => {
 
   test('errors with list_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockList.mockResolvedValueOnce({
-      data: null,
-      error: { message: 'Server error', name: 'server_error' },
-    } as any);
+    mockList.mockResolvedValueOnce(
+      mockSdkError('Server error', 'server_error'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();

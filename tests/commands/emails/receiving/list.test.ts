@@ -11,6 +11,7 @@ import {
   captureTestEnv,
   expectExit1,
   mockExitThrow,
+  mockSdkError,
   setNonInteractive,
   setupOutputSpies,
 } from '../../../helpers';
@@ -77,7 +78,7 @@ describe('emails receiving list command', () => {
     await listReceivingCommand.parseAsync([], { from: 'user' });
 
     expect(mockList).toHaveBeenCalledTimes(1);
-    const args = mockList.mock.calls[0][0] as any;
+    const args = mockList.mock.calls[0][0] as Record<string, unknown>;
     expect(args.limit).toBe(10);
   });
 
@@ -89,7 +90,7 @@ describe('emails receiving list command', () => {
     );
     await listReceivingCommand.parseAsync(['--limit', '5'], { from: 'user' });
 
-    const args = mockList.mock.calls[0][0] as any;
+    const args = mockList.mock.calls[0][0] as Record<string, unknown>;
     expect(args.limit).toBe(5);
   });
 
@@ -103,7 +104,7 @@ describe('emails receiving list command', () => {
       from: 'user',
     });
 
-    const args = mockList.mock.calls[0][0] as any;
+    const args = mockList.mock.calls[0][0] as Record<string, unknown>;
     expect(args.after).toBe('rcv_cursor123');
   });
 
@@ -160,10 +161,9 @@ describe('emails receiving list command', () => {
 
   test('errors with list_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockList.mockResolvedValueOnce({
-      data: null,
-      error: { message: 'Server error', name: 'server_error' },
-    } as any);
+    mockList.mockResolvedValueOnce(
+      mockSdkError('Server error', 'server_error'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();

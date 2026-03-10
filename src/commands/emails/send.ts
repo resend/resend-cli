@@ -5,7 +5,7 @@ import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
 import { readFile } from '../../lib/files';
 import { buildHelpText } from '../../lib/help-text';
-import { outputError, outputResult } from '../../lib/output';
+import { outputResult } from '../../lib/output';
 import {
   cancelAndExit,
   promptForMissing,

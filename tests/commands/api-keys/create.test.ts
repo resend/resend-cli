@@ -11,6 +11,7 @@ import {
   captureTestEnv,
   expectExit1,
   mockExitThrow,
+  mockSdkError,
   setNonInteractive,
   setupOutputSpies,
 } from '../../helpers';
@@ -62,7 +63,7 @@ describe('api-keys create command', () => {
     });
 
     expect(mockCreate).toHaveBeenCalledTimes(1);
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.name).toBe('Production');
   });
 
@@ -77,7 +78,7 @@ describe('api-keys create command', () => {
       { from: 'user' },
     );
 
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.permission).toBe('sending_access');
   });
 
@@ -99,7 +100,7 @@ describe('api-keys create command', () => {
       { from: 'user' },
     );
 
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.domain_id).toBe('domain-123');
   });
 
@@ -172,10 +173,9 @@ describe('api-keys create command', () => {
 
   test('errors with create_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockCreate.mockResolvedValueOnce({
-      data: null,
-      error: { message: 'Name already taken', name: 'validation_error' },
-    } as any);
+    mockCreate.mockResolvedValueOnce(
+      mockSdkError('Name already taken', 'validation_error'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();

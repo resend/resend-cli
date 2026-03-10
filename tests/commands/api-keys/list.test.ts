@@ -11,6 +11,7 @@ import {
   captureTestEnv,
   expectExit1,
   mockExitThrow,
+  mockSdkError,
   setNonInteractive,
   setupOutputSpies,
 } from '../../helpers';
@@ -112,10 +113,9 @@ describe('api-keys list command', () => {
 
   test('errors with list_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockList.mockResolvedValueOnce({
-      data: null,
-      error: { message: 'Unauthorized', name: 'unauthorized' },
-    } as any); // biome-ignore lint/suspicious/noExplicitAny: test mock
+    mockList.mockResolvedValueOnce(
+      mockSdkError('Unauthorized', 'unauthorized'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();

@@ -98,7 +98,9 @@ describe('doctor command', () => {
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
-    const keyCheck = parsed.checks.find((c: any) => c.name === 'API Key');
+    const keyCheck = parsed.checks.find(
+      (c: Record<string, unknown>) => c.name === 'API Key',
+    );
 
     expect(keyCheck).toBeDefined();
     expect(keyCheck.status).toBe('pass');
@@ -122,7 +124,9 @@ describe('doctor command', () => {
     const parsed = JSON.parse(output);
 
     expect(parsed.ok).toBe(false);
-    const keyCheck = parsed.checks.find((c: any) => c.name === 'API Key');
+    const keyCheck = parsed.checks.find(
+      (c: Record<string, unknown>) => c.name === 'API Key',
+    );
     expect(keyCheck.status).toBe('fail');
   });
 
@@ -135,7 +139,9 @@ describe('doctor command', () => {
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
-    const keyCheck = parsed.checks.find((c: any) => c.name === 'API Key');
+    const keyCheck = parsed.checks.find(
+      (c: Record<string, unknown>) => c.name === 'API Key',
+    );
 
     // Should not contain full key
     expect(keyCheck.message).not.toContain('re_abcdefghijklmnop');

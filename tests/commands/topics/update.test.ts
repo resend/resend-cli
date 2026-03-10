@@ -11,6 +11,7 @@ import {
   captureTestEnv,
   expectExit1,
   mockExitThrow,
+  mockSdkError,
   setNonInteractive,
   setupOutputSpies,
 } from '../../helpers';
@@ -63,7 +64,7 @@ describe('topics update command', () => {
     );
 
     expect(mockUpdate).toHaveBeenCalledTimes(1);
-    const payload = mockUpdate.mock.calls[0][0] as any;
+    const payload = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
     expect(payload.id).toBe('top_abc123');
     expect(payload.name).toBe('Security Alerts');
   });
@@ -79,7 +80,7 @@ describe('topics update command', () => {
       { from: 'user' },
     );
 
-    const payload = mockUpdate.mock.calls[0][0] as any;
+    const payload = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
     expect(payload.id).toBe('top_abc123');
     expect(payload.description).toBe('Updated desc');
     expect(payload.name).toBeUndefined();
@@ -154,10 +155,9 @@ describe('topics update command', () => {
 
   test('errors with update_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockUpdate.mockResolvedValueOnce({
-      data: null,
-      error: { message: 'Topic not found', name: 'not_found' },
-    } as any);
+    mockUpdate.mockResolvedValueOnce(
+      mockSdkError('Topic not found', 'not_found'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();

@@ -11,6 +11,7 @@ import {
   captureTestEnv,
   expectExit1,
   mockExitThrow,
+  mockSdkError,
   setNonInteractive,
   setupOutputSpies,
 } from '../../helpers';
@@ -62,7 +63,7 @@ describe('contacts create command', () => {
     });
 
     expect(mockCreate).toHaveBeenCalledTimes(1);
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.email).toBe('jane@example.com');
   });
 
@@ -100,7 +101,7 @@ describe('contacts create command', () => {
       { from: 'user' },
     );
 
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.firstName).toBe('Jane');
     expect(args.lastName).toBe('Smith');
   });
@@ -116,7 +117,7 @@ describe('contacts create command', () => {
       { from: 'user' },
     );
 
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.unsubscribed).toBe(true);
   });
 
@@ -136,7 +137,7 @@ describe('contacts create command', () => {
       { from: 'user' },
     );
 
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.properties).toEqual({ company: 'Acme', plan: 'pro' });
   });
 
@@ -151,7 +152,7 @@ describe('contacts create command', () => {
       { from: 'user' },
     );
 
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.segments).toEqual([{ id: 'seg_123' }]);
   });
 
@@ -173,7 +174,7 @@ describe('contacts create command', () => {
       { from: 'user' },
     );
 
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.segments).toEqual([{ id: 'seg_abc' }, { id: 'seg_def' }]);
   });
 
@@ -234,10 +235,9 @@ describe('contacts create command', () => {
 
   test('errors with create_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockCreate.mockResolvedValueOnce({
-      data: null,
-      error: { message: 'Contact already exists', name: 'validation_error' },
-    } as any);
+    mockCreate.mockResolvedValueOnce(
+      mockSdkError('Contact already exists', 'validation_error'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();

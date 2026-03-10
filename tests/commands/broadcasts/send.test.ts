@@ -11,6 +11,7 @@ import {
   captureTestEnv,
   expectExit1,
   mockExitThrow,
+  mockSdkError,
   setNonInteractive,
   setupOutputSpies,
 } from '../../helpers';
@@ -87,7 +88,7 @@ describe('broadcasts send command', () => {
       { from: 'user' },
     );
 
-    const payload = mockSend.mock.calls[0][1] as any;
+    const payload = mockSend.mock.calls[0][1] as Record<string, unknown>;
     expect(payload.scheduledAt).toBe('in 1 hour');
   });
 
@@ -99,7 +100,7 @@ describe('broadcasts send command', () => {
     );
     await sendBroadcastCommand.parseAsync(['bcast_abc123'], { from: 'user' });
 
-    const payload = mockSend.mock.calls[0][1] as any;
+    const payload = mockSend.mock.calls[0][1] as Record<string, unknown>;
     expect(payload.scheduledAt).toBeUndefined();
   });
 
@@ -123,10 +124,9 @@ describe('broadcasts send command', () => {
 
   test('errors with send_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockSend.mockResolvedValueOnce({
-      data: null,
-      error: { message: 'Broadcast not found', name: 'not_found' },
-    } as any);
+    mockSend.mockResolvedValueOnce(
+      mockSdkError('Broadcast not found', 'not_found'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();

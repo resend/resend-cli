@@ -79,7 +79,7 @@ describe('send command', () => {
     );
 
     expect(mockSend).toHaveBeenCalledTimes(1);
-    const callArgs = mockSend.mock.calls[0][0] as any;
+    const callArgs = mockSend.mock.calls[0][0] as Record<string, unknown>;
     expect(callArgs.from).toBe('a@test.com');
     expect(callArgs.to).toEqual(['b@test.com']);
     expect(callArgs.subject).toBe('Test');
@@ -127,7 +127,7 @@ describe('send command', () => {
       { from: 'user' },
     );
 
-    const callArgs = mockSend.mock.calls[0][0] as any;
+    const callArgs = mockSend.mock.calls[0][0] as Record<string, unknown>;
     expect(callArgs.html).toBe('<h1>Hello</h1>');
     expect(callArgs.text).toBeUndefined();
   });
@@ -151,7 +151,7 @@ describe('send command', () => {
       { from: 'user' },
     );
 
-    const callArgs = mockSend.mock.calls[0][0] as any;
+    const callArgs = mockSend.mock.calls[0][0] as Record<string, unknown>;
     expect(callArgs.to).toEqual(['b@test.com', 'c@test.com']);
   });
 
@@ -231,7 +231,7 @@ describe('send command', () => {
         { from: 'user' },
       );
 
-      const callArgs = mockSend.mock.calls[0][0] as any;
+      const callArgs = mockSend.mock.calls[0][0] as Record<string, unknown>;
       expect(callArgs.html).toBe('<h1>From file</h1>');
     } finally {
       unlinkSync(tmpFile);
@@ -262,7 +262,7 @@ describe('send command', () => {
       { from: 'user' },
     );
 
-    const callArgs = mockSend.mock.calls[0][0] as any;
+    const callArgs = mockSend.mock.calls[0][0] as Record<string, unknown>;
     expect(callArgs.cc).toEqual(['cc@test.com']);
     expect(callArgs.bcc).toEqual(['bcc@test.com']);
     expect(callArgs.replyTo).toBe('reply@test.com');
@@ -300,7 +300,7 @@ describe('send command', () => {
           throw new Error('Network error');
         }),
       },
-    } as any;
+    } as Record<string, unknown>;
 
     // Should return [] without throwing, so the caller falls through to promptForMissing
     const result = await fetchVerifiedDomains(failingResend);

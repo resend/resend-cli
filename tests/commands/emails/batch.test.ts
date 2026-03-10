@@ -244,7 +244,7 @@ describe('batch command', () => {
     );
 
     expect(mockBatchSend).toHaveBeenCalledTimes(1);
-    const opts = mockBatchSend.mock.calls[0][1] as any;
+    const opts = mockBatchSend.mock.calls[0][1] as Record<string, unknown>;
     expect(opts?.idempotencyKey).toBe('my-key-123');
   });
 

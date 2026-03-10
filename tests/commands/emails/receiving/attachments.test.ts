@@ -11,6 +11,7 @@ import {
   captureTestEnv,
   expectExit1,
   mockExitThrow,
+  mockSdkError,
   setNonInteractive,
   setupOutputSpies,
 } from '../../../helpers';
@@ -75,7 +76,7 @@ describe('emails receiving attachments command', () => {
     await listAttachmentsCommand.parseAsync(['rcv_email123'], { from: 'user' });
 
     expect(mockList).toHaveBeenCalledTimes(1);
-    const args = mockList.mock.calls[0][0] as any;
+    const args = mockList.mock.calls[0][0] as Record<string, unknown>;
     expect(args.emailId).toBe('rcv_email123');
     expect(args.limit).toBe(10);
   });
@@ -90,7 +91,7 @@ describe('emails receiving attachments command', () => {
       from: 'user',
     });
 
-    const args = mockList.mock.calls[0][0] as any;
+    const args = mockList.mock.calls[0][0] as Record<string, unknown>;
     expect(args.limit).toBe(5);
   });
 
@@ -149,10 +150,7 @@ describe('emails receiving attachments command', () => {
 
   test('errors with list_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockList.mockResolvedValueOnce({
-      data: null,
-      error: { message: 'Not found', name: 'not_found' },
-    } as any);
+    mockList.mockResolvedValueOnce(mockSdkError('Not found', 'not_found'));
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();

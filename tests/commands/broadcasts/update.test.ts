@@ -12,6 +12,7 @@ import {
   captureTestEnv,
   expectExit1,
   mockExitThrow,
+  mockSdkError,
   setNonInteractive,
   setupOutputSpies,
 } from '../../helpers';
@@ -68,7 +69,7 @@ describe('broadcasts update command', () => {
 
     expect(mockUpdate).toHaveBeenCalledTimes(1);
     expect(mockUpdate.mock.calls[0][0]).toBe('bcast_abc123');
-    const payload = mockUpdate.mock.calls[0][1] as any;
+    const payload = mockUpdate.mock.calls[0][1] as Record<string, unknown>;
     expect(payload.subject).toBe('Updated Subject');
   });
 
@@ -93,7 +94,7 @@ describe('broadcasts update command', () => {
       { from: 'user' },
     );
 
-    const payload = mockUpdate.mock.calls[0][1] as any;
+    const payload = mockUpdate.mock.calls[0][1] as Record<string, unknown>;
     expect(payload.from).toBe('new@domain.com');
     expect(payload.subject).toBe('New Subject');
     expect(payload.text).toBe('New body');
@@ -127,7 +128,7 @@ describe('broadcasts update command', () => {
       { from: 'user' },
     );
 
-    const payload = mockUpdate.mock.calls[0][1] as any;
+    const payload = mockUpdate.mock.calls[0][1] as Record<string, unknown>;
     expect(payload.name).toBe('Only Name');
     expect(payload.from).toBeUndefined();
     expect(payload.subject).toBeUndefined();
@@ -186,13 +187,9 @@ describe('broadcasts update command', () => {
 
   test('errors with update_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockUpdate.mockResolvedValueOnce({
-      data: null,
-      error: {
-        message: 'Cannot update sent broadcast',
-        name: 'validation_error',
-      },
-    } as any);
+    mockUpdate.mockResolvedValueOnce(
+      mockSdkError('Cannot update sent broadcast', 'validation_error'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
@@ -225,7 +222,7 @@ describe('broadcasts update command', () => {
     );
 
     expect(readFileSpy).toHaveBeenCalledTimes(1);
-    const payload = mockUpdate.mock.calls[0][1] as any;
+    const payload = mockUpdate.mock.calls[0][1] as Record<string, unknown>;
     expect(payload.html).toBe('<p>Updated from file</p>');
   });
 

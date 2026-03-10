@@ -11,6 +11,7 @@ import {
   captureTestEnv,
   expectExit1,
   mockExitThrow,
+  mockSdkError,
   setNonInteractive,
   setupOutputSpies,
 } from '../../helpers';
@@ -135,13 +136,9 @@ describe('broadcasts delete command', () => {
 
   test('errors with delete_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockRemove.mockResolvedValueOnce({
-      data: null,
-      error: {
-        message: 'Cannot delete sent broadcast',
-        name: 'validation_error',
-      },
-    } as any);
+    mockRemove.mockResolvedValueOnce(
+      mockSdkError('Cannot delete sent broadcast', 'validation_error'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();

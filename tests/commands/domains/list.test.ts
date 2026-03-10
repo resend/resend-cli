@@ -11,6 +11,7 @@ import {
   captureTestEnv,
   expectExit1,
   mockExitThrow,
+  mockSdkError,
   setNonInteractive,
   setupOutputSpies,
 } from '../../helpers';
@@ -95,7 +96,7 @@ describe('domains list command', () => {
     );
     await listDomainsCommand.parseAsync(['--limit', '25'], { from: 'user' });
 
-    const callArgs = mockList.mock.calls[0][0] as any;
+    const callArgs = mockList.mock.calls[0][0] as Record<string, unknown>;
     expect(callArgs.limit).toBe(25);
   });
 
@@ -109,7 +110,7 @@ describe('domains list command', () => {
       from: 'user',
     });
 
-    const callArgs = mockList.mock.calls[0][0] as any;
+    const callArgs = mockList.mock.calls[0][0] as Record<string, unknown>;
     expect(callArgs.after).toBe('some-cursor');
   });
 
@@ -121,7 +122,7 @@ describe('domains list command', () => {
     );
     await listDomainsCommand.parseAsync([], { from: 'user' });
 
-    const callArgs = mockList.mock.calls[0][0] as any;
+    const callArgs = mockList.mock.calls[0][0] as Record<string, unknown>;
     expect(callArgs.limit).toBe(10);
   });
 
@@ -145,10 +146,7 @@ describe('domains list command', () => {
 
   test('errors with list_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockList.mockResolvedValueOnce({
-      data: null,
-      error: { message: 'Unauthorized', name: 'auth_error' },
-    } as any);
+    mockList.mockResolvedValueOnce(mockSdkError('Unauthorized', 'auth_error'));
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();

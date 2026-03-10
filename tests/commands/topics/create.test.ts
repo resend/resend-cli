@@ -11,6 +11,7 @@ import {
   captureTestEnv,
   expectExit1,
   mockExitThrow,
+  mockSdkError,
   setNonInteractive,
   setupOutputSpies,
 } from '../../helpers';
@@ -62,7 +63,7 @@ describe('topics create command', () => {
     });
 
     expect(mockCreate).toHaveBeenCalledTimes(1);
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.name).toBe('Product Updates');
     expect(args.defaultSubscription).toBe('opt_in');
   });
@@ -78,7 +79,7 @@ describe('topics create command', () => {
       { from: 'user' },
     );
 
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.defaultSubscription).toBe('opt_out');
   });
 
@@ -98,7 +99,7 @@ describe('topics create command', () => {
       { from: 'user' },
     );
 
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.description).toBe('Get notified about new features');
   });
 
@@ -168,10 +169,9 @@ describe('topics create command', () => {
 
   test('errors with create_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockCreate.mockResolvedValueOnce({
-      data: null,
-      error: { message: 'Topic already exists', name: 'validation_error' },
-    } as any);
+    mockCreate.mockResolvedValueOnce(
+      mockSdkError('Topic already exists', 'validation_error'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();

@@ -11,6 +11,7 @@ import {
   captureTestEnv,
   expectExit1,
   mockExitThrow,
+  mockSdkError,
   setNonInteractive,
   setupOutputSpies,
 } from '../../../helpers';
@@ -72,7 +73,7 @@ describe('emails receiving attachment command', () => {
     });
 
     expect(mockGet).toHaveBeenCalledTimes(1);
-    const args = mockGet.mock.calls[0][0] as any;
+    const args = mockGet.mock.calls[0][0] as Record<string, unknown>;
     expect(args.emailId).toBe('rcv_email123');
     expect(args.id).toBe('attach_abc123');
   });
@@ -119,10 +120,7 @@ describe('emails receiving attachment command', () => {
 
   test('errors with fetch_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockGet.mockResolvedValueOnce({
-      data: null,
-      error: { message: 'Not found', name: 'not_found' },
-    } as any);
+    mockGet.mockResolvedValueOnce(mockSdkError('Not found', 'not_found'));
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();

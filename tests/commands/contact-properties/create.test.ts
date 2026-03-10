@@ -11,6 +11,7 @@ import {
   captureTestEnv,
   expectExit1,
   mockExitThrow,
+  mockSdkError,
   setNonInteractive,
   setupOutputSpies,
 } from '../../helpers';
@@ -63,7 +64,7 @@ describe('contact-properties create command', () => {
     );
 
     expect(mockCreate).toHaveBeenCalledTimes(1);
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.key).toBe('company_name');
     expect(args.type).toBe('string');
   });
@@ -79,7 +80,7 @@ describe('contact-properties create command', () => {
       { from: 'user' },
     );
 
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.key).toBe('score');
     expect(args.type).toBe('number');
   });
@@ -102,7 +103,7 @@ describe('contact-properties create command', () => {
       { from: 'user' },
     );
 
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.fallbackValue).toBe('Unknown');
   });
 
@@ -117,7 +118,7 @@ describe('contact-properties create command', () => {
       { from: 'user' },
     );
 
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.fallbackValue).toBe(42);
   });
 
@@ -223,10 +224,9 @@ describe('contact-properties create command', () => {
 
   test('errors with create_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockCreate.mockResolvedValueOnce({
-      data: null,
-      error: { message: 'Key already exists', name: 'validation_error' },
-    } as any);
+    mockCreate.mockResolvedValueOnce(
+      mockSdkError('Key already exists', 'validation_error'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();

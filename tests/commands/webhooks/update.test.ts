@@ -11,6 +11,7 @@ import {
   captureTestEnv,
   expectExit1,
   mockExitThrow,
+  mockSdkError,
   setNonInteractive,
   setupOutputSpies,
 } from '../../helpers';
@@ -64,7 +65,7 @@ describe('webhooks update command', () => {
 
     expect(mockUpdate).toHaveBeenCalledTimes(1);
     expect(mockUpdate.mock.calls[0][0]).toBe('wh_abc123');
-    const payload = mockUpdate.mock.calls[0][1] as any;
+    const payload = mockUpdate.mock.calls[0][1] as Record<string, unknown>;
     expect(payload.endpoint).toBe('https://new-app.example.com/hooks');
   });
 
@@ -79,7 +80,7 @@ describe('webhooks update command', () => {
       { from: 'user' },
     );
 
-    const payload = mockUpdate.mock.calls[0][1] as any;
+    const payload = mockUpdate.mock.calls[0][1] as Record<string, unknown>;
     expect(payload.events).toEqual(['email.sent', 'email.bounced']);
   });
 
@@ -93,7 +94,7 @@ describe('webhooks update command', () => {
       from: 'user',
     });
 
-    const payload = mockUpdate.mock.calls[0][1] as any;
+    const payload = mockUpdate.mock.calls[0][1] as Record<string, unknown>;
     expect(payload.events).toHaveLength(17);
   });
 
@@ -108,7 +109,7 @@ describe('webhooks update command', () => {
       { from: 'user' },
     );
 
-    const payload = mockUpdate.mock.calls[0][1] as any;
+    const payload = mockUpdate.mock.calls[0][1] as Record<string, unknown>;
     expect(payload.status).toBe('disabled');
   });
 
@@ -182,10 +183,9 @@ describe('webhooks update command', () => {
 
   test('errors with update_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockUpdate.mockResolvedValueOnce({
-      data: null,
-      error: { message: 'Webhook not found', name: 'not_found' },
-    } as any);
+    mockUpdate.mockResolvedValueOnce(
+      mockSdkError('Webhook not found', 'not_found'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();

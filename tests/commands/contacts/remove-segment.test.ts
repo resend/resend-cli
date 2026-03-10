@@ -11,6 +11,7 @@ import {
   captureTestEnv,
   expectExit1,
   mockExitThrow,
+  mockSdkError,
   setNonInteractive,
   setupOutputSpies,
 } from '../../helpers';
@@ -65,7 +66,7 @@ describe('contacts remove-segment command', () => {
     );
 
     expect(mockRemoveSegment).toHaveBeenCalledTimes(1);
-    const args = mockRemoveSegment.mock.calls[0][0] as any;
+    const args = mockRemoveSegment.mock.calls[0][0] as Record<string, unknown>;
     expect(args.contactId).toBe('contact_abc123');
     expect(args.segmentId).toBe('seg_123');
   });
@@ -81,7 +82,7 @@ describe('contacts remove-segment command', () => {
       { from: 'user' },
     );
 
-    const args = mockRemoveSegment.mock.calls[0][0] as any;
+    const args = mockRemoveSegment.mock.calls[0][0] as Record<string, unknown>;
     expect(args.email).toBe('jane@example.com');
     expect(args.segmentId).toBe('seg_123');
   });
@@ -125,10 +126,9 @@ describe('contacts remove-segment command', () => {
 
   test('errors with remove_segment_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockRemoveSegment.mockResolvedValueOnce({
-      data: null,
-      error: { message: 'Not found', name: 'not_found' },
-    } as any);
+    mockRemoveSegment.mockResolvedValueOnce(
+      mockSdkError('Not found', 'not_found'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();

@@ -11,6 +11,7 @@ import {
   captureTestEnv,
   expectExit1,
   mockExitThrow,
+  mockSdkError,
   setNonInteractive,
   setupOutputSpies,
 } from '../../helpers';
@@ -96,10 +97,9 @@ describe('domains verify command', () => {
 
   test('errors with verify_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockVerify.mockResolvedValueOnce({
-      data: null,
-      error: { message: 'Domain not found', name: 'not_found' },
-    } as any);
+    mockVerify.mockResolvedValueOnce(
+      mockSdkError('Domain not found', 'not_found'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
