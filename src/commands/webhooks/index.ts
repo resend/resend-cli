@@ -39,6 +39,6 @@ Signature verification (Svix):
   )
   .addCommand(createWebhookCommand)
   .addCommand(getWebhookCommand)
-  .addCommand(listWebhooksCommand)
+  .addCommand(listWebhooksCommand, { isDefault: true })
   .addCommand(updateWebhookCommand)
   .addCommand(deleteWebhookCommand);

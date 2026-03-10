@@ -32,5 +32,5 @@ There is no "update" endpoint — to rename a segment, delete it and recreate.`,
   )
   .addCommand(createSegmentCommand)
   .addCommand(getSegmentCommand)
-  .addCommand(listSegmentsCommand)
+  .addCommand(listSegmentsCommand, { isDefault: true })
   .addCommand(deleteSegmentCommand);

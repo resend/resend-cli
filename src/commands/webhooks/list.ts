@@ -10,6 +10,7 @@ import {
 import { renderWebhooksTable } from './utils';
 
 export const listWebhooksCommand = new Command('list')
+  .alias('ls')
   .description('List all registered webhook endpoints')
   .option('--limit <n>', 'Maximum number of webhooks to return (1-100)', '10')
   .option('--after <cursor>', 'Return webhooks after this cursor (next page)')

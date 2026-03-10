@@ -5,6 +5,7 @@ import { buildHelpText } from '../../lib/help-text';
 import { renderTopicsTable } from './utils';
 
 export const listTopicsCommand = new Command('list')
+  .alias('ls')
   .description('List all topics')
   .addHelpText(
     'after',

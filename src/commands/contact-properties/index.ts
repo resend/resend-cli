@@ -43,6 +43,6 @@ be updated. Deleting a property removes it from all contacts.`,
   )
   .addCommand(createContactPropertyCommand)
   .addCommand(getContactPropertyCommand)
-  .addCommand(listContactPropertiesCommand)
+  .addCommand(listContactPropertiesCommand, { isDefault: true })
   .addCommand(updateContactPropertyCommand)
   .addCommand(deleteContactPropertyCommand);

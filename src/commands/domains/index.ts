@@ -30,6 +30,6 @@ export const domainsCommand = new Command('domains')
   .addCommand(createDomainCommand)
   .addCommand(verifyDomainCommand)
   .addCommand(getDomainCommand)
-  .addCommand(listDomainsCommand)
+  .addCommand(listDomainsCommand, { isDefault: true })
   .addCommand(updateDomainCommand)
   .addCommand(deleteDomainCommand);

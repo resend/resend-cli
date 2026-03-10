@@ -22,7 +22,7 @@ export const receivingCommand = new Command('receiving')
       ],
     }),
   )
-  .addCommand(listReceivingCommand)
+  .addCommand(listReceivingCommand, { isDefault: true })
   .addCommand(getReceivingCommand)
   .addCommand(listAttachmentsCommand)
   .addCommand(getAttachmentCommand);

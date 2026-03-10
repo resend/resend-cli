@@ -37,6 +37,6 @@ Contact topic subscriptions are managed via the contacts namespace:
   )
   .addCommand(createTopicCommand)
   .addCommand(getTopicCommand)
-  .addCommand(listTopicsCommand)
+  .addCommand(listTopicsCommand, { isDefault: true })
   .addCommand(updateTopicCommand)
   .addCommand(deleteTopicCommand);

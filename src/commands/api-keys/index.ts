@@ -22,5 +22,5 @@ export const apiKeysCommand = new Command('api-keys')
     }),
   )
   .addCommand(createApiKeyCommand)
-  .addCommand(listApiKeysCommand)
+  .addCommand(listApiKeysCommand, { isDefault: true })
   .addCommand(deleteApiKeyCommand);

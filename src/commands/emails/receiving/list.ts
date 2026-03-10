@@ -10,6 +10,7 @@ import {
 import { renderReceivingEmailsTable } from './utils';
 
 export const listReceivingCommand = new Command('list')
+  .alias('ls')
   .description(
     'List received (inbound) emails for domains with receiving enabled',
   )

@@ -10,6 +10,7 @@ import {
 import { renderBroadcastsTable } from './utils';
 
 export const listBroadcastsCommand = new Command('list')
+  .alias('ls')
   .description(
     'List broadcasts — returns summary objects (use "get <id>" for full details including html/text)',
   )

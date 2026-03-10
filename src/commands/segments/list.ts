@@ -10,6 +10,7 @@ import {
 import { renderSegmentsTable } from './utils';
 
 export const listSegmentsCommand = new Command('list')
+  .alias('ls')
   .description('List all segments')
   .option('--limit <n>', 'Maximum number of segments to return (1-100)', '10')
   .option('--after <cursor>', 'Return segments after this cursor (next page)')

@@ -5,6 +5,7 @@ import { buildHelpText } from '../../lib/help-text';
 import { renderApiKeysTable } from './utils';
 
 export const listApiKeysCommand = new Command('list')
+  .alias('ls')
   .description(
     'List all API keys (IDs and names — tokens are never returned by this endpoint)',
   )

@@ -38,6 +38,6 @@ Scheduling:
   .addCommand(createBroadcastCommand)
   .addCommand(sendBroadcastCommand)
   .addCommand(getBroadcastCommand)
-  .addCommand(listBroadcastsCommand)
+  .addCommand(listBroadcastsCommand, { isDefault: true })
   .addCommand(updateBroadcastCommand)
   .addCommand(deleteBroadcastCommand);

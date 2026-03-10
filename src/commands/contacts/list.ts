@@ -10,6 +10,7 @@ import {
 import { renderContactsTable } from './utils';
 
 export const listContactsCommand = new Command('list')
+  .alias('ls')
   .description('List all contacts')
   .option('--limit <n>', 'Maximum number of contacts to return (1-100)', '10')
   .option('--after <cursor>', 'Return contacts after this cursor (next page)')

@@ -48,7 +48,7 @@ Segments:
   )
   .addCommand(createContactCommand)
   .addCommand(getContactCommand)
-  .addCommand(listContactsCommand)
+  .addCommand(listContactsCommand, { isDefault: true })
   .addCommand(updateContactCommand)
   .addCommand(deleteContactCommand)
   .addCommand(listContactSegmentsCommand)

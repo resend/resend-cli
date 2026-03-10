@@ -10,6 +10,7 @@ import {
 import { renderDomainsTable } from './utils';
 
 export const listDomainsCommand = new Command('list')
+  .alias('ls')
   .description('List all domains')
   .option('--limit <n>', 'Maximum number of domains to return (1-100)', '10')
   .option('--after <cursor>', 'Return domains after this cursor (next page)')

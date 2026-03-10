@@ -10,6 +10,7 @@ import {
 import { renderContactPropertiesTable } from './utils';
 
 export const listContactPropertiesCommand = new Command('list')
+  .alias('ls')
   .description('List all contact property definitions')
   .option(
     '--limit <n>',
