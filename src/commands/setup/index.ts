@@ -1,18 +1,18 @@
-import { Command } from '@commander-js/extra-typings';
-import * as p from '@clack/prompts';
 import { existsSync } from 'node:fs';
-import { join } from 'node:path';
 import { homedir } from 'node:os';
+import { join } from 'node:path';
+import * as p from '@clack/prompts';
+import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
-import { outputError } from '../../lib/output';
-import { isInteractive } from '../../lib/tty';
-import { cancelAndExit } from '../../lib/prompts';
 import { buildHelpText } from '../../lib/help-text';
-import { cursorCommand, setupCursor } from './cursor';
-import { claudeDesktopCommand, setupClaudeDesktop } from './claude-desktop';
+import { outputError } from '../../lib/output';
+import { cancelAndExit } from '../../lib/prompts';
+import { isInteractive } from '../../lib/tty';
 import { claudeCodeCommand, setupClaudeCode } from './claude-code';
-import { vscodeCommand, setupVscode } from './vscode';
+import { claudeDesktopCommand, setupClaudeDesktop } from './claude-desktop';
+import { cursorCommand, setupCursor } from './cursor';
 import { openclawCommand, setupOpenclaw } from './openclaw';
+import { setupVscode, vscodeCommand } from './vscode';
 
 const SETUP_FNS = {
   cursor: setupCursor,
@@ -24,9 +24,11 @@ const SETUP_FNS = {
 
 export const setupCommand = new Command('setup')
   .description('Configure AI tools to use Resend CLI as an MCP server')
-  .addHelpText('after', buildHelpText({
-    setup: true,
-    context: `Targets:
+  .addHelpText(
+    'after',
+    buildHelpText({
+      setup: true,
+      context: `Targets:
   cursor          Write MCP config to ~/.cursor/mcp.json
   claude-desktop  Write MCP config to Claude Desktop config file
   claude-code     Run \`claude mcp add resend -- npx -y resend-mcp\`
@@ -42,16 +44,21 @@ Each subcommand outputs JSON when --json is set or stdout is not a TTY.
 
 To install Resend Agent Skills for Claude Code:
   resend skills install`,
-    errorCodes: ['missing_target', 'config_write_error', 'claude_mcp_add_failed'],
-    examples: [
-      'resend setup',
-      'resend setup cursor',
-      'resend setup claude-desktop --json',
-      'resend setup claude-code',
-      'resend setup vscode',
-      'resend setup openclaw',
-    ],
-  }))
+      errorCodes: [
+        'missing_target',
+        'config_write_error',
+        'claude_mcp_add_failed',
+      ],
+      examples: [
+        'resend setup',
+        'resend setup cursor',
+        'resend setup claude-desktop --json',
+        'resend setup claude-code',
+        'resend setup vscode',
+        'resend setup openclaw',
+      ],
+    }),
+  )
   .addCommand(cursorCommand)
   .addCommand(claudeDesktopCommand)
   .addCommand(claudeCodeCommand)
@@ -76,17 +83,43 @@ To install Resend Agent Skills for Claude Code:
 
     const claudeDesktopPath =
       process.platform === 'darwin'
-        ? join(home, 'Library', 'Application Support', 'Claude', 'claude_desktop_config.json')
+        ? join(
+            home,
+            'Library',
+            'Application Support',
+            'Claude',
+            'claude_desktop_config.json',
+          )
         : process.platform === 'win32'
-          ? join(process.env.APPDATA ?? home, 'Claude', 'claude_desktop_config.json')
+          ? join(
+              process.env.APPDATA ?? home,
+              'Claude',
+              'claude_desktop_config.json',
+            )
           : join(home, '.config', 'Claude', 'claude_desktop_config.json');
 
     const candidates = [
-      { value: 'cursor' as const, label: 'Cursor', detected: existsSync(join(home, '.cursor')) },
-      { value: 'claude-desktop' as const, label: 'Claude Desktop', detected: existsSync(claudeDesktopPath) },
+      {
+        value: 'cursor' as const,
+        label: 'Cursor',
+        detected: existsSync(join(home, '.cursor')),
+      },
+      {
+        value: 'claude-desktop' as const,
+        label: 'Claude Desktop',
+        detected: existsSync(claudeDesktopPath),
+      },
       { value: 'claude-code' as const, label: 'Claude Code', detected: false },
-      { value: 'vscode' as const, label: 'VS Code', detected: existsSync(join(cwd, '.vscode')) },
-      { value: 'openclaw' as const, label: 'OpenClaw', detected: existsSync(join(home, 'clawd', 'skills')) },
+      {
+        value: 'vscode' as const,
+        label: 'VS Code',
+        detected: existsSync(join(cwd, '.vscode')),
+      },
+      {
+        value: 'openclaw' as const,
+        label: 'OpenClaw',
+        detected: existsSync(join(home, 'clawd', 'skills')),
+      },
     ];
 
     const options = candidates.map((c) => ({
@@ -100,7 +133,9 @@ To install Resend Agent Skills for Claude Code:
       required: true,
     });
 
-    if (p.isCancel(selected)) cancelAndExit('Setup cancelled.');
+    if (p.isCancel(selected)) {
+      cancelAndExit('Setup cancelled.');
+    }
 
     for (const target of selected as Array<keyof typeof SETUP_FNS>) {
       await SETUP_FNS[target](globalOpts);

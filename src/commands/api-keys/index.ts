@@ -1,8 +1,8 @@
 import { Command } from '@commander-js/extra-typings';
-import { createApiKeyCommand } from './create';
-import { listApiKeysCommand } from './list';
-import { deleteApiKeyCommand } from './delete';
 import { buildHelpText } from '../../lib/help-text';
+import { createApiKeyCommand } from './create';
+import { deleteApiKeyCommand } from './delete';
+import { listApiKeysCommand } from './list';
 
 export const apiKeysCommand = new Command('api-keys')
   .description('Manage API keys for authentication')
@@ -19,8 +19,8 @@ export const apiKeysCommand = new Command('api-keys')
         'resend api-keys create --name "CI Token" --permission sending_access --domain-id <domain-id>',
         'resend api-keys delete <id> --yes',
       ],
-    })
+    }),
   )
   .addCommand(createApiKeyCommand)
-  .addCommand(listApiKeysCommand)
+  .addCommand(listApiKeysCommand, { isDefault: true })
   .addCommand(deleteApiKeyCommand);

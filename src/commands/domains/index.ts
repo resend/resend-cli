@@ -1,11 +1,11 @@
 import { Command } from '@commander-js/extra-typings';
 import { buildHelpText } from '../../lib/help-text';
 import { createDomainCommand } from './create';
-import { verifyDomainCommand } from './verify';
+import { deleteDomainCommand } from './delete';
 import { getDomainCommand } from './get';
 import { listDomainsCommand } from './list';
 import { updateDomainCommand } from './update';
-import { deleteDomainCommand } from './delete';
+import { verifyDomainCommand } from './verify';
 
 export const domainsCommand = new Command('domains')
   .description('Manage verified sending and receiving domains')
@@ -25,11 +25,11 @@ export const domainsCommand = new Command('domains')
         'resend domains update <id> --tls enforced --open-tracking',
         'resend domains delete <id> --yes',
       ],
-    })
+    }),
   )
   .addCommand(createDomainCommand)
   .addCommand(verifyDomainCommand)
   .addCommand(getDomainCommand)
-  .addCommand(listDomainsCommand)
+  .addCommand(listDomainsCommand, { isDefault: true })
   .addCommand(updateDomainCommand)
   .addCommand(deleteDomainCommand);

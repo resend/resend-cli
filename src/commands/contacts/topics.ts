@@ -1,8 +1,8 @@
 import { Command } from '@commander-js/extra-typings';
-import type { GlobalOpts } from '../../lib/client';
 import { runList } from '../../lib/actions';
+import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
-import { renderContactTopicsTable, contactIdentifier } from './utils';
+import { contactIdentifier, renderContactTopicsTable } from './utils';
 
 export const listContactTopicsCommand = new Command('topics')
   .description("List a contact's topic subscriptions")
@@ -29,9 +29,17 @@ Use "resend contacts update-topics <id>" to change subscription statuses.`,
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     // ListContactTopicsBaseOptions uses optional { id?, email? } (not a discriminated
     // union), so contactIdentifier's result is directly assignable without a cast.
-    await runList({
-      spinner: { loading: 'Fetching topic subscriptions...', success: 'Topic subscriptions fetched', fail: 'Failed to list topic subscriptions' },
-      sdkCall: (resend) => resend.contacts.topics.list(contactIdentifier(id)),
-      onInteractive: (list) => console.log(renderContactTopicsTable(list.data)),
-    }, globalOpts);
+    await runList(
+      {
+        spinner: {
+          loading: 'Fetching topic subscriptions...',
+          success: 'Topic subscriptions fetched',
+          fail: 'Failed to list topic subscriptions',
+        },
+        sdkCall: (resend) => resend.contacts.topics.list(contactIdentifier(id)),
+        onInteractive: (list) =>
+          console.log(renderContactTopicsTable(list.data)),
+      },
+      globalOpts,
+    );
   });

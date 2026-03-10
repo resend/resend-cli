@@ -1,10 +1,19 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
 import {
-  setNonInteractive,
-  mockExitThrow,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
   captureTestEnv,
-  setupOutputSpies,
   expectExit1,
+  mockExitThrow,
+  mockSdkError,
+  setNonInteractive,
+  setupOutputSpies,
 } from '../../../helpers';
 
 const mockList = mock(async () => ({
@@ -63,38 +72,48 @@ describe('emails receiving list command', () => {
   test('calls SDK list with default pagination', async () => {
     spies = setupOutputSpies();
 
-    const { listReceivingCommand } = await import('../../../../src/commands/emails/receiving/list');
+    const { listReceivingCommand } = await import(
+      '../../../../src/commands/emails/receiving/list'
+    );
     await listReceivingCommand.parseAsync([], { from: 'user' });
 
     expect(mockList).toHaveBeenCalledTimes(1);
-    const args = mockList.mock.calls[0][0] as any;
+    const args = mockList.mock.calls[0][0] as Record<string, unknown>;
     expect(args.limit).toBe(10);
   });
 
   test('passes --limit to pagination options', async () => {
     spies = setupOutputSpies();
 
-    const { listReceivingCommand } = await import('../../../../src/commands/emails/receiving/list');
+    const { listReceivingCommand } = await import(
+      '../../../../src/commands/emails/receiving/list'
+    );
     await listReceivingCommand.parseAsync(['--limit', '5'], { from: 'user' });
 
-    const args = mockList.mock.calls[0][0] as any;
+    const args = mockList.mock.calls[0][0] as Record<string, unknown>;
     expect(args.limit).toBe(5);
   });
 
   test('passes --after cursor to pagination options', async () => {
     spies = setupOutputSpies();
 
-    const { listReceivingCommand } = await import('../../../../src/commands/emails/receiving/list');
-    await listReceivingCommand.parseAsync(['--after', 'rcv_cursor123'], { from: 'user' });
+    const { listReceivingCommand } = await import(
+      '../../../../src/commands/emails/receiving/list'
+    );
+    await listReceivingCommand.parseAsync(['--after', 'rcv_cursor123'], {
+      from: 'user',
+    });
 
-    const args = mockList.mock.calls[0][0] as any;
+    const args = mockList.mock.calls[0][0] as Record<string, unknown>;
     expect(args.after).toBe('rcv_cursor123');
   });
 
   test('outputs JSON list with received email data when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { listReceivingCommand } = await import('../../../../src/commands/emails/receiving/list');
+    const { listReceivingCommand } = await import(
+      '../../../../src/commands/emails/receiving/list'
+    );
     await listReceivingCommand.parseAsync([], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -111,8 +130,12 @@ describe('emails receiving list command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listReceivingCommand } = await import('../../../../src/commands/emails/receiving/list');
-    await expectExit1(() => listReceivingCommand.parseAsync(['--limit', '200'], { from: 'user' }));
+    const { listReceivingCommand } = await import(
+      '../../../../src/commands/emails/receiving/list'
+    );
+    await expectExit1(() =>
+      listReceivingCommand.parseAsync(['--limit', '200'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('invalid_limit');
@@ -125,8 +148,12 @@ describe('emails receiving list command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listReceivingCommand } = await import('../../../../src/commands/emails/receiving/list');
-    await expectExit1(() => listReceivingCommand.parseAsync([], { from: 'user' }));
+    const { listReceivingCommand } = await import(
+      '../../../../src/commands/emails/receiving/list'
+    );
+    await expectExit1(() =>
+      listReceivingCommand.parseAsync([], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -134,13 +161,19 @@ describe('emails receiving list command', () => {
 
   test('errors with list_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockList.mockResolvedValueOnce({ data: null, error: { message: 'Server error', name: 'server_error' } } as any);
+    mockList.mockResolvedValueOnce(
+      mockSdkError('Server error', 'server_error'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { listReceivingCommand } = await import('../../../../src/commands/emails/receiving/list');
-    await expectExit1(() => listReceivingCommand.parseAsync([], { from: 'user' }));
+    const { listReceivingCommand } = await import(
+      '../../../../src/commands/emails/receiving/list'
+    );
+    await expectExit1(() =>
+      listReceivingCommand.parseAsync([], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('list_error');

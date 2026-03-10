@@ -1,5 +1,20 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
-import { setNonInteractive, mockExitThrow, captureTestEnv, setupOutputSpies, expectExit1 } from '../../helpers';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  mockSdkError,
+  setNonInteractive,
+  setupOutputSpies,
+} from '../../helpers';
 
 const mockRemove = mock(async () => ({
   data: { object: 'broadcast' as const, id: 'bcast_abc123', deleted: true },
@@ -40,8 +55,12 @@ describe('broadcasts delete command', () => {
   test('deletes broadcast with --yes flag', async () => {
     spies = setupOutputSpies();
 
-    const { deleteBroadcastCommand } = await import('../../../src/commands/broadcasts/delete');
-    await deleteBroadcastCommand.parseAsync(['bcast_abc123', '--yes'], { from: 'user' });
+    const { deleteBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/delete'
+    );
+    await deleteBroadcastCommand.parseAsync(['bcast_abc123', '--yes'], {
+      from: 'user',
+    });
 
     expect(mockRemove).toHaveBeenCalledTimes(1);
     expect(mockRemove.mock.calls[0][0]).toBe('bcast_abc123');
@@ -50,8 +69,12 @@ describe('broadcasts delete command', () => {
   test('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { deleteBroadcastCommand } = await import('../../../src/commands/broadcasts/delete');
-    await deleteBroadcastCommand.parseAsync(['bcast_abc123', '--yes'], { from: 'user' });
+    const { deleteBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/delete'
+    );
+    await deleteBroadcastCommand.parseAsync(['bcast_abc123', '--yes'], {
+      from: 'user',
+    });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
@@ -65,8 +88,12 @@ describe('broadcasts delete command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteBroadcastCommand } = await import('../../../src/commands/broadcasts/delete');
-    await expectExit1(() => deleteBroadcastCommand.parseAsync(['bcast_abc123'], { from: 'user' }));
+    const { deleteBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/delete'
+    );
+    await expectExit1(() =>
+      deleteBroadcastCommand.parseAsync(['bcast_abc123'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('confirmation_required');
@@ -77,8 +104,12 @@ describe('broadcasts delete command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteBroadcastCommand } = await import('../../../src/commands/broadcasts/delete');
-    await expectExit1(() => deleteBroadcastCommand.parseAsync(['bcast_abc123'], { from: 'user' }));
+    const { deleteBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/delete'
+    );
+    await expectExit1(() =>
+      deleteBroadcastCommand.parseAsync(['bcast_abc123'], { from: 'user' }),
+    );
 
     expect(mockRemove).not.toHaveBeenCalled();
   });
@@ -90,8 +121,14 @@ describe('broadcasts delete command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteBroadcastCommand } = await import('../../../src/commands/broadcasts/delete');
-    await expectExit1(() => deleteBroadcastCommand.parseAsync(['bcast_abc123', '--yes'], { from: 'user' }));
+    const { deleteBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/delete'
+    );
+    await expectExit1(() =>
+      deleteBroadcastCommand.parseAsync(['bcast_abc123', '--yes'], {
+        from: 'user',
+      }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -99,13 +136,21 @@ describe('broadcasts delete command', () => {
 
   test('errors with delete_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockRemove.mockResolvedValueOnce({ data: null, error: { message: 'Cannot delete sent broadcast', name: 'validation_error' } } as any);
+    mockRemove.mockResolvedValueOnce(
+      mockSdkError('Cannot delete sent broadcast', 'validation_error'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { deleteBroadcastCommand } = await import('../../../src/commands/broadcasts/delete');
-    await expectExit1(() => deleteBroadcastCommand.parseAsync(['bcast_sent', '--yes'], { from: 'user' }));
+    const { deleteBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/delete'
+    );
+    await expectExit1(() =>
+      deleteBroadcastCommand.parseAsync(['bcast_sent', '--yes'], {
+        from: 'user',
+      }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('delete_error');

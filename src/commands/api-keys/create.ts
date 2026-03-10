@@ -1,22 +1,27 @@
-import { Command, Option } from '@commander-js/extra-typings';
 import * as p from '@clack/prompts';
-import type { GlobalOpts } from '../../lib/client';
+import { Command, Option } from '@commander-js/extra-typings';
 import { runCreate } from '../../lib/actions';
-import { cancelAndExit } from '../../lib/prompts';
-import { outputError } from '../../lib/output';
-import { isInteractive } from '../../lib/tty';
+import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
+import { outputError } from '../../lib/output';
+import { cancelAndExit } from '../../lib/prompts';
+import { isInteractive } from '../../lib/tty';
 
 export const createApiKeyCommand = new Command('create')
-  .description('Create a new API key and display the token (shown once — store it immediately)')
+  .description(
+    'Create a new API key and display the token (shown once — store it immediately)',
+  )
   .option('--name <name>', 'API key name (max 50 characters)')
   .addOption(
     new Option('--permission <permission>', 'Permission level').choices([
       'full_access',
       'sending_access',
-    ] as const)
+    ] as const),
   )
-  .option('--domain-id <id>', 'Restrict a sending_access key to a single domain ID')
+  .option(
+    '--domain-id <id>',
+    'Restrict a sending_access key to a single domain ID',
+  )
   .addHelpText(
     'after',
     buildHelpText({
@@ -34,7 +39,7 @@ Permissions:
         'resend api-keys create --name "Domain Token" --permission sending_access --domain-id <domain-id>',
         'resend api-keys create --name "Production" --json',
       ],
-    })
+    }),
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
@@ -44,19 +49,28 @@ Permissions:
 
     if (!name) {
       if (!isInteractive()) {
-        outputError({ message: 'Missing --name flag.', code: 'missing_name' }, { json: globalOpts.json });
+        outputError(
+          { message: 'Missing --name flag.', code: 'missing_name' },
+          { json: globalOpts.json },
+        );
       }
 
       const nameResult = await p.text({
         message: 'Key name',
         placeholder: 'My API Key',
         validate: (v) => {
-          if (!v) return 'Name is required';
-          if (v.length > 50) return 'Name must be 50 characters or less';
+          if (!v) {
+            return 'Name is required';
+          }
+          if (v.length > 50) {
+            return 'Name must be 50 characters or less';
+          }
           return undefined;
         },
       });
-      if (p.isCancel(nameResult)) cancelAndExit('Cancelled.');
+      if (p.isCancel(nameResult)) {
+        cancelAndExit('Cancelled.');
+      }
       name = nameResult;
 
       const permissionResult = await p.select({
@@ -66,23 +80,35 @@ Permissions:
           { value: 'sending_access' as const, label: 'Sending access only' },
         ],
       });
-      if (p.isCancel(permissionResult)) cancelAndExit('Cancelled.');
+      if (p.isCancel(permissionResult)) {
+        cancelAndExit('Cancelled.');
+      }
       permission = permissionResult;
     }
 
-    await runCreate({
-      spinner: { loading: 'Creating API key...', success: 'API key created', fail: 'Failed to create API key' },
-      sdkCall: (resend) => resend.apiKeys.create({
-        name,
-        ...(permission && { permission }),
-        ...(opts.domainId && { domain_id: opts.domainId }),
-      }),
-      onInteractive: (d) => {
-        console.log('\nAPI key created!\n');
-        console.log(`  Name:    ${name}`);
-        console.log(`  ID:      ${d.id}`);
-        console.log(`  Token:   ${d.token}`);
-        console.log('\n⚠  Store this token now — it cannot be retrieved again.');
+    await runCreate(
+      {
+        spinner: {
+          loading: 'Creating API key...',
+          success: 'API key created',
+          fail: 'Failed to create API key',
+        },
+        sdkCall: (resend) =>
+          resend.apiKeys.create({
+            name,
+            ...(permission && { permission }),
+            ...(opts.domainId && { domain_id: opts.domainId }),
+          }),
+        onInteractive: (d) => {
+          console.log('\nAPI key created!\n');
+          console.log(`  Name:    ${name}`);
+          console.log(`  ID:      ${d.id}`);
+          console.log(`  Token:   ${d.token}`);
+          console.log(
+            '\n⚠  Store this token now — it cannot be retrieved again.',
+          );
+        },
       },
-    }, globalOpts);
+      globalOpts,
+    );
   });

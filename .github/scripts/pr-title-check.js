@@ -2,7 +2,9 @@ import fs from 'node:fs';
 
 const eventPath = process.env.GITHUB_EVENT_PATH;
 if (!eventPath) {
-  console.error('GITHUB_EVENT_PATH is not set. This script must run inside GitHub Actions.');
+  console.error(
+    'GITHUB_EVENT_PATH is not set. This script must run inside GitHub Actions.',
+  );
   process.exit(1);
 }
 
@@ -22,7 +24,7 @@ const validateTitle = (title) => {
       `PR title does not follow the required format "[type]: [description]"
   Examples: "feat: add --cc flag"  |  "fix: domain fetch timeout"
   Types:    feat · fix · chore · refactor
-  Rules:    lowercase after the colon`
+  Rules:    lowercase after the colon`,
     );
     process.exit(1);
   }

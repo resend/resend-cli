@@ -1,10 +1,19 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
 import {
-  setNonInteractive,
-  mockExitThrow,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
   captureTestEnv,
-  setupOutputSpies,
   expectExit1,
+  mockExitThrow,
+  mockSdkError,
+  setNonInteractive,
+  setupOutputSpies,
 } from '../../helpers';
 
 const mockUpdate = mock(async () => ({
@@ -46,64 +55,73 @@ describe('webhooks update command', () => {
   test('updates endpoint with --endpoint flag', async () => {
     spies = setupOutputSpies();
 
-    const { updateWebhookCommand } = await import('../../../src/commands/webhooks/update');
+    const { updateWebhookCommand } = await import(
+      '../../../src/commands/webhooks/update'
+    );
     await updateWebhookCommand.parseAsync(
       ['wh_abc123', '--endpoint', 'https://new-app.example.com/hooks'],
-      { from: 'user' }
+      { from: 'user' },
     );
 
     expect(mockUpdate).toHaveBeenCalledTimes(1);
     expect(mockUpdate.mock.calls[0][0]).toBe('wh_abc123');
-    const payload = mockUpdate.mock.calls[0][1] as any;
+    const payload = mockUpdate.mock.calls[0][1] as Record<string, unknown>;
     expect(payload.endpoint).toBe('https://new-app.example.com/hooks');
   });
 
   test('updates events with --events flag', async () => {
     spies = setupOutputSpies();
 
-    const { updateWebhookCommand } = await import('../../../src/commands/webhooks/update');
+    const { updateWebhookCommand } = await import(
+      '../../../src/commands/webhooks/update'
+    );
     await updateWebhookCommand.parseAsync(
       ['wh_abc123', '--events', 'email.sent', 'email.bounced'],
-      { from: 'user' }
+      { from: 'user' },
     );
 
-    const payload = mockUpdate.mock.calls[0][1] as any;
+    const payload = mockUpdate.mock.calls[0][1] as Record<string, unknown>;
     expect(payload.events).toEqual(['email.sent', 'email.bounced']);
   });
 
   test('expands "all" shorthand in --events to 17 events', async () => {
     spies = setupOutputSpies();
 
-    const { updateWebhookCommand } = await import('../../../src/commands/webhooks/update');
-    await updateWebhookCommand.parseAsync(
-      ['wh_abc123', '--events', 'all'],
-      { from: 'user' }
+    const { updateWebhookCommand } = await import(
+      '../../../src/commands/webhooks/update'
     );
+    await updateWebhookCommand.parseAsync(['wh_abc123', '--events', 'all'], {
+      from: 'user',
+    });
 
-    const payload = mockUpdate.mock.calls[0][1] as any;
+    const payload = mockUpdate.mock.calls[0][1] as Record<string, unknown>;
     expect(payload.events).toHaveLength(17);
   });
 
   test('updates status with --status flag', async () => {
     spies = setupOutputSpies();
 
-    const { updateWebhookCommand } = await import('../../../src/commands/webhooks/update');
+    const { updateWebhookCommand } = await import(
+      '../../../src/commands/webhooks/update'
+    );
     await updateWebhookCommand.parseAsync(
       ['wh_abc123', '--status', 'disabled'],
-      { from: 'user' }
+      { from: 'user' },
     );
 
-    const payload = mockUpdate.mock.calls[0][1] as any;
+    const payload = mockUpdate.mock.calls[0][1] as Record<string, unknown>;
     expect(payload.status).toBe('disabled');
   });
 
   test('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { updateWebhookCommand } = await import('../../../src/commands/webhooks/update');
+    const { updateWebhookCommand } = await import(
+      '../../../src/commands/webhooks/update'
+    );
     await updateWebhookCommand.parseAsync(
       ['wh_abc123', '--status', 'enabled'],
-      { from: 'user' }
+      { from: 'user' },
     );
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -117,8 +135,12 @@ describe('webhooks update command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateWebhookCommand } = await import('../../../src/commands/webhooks/update');
-    await expectExit1(() => updateWebhookCommand.parseAsync(['wh_abc123'], { from: 'user' }));
+    const { updateWebhookCommand } = await import(
+      '../../../src/commands/webhooks/update'
+    );
+    await expectExit1(() =>
+      updateWebhookCommand.parseAsync(['wh_abc123'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('no_changes');
@@ -129,8 +151,12 @@ describe('webhooks update command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateWebhookCommand } = await import('../../../src/commands/webhooks/update');
-    await expectExit1(() => updateWebhookCommand.parseAsync(['wh_abc123'], { from: 'user' }));
+    const { updateWebhookCommand } = await import(
+      '../../../src/commands/webhooks/update'
+    );
+    await expectExit1(() =>
+      updateWebhookCommand.parseAsync(['wh_abc123'], { from: 'user' }),
+    );
 
     expect(mockUpdate).not.toHaveBeenCalled();
   });
@@ -142,9 +168,13 @@ describe('webhooks update command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateWebhookCommand } = await import('../../../src/commands/webhooks/update');
+    const { updateWebhookCommand } = await import(
+      '../../../src/commands/webhooks/update'
+    );
     await expectExit1(() =>
-      updateWebhookCommand.parseAsync(['wh_abc123', '--status', 'enabled'], { from: 'user' })
+      updateWebhookCommand.parseAsync(['wh_abc123', '--status', 'enabled'], {
+        from: 'user',
+      }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -153,14 +183,21 @@ describe('webhooks update command', () => {
 
   test('errors with update_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockUpdate.mockResolvedValueOnce({ data: null, error: { message: 'Webhook not found', name: 'not_found' } } as any);
+    mockUpdate.mockResolvedValueOnce(
+      mockSdkError('Webhook not found', 'not_found'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { updateWebhookCommand } = await import('../../../src/commands/webhooks/update');
+    const { updateWebhookCommand } = await import(
+      '../../../src/commands/webhooks/update'
+    );
     await expectExit1(() =>
-      updateWebhookCommand.parseAsync(['wh_nonexistent', '--status', 'disabled'], { from: 'user' })
+      updateWebhookCommand.parseAsync(
+        ['wh_nonexistent', '--status', 'disabled'],
+        { from: 'user' },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

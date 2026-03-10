@@ -78,18 +78,3 @@ jobs:
             dist/resend-linux-x64.tar.gz
             dist/resend-linux-arm64.tar.gz
             dist/resend-windows-x64.zip
-
-  notify-tap:
-    name: Trigger Homebrew Tap Update
-    needs: release
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Dispatch publish-release workflow on tap
-        env:
-          GH_TOKEN: ${{ secrets.TAP_WORKFLOW_PAT }}
-        run: |
-          gh workflow run publish-release.yml \
-            --repo rafa-thayto/homebrew-tap \
-            --field version="${GITHUB_REF_NAME}"

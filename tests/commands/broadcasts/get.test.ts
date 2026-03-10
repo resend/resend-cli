@@ -1,5 +1,20 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
-import { setNonInteractive, mockExitThrow, captureTestEnv, setupOutputSpies, expectExit1 } from '../../helpers';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  mockSdkError,
+  setNonInteractive,
+  setupOutputSpies,
+} from '../../helpers';
 
 const mockGet = mock(async () => ({
   data: {
@@ -57,7 +72,9 @@ describe('broadcasts get command', () => {
   test('fetches broadcast by id', async () => {
     spies = setupOutputSpies();
 
-    const { getBroadcastCommand } = await import('../../../src/commands/broadcasts/get');
+    const { getBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/get'
+    );
     await getBroadcastCommand.parseAsync(['bcast_abc123'], { from: 'user' });
 
     expect(mockGet).toHaveBeenCalledTimes(1);
@@ -67,7 +84,9 @@ describe('broadcasts get command', () => {
   test('outputs full JSON when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { getBroadcastCommand } = await import('../../../src/commands/broadcasts/get');
+    const { getBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/get'
+    );
     await getBroadcastCommand.parseAsync(['bcast_abc123'], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -84,8 +103,12 @@ describe('broadcasts get command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { getBroadcastCommand } = await import('../../../src/commands/broadcasts/get');
-    await expectExit1(() => getBroadcastCommand.parseAsync(['bcast_abc123'], { from: 'user' }));
+    const { getBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/get'
+    );
+    await expectExit1(() =>
+      getBroadcastCommand.parseAsync(['bcast_abc123'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -93,13 +116,17 @@ describe('broadcasts get command', () => {
 
   test('errors with fetch_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockGet.mockResolvedValueOnce({ data: null, error: { message: 'Not found', name: 'not_found' } } as any);
+    mockGet.mockResolvedValueOnce(mockSdkError('Not found', 'not_found'));
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { getBroadcastCommand } = await import('../../../src/commands/broadcasts/get');
-    await expectExit1(() => getBroadcastCommand.parseAsync(['bcast_bad'], { from: 'user' }));
+    const { getBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/get'
+    );
+    await expectExit1(() =>
+      getBroadcastCommand.parseAsync(['bcast_bad'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('fetch_error');

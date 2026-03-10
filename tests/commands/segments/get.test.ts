@@ -1,10 +1,19 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
 import {
-  setNonInteractive,
-  mockExitThrow,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
   captureTestEnv,
-  setupOutputSpies,
   expectExit1,
+  mockExitThrow,
+  mockSdkError,
+  setNonInteractive,
+  setupOutputSpies,
 } from '../../helpers';
 
 const mockGet = mock(async () => ({
@@ -51,7 +60,9 @@ describe('segments get command', () => {
   test('calls SDK with the provided segment ID', async () => {
     spies = setupOutputSpies();
 
-    const { getSegmentCommand } = await import('../../../src/commands/segments/get');
+    const { getSegmentCommand } = await import(
+      '../../../src/commands/segments/get'
+    );
     await getSegmentCommand.parseAsync(['seg_abc123'], { from: 'user' });
 
     expect(mockGet).toHaveBeenCalledTimes(1);
@@ -61,7 +72,9 @@ describe('segments get command', () => {
   test('outputs JSON segment data when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { getSegmentCommand } = await import('../../../src/commands/segments/get');
+    const { getSegmentCommand } = await import(
+      '../../../src/commands/segments/get'
+    );
     await getSegmentCommand.parseAsync(['seg_abc123'], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -79,8 +92,12 @@ describe('segments get command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { getSegmentCommand } = await import('../../../src/commands/segments/get');
-    await expectExit1(() => getSegmentCommand.parseAsync(['seg_abc123'], { from: 'user' }));
+    const { getSegmentCommand } = await import(
+      '../../../src/commands/segments/get'
+    );
+    await expectExit1(() =>
+      getSegmentCommand.parseAsync(['seg_abc123'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -88,13 +105,19 @@ describe('segments get command', () => {
 
   test('errors with fetch_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockGet.mockResolvedValueOnce({ data: null, error: { message: 'Segment not found', name: 'not_found' } } as any);
+    mockGet.mockResolvedValueOnce(
+      mockSdkError('Segment not found', 'not_found'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { getSegmentCommand } = await import('../../../src/commands/segments/get');
-    await expectExit1(() => getSegmentCommand.parseAsync(['seg_nonexistent'], { from: 'user' }));
+    const { getSegmentCommand } = await import(
+      '../../../src/commands/segments/get'
+    );
+    await expectExit1(() =>
+      getSegmentCommand.parseAsync(['seg_nonexistent'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('fetch_error');

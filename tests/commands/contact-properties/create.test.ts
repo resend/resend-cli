@@ -1,5 +1,20 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
-import { setNonInteractive, mockExitThrow, captureTestEnv, setupOutputSpies, expectExit1 } from '../../helpers';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  mockSdkError,
+  setNonInteractive,
+  setupOutputSpies,
+} from '../../helpers';
 
 const mockCreate = mock(async () => ({
   data: { object: 'contact_property' as const, id: 'prop_abc123' },
@@ -40,11 +55,16 @@ describe('contact-properties create command', () => {
   test('creates property with --key and --type', async () => {
     spies = setupOutputSpies();
 
-    const { createContactPropertyCommand } = await import('../../../src/commands/contact-properties/create');
-    await createContactPropertyCommand.parseAsync(['--key', 'company_name', '--type', 'string'], { from: 'user' });
+    const { createContactPropertyCommand } = await import(
+      '../../../src/commands/contact-properties/create'
+    );
+    await createContactPropertyCommand.parseAsync(
+      ['--key', 'company_name', '--type', 'string'],
+      { from: 'user' },
+    );
 
     expect(mockCreate).toHaveBeenCalledTimes(1);
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.key).toBe('company_name');
     expect(args.type).toBe('string');
   });
@@ -52,10 +72,15 @@ describe('contact-properties create command', () => {
   test('creates number-type property', async () => {
     spies = setupOutputSpies();
 
-    const { createContactPropertyCommand } = await import('../../../src/commands/contact-properties/create');
-    await createContactPropertyCommand.parseAsync(['--key', 'score', '--type', 'number'], { from: 'user' });
+    const { createContactPropertyCommand } = await import(
+      '../../../src/commands/contact-properties/create'
+    );
+    await createContactPropertyCommand.parseAsync(
+      ['--key', 'score', '--type', 'number'],
+      { from: 'user' },
+    );
 
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.key).toBe('score');
     expect(args.type).toBe('number');
   });
@@ -63,34 +88,50 @@ describe('contact-properties create command', () => {
   test('passes string fallback-value to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { createContactPropertyCommand } = await import('../../../src/commands/contact-properties/create');
+    const { createContactPropertyCommand } = await import(
+      '../../../src/commands/contact-properties/create'
+    );
     await createContactPropertyCommand.parseAsync(
-      ['--key', 'company_name', '--type', 'string', '--fallback-value', 'Unknown'],
-      { from: 'user' }
+      [
+        '--key',
+        'company_name',
+        '--type',
+        'string',
+        '--fallback-value',
+        'Unknown',
+      ],
+      { from: 'user' },
     );
 
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.fallbackValue).toBe('Unknown');
   });
 
   test('coerces fallback-value to number for number-type properties', async () => {
     spies = setupOutputSpies();
 
-    const { createContactPropertyCommand } = await import('../../../src/commands/contact-properties/create');
+    const { createContactPropertyCommand } = await import(
+      '../../../src/commands/contact-properties/create'
+    );
     await createContactPropertyCommand.parseAsync(
       ['--key', 'score', '--type', 'number', '--fallback-value', '42'],
-      { from: 'user' }
+      { from: 'user' },
     );
 
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.fallbackValue).toBe(42);
   });
 
   test('outputs JSON id when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { createContactPropertyCommand } = await import('../../../src/commands/contact-properties/create');
-    await createContactPropertyCommand.parseAsync(['--key', 'plan', '--type', 'string'], { from: 'user' });
+    const { createContactPropertyCommand } = await import(
+      '../../../src/commands/contact-properties/create'
+    );
+    await createContactPropertyCommand.parseAsync(
+      ['--key', 'plan', '--type', 'string'],
+      { from: 'user' },
+    );
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
@@ -103,8 +144,14 @@ describe('contact-properties create command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createContactPropertyCommand } = await import('../../../src/commands/contact-properties/create');
-    await expectExit1(() => createContactPropertyCommand.parseAsync(['--type', 'string'], { from: 'user' }));
+    const { createContactPropertyCommand } = await import(
+      '../../../src/commands/contact-properties/create'
+    );
+    await expectExit1(() =>
+      createContactPropertyCommand.parseAsync(['--type', 'string'], {
+        from: 'user',
+      }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('missing_key');
@@ -115,8 +162,14 @@ describe('contact-properties create command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createContactPropertyCommand } = await import('../../../src/commands/contact-properties/create');
-    await expectExit1(() => createContactPropertyCommand.parseAsync(['--key', 'company_name'], { from: 'user' }));
+    const { createContactPropertyCommand } = await import(
+      '../../../src/commands/contact-properties/create'
+    );
+    await expectExit1(() =>
+      createContactPropertyCommand.parseAsync(['--key', 'company_name'], {
+        from: 'user',
+      }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('missing_type');
@@ -127,12 +180,21 @@ describe('contact-properties create command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createContactPropertyCommand } = await import('../../../src/commands/contact-properties/create');
+    const { createContactPropertyCommand } = await import(
+      '../../../src/commands/contact-properties/create'
+    );
     await expectExit1(() =>
       createContactPropertyCommand.parseAsync(
-        ['--key', 'score', '--type', 'number', '--fallback-value', 'not-a-number'],
-        { from: 'user' }
-      )
+        [
+          '--key',
+          'score',
+          '--type',
+          'number',
+          '--fallback-value',
+          'not-a-number',
+        ],
+        { from: 'user' },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -146,9 +208,14 @@ describe('contact-properties create command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createContactPropertyCommand } = await import('../../../src/commands/contact-properties/create');
+    const { createContactPropertyCommand } = await import(
+      '../../../src/commands/contact-properties/create'
+    );
     await expectExit1(() =>
-      createContactPropertyCommand.parseAsync(['--key', 'company_name', '--type', 'string'], { from: 'user' })
+      createContactPropertyCommand.parseAsync(
+        ['--key', 'company_name', '--type', 'string'],
+        { from: 'user' },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -157,14 +224,21 @@ describe('contact-properties create command', () => {
 
   test('errors with create_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockCreate.mockResolvedValueOnce({ data: null, error: { message: 'Key already exists', name: 'validation_error' } } as any);
+    mockCreate.mockResolvedValueOnce(
+      mockSdkError('Key already exists', 'validation_error'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { createContactPropertyCommand } = await import('../../../src/commands/contact-properties/create');
+    const { createContactPropertyCommand } = await import(
+      '../../../src/commands/contact-properties/create'
+    );
     await expectExit1(() =>
-      createContactPropertyCommand.parseAsync(['--key', 'company_name', '--type', 'string'], { from: 'user' })
+      createContactPropertyCommand.parseAsync(
+        ['--key', 'company_name', '--type', 'string'],
+        { from: 'user' },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

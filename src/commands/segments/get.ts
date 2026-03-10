@@ -1,6 +1,6 @@
 import { Command } from '@commander-js/extra-typings';
-import type { GlobalOpts } from '../../lib/client';
 import { runGet } from '../../lib/actions';
+import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 
 export const getSegmentCommand = new Command('get')
@@ -19,13 +19,20 @@ export const getSegmentCommand = new Command('get')
   )
   .action(async (id, _opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    await runGet({
-      spinner: { loading: 'Fetching segment...', success: 'Segment fetched', fail: 'Failed to fetch segment' },
-      sdkCall: (resend) => resend.segments.get(id),
-      onInteractive: (data) => {
-        console.log(`\n${data.name}`);
-        console.log(`ID: ${data.id}`);
-        console.log(`Created: ${data.created_at}`);
+    await runGet(
+      {
+        spinner: {
+          loading: 'Fetching segment...',
+          success: 'Segment fetched',
+          fail: 'Failed to fetch segment',
+        },
+        sdkCall: (resend) => resend.segments.get(id),
+        onInteractive: (data) => {
+          console.log(`\n${data.name}`);
+          console.log(`ID: ${data.id}`);
+          console.log(`Created: ${data.created_at}`);
+        },
       },
-    }, globalOpts);
+      globalOpts,
+    );
   });

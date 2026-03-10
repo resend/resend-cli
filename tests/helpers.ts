@@ -7,8 +7,14 @@ export class ExitError extends Error {
 }
 
 export function setNonInteractive(): void {
-  Object.defineProperty(process.stdin, 'isTTY', { value: undefined, writable: true });
-  Object.defineProperty(process.stdout, 'isTTY', { value: undefined, writable: true });
+  Object.defineProperty(process.stdin, 'isTTY', {
+    value: undefined,
+    writable: true,
+  });
+  Object.defineProperty(process.stdout, 'isTTY', {
+    value: undefined,
+    writable: true,
+  });
 }
 
 export function mockExitThrow(): ReturnType<typeof spyOn> {
@@ -28,8 +34,14 @@ export function captureTestEnv(): () => void {
   const originalStdoutIsTTY = process.stdout.isTTY;
   return () => {
     process.env = { ...originalEnv };
-    Object.defineProperty(process.stdin, 'isTTY', { value: originalStdinIsTTY, writable: true });
-    Object.defineProperty(process.stdout, 'isTTY', { value: originalStdoutIsTTY, writable: true });
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: originalStdinIsTTY,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: originalStdoutIsTTY,
+      writable: true,
+    });
   };
 }
 
@@ -40,7 +52,9 @@ export function captureTestEnv(): () => void {
 export function setupOutputSpies() {
   setNonInteractive();
   const logSpy = spyOn(console, 'log').mockImplementation(() => {});
-  const stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
+  const stderrSpy = spyOn(process.stderr, 'write').mockImplementation(
+    () => true,
+  );
   return {
     logSpy,
     stderrSpy,
@@ -55,7 +69,14 @@ export function setupOutputSpies() {
  * Asserts that fn throws ExitError with code 1.
  * Eliminates the expect(true).toBe(false) anti-pattern in error-path tests.
  */
-export async function expectExit1(fn: () => Promise<void>): Promise<void> {
+/**
+ * Returns a properly-typed SDK error response without needing `as any`.
+ */
+export function mockSdkError(message: string, name = 'error') {
+  return { data: null, error: { message, name }, headers: null };
+}
+
+export async function expectExit1(fn: () => Promise<unknown>): Promise<void> {
   let threw = false;
   try {
     await fn();
@@ -65,6 +86,8 @@ export async function expectExit1(fn: () => Promise<void>): Promise<void> {
     expect((err as ExitError).code).toBe(1);
   }
   if (!threw) {
-    throw new Error('Expected command to exit with code 1 but it completed successfully');
+    throw new Error(
+      'Expected command to exit with code 1 but it completed successfully',
+    );
   }
 }

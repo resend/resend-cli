@@ -1,15 +1,23 @@
 import { Command } from '@commander-js/extra-typings';
-import type { GlobalOpts } from '../../lib/client';
 import { runList } from '../../lib/actions';
-import { parseLimitOpt, buildPaginationOpts, printPaginationHint } from '../../lib/pagination';
-import { renderSegmentsTable } from './utils';
+import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
+import {
+  buildPaginationOpts,
+  parseLimitOpt,
+  printPaginationHint,
+} from '../../lib/pagination';
+import { renderSegmentsTable } from './utils';
 
 export const listSegmentsCommand = new Command('list')
+  .alias('ls')
   .description('List all segments')
   .option('--limit <n>', 'Maximum number of segments to return (1-100)', '10')
   .option('--after <cursor>', 'Return segments after this cursor (next page)')
-  .option('--before <cursor>', 'Return segments before this cursor (previous page)')
+  .option(
+    '--before <cursor>',
+    'Return segments before this cursor (previous page)',
+  )
   .addHelpText(
     'after',
     buildHelpText({
@@ -32,9 +40,19 @@ or "resend contacts add-segment".`,
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const limit = parseLimitOpt(opts.limit, globalOpts);
     const paginationOpts = buildPaginationOpts(limit, opts.after, opts.before);
-    await runList({
-      spinner: { loading: 'Fetching segments...', success: 'Segments fetched', fail: 'Failed to list segments' },
-      sdkCall: (resend) => resend.segments.list(paginationOpts),
-      onInteractive: (list) => { console.log(renderSegmentsTable(list.data)); printPaginationHint(list); },
-    }, globalOpts);
+    await runList(
+      {
+        spinner: {
+          loading: 'Fetching segments...',
+          success: 'Segments fetched',
+          fail: 'Failed to list segments',
+        },
+        sdkCall: (resend) => resend.segments.list(paginationOpts),
+        onInteractive: (list) => {
+          console.log(renderSegmentsTable(list.data));
+          printPaginationHint(list);
+        },
+      },
+      globalOpts,
+    );
   });

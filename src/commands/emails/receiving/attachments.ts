@@ -1,16 +1,30 @@
 import { Command } from '@commander-js/extra-typings';
-import type { GlobalOpts } from '../../../lib/client';
 import { runList } from '../../../lib/actions';
-import { parseLimitOpt, buildPaginationOpts, printPaginationHint } from '../../../lib/pagination';
+import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
+import {
+  buildPaginationOpts,
+  parseLimitOpt,
+  printPaginationHint,
+} from '../../../lib/pagination';
 import { renderAttachmentsTable } from './utils';
 
 export const listAttachmentsCommand = new Command('attachments')
   .description('List attachments on a received (inbound) email')
   .argument('<emailId>', 'Received email UUID')
-  .option('--limit <n>', 'Maximum number of attachments to return (1-100)', '10')
-  .option('--after <cursor>', 'Return attachments after this cursor (next page)')
-  .option('--before <cursor>', 'Return attachments before this cursor (previous page)')
+  .option(
+    '--limit <n>',
+    'Maximum number of attachments to return (1-100)',
+    '10',
+  )
+  .option(
+    '--after <cursor>',
+    'Return attachments after this cursor (next page)',
+  )
+  .option(
+    '--before <cursor>',
+    'Return attachments before this cursor (previous page)',
+  )
   .addHelpText(
     'after',
     buildHelpText({
@@ -24,7 +38,7 @@ export const listAttachmentsCommand = new Command('attachments')
         'resend emails receiving attachments <email-id> --json',
         'resend emails receiving attachments <email-id> --limit 25 --json',
       ],
-    })
+    }),
   )
   .action(async (emailId, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
@@ -32,12 +46,23 @@ export const listAttachmentsCommand = new Command('attachments')
     const limit = parseLimitOpt(opts.limit, globalOpts);
     const paginationOpts = buildPaginationOpts(limit, opts.after, opts.before);
 
-    await runList({
-      spinner: { loading: 'Fetching attachments...', success: 'Attachments fetched', fail: 'Failed to list attachments' },
-      sdkCall: (resend) => resend.emails.receiving.attachments.list({ emailId, ...paginationOpts }),
-      onInteractive: (list) => {
-        console.log(renderAttachmentsTable(list.data));
-        printPaginationHint(list);
+    await runList(
+      {
+        spinner: {
+          loading: 'Fetching attachments...',
+          success: 'Attachments fetched',
+          fail: 'Failed to list attachments',
+        },
+        sdkCall: (resend) =>
+          resend.emails.receiving.attachments.list({
+            emailId,
+            ...paginationOpts,
+          }),
+        onInteractive: (list) => {
+          console.log(renderAttachmentsTable(list.data));
+          printPaginationHint(list);
+        },
       },
-    }, globalOpts);
+      globalOpts,
+    );
   });

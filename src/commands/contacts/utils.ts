@@ -1,4 +1,4 @@
-import type { ContactTopic, ContactSegmentsBaseOptions } from 'resend';
+import type { ContactSegmentsBaseOptions, ContactTopic } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
 import { outputError } from '../../lib/output';
 import { renderTable } from '../../lib/table';
@@ -6,15 +6,40 @@ import { renderTable } from '../../lib/table';
 // ─── Table renderers ─────────────────────────────────────────────────────────
 
 export function renderContactsTable(
-  contacts: Array<{ id: string; email: string; first_name: string | null; last_name: string | null; unsubscribed: boolean }>
+  contacts: Array<{
+    id: string;
+    email: string;
+    first_name: string | null;
+    last_name: string | null;
+    unsubscribed: boolean;
+  }>,
 ): string {
-  const rows = contacts.map((c) => [c.email, c.first_name ?? '', c.last_name ?? '', c.unsubscribed ? 'yes' : 'no', c.id]);
-  return renderTable(['Email', 'First Name', 'Last Name', 'Unsubscribed', 'ID'], rows, '(no contacts)');
+  const rows = contacts.map((c) => [
+    c.email,
+    c.first_name ?? '',
+    c.last_name ?? '',
+    c.unsubscribed ? 'yes' : 'no',
+    c.id,
+  ]);
+  return renderTable(
+    ['Email', 'First Name', 'Last Name', 'Unsubscribed', 'ID'],
+    rows,
+    '(no contacts)',
+  );
 }
 
 export function renderContactTopicsTable(topics: ContactTopic[]): string {
-  const rows = topics.map((t) => [t.name, t.subscription, t.id, t.description ?? '']);
-  return renderTable(['Name', 'Subscription', 'ID', 'Description'], rows, '(no topic subscriptions)');
+  const rows = topics.map((t) => [
+    t.name,
+    t.subscription,
+    t.id,
+    t.description ?? '',
+  ]);
+  return renderTable(
+    ['Name', 'Subscription', 'ID', 'Description'],
+    rows,
+    '(no topic subscriptions)',
+  );
 }
 
 // ─── Contact identifier helpers ───────────────────────────────────────────────
@@ -32,11 +57,15 @@ export function renderContactTopicsTable(topics: ContactTopic[]): string {
 // Centralising the `str.includes('@')` check here prevents it from drifting
 // across six separate command files.
 
-export function contactIdentifier(id: string): { id: string } | { email: string } {
+export function contactIdentifier(
+  id: string,
+): { id: string } | { email: string } {
   return id.includes('@') ? { email: id } : { id };
 }
 
-export function segmentContactIdentifier(id: string): ContactSegmentsBaseOptions {
+export function segmentContactIdentifier(
+  id: string,
+): ContactSegmentsBaseOptions {
   return id.includes('@') ? { email: id } : { contactId: id };
 }
 
@@ -44,28 +73,47 @@ export function segmentContactIdentifier(id: string): ContactSegmentsBaseOptions
 
 export function parseTopicsJson(
   raw: string,
-  globalOpts: GlobalOpts
+  globalOpts: GlobalOpts,
 ): Array<{ id: string; subscription: 'opt_in' | 'opt_out' }> {
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
   } catch {
-    outputError({ message: 'Invalid --topics JSON. Expected an array of {id, subscription} objects.', code: 'invalid_topics' }, { json: globalOpts.json });
+    outputError(
+      {
+        message:
+          'Invalid --topics JSON. Expected an array of {id, subscription} objects.',
+        code: 'invalid_topics',
+      },
+      { json: globalOpts.json },
+    );
   }
   if (!Array.isArray(parsed)) {
-    outputError({ message: 'Invalid --topics JSON. Expected an array of {id, subscription} objects.', code: 'invalid_topics' }, { json: globalOpts.json });
+    outputError(
+      {
+        message:
+          'Invalid --topics JSON. Expected an array of {id, subscription} objects.',
+        code: 'invalid_topics',
+      },
+      { json: globalOpts.json },
+    );
   }
   return parsed as Array<{ id: string; subscription: 'opt_in' | 'opt_out' }>;
 }
 
 export function parsePropertiesJson(
   raw: string | undefined,
-  globalOpts: GlobalOpts
+  globalOpts: GlobalOpts,
 ): Record<string, string | number | null> | undefined {
-  if (!raw) return undefined;
+  if (!raw) {
+    return undefined;
+  }
   try {
     return JSON.parse(raw) as Record<string, string | number | null>;
   } catch {
-    outputError({ message: 'Invalid --properties JSON.', code: 'invalid_properties' }, { json: globalOpts.json });
+    outputError(
+      { message: 'Invalid --properties JSON.', code: 'invalid_properties' },
+      { json: globalOpts.json },
+    );
   }
 }

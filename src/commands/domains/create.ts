@@ -1,11 +1,8 @@
 import { Command, Option } from '@commander-js/extra-typings';
-import * as p from '@clack/prompts';
-import type { GlobalOpts } from '../../lib/client';
 import { runCreate } from '../../lib/actions';
-import { cancelAndExit } from '../../lib/prompts';
-import { outputError } from '../../lib/output';
-import { isInteractive } from '../../lib/tty';
+import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
+import { requireText } from '../../lib/prompts';
 import { renderDnsRecordsTable } from './utils';
 
 export const createDomainCommand = new Command('create')
@@ -17,21 +14,23 @@ export const createDomainCommand = new Command('create')
       'eu-west-1',
       'sa-east-1',
       'ap-northeast-1',
-    ] as const)
+    ] as const),
   )
   .addOption(
     new Option('--tls <mode>', 'TLS mode (default: opportunistic)').choices([
       'opportunistic',
       'enforced',
-    ] as const)
+    ] as const),
   )
   .option('--sending', 'Enable sending capability (default: enabled)')
   .option('--receiving', 'Enable receiving capability (default: disabled)')
   .addHelpText(
     'after',
     buildHelpText({
-      context: 'Non-interactive: --name is required (no prompts when stdin/stdout is not a TTY)',
-      output: '  Full domain object with DNS records array to configure in your DNS provider.',
+      context:
+        'Non-interactive: --name is required (no prompts when stdin/stdout is not a TTY)',
+      output:
+        '  Full domain object with DNS records array to configure in your DNS provider.',
       errorCodes: ['auth_error', 'missing_name', 'create_error'],
       examples: [
         'resend domains create --name example.com',
@@ -39,45 +38,46 @@ export const createDomainCommand = new Command('create')
         'resend domains create --name example.com --receiving --json',
         'resend domains create --name example.com --sending --receiving --json',
       ],
-    })
+    }),
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
-    let name = opts.name;
+    const name = await requireText(
+      opts.name,
+      { message: 'Domain name', placeholder: 'example.com' },
+      { message: 'Missing --name flag.', code: 'missing_name' },
+      globalOpts,
+    );
 
-    if (!name) {
-      if (!isInteractive()) {
-        outputError({ message: 'Missing --name flag.', code: 'missing_name' }, { json: globalOpts.json });
-      }
-
-      const result = await p.text({
-        message: 'Domain name',
-        placeholder: 'example.com',
-        validate: (v) => (!v ? 'Domain name is required' : undefined),
-      });
-      if (p.isCancel(result)) cancelAndExit('Cancelled.');
-      name = result;
-    }
-
-    await runCreate({
-      spinner: { loading: 'Creating domain...', success: 'Domain created', fail: 'Failed to create domain' },
-      sdkCall: (resend) => resend.domains.create({
-        name: name!,
-        ...(opts.region && { region: opts.region }),
-        ...(opts.tls && { tls: opts.tls }),
-        ...((opts.sending || opts.receiving) && {
-          capabilities: {
-            ...(opts.sending && { sending: 'enabled' as const }),
-            ...(opts.receiving && { receiving: 'enabled' as const }),
-          },
-        }),
-      }),
-      onInteractive: (d) => {
-        console.log(`\nDomain created: ${d.name} (id: ${d.id})`);
-        console.log('\nDNS Records to configure:');
-        console.log(renderDnsRecordsTable(d.records, d.name));
-        console.log(`\nRun \`resend domains verify ${d.id}\` after configuring DNS.`);
+    await runCreate(
+      {
+        spinner: {
+          loading: 'Creating domain...',
+          success: 'Domain created',
+          fail: 'Failed to create domain',
+        },
+        sdkCall: (resend) =>
+          resend.domains.create({
+            name,
+            ...(opts.region && { region: opts.region }),
+            ...(opts.tls && { tls: opts.tls }),
+            ...((opts.sending || opts.receiving) && {
+              capabilities: {
+                ...(opts.sending && { sending: 'enabled' as const }),
+                ...(opts.receiving && { receiving: 'enabled' as const }),
+              },
+            }),
+          }),
+        onInteractive: (d) => {
+          console.log(`\nDomain created: ${d.name} (id: ${d.id})`);
+          console.log('\nDNS Records to configure:');
+          console.log(renderDnsRecordsTable(d.records, d.name));
+          console.log(
+            `\nRun \`resend domains verify ${d.id}\` after configuring DNS.`,
+          );
+        },
       },
-    }, globalOpts);
+      globalOpts,
+    );
   });

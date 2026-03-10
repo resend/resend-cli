@@ -2,58 +2,62 @@ import { Command } from '@commander-js/extra-typings';
 import type { CreateBatchOptions } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
-import { cancelAndExit } from '../../lib/prompts';
-import { withSpinner } from '../../lib/spinner';
-import { outputError, outputResult } from '../../lib/output';
 import { readFile } from '../../lib/files';
-import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
-import * as p from '@clack/prompts';
+import { outputError, outputResult } from '../../lib/output';
+import { requireText } from '../../lib/prompts';
+import { withSpinner } from '../../lib/spinner';
+import { isInteractive } from '../../lib/tty';
 
 export const batchCommand = new Command('batch')
   .description('Send up to 100 emails in a single API request from a JSON file')
-  .option('--file <path>', 'Path to a JSON file containing an array of email objects (required in non-interactive mode)')
-  .option('--idempotency-key <key>', 'Deduplicate this batch request using this key')
+  .option(
+    '--file <path>',
+    'Path to a JSON file containing an array of email objects (required in non-interactive mode)',
+  )
+  .option(
+    '--idempotency-key <key>',
+    'Deduplicate this batch request using this key',
+  )
   .addHelpText(
     'after',
     buildHelpText({
       context:
         'Non-interactive: --file\nLimit: 100 emails per request (API hard limit — warned if exceeded)\nUnsupported per-email fields: attachments, scheduled_at\n\nFile format (--file path):\n  [\n    {"from":"you@domain.com","to":["user@example.com"],"subject":"Hello","text":"Hi"},\n    {"from":"you@domain.com","to":["other@example.com"],"subject":"Hello","html":"<b>Hi</b>"}\n  ]',
       output: '  [{"id":"<email-id>"},{"id":"<email-id>"}]',
-      errorCodes: ['auth_error', 'missing_file', 'file_read_error', 'invalid_json', 'invalid_format', 'batch_error'],
+      errorCodes: [
+        'auth_error',
+        'missing_file',
+        'file_read_error',
+        'invalid_json',
+        'invalid_format',
+        'batch_error',
+      ],
       examples: [
         'resend emails batch --file ./emails.json',
         'resend emails batch --file ./emails.json --json',
         'resend emails batch --file ./emails.json --idempotency-key my-batch-2026-02-18',
         'RESEND_API_KEY=re_123 resend emails batch --file ./emails.json --json',
       ],
-    })
+    }),
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
     const resend = requireClient(globalOpts);
 
-    let filePath = opts.file;
+    const filePath = await requireText(
+      opts.file,
+      { message: 'Path to JSON file', placeholder: './emails.json' },
+      {
+        message:
+          'Missing --file flag. Provide a JSON file with an array of email objects.',
+        code: 'missing_file',
+      },
+      globalOpts,
+    );
 
-    if (!filePath) {
-      if (!isInteractive()) {
-        outputError(
-          { message: 'Missing --file flag. Provide a JSON file with an array of email objects.', code: 'missing_file' },
-          { json: globalOpts.json }
-        );
-      }
-
-      const result = await p.text({
-        message: 'Path to JSON file',
-        placeholder: './emails.json',
-        validate: (v) => (!v ? 'File path is required' : undefined),
-      });
-      if (p.isCancel(result)) cancelAndExit('Batch cancelled.');
-      filePath = result;
-    }
-
-    const raw = readFile(filePath!, globalOpts);
+    const raw = readFile(filePath, globalOpts);
 
     let parsed: unknown;
     try {
@@ -61,52 +65,72 @@ export const batchCommand = new Command('batch')
     } catch {
       outputError(
         { message: 'File content is not valid JSON.', code: 'invalid_json' },
-        { json: globalOpts.json }
+        { json: globalOpts.json },
       );
     }
 
     if (!Array.isArray(parsed)) {
       outputError(
-        { message: 'File content must be a JSON array of email objects.', code: 'invalid_format' },
-        { json: globalOpts.json }
+        {
+          message: 'File content must be a JSON array of email objects.',
+          code: 'invalid_format',
+        },
+        { json: globalOpts.json },
       );
     }
 
     const emails = parsed as unknown[];
 
     if (emails.length > 100) {
-      console.warn(`Warning: ${emails.length} emails exceeds the 100-email limit. The API may reject this request.`);
+      console.warn(
+        `Warning: ${emails.length} emails exceeds the 100-email limit. The API may reject this request.`,
+      );
     }
 
     for (let i = 0; i < emails.length; i++) {
       const email = emails[i] as Record<string, unknown>;
       if ('attachments' in email) {
         outputError(
-          { message: `Email at index ${i} contains "attachments", which is not supported in batch sends.`, code: 'batch_error' },
-          { json: globalOpts.json }
+          {
+            message: `Email at index ${i} contains "attachments", which is not supported in batch sends.`,
+            code: 'batch_error',
+          },
+          { json: globalOpts.json },
         );
       }
       if ('scheduled_at' in email) {
         outputError(
-          { message: `Email at index ${i} contains "scheduled_at", which is not supported in batch sends.`, code: 'batch_error' },
-          { json: globalOpts.json }
+          {
+            message: `Email at index ${i} contains "scheduled_at", which is not supported in batch sends.`,
+            code: 'batch_error',
+          },
+          { json: globalOpts.json },
         );
       }
     }
 
     const batchData = await withSpinner(
-      { loading: 'Sending batch...', success: 'Batch sent', fail: 'Failed to send batch' },
-      () => resend.batch.send(
-        emails as CreateBatchOptions,
-        opts.idempotencyKey ? { idempotencyKey: opts.idempotencyKey } : undefined
-      ),
+      {
+        loading: 'Sending batch...',
+        success: 'Batch sent',
+        fail: 'Failed to send batch',
+      },
+      () =>
+        resend.batch.send(
+          emails as CreateBatchOptions,
+          opts.idempotencyKey
+            ? { idempotencyKey: opts.idempotencyKey }
+            : undefined,
+        ),
       'batch_error',
       globalOpts,
     );
 
     const emailIds = batchData.data;
     if (!globalOpts.json && isInteractive()) {
-      console.log(`Sent ${emailIds.length} email${emailIds.length === 1 ? '' : 's'}`);
+      console.log(
+        `Sent ${emailIds.length} email${emailIds.length === 1 ? '' : 's'}`,
+      );
       for (const email of emailIds) {
         console.log(`  ${email.id}`);
       }

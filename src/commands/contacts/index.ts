@@ -1,14 +1,14 @@
 import { Command } from '@commander-js/extra-typings';
 import { buildHelpText } from '../../lib/help-text';
+import { addContactSegmentCommand } from './add-segment';
 import { createContactCommand } from './create';
+import { deleteContactCommand } from './delete';
 import { getContactCommand } from './get';
 import { listContactsCommand } from './list';
-import { updateContactCommand } from './update';
-import { deleteContactCommand } from './delete';
-import { listContactSegmentsCommand } from './segments';
-import { addContactSegmentCommand } from './add-segment';
 import { removeContactSegmentCommand } from './remove-segment';
+import { listContactSegmentsCommand } from './segments';
 import { listContactTopicsCommand } from './topics';
+import { updateContactCommand } from './update';
 import { updateContactTopicsCommand } from './update-topics';
 
 export const contactsCommand = new Command('contacts')
@@ -48,7 +48,7 @@ Segments:
   )
   .addCommand(createContactCommand)
   .addCommand(getContactCommand)
-  .addCommand(listContactsCommand)
+  .addCommand(listContactsCommand, { isDefault: true })
   .addCommand(updateContactCommand)
   .addCommand(deleteContactCommand)
   .addCommand(listContactSegmentsCommand)

@@ -1,10 +1,19 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
 import {
-  setNonInteractive,
-  mockExitThrow,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
   captureTestEnv,
-  setupOutputSpies,
   expectExit1,
+  mockExitThrow,
+  mockSdkError,
+  setNonInteractive,
+  setupOutputSpies,
 } from '../../../helpers';
 
 const mockList = mock(async () => ({
@@ -61,11 +70,13 @@ describe('emails receiving attachments command', () => {
   test('calls SDK list with emailId and default pagination', async () => {
     spies = setupOutputSpies();
 
-    const { listAttachmentsCommand } = await import('../../../../src/commands/emails/receiving/attachments');
+    const { listAttachmentsCommand } = await import(
+      '../../../../src/commands/emails/receiving/attachments'
+    );
     await listAttachmentsCommand.parseAsync(['rcv_email123'], { from: 'user' });
 
     expect(mockList).toHaveBeenCalledTimes(1);
-    const args = mockList.mock.calls[0][0] as any;
+    const args = mockList.mock.calls[0][0] as Record<string, unknown>;
     expect(args.emailId).toBe('rcv_email123');
     expect(args.limit).toBe(10);
   });
@@ -73,17 +84,23 @@ describe('emails receiving attachments command', () => {
   test('passes --limit to pagination options', async () => {
     spies = setupOutputSpies();
 
-    const { listAttachmentsCommand } = await import('../../../../src/commands/emails/receiving/attachments');
-    await listAttachmentsCommand.parseAsync(['rcv_email123', '--limit', '5'], { from: 'user' });
+    const { listAttachmentsCommand } = await import(
+      '../../../../src/commands/emails/receiving/attachments'
+    );
+    await listAttachmentsCommand.parseAsync(['rcv_email123', '--limit', '5'], {
+      from: 'user',
+    });
 
-    const args = mockList.mock.calls[0][0] as any;
+    const args = mockList.mock.calls[0][0] as Record<string, unknown>;
     expect(args.limit).toBe(5);
   });
 
   test('outputs JSON list with attachment data when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { listAttachmentsCommand } = await import('../../../../src/commands/emails/receiving/attachments');
+    const { listAttachmentsCommand } = await import(
+      '../../../../src/commands/emails/receiving/attachments'
+    );
     await listAttachmentsCommand.parseAsync(['rcv_email123'], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -100,8 +117,14 @@ describe('emails receiving attachments command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listAttachmentsCommand } = await import('../../../../src/commands/emails/receiving/attachments');
-    await expectExit1(() => listAttachmentsCommand.parseAsync(['rcv_email123', '--limit', '200'], { from: 'user' }));
+    const { listAttachmentsCommand } = await import(
+      '../../../../src/commands/emails/receiving/attachments'
+    );
+    await expectExit1(() =>
+      listAttachmentsCommand.parseAsync(['rcv_email123', '--limit', '200'], {
+        from: 'user',
+      }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('invalid_limit');
@@ -114,8 +137,12 @@ describe('emails receiving attachments command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listAttachmentsCommand } = await import('../../../../src/commands/emails/receiving/attachments');
-    await expectExit1(() => listAttachmentsCommand.parseAsync(['rcv_email123'], { from: 'user' }));
+    const { listAttachmentsCommand } = await import(
+      '../../../../src/commands/emails/receiving/attachments'
+    );
+    await expectExit1(() =>
+      listAttachmentsCommand.parseAsync(['rcv_email123'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -123,13 +150,17 @@ describe('emails receiving attachments command', () => {
 
   test('errors with list_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockList.mockResolvedValueOnce({ data: null, error: { message: 'Not found', name: 'not_found' } } as any);
+    mockList.mockResolvedValueOnce(mockSdkError('Not found', 'not_found'));
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { listAttachmentsCommand } = await import('../../../../src/commands/emails/receiving/attachments');
-    await expectExit1(() => listAttachmentsCommand.parseAsync(['rcv_nonexistent'], { from: 'user' }));
+    const { listAttachmentsCommand } = await import(
+      '../../../../src/commands/emails/receiving/attachments'
+    );
+    await expectExit1(() =>
+      listAttachmentsCommand.parseAsync(['rcv_nonexistent'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('list_error');

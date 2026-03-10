@@ -1,13 +1,15 @@
 import { Command } from '@commander-js/extra-typings';
+import { buildHelpText } from '../../lib/help-text';
 import { createContactPropertyCommand } from './create';
+import { deleteContactPropertyCommand } from './delete';
 import { getContactPropertyCommand } from './get';
 import { listContactPropertiesCommand } from './list';
 import { updateContactPropertyCommand } from './update';
-import { deleteContactPropertyCommand } from './delete';
-import { buildHelpText } from '../../lib/help-text';
 
 export const contactPropertiesCommand = new Command('contact-properties')
-  .description('Manage contact property definitions — schema for custom data on contacts')
+  .description(
+    'Manage contact property definitions — schema for custom data on contacts',
+  )
   .addHelpText(
     'after',
     buildHelpText({
@@ -41,6 +43,6 @@ be updated. Deleting a property removes it from all contacts.`,
   )
   .addCommand(createContactPropertyCommand)
   .addCommand(getContactPropertyCommand)
-  .addCommand(listContactPropertiesCommand)
+  .addCommand(listContactPropertiesCommand, { isDefault: true })
   .addCommand(updateContactPropertyCommand)
   .addCommand(deleteContactPropertyCommand);

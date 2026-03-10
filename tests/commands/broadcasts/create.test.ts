@@ -1,7 +1,21 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
-import { writeFileSync, unlinkSync } from 'node:fs';
-import { join } from 'node:path';
-import { setNonInteractive, mockExitThrow, captureTestEnv, setupOutputSpies, expectExit1 } from '../../helpers';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import * as files from '../../../src/lib/files';
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  mockSdkError,
+  setNonInteractive,
+  setupOutputSpies,
+} from '../../helpers';
 
 const mockCreate = mock(async () => ({
   data: { id: 'bcast_abc123' },
@@ -21,6 +35,7 @@ describe('broadcasts create command', () => {
   let errorSpy: ReturnType<typeof spyOn> | undefined;
   let stderrSpy: ReturnType<typeof spyOn> | undefined;
   let exitSpy: ReturnType<typeof spyOn> | undefined;
+  let readFileSpy: ReturnType<typeof spyOn> | undefined;
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
@@ -33,23 +48,36 @@ describe('broadcasts create command', () => {
     errorSpy?.mockRestore();
     stderrSpy?.mockRestore();
     exitSpy?.mockRestore();
+    readFileSpy?.mockRestore();
     spies = undefined;
     errorSpy = undefined;
     stderrSpy = undefined;
     exitSpy = undefined;
+    readFileSpy = undefined;
   });
 
   test('creates broadcast with required flags', async () => {
     spies = setupOutputSpies();
 
-    const { createBroadcastCommand } = await import('../../../src/commands/broadcasts/create');
+    const { createBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/create'
+    );
     await createBroadcastCommand.parseAsync(
-      ['--from', 'hello@domain.com', '--subject', 'Weekly Update', '--segment-id', 'seg_123', '--html', '<p>Hi</p>'],
-      { from: 'user' }
+      [
+        '--from',
+        'hello@domain.com',
+        '--subject',
+        'Weekly Update',
+        '--segment-id',
+        'seg_123',
+        '--html',
+        '<p>Hi</p>',
+      ],
+      { from: 'user' },
     );
 
     expect(mockCreate).toHaveBeenCalledTimes(1);
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.from).toBe('hello@domain.com');
     expect(args.subject).toBe('Weekly Update');
     expect(args.segmentId).toBe('seg_123');
@@ -59,10 +87,21 @@ describe('broadcasts create command', () => {
   test('outputs JSON id when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { createBroadcastCommand } = await import('../../../src/commands/broadcasts/create');
+    const { createBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/create'
+    );
     await createBroadcastCommand.parseAsync(
-      ['--from', 'hello@domain.com', '--subject', 'News', '--segment-id', 'seg_123', '--text', 'Hello!'],
-      { from: 'user' }
+      [
+        '--from',
+        'hello@domain.com',
+        '--subject',
+        'News',
+        '--segment-id',
+        'seg_123',
+        '--text',
+        'Hello!',
+      ],
+      { from: 'user' },
     );
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -73,48 +112,84 @@ describe('broadcasts create command', () => {
   test('passes --send flag to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { createBroadcastCommand } = await import('../../../src/commands/broadcasts/create');
+    const { createBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/create'
+    );
     await createBroadcastCommand.parseAsync(
-      ['--from', 'hello@domain.com', '--subject', 'Go', '--segment-id', 'seg_123', '--text', 'Hi', '--send'],
-      { from: 'user' }
+      [
+        '--from',
+        'hello@domain.com',
+        '--subject',
+        'Go',
+        '--segment-id',
+        'seg_123',
+        '--text',
+        'Hi',
+        '--send',
+      ],
+      { from: 'user' },
     );
 
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.send).toBe(true);
   });
 
   test('passes --scheduled-at with --send to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { createBroadcastCommand } = await import('../../../src/commands/broadcasts/create');
+    const { createBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/create'
+    );
     await createBroadcastCommand.parseAsync(
-      ['--from', 'hello@domain.com', '--subject', 'Go', '--segment-id', 'seg_123', '--text', 'Hi', '--send', '--scheduled-at', 'in 1 hour'],
-      { from: 'user' }
+      [
+        '--from',
+        'hello@domain.com',
+        '--subject',
+        'Go',
+        '--segment-id',
+        'seg_123',
+        '--text',
+        'Hi',
+        '--send',
+        '--scheduled-at',
+        'in 1 hour',
+      ],
+      { from: 'user' },
     );
 
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.scheduledAt).toBe('in 1 hour');
   });
 
   test('passes optional flags to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { createBroadcastCommand } = await import('../../../src/commands/broadcasts/create');
+    const { createBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/create'
+    );
     await createBroadcastCommand.parseAsync(
       [
-        '--from', 'hello@domain.com',
-        '--subject', 'News',
-        '--segment-id', 'seg_123',
-        '--html', '<p>Hi</p>',
-        '--name', 'Q1 Newsletter',
-        '--reply-to', 'reply@domain.com',
-        '--preview-text', 'Read the news',
-        '--topic-id', 'topic_xyz',
+        '--from',
+        'hello@domain.com',
+        '--subject',
+        'News',
+        '--segment-id',
+        'seg_123',
+        '--html',
+        '<p>Hi</p>',
+        '--name',
+        'Q1 Newsletter',
+        '--reply-to',
+        'reply@domain.com',
+        '--preview-text',
+        'Read the news',
+        '--topic-id',
+        'topic_xyz',
       ],
-      { from: 'user' }
+      { from: 'user' },
     );
 
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.name).toBe('Q1 Newsletter');
     expect(args.replyTo).toBe('reply@domain.com');
     expect(args.previewText).toBe('Read the news');
@@ -126,11 +201,15 @@ describe('broadcasts create command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createBroadcastCommand } = await import('../../../src/commands/broadcasts/create');
-    await expectExit1(() => createBroadcastCommand.parseAsync(
-      ['--subject', 'News', '--segment-id', 'seg_123', '--html', '<p>Hi</p>'],
-      { from: 'user' }
-    ));
+    const { createBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/create'
+    );
+    await expectExit1(() =>
+      createBroadcastCommand.parseAsync(
+        ['--subject', 'News', '--segment-id', 'seg_123', '--html', '<p>Hi</p>'],
+        { from: 'user' },
+      ),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('missing_from');
@@ -141,11 +220,22 @@ describe('broadcasts create command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createBroadcastCommand } = await import('../../../src/commands/broadcasts/create');
-    await expectExit1(() => createBroadcastCommand.parseAsync(
-      ['--from', 'hello@domain.com', '--segment-id', 'seg_123', '--html', '<p>Hi</p>'],
-      { from: 'user' }
-    ));
+    const { createBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/create'
+    );
+    await expectExit1(() =>
+      createBroadcastCommand.parseAsync(
+        [
+          '--from',
+          'hello@domain.com',
+          '--segment-id',
+          'seg_123',
+          '--html',
+          '<p>Hi</p>',
+        ],
+        { from: 'user' },
+      ),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('missing_subject');
@@ -156,11 +246,22 @@ describe('broadcasts create command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createBroadcastCommand } = await import('../../../src/commands/broadcasts/create');
-    await expectExit1(() => createBroadcastCommand.parseAsync(
-      ['--from', 'hello@domain.com', '--subject', 'News', '--html', '<p>Hi</p>'],
-      { from: 'user' }
-    ));
+    const { createBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/create'
+    );
+    await expectExit1(() =>
+      createBroadcastCommand.parseAsync(
+        [
+          '--from',
+          'hello@domain.com',
+          '--subject',
+          'News',
+          '--html',
+          '<p>Hi</p>',
+        ],
+        { from: 'user' },
+      ),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('missing_segment');
@@ -171,11 +272,22 @@ describe('broadcasts create command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createBroadcastCommand } = await import('../../../src/commands/broadcasts/create');
-    await expectExit1(() => createBroadcastCommand.parseAsync(
-      ['--from', 'hello@domain.com', '--subject', 'News', '--segment-id', 'seg_123'],
-      { from: 'user' }
-    ));
+    const { createBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/create'
+    );
+    await expectExit1(() =>
+      createBroadcastCommand.parseAsync(
+        [
+          '--from',
+          'hello@domain.com',
+          '--subject',
+          'News',
+          '--segment-id',
+          'seg_123',
+        ],
+        { from: 'user' },
+      ),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('missing_body');
@@ -188,11 +300,24 @@ describe('broadcasts create command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createBroadcastCommand } = await import('../../../src/commands/broadcasts/create');
-    await expectExit1(() => createBroadcastCommand.parseAsync(
-      ['--from', 'hello@domain.com', '--subject', 'News', '--segment-id', 'seg_123', '--html', '<p>Hi</p>'],
-      { from: 'user' }
-    ));
+    const { createBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/create'
+    );
+    await expectExit1(() =>
+      createBroadcastCommand.parseAsync(
+        [
+          '--from',
+          'hello@domain.com',
+          '--subject',
+          'News',
+          '--segment-id',
+          'seg_123',
+          '--html',
+          '<p>Hi</p>',
+        ],
+        { from: 'user' },
+      ),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -200,16 +325,31 @@ describe('broadcasts create command', () => {
 
   test('errors with create_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockCreate.mockResolvedValueOnce({ data: null, error: { message: 'Segment not found', name: 'not_found' } } as any);
+    mockCreate.mockResolvedValueOnce(
+      mockSdkError('Segment not found', 'not_found'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { createBroadcastCommand } = await import('../../../src/commands/broadcasts/create');
-    await expectExit1(() => createBroadcastCommand.parseAsync(
-      ['--from', 'hello@domain.com', '--subject', 'News', '--segment-id', 'seg_bad', '--html', '<p>Hi</p>'],
-      { from: 'user' }
-    ));
+    const { createBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/create'
+    );
+    await expectExit1(() =>
+      createBroadcastCommand.parseAsync(
+        [
+          '--from',
+          'hello@domain.com',
+          '--subject',
+          'News',
+          '--segment-id',
+          'seg_bad',
+          '--html',
+          '<p>Hi</p>',
+        ],
+        { from: 'user' },
+      ),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('create_error');
@@ -220,29 +360,40 @@ describe('broadcasts create command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createBroadcastCommand } = await import('../../../src/commands/broadcasts/create');
-    await expectExit1(() => createBroadcastCommand.parseAsync([], { from: 'user' }));
+    const { createBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/create'
+    );
+    await expectExit1(() =>
+      createBroadcastCommand.parseAsync([], { from: 'user' }),
+    );
 
     expect(mockCreate).not.toHaveBeenCalled();
   });
 
   test('reads html body from --html-file and passes it to SDK', async () => {
     spies = setupOutputSpies();
+    readFileSpy = spyOn(files, 'readFile').mockReturnValue('<p>From file</p>');
 
-    const tmpFile = join(import.meta.dir, 'tmp-broadcast.html');
-    writeFileSync(tmpFile, '<p>From file</p>', 'utf-8');
-    try {
-      const { createBroadcastCommand } = await import('../../../src/commands/broadcasts/create');
-      await createBroadcastCommand.parseAsync(
-        ['--from', 'hello@domain.com', '--subject', 'News', '--segment-id', 'seg_123', '--html-file', tmpFile],
-        { from: 'user' }
-      );
+    const { createBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/create'
+    );
+    await createBroadcastCommand.parseAsync(
+      [
+        '--from',
+        'hello@domain.com',
+        '--subject',
+        'News',
+        '--segment-id',
+        'seg_123',
+        '--html-file',
+        '/fake/email.html',
+      ],
+      { from: 'user' },
+    );
 
-      const args = mockCreate.mock.calls[0][0] as any;
-      expect(args.html).toBe('<p>From file</p>');
-    } finally {
-      unlinkSync(tmpFile);
-    }
+    expect(readFileSpy).toHaveBeenCalledTimes(1);
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.html).toBe('<p>From file</p>');
   });
 
   test('errors with file_read_error when --html-file path is unreadable', async () => {
@@ -251,11 +402,37 @@ describe('broadcasts create command', () => {
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { createBroadcastCommand } = await import('../../../src/commands/broadcasts/create');
-    await expectExit1(() => createBroadcastCommand.parseAsync(
-      ['--from', 'hello@domain.com', '--subject', 'News', '--segment-id', 'seg_123', '--html-file', '/nonexistent/file.html'],
-      { from: 'user' }
-    ));
+    const { outputError } = await import('../../../src/lib/output');
+    readFileSpy = spyOn(files, 'readFile').mockImplementation(
+      (filePath: string, globalOpts: { json?: boolean }) => {
+        outputError(
+          {
+            message: `Failed to read file: ${filePath}`,
+            code: 'file_read_error',
+          },
+          { json: globalOpts.json },
+        );
+      },
+    );
+
+    const { createBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/create'
+    );
+    await expectExit1(() =>
+      createBroadcastCommand.parseAsync(
+        [
+          '--from',
+          'hello@domain.com',
+          '--subject',
+          'News',
+          '--segment-id',
+          'seg_123',
+          '--html-file',
+          '/nonexistent/file.html',
+        ],
+        { from: 'user' },
+      ),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('file_read_error');

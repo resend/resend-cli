@@ -1,5 +1,20 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
-import { setNonInteractive, mockExitThrow, captureTestEnv, setupOutputSpies, expectExit1 } from '../../helpers';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  mockSdkError,
+  setNonInteractive,
+  setupOutputSpies,
+} from '../../helpers';
 
 const mockAddSegment = mock(async () => ({
   data: { id: 'seg_123' },
@@ -42,11 +57,16 @@ describe('contacts add-segment command', () => {
   test('adds contact to segment by contact ID', async () => {
     spies = setupOutputSpies();
 
-    const { addContactSegmentCommand } = await import('../../../src/commands/contacts/add-segment');
-    await addContactSegmentCommand.parseAsync(['contact_abc123', '--segment-id', 'seg_123'], { from: 'user' });
+    const { addContactSegmentCommand } = await import(
+      '../../../src/commands/contacts/add-segment'
+    );
+    await addContactSegmentCommand.parseAsync(
+      ['contact_abc123', '--segment-id', 'seg_123'],
+      { from: 'user' },
+    );
 
     expect(mockAddSegment).toHaveBeenCalledTimes(1);
-    const args = mockAddSegment.mock.calls[0][0] as any;
+    const args = mockAddSegment.mock.calls[0][0] as Record<string, unknown>;
     expect(args.contactId).toBe('contact_abc123');
     expect(args.segmentId).toBe('seg_123');
   });
@@ -54,10 +74,15 @@ describe('contacts add-segment command', () => {
   test('adds contact to segment by email', async () => {
     spies = setupOutputSpies();
 
-    const { addContactSegmentCommand } = await import('../../../src/commands/contacts/add-segment');
-    await addContactSegmentCommand.parseAsync(['jane@example.com', '--segment-id', 'seg_123'], { from: 'user' });
+    const { addContactSegmentCommand } = await import(
+      '../../../src/commands/contacts/add-segment'
+    );
+    await addContactSegmentCommand.parseAsync(
+      ['jane@example.com', '--segment-id', 'seg_123'],
+      { from: 'user' },
+    );
 
-    const args = mockAddSegment.mock.calls[0][0] as any;
+    const args = mockAddSegment.mock.calls[0][0] as Record<string, unknown>;
     expect(args.email).toBe('jane@example.com');
     expect(args.segmentId).toBe('seg_123');
   });
@@ -65,8 +90,13 @@ describe('contacts add-segment command', () => {
   test('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { addContactSegmentCommand } = await import('../../../src/commands/contacts/add-segment');
-    await addContactSegmentCommand.parseAsync(['contact_abc123', '--segment-id', 'seg_123'], { from: 'user' });
+    const { addContactSegmentCommand } = await import(
+      '../../../src/commands/contacts/add-segment'
+    );
+    await addContactSegmentCommand.parseAsync(
+      ['contact_abc123', '--segment-id', 'seg_123'],
+      { from: 'user' },
+    );
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
@@ -78,8 +108,12 @@ describe('contacts add-segment command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { addContactSegmentCommand } = await import('../../../src/commands/contacts/add-segment');
-    await expectExit1(() => addContactSegmentCommand.parseAsync(['contact_abc123'], { from: 'user' }));
+    const { addContactSegmentCommand } = await import(
+      '../../../src/commands/contacts/add-segment'
+    );
+    await expectExit1(() =>
+      addContactSegmentCommand.parseAsync(['contact_abc123'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('missing_segment_id');
@@ -92,8 +126,15 @@ describe('contacts add-segment command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { addContactSegmentCommand } = await import('../../../src/commands/contacts/add-segment');
-    await expectExit1(() => addContactSegmentCommand.parseAsync(['contact_abc123', '--segment-id', 'seg_123'], { from: 'user' }));
+    const { addContactSegmentCommand } = await import(
+      '../../../src/commands/contacts/add-segment'
+    );
+    await expectExit1(() =>
+      addContactSegmentCommand.parseAsync(
+        ['contact_abc123', '--segment-id', 'seg_123'],
+        { from: 'user' },
+      ),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -101,13 +142,22 @@ describe('contacts add-segment command', () => {
 
   test('errors with add_segment_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockAddSegment.mockResolvedValueOnce({ data: null, error: { message: 'Segment not found', name: 'not_found' } } as any);
+    mockAddSegment.mockResolvedValueOnce(
+      mockSdkError('Segment not found', 'not_found'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { addContactSegmentCommand } = await import('../../../src/commands/contacts/add-segment');
-    await expectExit1(() => addContactSegmentCommand.parseAsync(['contact_abc123', '--segment-id', 'bad_seg'], { from: 'user' }));
+    const { addContactSegmentCommand } = await import(
+      '../../../src/commands/contacts/add-segment'
+    );
+    await expectExit1(() =>
+      addContactSegmentCommand.parseAsync(
+        ['contact_abc123', '--segment-id', 'bad_seg'],
+        { from: 'user' },
+      ),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('add_segment_error');

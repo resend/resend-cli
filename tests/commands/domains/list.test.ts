@@ -1,12 +1,41 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
-import { setNonInteractive, mockExitThrow, captureTestEnv, setupOutputSpies, expectExit1 } from '../../helpers';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  mockSdkError,
+  setNonInteractive,
+  setupOutputSpies,
+} from '../../helpers';
 
 const mockList = mock(async () => ({
   data: {
     object: 'list',
     data: [
-      { id: 'domain-1', name: 'example.com', status: 'verified', region: 'us-east-1', created_at: '2026-01-01T00:00:00.000Z', capabilities: { sending: 'enabled', receiving: 'disabled' } },
-      { id: 'domain-2', name: 'test.com', status: 'pending', region: 'eu-west-1', created_at: '2026-01-02T00:00:00.000Z', capabilities: { sending: 'enabled', receiving: 'disabled' } },
+      {
+        id: 'domain-1',
+        name: 'example.com',
+        status: 'verified',
+        region: 'us-east-1',
+        created_at: '2026-01-01T00:00:00.000Z',
+        capabilities: { sending: 'enabled', receiving: 'disabled' },
+      },
+      {
+        id: 'domain-2',
+        name: 'test.com',
+        status: 'pending',
+        region: 'eu-west-1',
+        created_at: '2026-01-02T00:00:00.000Z',
+        capabilities: { sending: 'enabled', receiving: 'disabled' },
+      },
     ],
     has_more: false,
   },
@@ -47,7 +76,9 @@ describe('domains list command', () => {
   test('calls SDK list and outputs domains as JSON', async () => {
     spies = setupOutputSpies();
 
-    const { listDomainsCommand } = await import('../../../src/commands/domains/list');
+    const { listDomainsCommand } = await import(
+      '../../../src/commands/domains/list'
+    );
     await listDomainsCommand.parseAsync([], { from: 'user' });
 
     expect(mockList).toHaveBeenCalledTimes(1);
@@ -60,30 +91,38 @@ describe('domains list command', () => {
   test('passes limit to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { listDomainsCommand } = await import('../../../src/commands/domains/list');
+    const { listDomainsCommand } = await import(
+      '../../../src/commands/domains/list'
+    );
     await listDomainsCommand.parseAsync(['--limit', '25'], { from: 'user' });
 
-    const callArgs = mockList.mock.calls[0][0] as any;
+    const callArgs = mockList.mock.calls[0][0] as Record<string, unknown>;
     expect(callArgs.limit).toBe(25);
   });
 
   test('passes after cursor to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { listDomainsCommand } = await import('../../../src/commands/domains/list');
-    await listDomainsCommand.parseAsync(['--after', 'some-cursor'], { from: 'user' });
+    const { listDomainsCommand } = await import(
+      '../../../src/commands/domains/list'
+    );
+    await listDomainsCommand.parseAsync(['--after', 'some-cursor'], {
+      from: 'user',
+    });
 
-    const callArgs = mockList.mock.calls[0][0] as any;
+    const callArgs = mockList.mock.calls[0][0] as Record<string, unknown>;
     expect(callArgs.after).toBe('some-cursor');
   });
 
   test('uses default limit of 10 when not specified', async () => {
     spies = setupOutputSpies();
 
-    const { listDomainsCommand } = await import('../../../src/commands/domains/list');
+    const { listDomainsCommand } = await import(
+      '../../../src/commands/domains/list'
+    );
     await listDomainsCommand.parseAsync([], { from: 'user' });
 
-    const callArgs = mockList.mock.calls[0][0] as any;
+    const callArgs = mockList.mock.calls[0][0] as Record<string, unknown>;
     expect(callArgs.limit).toBe(10);
   });
 
@@ -94,8 +133,12 @@ describe('domains list command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listDomainsCommand } = await import('../../../src/commands/domains/list');
-    await expectExit1(() => listDomainsCommand.parseAsync([], { from: 'user' }));
+    const { listDomainsCommand } = await import(
+      '../../../src/commands/domains/list'
+    );
+    await expectExit1(() =>
+      listDomainsCommand.parseAsync([], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -103,13 +146,17 @@ describe('domains list command', () => {
 
   test('errors with list_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockList.mockResolvedValueOnce({ data: null, error: { message: 'Unauthorized', name: 'auth_error' } } as any);
+    mockList.mockResolvedValueOnce(mockSdkError('Unauthorized', 'auth_error'));
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { listDomainsCommand } = await import('../../../src/commands/domains/list');
-    await expectExit1(() => listDomainsCommand.parseAsync([], { from: 'user' }));
+    const { listDomainsCommand } = await import(
+      '../../../src/commands/domains/list'
+    );
+    await expectExit1(() =>
+      listDomainsCommand.parseAsync([], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('list_error');

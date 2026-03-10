@@ -1,15 +1,28 @@
 import { Command } from '@commander-js/extra-typings';
-import type { GlobalOpts } from '../../lib/client';
 import { runList } from '../../lib/actions';
-import { parseLimitOpt, buildPaginationOpts, printPaginationHint } from '../../lib/pagination';
-import { renderBroadcastsTable } from './utils';
+import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
+import {
+  buildPaginationOpts,
+  parseLimitOpt,
+  printPaginationHint,
+} from '../../lib/pagination';
+import { renderBroadcastsTable } from './utils';
 
 export const listBroadcastsCommand = new Command('list')
-  .description('List broadcasts — returns summary objects (use "get <id>" for full details including html/text)')
+  .alias('ls')
+  .description(
+    'List broadcasts — returns summary objects (use "get <id>" for full details including html/text)',
+  )
   .option('--limit <n>', 'Maximum number of results to return (1-100)', '10')
-  .option('--after <cursor>', 'Cursor for forward pagination — list items after this ID')
-  .option('--before <cursor>', 'Cursor for backward pagination — list items before this ID')
+  .option(
+    '--after <cursor>',
+    'Cursor for forward pagination — list items after this ID',
+  )
+  .option(
+    '--before <cursor>',
+    'Cursor for backward pagination — list items before this ID',
+  )
   .addHelpText(
     'after',
     buildHelpText({
@@ -23,15 +36,25 @@ To retrieve full details (html, from, subject), use: resend broadcasts get <id>`
         'resend broadcasts list --after bcast_abc --limit 10',
         'resend broadcasts list --json',
       ],
-    })
+    }),
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const limit = parseLimitOpt(opts.limit, globalOpts);
     const paginationOpts = buildPaginationOpts(limit, opts.after, opts.before);
-    await runList({
-      spinner: { loading: 'Fetching broadcasts...', success: 'Broadcasts fetched', fail: 'Failed to list broadcasts' },
-      sdkCall: (resend) => resend.broadcasts.list(paginationOpts),
-      onInteractive: (list) => { console.log(renderBroadcastsTable(list.data)); printPaginationHint(list); },
-    }, globalOpts);
+    await runList(
+      {
+        spinner: {
+          loading: 'Fetching broadcasts...',
+          success: 'Broadcasts fetched',
+          fail: 'Failed to list broadcasts',
+        },
+        sdkCall: (resend) => resend.broadcasts.list(paginationOpts),
+        onInteractive: (list) => {
+          console.log(renderBroadcastsTable(list.data));
+          printPaginationHint(list);
+        },
+      },
+      globalOpts,
+    );
   });

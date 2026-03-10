@@ -1,41 +1,47 @@
-import { describe, test, expect, mock, spyOn, afterEach } from 'bun:test';
-import { captureTestEnv, setupOutputSpies, mockExitThrow, expectExit1 } from '../../helpers';
-
-const mockWriteFileSync = mock(() => {});
-const mockMkdirSync = mock(() => {});
-const mockReadFileSync = mock(() => JSON.stringify({ servers: { other: { type: 'stdio', command: 'other', args: [] } } }));
-const mockExistsSync = mock(() => true);
-const mockReaddirSync = mock(() => []);
-const mockLstatSync = mock(() => ({ isDirectory: () => false }));
-
-mock.module('node:fs', () => ({
-  existsSync: mockExistsSync,
-  readFileSync: mockReadFileSync,
-  writeFileSync: mockWriteFileSync,
-  mkdirSync: mockMkdirSync,
-  readdirSync: mockReaddirSync,
-  lstatSync: mockLstatSync,
-  unlinkSync: mock(() => {}),
-  chmodSync: mock(() => {}),
-}));
+import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
+import * as fs from 'node:fs';
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  setupOutputSpies,
+} from '../../helpers';
 
 describe('setupVscode', () => {
   const restoreEnv = captureTestEnv();
+  let existsSyncSpy: ReturnType<typeof spyOn>;
+  let readFileSyncSpy: ReturnType<typeof spyOn>;
+  let writeFileSyncSpy: ReturnType<typeof spyOn>;
+  let mkdirSyncSpy: ReturnType<typeof spyOn>;
+
+  beforeEach(() => {
+    existsSyncSpy = spyOn(fs, 'existsSync').mockReturnValue(true);
+    readFileSyncSpy = spyOn(fs, 'readFileSync').mockReturnValue(
+      JSON.stringify({
+        servers: { other: { type: 'stdio', command: 'other', args: [] } },
+      }),
+    );
+    writeFileSyncSpy = spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+    mkdirSyncSpy = spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
+  });
+
   afterEach(() => {
     restoreEnv();
-    mockWriteFileSync.mockClear();
-    mockReadFileSync.mockClear();
-    mockExistsSync.mockClear();
-    mockMkdirSync.mockClear();
+    existsSyncSpy.mockRestore();
+    readFileSyncSpy.mockRestore();
+    writeFileSyncSpy.mockRestore();
+    mkdirSyncSpy.mockRestore();
   });
 
   test('uses "servers" key (not "mcpServers") with npx entry', async () => {
     const { restore } = setupOutputSpies();
     try {
-      const { setupVscode } = await import('../../../src/commands/setup/vscode');
+      const { setupVscode } = await import(
+        '../../../src/commands/setup/vscode'
+      );
       await setupVscode({ json: true });
 
-      const written = JSON.parse(mockWriteFileSync.mock.calls[0][1] as string);
+      const written = JSON.parse(writeFileSyncSpy.mock.calls[0][1] as string);
       expect(written.servers).toBeDefined();
       expect(written.mcpServers).toBeUndefined();
       expect(written.servers.resend.type).toBeUndefined();
@@ -50,10 +56,12 @@ describe('setupVscode', () => {
   test('preserves other entries in servers object', async () => {
     const { restore } = setupOutputSpies();
     try {
-      const { setupVscode } = await import('../../../src/commands/setup/vscode');
+      const { setupVscode } = await import(
+        '../../../src/commands/setup/vscode'
+      );
       await setupVscode({ json: true });
 
-      const written = JSON.parse(mockWriteFileSync.mock.calls[0][1] as string);
+      const written = JSON.parse(writeFileSyncSpy.mock.calls[0][1] as string);
       expect(written.servers.other).toBeDefined();
     } finally {
       restore();
@@ -63,7 +71,9 @@ describe('setupVscode', () => {
   test('outputs JSON with config_path containing .vscode/mcp.json', async () => {
     const { logSpy, restore } = setupOutputSpies();
     try {
-      const { setupVscode } = await import('../../../src/commands/setup/vscode');
+      const { setupVscode } = await import(
+        '../../../src/commands/setup/vscode'
+      );
       await setupVscode({ json: true });
 
       const output = JSON.parse(logSpy.mock.calls[0][0] as string);
@@ -76,12 +86,16 @@ describe('setupVscode', () => {
   });
 
   test('calls outputError with config_write_error on failure', async () => {
-    mockWriteFileSync.mockImplementationOnce(() => { throw new Error('EPERM'); });
+    writeFileSyncSpy.mockImplementationOnce(() => {
+      throw new Error('EPERM');
+    });
     const errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     const exitSpy = mockExitThrow();
 
     try {
-      const { setupVscode } = await import('../../../src/commands/setup/vscode');
+      const { setupVscode } = await import(
+        '../../../src/commands/setup/vscode'
+      );
       await expectExit1(() => setupVscode({ json: true }));
       const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
       expect(output).toContain('config_write_error');

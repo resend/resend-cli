@@ -1,5 +1,20 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
-import { setNonInteractive, mockExitThrow, captureTestEnv, setupOutputSpies, expectExit1 } from '../../helpers';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  mockSdkError,
+  setNonInteractive,
+  setupOutputSpies,
+} from '../../helpers';
 
 const mockVerify = mock(async () => ({
   data: { object: 'domain', id: 'test-domain-id' },
@@ -40,7 +55,9 @@ describe('domains verify command', () => {
   test('calls SDK verify with correct id', async () => {
     spies = setupOutputSpies();
 
-    const { verifyDomainCommand } = await import('../../../src/commands/domains/verify');
+    const { verifyDomainCommand } = await import(
+      '../../../src/commands/domains/verify'
+    );
     await verifyDomainCommand.parseAsync(['test-domain-id'], { from: 'user' });
 
     expect(mockVerify).toHaveBeenCalledWith('test-domain-id');
@@ -49,7 +66,9 @@ describe('domains verify command', () => {
   test('outputs JSON object in non-interactive mode (stdout not a TTY)', async () => {
     spies = setupOutputSpies();
 
-    const { verifyDomainCommand } = await import('../../../src/commands/domains/verify');
+    const { verifyDomainCommand } = await import(
+      '../../../src/commands/domains/verify'
+    );
     await verifyDomainCommand.parseAsync(['test-domain-id'], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -65,8 +84,12 @@ describe('domains verify command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { verifyDomainCommand } = await import('../../../src/commands/domains/verify');
-    await expectExit1(() => verifyDomainCommand.parseAsync(['test-domain-id'], { from: 'user' }));
+    const { verifyDomainCommand } = await import(
+      '../../../src/commands/domains/verify'
+    );
+    await expectExit1(() =>
+      verifyDomainCommand.parseAsync(['test-domain-id'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -74,13 +97,19 @@ describe('domains verify command', () => {
 
   test('errors with verify_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockVerify.mockResolvedValueOnce({ data: null, error: { message: 'Domain not found', name: 'not_found' } } as any);
+    mockVerify.mockResolvedValueOnce(
+      mockSdkError('Domain not found', 'not_found'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { verifyDomainCommand } = await import('../../../src/commands/domains/verify');
-    await expectExit1(() => verifyDomainCommand.parseAsync(['test-domain-id'], { from: 'user' }));
+    const { verifyDomainCommand } = await import(
+      '../../../src/commands/domains/verify'
+    );
+    await expectExit1(() =>
+      verifyDomainCommand.parseAsync(['test-domain-id'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('verify_error');

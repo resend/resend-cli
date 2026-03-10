@@ -1,7 +1,7 @@
 import { Command } from '@commander-js/extra-typings';
 import type { RemoveContactSegmentOptions } from 'resend';
-import type { GlobalOpts } from '../../lib/client';
 import { runWrite } from '../../lib/actions';
+import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { segmentContactIdentifier } from './utils';
 
@@ -27,12 +27,22 @@ The <segmentId> argument must be a segment UUID (not an email).`,
 
     // segmentContactIdentifier resolves UUID vs email for the ContactSegmentsBaseOptions
     // discriminated union. The spread of that union requires an explicit cast.
-    const payload = { ...segmentContactIdentifier(contactId), segmentId } as RemoveContactSegmentOptions;
+    const payload = {
+      ...segmentContactIdentifier(contactId),
+      segmentId,
+    } as RemoveContactSegmentOptions;
 
-    await runWrite({
-      spinner: { loading: 'Removing contact from segment...', success: 'Contact removed from segment', fail: 'Failed to remove contact from segment' },
-      sdkCall: (resend) => resend.contacts.segments.remove(payload),
-      errorCode: 'remove_segment_error',
-      successMsg: `Contact removed from segment: ${segmentId}`,
-    }, globalOpts);
+    await runWrite(
+      {
+        spinner: {
+          loading: 'Removing contact from segment...',
+          success: 'Contact removed from segment',
+          fail: 'Failed to remove contact from segment',
+        },
+        sdkCall: (resend) => resend.contacts.segments.remove(payload),
+        errorCode: 'remove_segment_error',
+        successMsg: `Contact removed from segment: ${segmentId}`,
+      },
+      globalOpts,
+    );
   });

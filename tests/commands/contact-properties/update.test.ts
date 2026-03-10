@@ -1,5 +1,20 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
-import { setNonInteractive, mockExitThrow, captureTestEnv, setupOutputSpies, expectExit1 } from '../../helpers';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  mockSdkError,
+  setNonInteractive,
+  setupOutputSpies,
+} from '../../helpers';
 
 const mockUpdate = mock(async () => ({
   data: { object: 'contact_property' as const, id: 'prop_abc123' },
@@ -40,11 +55,16 @@ describe('contact-properties update command', () => {
   test('updates property fallback value', async () => {
     spies = setupOutputSpies();
 
-    const { updateContactPropertyCommand } = await import('../../../src/commands/contact-properties/update');
-    await updateContactPropertyCommand.parseAsync(['prop_abc123', '--fallback-value', 'Acme Corp'], { from: 'user' });
+    const { updateContactPropertyCommand } = await import(
+      '../../../src/commands/contact-properties/update'
+    );
+    await updateContactPropertyCommand.parseAsync(
+      ['prop_abc123', '--fallback-value', 'Acme Corp'],
+      { from: 'user' },
+    );
 
     expect(mockUpdate).toHaveBeenCalledTimes(1);
-    const args = mockUpdate.mock.calls[0][0] as any;
+    const args = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.id).toBe('prop_abc123');
     expect(args.fallbackValue).toBe('Acme Corp');
   });
@@ -52,10 +72,15 @@ describe('contact-properties update command', () => {
   test('clears fallback value with --clear-fallback-value', async () => {
     spies = setupOutputSpies();
 
-    const { updateContactPropertyCommand } = await import('../../../src/commands/contact-properties/update');
-    await updateContactPropertyCommand.parseAsync(['prop_abc123', '--clear-fallback-value'], { from: 'user' });
+    const { updateContactPropertyCommand } = await import(
+      '../../../src/commands/contact-properties/update'
+    );
+    await updateContactPropertyCommand.parseAsync(
+      ['prop_abc123', '--clear-fallback-value'],
+      { from: 'user' },
+    );
 
-    const args = mockUpdate.mock.calls[0][0] as any;
+    const args = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.id).toBe('prop_abc123');
     expect(args.fallbackValue).toBeNull();
   });
@@ -65,12 +90,14 @@ describe('contact-properties update command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateContactPropertyCommand } = await import('../../../src/commands/contact-properties/update');
+    const { updateContactPropertyCommand } = await import(
+      '../../../src/commands/contact-properties/update'
+    );
     await expectExit1(() =>
       updateContactPropertyCommand.parseAsync(
         ['prop_abc123', '--fallback-value', 'Acme', '--clear-fallback-value'],
-        { from: 'user' }
-      )
+        { from: 'user' },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -80,8 +107,13 @@ describe('contact-properties update command', () => {
   test('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { updateContactPropertyCommand } = await import('../../../src/commands/contact-properties/update');
-    await updateContactPropertyCommand.parseAsync(['prop_abc123', '--fallback-value', 'Test'], { from: 'user' });
+    const { updateContactPropertyCommand } = await import(
+      '../../../src/commands/contact-properties/update'
+    );
+    await updateContactPropertyCommand.parseAsync(
+      ['prop_abc123', '--fallback-value', 'Test'],
+      { from: 'user' },
+    );
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
@@ -94,8 +126,14 @@ describe('contact-properties update command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateContactPropertyCommand } = await import('../../../src/commands/contact-properties/update');
-    await expectExit1(() => updateContactPropertyCommand.parseAsync(['prop_abc123'], { from: 'user' }));
+    const { updateContactPropertyCommand } = await import(
+      '../../../src/commands/contact-properties/update'
+    );
+    await expectExit1(() =>
+      updateContactPropertyCommand.parseAsync(['prop_abc123'], {
+        from: 'user',
+      }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('no_changes');
@@ -106,8 +144,14 @@ describe('contact-properties update command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateContactPropertyCommand } = await import('../../../src/commands/contact-properties/update');
-    await expectExit1(() => updateContactPropertyCommand.parseAsync(['prop_abc123'], { from: 'user' }));
+    const { updateContactPropertyCommand } = await import(
+      '../../../src/commands/contact-properties/update'
+    );
+    await expectExit1(() =>
+      updateContactPropertyCommand.parseAsync(['prop_abc123'], {
+        from: 'user',
+      }),
+    );
 
     expect(mockUpdate).not.toHaveBeenCalled();
   });
@@ -119,9 +163,14 @@ describe('contact-properties update command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateContactPropertyCommand } = await import('../../../src/commands/contact-properties/update');
+    const { updateContactPropertyCommand } = await import(
+      '../../../src/commands/contact-properties/update'
+    );
     await expectExit1(() =>
-      updateContactPropertyCommand.parseAsync(['prop_abc123', '--fallback-value', 'Test'], { from: 'user' })
+      updateContactPropertyCommand.parseAsync(
+        ['prop_abc123', '--fallback-value', 'Test'],
+        { from: 'user' },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -130,14 +179,21 @@ describe('contact-properties update command', () => {
 
   test('errors with update_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockUpdate.mockResolvedValueOnce({ data: null, error: { message: 'Property not found', name: 'not_found' } } as any);
+    mockUpdate.mockResolvedValueOnce(
+      mockSdkError('Property not found', 'not_found'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { updateContactPropertyCommand } = await import('../../../src/commands/contact-properties/update');
+    const { updateContactPropertyCommand } = await import(
+      '../../../src/commands/contact-properties/update'
+    );
     await expectExit1(() =>
-      updateContactPropertyCommand.parseAsync(['nonexistent_id', '--fallback-value', 'Test'], { from: 'user' })
+      updateContactPropertyCommand.parseAsync(
+        ['nonexistent_id', '--fallback-value', 'Test'],
+        { from: 'user' },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

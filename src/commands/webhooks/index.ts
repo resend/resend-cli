@@ -1,10 +1,10 @@
 import { Command } from '@commander-js/extra-typings';
 import { buildHelpText } from '../../lib/help-text';
 import { createWebhookCommand } from './create';
+import { deleteWebhookCommand } from './delete';
 import { getWebhookCommand } from './get';
 import { listWebhooksCommand } from './list';
 import { updateWebhookCommand } from './update';
-import { deleteWebhookCommand } from './delete';
 
 export const webhooksCommand = new Command('webhooks')
   .description('Manage webhook endpoints for real-time event notifications')
@@ -35,10 +35,10 @@ Signature verification (Svix):
         'resend webhooks update wh_abc123 --status disabled',
         'resend webhooks delete wh_abc123 --yes',
       ],
-    })
+    }),
   )
   .addCommand(createWebhookCommand)
   .addCommand(getWebhookCommand)
-  .addCommand(listWebhooksCommand)
+  .addCommand(listWebhooksCommand, { isDefault: true })
   .addCommand(updateWebhookCommand)
   .addCommand(deleteWebhookCommand);

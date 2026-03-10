@@ -1,12 +1,14 @@
 import type { Resend } from 'resend';
 import type { GlobalOpts } from './client';
 import { requireClient } from './client';
+import { outputResult } from './output';
 import { confirmDelete } from './prompts';
 import { withSpinner } from './spinner';
-import { outputResult } from './output';
 import { isInteractive } from './tty';
 
-type SdkCall<T> = (resend: Resend) => Promise<{ data: T | null; error: { message: string } | null }>;
+type SdkCall<T> = (
+  resend: Resend,
+) => Promise<{ data: T | null; error: { message: string } | null }>;
 type SpinnerMessages = { loading: string; success: string; fail: string };
 
 /**
@@ -22,7 +24,12 @@ export async function runGet<T>(
   globalOpts: GlobalOpts,
 ): Promise<void> {
   const resend = requireClient(globalOpts);
-  const data = await withSpinner(config.spinner, () => config.sdkCall(resend), 'fetch_error', globalOpts);
+  const data = await withSpinner(
+    config.spinner,
+    () => config.sdkCall(resend),
+    'fetch_error',
+    globalOpts,
+  );
   if (!globalOpts.json && isInteractive()) {
     config.onInteractive(data);
   } else {
@@ -47,12 +54,22 @@ export async function runDelete(
   globalOpts: GlobalOpts,
 ): Promise<void> {
   const resend = requireClient(globalOpts);
-  if (!skipConfirm) await confirmDelete(id, config.confirmMessage, globalOpts);
-  await withSpinner(config.spinner, () => config.sdkCall(resend), 'delete_error', globalOpts);
+  if (!skipConfirm) {
+    await confirmDelete(id, config.confirmMessage, globalOpts);
+  }
+  await withSpinner(
+    config.spinner,
+    () => config.sdkCall(resend),
+    'delete_error',
+    globalOpts,
+  );
   if (!globalOpts.json && isInteractive()) {
     console.log(config.successMsg);
   } else {
-    outputResult({ object: config.object, id, deleted: true }, { json: globalOpts.json });
+    outputResult(
+      { object: config.object, id, deleted: true },
+      { json: globalOpts.json },
+    );
   }
 }
 
@@ -69,7 +86,12 @@ export async function runCreate<T>(
   globalOpts: GlobalOpts,
 ): Promise<void> {
   const resend = requireClient(globalOpts);
-  const data = await withSpinner(config.spinner, () => config.sdkCall(resend), 'create_error', globalOpts);
+  const data = await withSpinner(
+    config.spinner,
+    () => config.sdkCall(resend),
+    'create_error',
+    globalOpts,
+  );
   if (!globalOpts.json && isInteractive()) {
     config.onInteractive(data);
   } else {
@@ -92,7 +114,12 @@ export async function runWrite<T>(
   globalOpts: GlobalOpts,
 ): Promise<void> {
   const resend = requireClient(globalOpts);
-  const data = await withSpinner(config.spinner, () => config.sdkCall(resend), config.errorCode, globalOpts);
+  const data = await withSpinner(
+    config.spinner,
+    () => config.sdkCall(resend),
+    config.errorCode,
+    globalOpts,
+  );
   if (!globalOpts.json && isInteractive()) {
     console.log(config.successMsg);
   } else {

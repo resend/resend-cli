@@ -8,8 +8,12 @@ export interface OutputOptions {
 }
 
 function shouldOutputJson(json?: boolean): boolean {
-  if (json) return true;
-  if (!process.stdout.isTTY) return true;
+  if (json) {
+    return true;
+  }
+  if (!process.stdout.isTTY) {
+    return true;
+  }
   return false;
 }
 
@@ -30,12 +34,18 @@ export function outputResult(data: unknown, opts: OutputOptions = {}): void {
 
 export function outputError(
   error: { message: string; code?: string },
-  opts: OutputOptions = {}
+  opts: OutputOptions = {},
 ): never {
   const exitCode = opts.exitCode ?? 1;
 
   if (shouldOutputJson(opts.json)) {
-    console.error(JSON.stringify({ error: { message: error.message, code: error.code ?? 'unknown' } }, null, 2));
+    console.error(
+      JSON.stringify(
+        { error: { message: error.message, code: error.code ?? 'unknown' } },
+        null,
+        2,
+      ),
+    );
   } else {
     console.error(`Error: ${error.message}`);
   }

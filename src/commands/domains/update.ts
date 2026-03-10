@@ -1,15 +1,20 @@
 import { Command, Option } from '@commander-js/extra-typings';
 import type { UpdateDomainsOptions } from 'resend';
-import type { GlobalOpts } from '../../lib/client';
 import { runWrite } from '../../lib/actions';
-import { outputError } from '../../lib/output';
+import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
+import { outputError } from '../../lib/output';
 
 export const updateDomainCommand = new Command('update')
-  .description('Update domain settings: TLS mode, open tracking, and click tracking')
+  .description(
+    'Update domain settings: TLS mode, open tracking, and click tracking',
+  )
   .argument('<id>', 'Domain ID')
   .addOption(
-    new Option('--tls <mode>', 'TLS mode').choices(['opportunistic', 'enforced'] as const)
+    new Option('--tls <mode>', 'TLS mode').choices([
+      'opportunistic',
+      'enforced',
+    ] as const),
   )
   .option('--open-tracking', 'Enable open tracking')
   .option('--no-open-tracking', 'Disable open tracking')
@@ -25,7 +30,7 @@ export const updateDomainCommand = new Command('update')
         'resend domains update <id> --open-tracking --click-tracking',
         'resend domains update <id> --no-open-tracking --json',
       ],
-    })
+    }),
   )
   .action(async (id, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
@@ -35,22 +40,36 @@ export const updateDomainCommand = new Command('update')
     if (!tls && openTracking === undefined && clickTracking === undefined) {
       outputError(
         {
-          message: 'Provide at least one option to update: --tls, --open-tracking, or --click-tracking.',
+          message:
+            'Provide at least one option to update: --tls, --open-tracking, or --click-tracking.',
           code: 'no_changes',
         },
-        { json: globalOpts.json }
+        { json: globalOpts.json },
       );
     }
 
     const payload: UpdateDomainsOptions = { id };
-    if (tls) payload.tls = tls;
-    if (openTracking !== undefined) payload.openTracking = openTracking;
-    if (clickTracking !== undefined) payload.clickTracking = clickTracking;
+    if (tls) {
+      payload.tls = tls;
+    }
+    if (openTracking !== undefined) {
+      payload.openTracking = openTracking;
+    }
+    if (clickTracking !== undefined) {
+      payload.clickTracking = clickTracking;
+    }
 
-    await runWrite({
-      spinner: { loading: 'Updating domain...', success: 'Domain updated', fail: 'Failed to update domain' },
-      sdkCall: (resend) => resend.domains.update(payload),
-      errorCode: 'update_error',
-      successMsg: `Domain updated: ${id}`,
-    }, globalOpts);
+    await runWrite(
+      {
+        spinner: {
+          loading: 'Updating domain...',
+          success: 'Domain updated',
+          fail: 'Failed to update domain',
+        },
+        sdkCall: (resend) => resend.domains.update(payload),
+        errorCode: 'update_error',
+        successMsg: `Domain updated: ${id}`,
+      },
+      globalOpts,
+    );
   });

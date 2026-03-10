@@ -1,11 +1,11 @@
-import { Command } from '@commander-js/extra-typings';
-import { join } from 'node:path';
-import { homedir } from 'node:os';
 import { mkdirSync, writeFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
-import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
+import { errorMessage, outputError, outputResult } from '../../lib/output';
+import { isInteractive } from '../../lib/tty';
 
 const SKILL_CONTENT = `---
 name: resend
@@ -27,7 +27,7 @@ export RESEND_API_KEY=re_your_key_here
 Or store it permanently:
 
 \`\`\`
-resend auth login
+resend login
 \`\`\`
 
 ## Key Commands
@@ -110,7 +110,10 @@ export async function setupOpenclaw(globalOpts: GlobalOpts): Promise<void> {
     writeFileSync(skillPath, SKILL_CONTENT, 'utf8');
   } catch (err) {
     outputError(
-      { message: `Failed to write OpenClaw skill: ${errorMessage(err, 'unknown error')}`, code: 'config_write_error' },
+      {
+        message: `Failed to write OpenClaw skill: ${errorMessage(err, 'unknown error')}`,
+        code: 'config_write_error',
+      },
       { json: globalOpts.json },
     );
   }
@@ -118,33 +121,38 @@ export async function setupOpenclaw(globalOpts: GlobalOpts): Promise<void> {
   if (!globalOpts.json && isInteractive()) {
     console.log(`  ✔ OpenClaw skill created: ${skillPath}`);
   } else {
-    outputResult({ configured: true, tool: 'openclaw', config_path: skillPath }, { json: globalOpts.json });
+    outputResult(
+      { configured: true, tool: 'openclaw', config_path: skillPath },
+      { json: globalOpts.json },
+    );
   }
 }
 
 export const openclawCommand = new Command('openclaw')
-  .description('Create ~/.openclaw/skills/resend/SKILL.md skill file for OpenClaw')
-  .addHelpText('after', buildHelpText({
-    setup: true,
-    context: `What it does:
+  .description(
+    'Create ~/.openclaw/skills/resend/SKILL.md skill file for OpenClaw',
+  )
+  .addHelpText(
+    'after',
+    buildHelpText({
+      setup: true,
+      context: `What it does:
   Creates ~/.openclaw/skills/resend/SKILL.md — a skill file that teaches the OpenClaw agent
   how to authenticate and use the Resend CLI for sending email and managing resources.
 
 Skill file path: ~/.openclaw/skills/resend/SKILL.md
 
 The skill file covers:
-  - Authentication via RESEND_API_KEY or \`resend auth login\`
+  - Authentication via RESEND_API_KEY or \`resend login\`
   - Sending emails (plain text and HTML)
   - Managing domains, contacts, segments, and broadcasts
   - JSON output format for scripting
   - Health check via \`resend doctor\``,
-    output: `  {"configured":true,"tool":"openclaw","config_path":"~/.openclaw/skills/resend/SKILL.md"}`,
-    errorCodes: ['config_write_error'],
-    examples: [
-      'resend setup openclaw',
-      'resend setup openclaw --json',
-    ],
-  }))
+      output: `  {"configured":true,"tool":"openclaw","config_path":"~/.openclaw/skills/resend/SKILL.md"}`,
+      errorCodes: ['config_write_error'],
+      examples: ['resend setup openclaw', 'resend setup openclaw --json'],
+    }),
+  )
   .action((_opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     return setupOpenclaw(globalOpts);

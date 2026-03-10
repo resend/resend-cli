@@ -1,8 +1,8 @@
 import { Command } from '@commander-js/extra-typings';
-import { sendCommand } from './send';
+import { buildHelpText } from '../../lib/help-text';
 import { batchCommand } from './batch';
 import { receivingCommand } from './receiving/index';
-import { buildHelpText } from '../../lib/help-text';
+import { sendCommand } from './send';
 
 export const emailsCommand = new Command('emails')
   .description('Send and manage emails')
@@ -17,7 +17,7 @@ export const emailsCommand = new Command('emails')
         'resend emails receiving attachments <email-id>',
         'resend emails receiving attachment <email-id> <attachment-id>',
       ],
-    })
+    }),
   )
   .addCommand(sendCommand)
   .addCommand(batchCommand)

@@ -1,5 +1,5 @@
-import { describe, test, expect, spyOn, afterEach } from 'bun:test';
-import { writeFileSync, unlinkSync } from 'node:fs';
+import { afterEach, describe, expect, spyOn, test } from 'bun:test';
+import { unlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expectExit1, mockExitThrow } from '../helpers';
 
@@ -16,7 +16,11 @@ describe('readFile', () => {
     errorSpy = undefined;
     exitSpy?.mockRestore();
     exitSpy = undefined;
-    try { unlinkSync(tmpFile); } catch { /* already removed */ }
+    try {
+      unlinkSync(tmpFile);
+    } catch {
+      /* already removed */
+    }
   });
 
   test('reads file content and returns it as a string', () => {
@@ -38,10 +42,12 @@ describe('readFile', () => {
     exitSpy = mockExitThrow();
 
     const { readFile } = require('../../src/lib/files');
-    await expectExit1(async () => readFile('/nonexistent/path/data.txt', globalOpts));
+    await expectExit1(async () =>
+      readFile('/nonexistent/path/data.txt', globalOpts),
+    );
 
-    const output = errorSpy!.mock.calls.map((c) => c[0]).join(' ');
-    expect(output).toContain('file_read_error');
+    const output = errorSpy?.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('Failed to read file:');
   });
 
   test('outputs JSON error with file_read_error code when json option is true', async () => {
@@ -51,7 +57,7 @@ describe('readFile', () => {
     const { readFile } = require('../../src/lib/files');
     await expectExit1(async () => readFile('/nonexistent/file.txt', jsonOpts));
 
-    const raw = errorSpy!.mock.calls.map((c) => c[0]).join(' ');
+    const raw = errorSpy?.mock.calls.map((c) => c[0]).join(' ');
     const parsed = JSON.parse(raw);
     expect(parsed.error.code).toBe('file_read_error');
     expect(parsed.error.message).toContain('Failed to read file:');

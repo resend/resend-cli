@@ -1,18 +1,20 @@
-import { Command } from '@commander-js/extra-typings';
 import { execFileSync } from 'node:child_process';
-import { join } from 'node:path';
 import { homedir } from 'node:os';
+import { join } from 'node:path';
+import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
-import { isInteractive } from '../../lib/tty';
-import { buildHelpText } from '../../lib/help-text';
 import { resolveApiKey } from '../../lib/config';
+import { buildHelpText } from '../../lib/help-text';
+import { errorMessage, outputError, outputResult } from '../../lib/output';
+import { isInteractive } from '../../lib/tty';
 import { mergeJsonConfig } from './utils';
 
 export async function setupClaudeCode(globalOpts: GlobalOpts): Promise<void> {
   const resolved = resolveApiKey(globalOpts.apiKey);
   const mcpAddArgs = ['mcp', 'add', 'resend'];
-  if (resolved?.key) mcpAddArgs.push('-e', `RESEND_API_KEY=${resolved.key}`);
+  if (resolved?.key) {
+    mcpAddArgs.push('-e', `RESEND_API_KEY=${resolved.key}`);
+  }
   mcpAddArgs.push('--', 'npx', '-y', 'resend-mcp');
 
   try {
@@ -58,11 +60,18 @@ export async function setupClaudeCode(globalOpts: GlobalOpts): Promise<void> {
     }
 
     if (!globalOpts.json && isInteractive()) {
-      console.log(`  ✔ Claude Code configured via ~/.claude.json (install \`claude\` CLI for full integration)`);
+      console.log(
+        `  ✔ Claude Code configured via ~/.claude.json (install \`claude\` CLI for full integration)`,
+      );
       console.log('  Install Claude Code: https://claude.ai/download');
     } else {
       outputResult(
-        { configured: true, tool: 'claude-code', method: 'direct_write', config_path: configPath },
+        {
+          configured: true,
+          tool: 'claude-code',
+          method: 'direct_write',
+          config_path: configPath,
+        },
         { json: globalOpts.json },
       );
     }
@@ -73,15 +82,20 @@ export async function setupClaudeCode(globalOpts: GlobalOpts): Promise<void> {
     console.log('  ✔ Claude Code configured via `claude mcp add`');
     console.log('  Run `claude mcp list` to verify.');
   } else {
-    outputResult({ configured: true, tool: 'claude-code', method: 'mcp_add' }, { json: globalOpts.json });
+    outputResult(
+      { configured: true, tool: 'claude-code', method: 'mcp_add' },
+      { json: globalOpts.json },
+    );
   }
 }
 
 export const claudeCodeCommand = new Command('claude-code')
   .description('Register Resend as an MCP server in Claude Code')
-  .addHelpText('after', buildHelpText({
-    setup: true,
-    context: `What it does:
+  .addHelpText(
+    'after',
+    buildHelpText({
+      setup: true,
+      context: `What it does:
   Runs \`claude mcp add resend -- npx -y resend-mcp\` using the official Claude Code CLI.
   If the \`claude\` binary is not installed, falls back to writing ~/.claude.json directly.
 
@@ -102,13 +116,11 @@ Fallback method (no claude CLI):
   }
 
 Install Claude Code CLI: https://claude.ai/download`,
-    output: `  Primary:  {"configured":true,"tool":"claude-code","method":"mcp_add"}\n  Fallback: {"configured":true,"tool":"claude-code","method":"direct_write","config_path":"~/.claude.json"}`,
-    errorCodes: ['claude_mcp_add_failed', 'config_write_error'],
-    examples: [
-      'resend setup claude-code',
-      'resend setup claude-code --json',
-    ],
-  }))
+      output: `  Primary:  {"configured":true,"tool":"claude-code","method":"mcp_add"}\n  Fallback: {"configured":true,"tool":"claude-code","method":"direct_write","config_path":"~/.claude.json"}`,
+      errorCodes: ['claude_mcp_add_failed', 'config_write_error'],
+      examples: ['resend setup claude-code', 'resend setup claude-code --json'],
+    }),
+  )
   .action((_opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     return setupClaudeCode(globalOpts);

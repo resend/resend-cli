@@ -1,12 +1,15 @@
 import { Command } from '@commander-js/extra-typings';
-import type { GlobalOpts } from '../../lib/client';
 import { runDelete } from '../../lib/actions';
+import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 
 export const deleteTopicCommand = new Command('delete')
   .description('Delete a topic')
   .argument('<id>', 'Topic UUID')
-  .option('--yes', 'Skip the confirmation prompt (required in non-interactive mode)')
+  .option(
+    '--yes',
+    'Skip the confirmation prompt (required in non-interactive mode)',
+  )
   .addHelpText(
     'after',
     buildHelpText({
@@ -24,11 +27,20 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
   )
   .action(async (id, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    await runDelete(id, !!opts.yes, {
-      confirmMessage: `Delete topic ${id}? All contact subscriptions and broadcast associations will be removed.`,
-      spinner: { loading: 'Deleting topic...', success: 'Topic deleted', fail: 'Failed to delete topic' },
-      object: 'topic',
-      successMsg: 'Topic deleted.',
-      sdkCall: (resend) => resend.topics.remove(id),
-    }, globalOpts);
+    await runDelete(
+      id,
+      !!opts.yes,
+      {
+        confirmMessage: `Delete topic ${id}?\nAll contact subscriptions and broadcast associations will be removed.`,
+        spinner: {
+          loading: 'Deleting topic...',
+          success: 'Topic deleted',
+          fail: 'Failed to delete topic',
+        },
+        object: 'topic',
+        successMsg: 'Topic deleted.',
+        sdkCall: (resend) => resend.topics.remove(id),
+      },
+      globalOpts,
+    );
   });

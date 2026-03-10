@@ -1,10 +1,19 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
 import {
-  setNonInteractive,
-  mockExitThrow,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
   captureTestEnv,
-  setupOutputSpies,
   expectExit1,
+  mockExitThrow,
+  mockSdkError,
+  setNonInteractive,
+  setupOutputSpies,
 } from '../../helpers';
 
 const mockGet = mock(async () => ({
@@ -52,7 +61,9 @@ describe('topics get command', () => {
   test('calls SDK with the provided topic ID', async () => {
     spies = setupOutputSpies();
 
-    const { getTopicCommand } = await import('../../../src/commands/topics/get');
+    const { getTopicCommand } = await import(
+      '../../../src/commands/topics/get'
+    );
     await getTopicCommand.parseAsync(['top_abc123'], { from: 'user' });
 
     expect(mockGet).toHaveBeenCalledTimes(1);
@@ -62,7 +73,9 @@ describe('topics get command', () => {
   test('outputs JSON topic data when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { getTopicCommand } = await import('../../../src/commands/topics/get');
+    const { getTopicCommand } = await import(
+      '../../../src/commands/topics/get'
+    );
     await getTopicCommand.parseAsync(['top_abc123'], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -81,8 +94,12 @@ describe('topics get command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { getTopicCommand } = await import('../../../src/commands/topics/get');
-    await expectExit1(() => getTopicCommand.parseAsync(['top_abc123'], { from: 'user' }));
+    const { getTopicCommand } = await import(
+      '../../../src/commands/topics/get'
+    );
+    await expectExit1(() =>
+      getTopicCommand.parseAsync(['top_abc123'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -90,13 +107,17 @@ describe('topics get command', () => {
 
   test('errors with fetch_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockGet.mockResolvedValueOnce({ data: null, error: { message: 'Topic not found', name: 'not_found' } } as any);
+    mockGet.mockResolvedValueOnce(mockSdkError('Topic not found', 'not_found'));
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { getTopicCommand } = await import('../../../src/commands/topics/get');
-    await expectExit1(() => getTopicCommand.parseAsync(['top_nonexistent'], { from: 'user' }));
+    const { getTopicCommand } = await import(
+      '../../../src/commands/topics/get'
+    );
+    await expectExit1(() =>
+      getTopicCommand.parseAsync(['top_nonexistent'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('fetch_error');

@@ -1,9 +1,9 @@
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import type { GlobalOpts } from '../../lib/client';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
-import { isInteractive } from '../../lib/tty';
 import { resolveApiKey } from '../../lib/config';
+import { errorMessage, outputError, outputResult } from '../../lib/output';
+import { isInteractive } from '../../lib/tty';
 
 /**
  * Read an existing JSON config, apply `merge`, write back.
@@ -18,7 +18,10 @@ export function mergeJsonConfig(
   let existing: Record<string, unknown> = {};
   if (existsSync(filePath)) {
     try {
-      existing = JSON.parse(readFileSync(filePath, 'utf8')) as Record<string, unknown>;
+      existing = JSON.parse(readFileSync(filePath, 'utf8')) as Record<
+        string,
+        unknown
+      >;
     } catch {
       // Malformed JSON — start fresh rather than error
       existing = {};
@@ -26,7 +29,7 @@ export function mergeJsonConfig(
   }
   const updated = merge(existing);
   mkdirSync(dirname(filePath), { recursive: true });
-  writeFileSync(filePath, JSON.stringify(updated, null, 2) + '\n', 'utf8');
+  writeFileSync(filePath, `${JSON.stringify(updated, null, 2)}\n`, 'utf8');
 }
 
 /**
@@ -57,15 +60,23 @@ export async function writeMcpJsonConfig(
     }));
   } catch (err) {
     outputError(
-      { message: `Failed to write ${toolLabel} config: ${errorMessage(err, 'unknown error')}`, code: 'config_write_error' },
+      {
+        message: `Failed to write ${toolLabel} config: ${errorMessage(err, 'unknown error')}`,
+        code: 'config_write_error',
+      },
       { json: globalOpts.json },
     );
   }
 
   if (!globalOpts.json && isInteractive()) {
     console.log(`  ✔ ${toolLabel} configured: ${configPath}`);
-    if (restartHint) console.log(`  ${restartHint}`);
+    if (restartHint) {
+      console.log(`  ${restartHint}`);
+    }
   } else {
-    outputResult({ configured: true, tool: toolId, config_path: configPath }, { json: globalOpts.json });
+    outputResult(
+      { configured: true, tool: toolId, config_path: configPath },
+      { json: globalOpts.json },
+    );
   }
 }

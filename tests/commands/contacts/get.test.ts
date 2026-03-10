@@ -1,5 +1,20 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
-import { setNonInteractive, mockExitThrow, captureTestEnv, setupOutputSpies, expectExit1 } from '../../helpers';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  mockSdkError,
+  setNonInteractive,
+  setupOutputSpies,
+} from '../../helpers';
 
 const mockGet = mock(async () => ({
   data: {
@@ -49,7 +64,9 @@ describe('contacts get command', () => {
   test('calls SDK with contact ID', async () => {
     spies = setupOutputSpies();
 
-    const { getContactCommand } = await import('../../../src/commands/contacts/get');
+    const { getContactCommand } = await import(
+      '../../../src/commands/contacts/get'
+    );
     await getContactCommand.parseAsync(['contact_abc123'], { from: 'user' });
 
     expect(mockGet).toHaveBeenCalledTimes(1);
@@ -59,7 +76,9 @@ describe('contacts get command', () => {
   test('calls SDK with email address', async () => {
     spies = setupOutputSpies();
 
-    const { getContactCommand } = await import('../../../src/commands/contacts/get');
+    const { getContactCommand } = await import(
+      '../../../src/commands/contacts/get'
+    );
     await getContactCommand.parseAsync(['jane@example.com'], { from: 'user' });
 
     expect(mockGet.mock.calls[0][0]).toBe('jane@example.com');
@@ -68,7 +87,9 @@ describe('contacts get command', () => {
   test('outputs JSON when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { getContactCommand } = await import('../../../src/commands/contacts/get');
+    const { getContactCommand } = await import(
+      '../../../src/commands/contacts/get'
+    );
     await getContactCommand.parseAsync(['contact_abc123'], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -84,8 +105,12 @@ describe('contacts get command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { getContactCommand } = await import('../../../src/commands/contacts/get');
-    await expectExit1(() => getContactCommand.parseAsync(['contact_abc123'], { from: 'user' }));
+    const { getContactCommand } = await import(
+      '../../../src/commands/contacts/get'
+    );
+    await expectExit1(() =>
+      getContactCommand.parseAsync(['contact_abc123'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -93,13 +118,19 @@ describe('contacts get command', () => {
 
   test('errors with fetch_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockGet.mockResolvedValueOnce({ data: null, error: { message: 'Contact not found', name: 'not_found' } } as any);
+    mockGet.mockResolvedValueOnce(
+      mockSdkError('Contact not found', 'not_found'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { getContactCommand } = await import('../../../src/commands/contacts/get');
-    await expectExit1(() => getContactCommand.parseAsync(['nonexistent_id'], { from: 'user' }));
+    const { getContactCommand } = await import(
+      '../../../src/commands/contacts/get'
+    );
+    await expectExit1(() =>
+      getContactCommand.parseAsync(['nonexistent_id'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('fetch_error');

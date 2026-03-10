@@ -1,20 +1,20 @@
-import { describe, test, expect, mock, afterEach } from 'bun:test';
-import { captureTestEnv, setupOutputSpies, mockExitThrow, expectExit1 } from '../../helpers';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import * as fs from 'node:fs';
 import type { InstallTarget } from '../../../src/commands/skills/install';
-
-const mockWriteFileSync = mock(() => {});
-const mockMkdirSync = mock(() => {});
-
-mock.module('node:fs', () => ({
-  mkdirSync: mockMkdirSync,
-  writeFileSync: mockWriteFileSync,
-  existsSync: mock(() => false),
-  readFileSync: mock(() => '{}'),
-  readdirSync: mock(() => []),
-  lstatSync: mock(() => ({ isDirectory: () => false })),
-  unlinkSync: mock(() => {}),
-  chmodSync: mock(() => {}),
-}));
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  setupOutputSpies,
+} from '../../helpers';
 
 const MOCK_TREE = {
   tree: [
@@ -35,25 +35,42 @@ const MOCK_TREE = {
   ],
 };
 
-const SINGLE_TARGET: InstallTarget[] = [{ name: 'test', dir: '/project/.claude/skills' }];
+const SINGLE_TARGET: InstallTarget[] = [
+  { name: 'test', dir: '/project/.claude/skills' },
+];
 
 function makeMockFetch(treeData = MOCK_TREE, fileContent = '# skill content') {
   return mock(async (url: string | URL | Request) => {
     if (String(url).includes('git/trees')) {
-      return { ok: true, json: async () => treeData, text: async () => '' } as Response;
+      return {
+        ok: true,
+        json: async () => treeData,
+        text: async () => '',
+      } as Response;
     }
-    return { ok: true, text: async () => fileContent, json: async () => ({}) } as Response;
+    return {
+      ok: true,
+      text: async () => fileContent,
+      json: async () => ({}),
+    } as Response;
   });
 }
 
 describe('installSkills', () => {
   const restoreEnv = captureTestEnv();
   const originalFetch = globalThis.fetch;
+  let writeFileSyncSpy: ReturnType<typeof spyOn>;
+  let mkdirSyncSpy: ReturnType<typeof spyOn>;
+
+  beforeEach(() => {
+    writeFileSyncSpy = spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+    mkdirSyncSpy = spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
+  });
 
   afterEach(() => {
     restoreEnv();
-    mockWriteFileSync.mockClear();
-    mockMkdirSync.mockClear();
+    writeFileSyncSpy.mockRestore();
+    mkdirSyncSpy.mockRestore();
     globalThis.fetch = originalFetch;
   });
 
@@ -61,11 +78,13 @@ describe('installSkills', () => {
     globalThis.fetch = makeMockFetch();
     const { logSpy, restore } = setupOutputSpies();
     try {
-      const { installSkills } = await import('../../../src/commands/skills/install');
+      const { installSkills } = await import(
+        '../../../src/commands/skills/install'
+      );
       await installSkills(SINGLE_TARGET, { json: true });
 
       // 12 items in tree, 5 excluded → 7 actual files
-      expect(mockWriteFileSync).toHaveBeenCalledTimes(7);
+      expect(writeFileSyncSpy).toHaveBeenCalledTimes(7);
 
       const output = JSON.parse(logSpy.mock.calls[0][0] as string);
       expect(output.installed).toEqual([
@@ -76,7 +95,9 @@ describe('installSkills', () => {
         'templates',
       ]);
       expect(output.files).toBe(7);
-      expect(output.targets).toEqual([{ name: 'test', dir: '/project/.claude/skills' }]);
+      expect(output.targets).toEqual([
+        { name: 'test', dir: '/project/.claude/skills' },
+      ]);
     } finally {
       restore();
     }
@@ -90,11 +111,13 @@ describe('installSkills', () => {
       { name: 'agents', dir: '/project/.agents/skills' },
     ];
     try {
-      const { installSkills } = await import('../../../src/commands/skills/install');
+      const { installSkills } = await import(
+        '../../../src/commands/skills/install'
+      );
       await installSkills(multiTargets, { json: true });
 
       // 7 files × 2 targets
-      expect(mockWriteFileSync).toHaveBeenCalledTimes(14);
+      expect(writeFileSyncSpy).toHaveBeenCalledTimes(14);
     } finally {
       restore();
     }
@@ -104,14 +127,22 @@ describe('installSkills', () => {
     globalThis.fetch = makeMockFetch();
     const { restore } = setupOutputSpies();
     try {
-      const { installSkills } = await import('../../../src/commands/skills/install');
+      const { installSkills } = await import(
+        '../../../src/commands/skills/install'
+      );
       await installSkills(SINGLE_TARGET, { json: true });
 
-      const writtenPaths = mockWriteFileSync.mock.calls.map((c) => c[0] as string);
-      expect(writtenPaths.some((p) => p.includes('resend/SKILL.md'))).toBe(true);
+      const writtenPaths = writeFileSyncSpy.mock.calls.map(
+        (c) => c[0] as string,
+      );
+      expect(writtenPaths.some((p) => p.includes('resend/SKILL.md'))).toBe(
+        true,
+      );
       // No file written directly as /SKILL.md at root of skillsDir
       expect(
-        writtenPaths.some((p) => p.endsWith(`/project/.claude/skills/SKILL.md`)),
+        writtenPaths.some((p) =>
+          p.endsWith(`/project/.claude/skills/SKILL.md`),
+        ),
       ).toBe(false);
     } finally {
       restore();
@@ -122,10 +153,12 @@ describe('installSkills', () => {
     globalThis.fetch = makeMockFetch();
     const { restore } = setupOutputSpies();
     try {
-      const { installSkills } = await import('../../../src/commands/skills/install');
+      const { installSkills } = await import(
+        '../../../src/commands/skills/install'
+      );
       await installSkills(SINGLE_TARGET, { json: true });
 
-      const mkdirCalls = mockMkdirSync.mock.calls.map((c) => c[0] as string);
+      const mkdirCalls = mkdirSyncSpy.mock.calls.map((c) => c[0] as string);
       expect(mkdirCalls.some((p) => p.includes('send-email'))).toBe(true);
       expect(mkdirCalls.some((p) => p.includes('resend-inbound'))).toBe(true);
     } finally {
@@ -135,12 +168,19 @@ describe('installSkills', () => {
 
   test('exits with fetch_error when GitHub tree API fails', async () => {
     globalThis.fetch = mock(
-      async () => ({ ok: false, status: 503, statusText: 'Service Unavailable' }) as Response,
+      async () =>
+        ({
+          ok: false,
+          status: 503,
+          statusText: 'Service Unavailable',
+        }) as Response,
     );
     const { restore } = setupOutputSpies();
     const exitSpy = mockExitThrow();
     try {
-      const { installSkills } = await import('../../../src/commands/skills/install');
+      const { installSkills } = await import(
+        '../../../src/commands/skills/install'
+      );
       await expectExit1(() => installSkills(SINGLE_TARGET, { json: true }));
     } finally {
       restore();
@@ -152,19 +192,29 @@ describe('installSkills', () => {
     let callCount = 0;
     globalThis.fetch = mock(async (url: string | URL | Request) => {
       if (String(url).includes('git/trees')) {
-        return { ok: true, json: async () => MOCK_TREE, text: async () => '' } as Response;
+        return {
+          ok: true,
+          json: async () => MOCK_TREE,
+          text: async () => '',
+        } as Response;
       }
       callCount++;
       // fail on first file download
       if (callCount === 1) {
         return { ok: false, status: 404, statusText: 'Not Found' } as Response;
       }
-      return { ok: true, text: async () => '# content', json: async () => ({}) } as Response;
+      return {
+        ok: true,
+        text: async () => '# content',
+        json: async () => ({}),
+      } as Response;
     });
     const { restore } = setupOutputSpies();
     const exitSpy = mockExitThrow();
     try {
-      const { installSkills } = await import('../../../src/commands/skills/install');
+      const { installSkills } = await import(
+        '../../../src/commands/skills/install'
+      );
       await expectExit1(() => installSkills(SINGLE_TARGET, { json: true }));
     } finally {
       restore();
@@ -174,13 +224,15 @@ describe('installSkills', () => {
 
   test('exits with write_error when file write fails', async () => {
     globalThis.fetch = makeMockFetch();
-    mockWriteFileSync.mockImplementationOnce(() => {
+    writeFileSyncSpy.mockImplementationOnce(() => {
       throw new Error('ENOENT: no such file or directory');
     });
     const { restore } = setupOutputSpies();
     const exitSpy = mockExitThrow();
     try {
-      const { installSkills } = await import('../../../src/commands/skills/install');
+      const { installSkills } = await import(
+        '../../../src/commands/skills/install'
+      );
       await expectExit1(() => installSkills(SINGLE_TARGET, { json: true }));
     } finally {
       restore();

@@ -1,11 +1,8 @@
 import { Command } from '@commander-js/extra-typings';
-import * as p from '@clack/prompts';
-import type { GlobalOpts } from '../../lib/client';
 import { runCreate } from '../../lib/actions';
-import { cancelAndExit } from '../../lib/prompts';
-import { outputError } from '../../lib/output';
-import { isInteractive } from '../../lib/tty';
+import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
+import { requireText } from '../../lib/prompts';
 
 export const createSegmentCommand = new Command('create')
   .description('Create a new segment')
@@ -28,27 +25,26 @@ Non-interactive: --name is required.`,
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
-    let name = opts.name;
+    const name = await requireText(
+      opts.name,
+      { message: 'Segment name', placeholder: 'Newsletter Subscribers' },
+      { message: 'Missing --name flag.', code: 'missing_name' },
+      globalOpts,
+    );
 
-    if (!name) {
-      if (!isInteractive()) {
-        outputError({ message: 'Missing --name flag.', code: 'missing_name' }, { json: globalOpts.json });
-      }
-      const result = await p.text({
-        message: 'Segment name',
-        placeholder: 'Newsletter Subscribers',
-        validate: (v) => (!v ? 'Name is required' : undefined),
-      });
-      if (p.isCancel(result)) cancelAndExit('Cancelled.');
-      name = result;
-    }
-
-    await runCreate({
-      spinner: { loading: 'Creating segment...', success: 'Segment created', fail: 'Failed to create segment' },
-      sdkCall: (resend) => resend.segments.create({ name: name! }),
-      onInteractive: (data) => {
-        console.log(`\nSegment created: ${data.id}`);
-        console.log(`Name: ${data.name}`);
+    await runCreate(
+      {
+        spinner: {
+          loading: 'Creating segment...',
+          success: 'Segment created',
+          fail: 'Failed to create segment',
+        },
+        sdkCall: (resend) => resend.segments.create({ name }),
+        onInteractive: (data) => {
+          console.log(`\nSegment created: ${data.id}`);
+          console.log(`Name: ${data.name}`);
+        },
       },
-    }, globalOpts);
+      globalOpts,
+    );
   });

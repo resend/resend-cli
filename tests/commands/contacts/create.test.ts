@@ -1,5 +1,20 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
-import { setNonInteractive, mockExitThrow, captureTestEnv, setupOutputSpies, expectExit1 } from '../../helpers';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  mockSdkError,
+  setNonInteractive,
+  setupOutputSpies,
+} from '../../helpers';
 
 const mockCreate = mock(async () => ({
   data: { object: 'contact' as const, id: 'contact_abc123' },
@@ -40,19 +55,27 @@ describe('contacts create command', () => {
   test('creates contact with --email flag', async () => {
     spies = setupOutputSpies();
 
-    const { createContactCommand } = await import('../../../src/commands/contacts/create');
-    await createContactCommand.parseAsync(['--email', 'jane@example.com'], { from: 'user' });
+    const { createContactCommand } = await import(
+      '../../../src/commands/contacts/create'
+    );
+    await createContactCommand.parseAsync(['--email', 'jane@example.com'], {
+      from: 'user',
+    });
 
     expect(mockCreate).toHaveBeenCalledTimes(1);
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.email).toBe('jane@example.com');
   });
 
   test('outputs JSON id when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { createContactCommand } = await import('../../../src/commands/contacts/create');
-    await createContactCommand.parseAsync(['--email', 'jane@example.com'], { from: 'user' });
+    const { createContactCommand } = await import(
+      '../../../src/commands/contacts/create'
+    );
+    await createContactCommand.parseAsync(['--email', 'jane@example.com'], {
+      from: 'user',
+    });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
@@ -63,13 +86,22 @@ describe('contacts create command', () => {
   test('passes --first-name and --last-name to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { createContactCommand } = await import('../../../src/commands/contacts/create');
+    const { createContactCommand } = await import(
+      '../../../src/commands/contacts/create'
+    );
     await createContactCommand.parseAsync(
-      ['--email', 'jane@example.com', '--first-name', 'Jane', '--last-name', 'Smith'],
-      { from: 'user' }
+      [
+        '--email',
+        'jane@example.com',
+        '--first-name',
+        'Jane',
+        '--last-name',
+        'Smith',
+      ],
+      { from: 'user' },
     );
 
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.firstName).toBe('Jane');
     expect(args.lastName).toBe('Smith');
   });
@@ -77,46 +109,72 @@ describe('contacts create command', () => {
   test('passes --unsubscribed flag to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { createContactCommand } = await import('../../../src/commands/contacts/create');
-    await createContactCommand.parseAsync(['--email', 'jane@example.com', '--unsubscribed'], { from: 'user' });
+    const { createContactCommand } = await import(
+      '../../../src/commands/contacts/create'
+    );
+    await createContactCommand.parseAsync(
+      ['--email', 'jane@example.com', '--unsubscribed'],
+      { from: 'user' },
+    );
 
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.unsubscribed).toBe(true);
   });
 
   test('parses --properties JSON and passes to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { createContactCommand } = await import('../../../src/commands/contacts/create');
+    const { createContactCommand } = await import(
+      '../../../src/commands/contacts/create'
+    );
     await createContactCommand.parseAsync(
-      ['--email', 'jane@example.com', '--properties', '{"company":"Acme","plan":"pro"}'],
-      { from: 'user' }
+      [
+        '--email',
+        'jane@example.com',
+        '--properties',
+        '{"company":"Acme","plan":"pro"}',
+      ],
+      { from: 'user' },
     );
 
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.properties).toEqual({ company: 'Acme', plan: 'pro' });
   });
 
   test('passes --segment-id (single) to SDK as segments array', async () => {
     spies = setupOutputSpies();
 
-    const { createContactCommand } = await import('../../../src/commands/contacts/create');
-    await createContactCommand.parseAsync(['--email', 'jane@example.com', '--segment-id', 'seg_123'], { from: 'user' });
+    const { createContactCommand } = await import(
+      '../../../src/commands/contacts/create'
+    );
+    await createContactCommand.parseAsync(
+      ['--email', 'jane@example.com', '--segment-id', 'seg_123'],
+      { from: 'user' },
+    );
 
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.segments).toEqual([{ id: 'seg_123' }]);
   });
 
   test('passes multiple --segment-id values to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { createContactCommand } = await import('../../../src/commands/contacts/create');
+    const { createContactCommand } = await import(
+      '../../../src/commands/contacts/create'
+    );
     await createContactCommand.parseAsync(
-      ['--email', 'jane@example.com', '--segment-id', 'seg_abc', '--segment-id', 'seg_def'],
-      { from: 'user' }
+      [
+        '--email',
+        'jane@example.com',
+        '--segment-id',
+        'seg_abc',
+        '--segment-id',
+        'seg_def',
+      ],
+      { from: 'user' },
     );
 
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.segments).toEqual([{ id: 'seg_abc' }, { id: 'seg_def' }]);
   });
 
@@ -125,8 +183,12 @@ describe('contacts create command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createContactCommand } = await import('../../../src/commands/contacts/create');
-    await expectExit1(() => createContactCommand.parseAsync([], { from: 'user' }));
+    const { createContactCommand } = await import(
+      '../../../src/commands/contacts/create'
+    );
+    await expectExit1(() =>
+      createContactCommand.parseAsync([], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('missing_email');
@@ -137,8 +199,15 @@ describe('contacts create command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createContactCommand } = await import('../../../src/commands/contacts/create');
-    await expectExit1(() => createContactCommand.parseAsync(['--email', 'jane@example.com', '--properties', 'not-json'], { from: 'user' }));
+    const { createContactCommand } = await import(
+      '../../../src/commands/contacts/create'
+    );
+    await expectExit1(() =>
+      createContactCommand.parseAsync(
+        ['--email', 'jane@example.com', '--properties', 'not-json'],
+        { from: 'user' },
+      ),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('invalid_properties');
@@ -151,8 +220,14 @@ describe('contacts create command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createContactCommand } = await import('../../../src/commands/contacts/create');
-    await expectExit1(() => createContactCommand.parseAsync(['--email', 'jane@example.com'], { from: 'user' }));
+    const { createContactCommand } = await import(
+      '../../../src/commands/contacts/create'
+    );
+    await expectExit1(() =>
+      createContactCommand.parseAsync(['--email', 'jane@example.com'], {
+        from: 'user',
+      }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -160,13 +235,21 @@ describe('contacts create command', () => {
 
   test('errors with create_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockCreate.mockResolvedValueOnce({ data: null, error: { message: 'Contact already exists', name: 'validation_error' } } as any);
+    mockCreate.mockResolvedValueOnce(
+      mockSdkError('Contact already exists', 'validation_error'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { createContactCommand } = await import('../../../src/commands/contacts/create');
-    await expectExit1(() => createContactCommand.parseAsync(['--email', 'jane@example.com'], { from: 'user' }));
+    const { createContactCommand } = await import(
+      '../../../src/commands/contacts/create'
+    );
+    await expectExit1(() =>
+      createContactCommand.parseAsync(['--email', 'jane@example.com'], {
+        from: 'user',
+      }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('create_error');

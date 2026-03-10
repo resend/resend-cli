@@ -1,5 +1,20 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
-import { setNonInteractive, mockExitThrow, captureTestEnv, setupOutputSpies, expectExit1 } from '../../helpers';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  mockSdkError,
+  setNonInteractive,
+  setupOutputSpies,
+} from '../../helpers';
 
 const mockCreate = mock(async () => ({
   data: {
@@ -9,7 +24,15 @@ const mockCreate = mock(async () => ({
     created_at: '2026-01-01T00:00:00.000Z',
     region: 'us-east-1',
     records: [
-      { record: 'SPF', type: 'MX', name: 'send', ttl: 'Auto', status: 'not_started', value: 'feedback-smtp.us-east-1.amazonses.com', priority: 10 },
+      {
+        record: 'SPF',
+        type: 'MX',
+        name: 'send',
+        ttl: 'Auto',
+        status: 'not_started',
+        value: 'feedback-smtp.us-east-1.amazonses.com',
+        priority: 10,
+      },
     ],
     capabilities: { sending: 'enabled', receiving: 'disabled' },
   },
@@ -50,24 +73,30 @@ describe('domains create command', () => {
   test('creates domain with --name flag', async () => {
     spies = setupOutputSpies();
 
-    const { createDomainCommand } = await import('../../../src/commands/domains/create');
-    await createDomainCommand.parseAsync(['--name', 'example.com'], { from: 'user' });
+    const { createDomainCommand } = await import(
+      '../../../src/commands/domains/create'
+    );
+    await createDomainCommand.parseAsync(['--name', 'example.com'], {
+      from: 'user',
+    });
 
     expect(mockCreate).toHaveBeenCalledTimes(1);
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.name).toBe('example.com');
   });
 
   test('passes region and tls flags to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { createDomainCommand } = await import('../../../src/commands/domains/create');
+    const { createDomainCommand } = await import(
+      '../../../src/commands/domains/create'
+    );
     await createDomainCommand.parseAsync(
       ['--name', 'example.com', '--region', 'eu-west-1', '--tls', 'enforced'],
-      { from: 'user' }
+      { from: 'user' },
     );
 
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.region).toBe('eu-west-1');
     expect(args.tls).toBe('enforced');
   });
@@ -75,18 +104,27 @@ describe('domains create command', () => {
   test('passes receiving capability when --receiving flag is set', async () => {
     spies = setupOutputSpies();
 
-    const { createDomainCommand } = await import('../../../src/commands/domains/create');
-    await createDomainCommand.parseAsync(['--name', 'example.com', '--receiving'], { from: 'user' });
+    const { createDomainCommand } = await import(
+      '../../../src/commands/domains/create'
+    );
+    await createDomainCommand.parseAsync(
+      ['--name', 'example.com', '--receiving'],
+      { from: 'user' },
+    );
 
-    const args = mockCreate.mock.calls[0][0] as any;
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.capabilities?.receiving).toBe('enabled');
   });
 
   test('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { createDomainCommand } = await import('../../../src/commands/domains/create');
-    await createDomainCommand.parseAsync(['--name', 'example.com'], { from: 'user' });
+    const { createDomainCommand } = await import(
+      '../../../src/commands/domains/create'
+    );
+    await createDomainCommand.parseAsync(['--name', 'example.com'], {
+      from: 'user',
+    });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
@@ -99,8 +137,12 @@ describe('domains create command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createDomainCommand } = await import('../../../src/commands/domains/create');
-    await expectExit1(() => createDomainCommand.parseAsync([], { from: 'user' }));
+    const { createDomainCommand } = await import(
+      '../../../src/commands/domains/create'
+    );
+    await expectExit1(() =>
+      createDomainCommand.parseAsync([], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('missing_name');
@@ -113,8 +155,14 @@ describe('domains create command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createDomainCommand } = await import('../../../src/commands/domains/create');
-    await expectExit1(() => createDomainCommand.parseAsync(['--name', 'example.com'], { from: 'user' }));
+    const { createDomainCommand } = await import(
+      '../../../src/commands/domains/create'
+    );
+    await expectExit1(() =>
+      createDomainCommand.parseAsync(['--name', 'example.com'], {
+        from: 'user',
+      }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -122,13 +170,21 @@ describe('domains create command', () => {
 
   test('errors with create_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockCreate.mockResolvedValueOnce({ data: null, error: { message: 'Domain already exists', name: 'validation_error' } } as any);
+    mockCreate.mockResolvedValueOnce(
+      mockSdkError('Domain already exists', 'validation_error'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { createDomainCommand } = await import('../../../src/commands/domains/create');
-    await expectExit1(() => createDomainCommand.parseAsync(['--name', 'example.com'], { from: 'user' }));
+    const { createDomainCommand } = await import(
+      '../../../src/commands/domains/create'
+    );
+    await expectExit1(() =>
+      createDomainCommand.parseAsync(['--name', 'example.com'], {
+        from: 'user',
+      }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('create_error');

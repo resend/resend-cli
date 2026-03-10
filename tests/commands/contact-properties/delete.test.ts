@@ -1,8 +1,27 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
-import { setNonInteractive, mockExitThrow, captureTestEnv, setupOutputSpies, expectExit1 } from '../../helpers';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  mockSdkError,
+  setNonInteractive,
+  setupOutputSpies,
+} from '../../helpers';
 
 const mockRemove = mock(async () => ({
-  data: { object: 'contact_property' as const, id: 'prop_abc123', deleted: true },
+  data: {
+    object: 'contact_property' as const,
+    id: 'prop_abc123',
+    deleted: true,
+  },
   error: null,
 }));
 
@@ -40,8 +59,12 @@ describe('contact-properties delete command', () => {
   test('deletes property with --yes', async () => {
     spies = setupOutputSpies();
 
-    const { deleteContactPropertyCommand } = await import('../../../src/commands/contact-properties/delete');
-    await deleteContactPropertyCommand.parseAsync(['prop_abc123', '--yes'], { from: 'user' });
+    const { deleteContactPropertyCommand } = await import(
+      '../../../src/commands/contact-properties/delete'
+    );
+    await deleteContactPropertyCommand.parseAsync(['prop_abc123', '--yes'], {
+      from: 'user',
+    });
 
     expect(mockRemove).toHaveBeenCalledTimes(1);
     expect(mockRemove.mock.calls[0][0]).toBe('prop_abc123');
@@ -50,8 +73,12 @@ describe('contact-properties delete command', () => {
   test('outputs synthesized JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { deleteContactPropertyCommand } = await import('../../../src/commands/contact-properties/delete');
-    await deleteContactPropertyCommand.parseAsync(['prop_abc123', '--yes'], { from: 'user' });
+    const { deleteContactPropertyCommand } = await import(
+      '../../../src/commands/contact-properties/delete'
+    );
+    await deleteContactPropertyCommand.parseAsync(['prop_abc123', '--yes'], {
+      from: 'user',
+    });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
@@ -65,8 +92,14 @@ describe('contact-properties delete command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteContactPropertyCommand } = await import('../../../src/commands/contact-properties/delete');
-    await expectExit1(() => deleteContactPropertyCommand.parseAsync(['prop_abc123'], { from: 'user' }));
+    const { deleteContactPropertyCommand } = await import(
+      '../../../src/commands/contact-properties/delete'
+    );
+    await expectExit1(() =>
+      deleteContactPropertyCommand.parseAsync(['prop_abc123'], {
+        from: 'user',
+      }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('confirmation_required');
@@ -77,8 +110,14 @@ describe('contact-properties delete command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteContactPropertyCommand } = await import('../../../src/commands/contact-properties/delete');
-    await expectExit1(() => deleteContactPropertyCommand.parseAsync(['prop_abc123'], { from: 'user' }));
+    const { deleteContactPropertyCommand } = await import(
+      '../../../src/commands/contact-properties/delete'
+    );
+    await expectExit1(() =>
+      deleteContactPropertyCommand.parseAsync(['prop_abc123'], {
+        from: 'user',
+      }),
+    );
 
     expect(mockRemove).not.toHaveBeenCalled();
   });
@@ -90,8 +129,14 @@ describe('contact-properties delete command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteContactPropertyCommand } = await import('../../../src/commands/contact-properties/delete');
-    await expectExit1(() => deleteContactPropertyCommand.parseAsync(['prop_abc123', '--yes'], { from: 'user' }));
+    const { deleteContactPropertyCommand } = await import(
+      '../../../src/commands/contact-properties/delete'
+    );
+    await expectExit1(() =>
+      deleteContactPropertyCommand.parseAsync(['prop_abc123', '--yes'], {
+        from: 'user',
+      }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -99,13 +144,21 @@ describe('contact-properties delete command', () => {
 
   test('errors with delete_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockRemove.mockResolvedValueOnce({ data: null, error: { message: 'Property not found', name: 'not_found' } } as any);
+    mockRemove.mockResolvedValueOnce(
+      mockSdkError('Property not found', 'not_found'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { deleteContactPropertyCommand } = await import('../../../src/commands/contact-properties/delete');
-    await expectExit1(() => deleteContactPropertyCommand.parseAsync(['nonexistent_id', '--yes'], { from: 'user' }));
+    const { deleteContactPropertyCommand } = await import(
+      '../../../src/commands/contact-properties/delete'
+    );
+    await expectExit1(() =>
+      deleteContactPropertyCommand.parseAsync(['nonexistent_id', '--yes'], {
+        from: 'user',
+      }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('delete_error');

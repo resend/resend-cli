@@ -1,7 +1,21 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
-import { writeFileSync, unlinkSync } from 'node:fs';
-import { join } from 'node:path';
-import { setNonInteractive, mockExitThrow, captureTestEnv, setupOutputSpies, expectExit1 } from '../../helpers';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import * as files from '../../../src/lib/files';
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  mockSdkError,
+  setNonInteractive,
+  setupOutputSpies,
+} from '../../helpers';
 
 const mockUpdate = mock(async () => ({
   data: { id: 'bcast_abc123' },
@@ -21,6 +35,7 @@ describe('broadcasts update command', () => {
   let errorSpy: ReturnType<typeof spyOn> | undefined;
   let stderrSpy: ReturnType<typeof spyOn> | undefined;
   let exitSpy: ReturnType<typeof spyOn> | undefined;
+  let readFileSpy: ReturnType<typeof spyOn> | undefined;
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
@@ -33,34 +48,53 @@ describe('broadcasts update command', () => {
     errorSpy?.mockRestore();
     stderrSpy?.mockRestore();
     exitSpy?.mockRestore();
+    readFileSpy?.mockRestore();
     spies = undefined;
     errorSpy = undefined;
     stderrSpy = undefined;
     exitSpy = undefined;
+    readFileSpy = undefined;
   });
 
   test('updates broadcast subject', async () => {
     spies = setupOutputSpies();
 
-    const { updateBroadcastCommand } = await import('../../../src/commands/broadcasts/update');
-    await updateBroadcastCommand.parseAsync(['bcast_abc123', '--subject', 'Updated Subject'], { from: 'user' });
+    const { updateBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/update'
+    );
+    await updateBroadcastCommand.parseAsync(
+      ['bcast_abc123', '--subject', 'Updated Subject'],
+      { from: 'user' },
+    );
 
     expect(mockUpdate).toHaveBeenCalledTimes(1);
     expect(mockUpdate.mock.calls[0][0]).toBe('bcast_abc123');
-    const payload = mockUpdate.mock.calls[0][1] as any;
+    const payload = mockUpdate.mock.calls[0][1] as Record<string, unknown>;
     expect(payload.subject).toBe('Updated Subject');
   });
 
   test('passes all update flags to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { updateBroadcastCommand } = await import('../../../src/commands/broadcasts/update');
+    const { updateBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/update'
+    );
     await updateBroadcastCommand.parseAsync(
-      ['bcast_abc123', '--from', 'new@domain.com', '--subject', 'New Subject', '--text', 'New body', '--name', 'New Label'],
-      { from: 'user' }
+      [
+        'bcast_abc123',
+        '--from',
+        'new@domain.com',
+        '--subject',
+        'New Subject',
+        '--text',
+        'New body',
+        '--name',
+        'New Label',
+      ],
+      { from: 'user' },
     );
 
-    const payload = mockUpdate.mock.calls[0][1] as any;
+    const payload = mockUpdate.mock.calls[0][1] as Record<string, unknown>;
     expect(payload.from).toBe('new@domain.com');
     expect(payload.subject).toBe('New Subject');
     expect(payload.text).toBe('New body');
@@ -70,8 +104,13 @@ describe('broadcasts update command', () => {
   test('outputs JSON id when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { updateBroadcastCommand } = await import('../../../src/commands/broadcasts/update');
-    await updateBroadcastCommand.parseAsync(['bcast_abc123', '--subject', 'Updated'], { from: 'user' });
+    const { updateBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/update'
+    );
+    await updateBroadcastCommand.parseAsync(
+      ['bcast_abc123', '--subject', 'Updated'],
+      { from: 'user' },
+    );
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
@@ -81,10 +120,15 @@ describe('broadcasts update command', () => {
   test('omits undefined fields from SDK payload', async () => {
     spies = setupOutputSpies();
 
-    const { updateBroadcastCommand } = await import('../../../src/commands/broadcasts/update');
-    await updateBroadcastCommand.parseAsync(['bcast_abc123', '--name', 'Only Name'], { from: 'user' });
+    const { updateBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/update'
+    );
+    await updateBroadcastCommand.parseAsync(
+      ['bcast_abc123', '--name', 'Only Name'],
+      { from: 'user' },
+    );
 
-    const payload = mockUpdate.mock.calls[0][1] as any;
+    const payload = mockUpdate.mock.calls[0][1] as Record<string, unknown>;
     expect(payload.name).toBe('Only Name');
     expect(payload.from).toBeUndefined();
     expect(payload.subject).toBeUndefined();
@@ -95,8 +139,12 @@ describe('broadcasts update command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateBroadcastCommand } = await import('../../../src/commands/broadcasts/update');
-    await expectExit1(() => updateBroadcastCommand.parseAsync(['bcast_abc123'], { from: 'user' }));
+    const { updateBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/update'
+    );
+    await expectExit1(() =>
+      updateBroadcastCommand.parseAsync(['bcast_abc123'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('no_changes');
@@ -107,8 +155,12 @@ describe('broadcasts update command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateBroadcastCommand } = await import('../../../src/commands/broadcasts/update');
-    await expectExit1(() => updateBroadcastCommand.parseAsync(['bcast_abc123'], { from: 'user' }));
+    const { updateBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/update'
+    );
+    await expectExit1(() =>
+      updateBroadcastCommand.parseAsync(['bcast_abc123'], { from: 'user' }),
+    );
 
     expect(mockUpdate).not.toHaveBeenCalled();
   });
@@ -120,8 +172,14 @@ describe('broadcasts update command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateBroadcastCommand } = await import('../../../src/commands/broadcasts/update');
-    await expectExit1(() => updateBroadcastCommand.parseAsync(['bcast_abc123', '--subject', 'X'], { from: 'user' }));
+    const { updateBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/update'
+    );
+    await expectExit1(() =>
+      updateBroadcastCommand.parseAsync(['bcast_abc123', '--subject', 'X'], {
+        from: 'user',
+      }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -129,13 +187,21 @@ describe('broadcasts update command', () => {
 
   test('errors with update_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockUpdate.mockResolvedValueOnce({ data: null, error: { message: 'Cannot update sent broadcast', name: 'validation_error' } } as any);
+    mockUpdate.mockResolvedValueOnce(
+      mockSdkError('Cannot update sent broadcast', 'validation_error'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { updateBroadcastCommand } = await import('../../../src/commands/broadcasts/update');
-    await expectExit1(() => updateBroadcastCommand.parseAsync(['bcast_sent', '--subject', 'New'], { from: 'user' }));
+    const { updateBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/update'
+    );
+    await expectExit1(() =>
+      updateBroadcastCommand.parseAsync(['bcast_sent', '--subject', 'New'], {
+        from: 'user',
+      }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('update_error');
@@ -143,21 +209,21 @@ describe('broadcasts update command', () => {
 
   test('reads html body from --html-file and passes it to SDK', async () => {
     spies = setupOutputSpies();
+    readFileSpy = spyOn(files, 'readFile').mockReturnValue(
+      '<p>Updated from file</p>',
+    );
 
-    const tmpFile = join(import.meta.dir, 'tmp-update-broadcast.html');
-    writeFileSync(tmpFile, '<p>Updated from file</p>', 'utf-8');
-    try {
-      const { updateBroadcastCommand } = await import('../../../src/commands/broadcasts/update');
-      await updateBroadcastCommand.parseAsync(
-        ['bcast_abc123', '--html-file', tmpFile],
-        { from: 'user' }
-      );
+    const { updateBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/update'
+    );
+    await updateBroadcastCommand.parseAsync(
+      ['bcast_abc123', '--html-file', '/fake/email.html'],
+      { from: 'user' },
+    );
 
-      const payload = mockUpdate.mock.calls[0][1] as any;
-      expect(payload.html).toBe('<p>Updated from file</p>');
-    } finally {
-      unlinkSync(tmpFile);
-    }
+    expect(readFileSpy).toHaveBeenCalledTimes(1);
+    const payload = mockUpdate.mock.calls[0][1] as Record<string, unknown>;
+    expect(payload.html).toBe('<p>Updated from file</p>');
   });
 
   test('errors with file_read_error when --html-file path is unreadable', async () => {
@@ -166,11 +232,28 @@ describe('broadcasts update command', () => {
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { updateBroadcastCommand } = await import('../../../src/commands/broadcasts/update');
-    await expectExit1(() => updateBroadcastCommand.parseAsync(
-      ['bcast_abc123', '--html-file', '/nonexistent/file.html'],
-      { from: 'user' }
-    ));
+    const { outputError } = await import('../../../src/lib/output');
+    readFileSpy = spyOn(files, 'readFile').mockImplementation(
+      (filePath: string, globalOpts: { json?: boolean }) => {
+        outputError(
+          {
+            message: `Failed to read file: ${filePath}`,
+            code: 'file_read_error',
+          },
+          { json: globalOpts.json },
+        );
+      },
+    );
+
+    const { updateBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/update'
+    );
+    await expectExit1(() =>
+      updateBroadcastCommand.parseAsync(
+        ['bcast_abc123', '--html-file', '/nonexistent/file.html'],
+        { from: 'user' },
+      ),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('file_read_error');

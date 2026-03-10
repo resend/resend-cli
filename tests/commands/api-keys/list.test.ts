@@ -1,12 +1,35 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
-import { setNonInteractive, mockExitThrow, captureTestEnv, setupOutputSpies, expectExit1 } from '../../helpers';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  mockSdkError,
+  setNonInteractive,
+  setupOutputSpies,
+} from '../../helpers';
 
 const mockList = mock(async () => ({
   data: {
     object: 'list',
     data: [
-      { id: 'key-id-1', name: 'Production Key', created_at: '2026-01-01T00:00:00.000Z' },
-      { id: 'key-id-2', name: 'Staging Key', created_at: '2026-01-02T00:00:00.000Z' },
+      {
+        id: 'key-id-1',
+        name: 'Production Key',
+        created_at: '2026-01-01T00:00:00.000Z',
+      },
+      {
+        id: 'key-id-2',
+        name: 'Staging Key',
+        created_at: '2026-01-02T00:00:00.000Z',
+      },
     ],
   },
   error: null,
@@ -46,7 +69,9 @@ describe('api-keys list command', () => {
   test('calls SDK list with no arguments', async () => {
     spies = setupOutputSpies();
 
-    const { listApiKeysCommand } = await import('../../../src/commands/api-keys/list');
+    const { listApiKeysCommand } = await import(
+      '../../../src/commands/api-keys/list'
+    );
     await listApiKeysCommand.parseAsync([], { from: 'user' });
 
     expect(mockList).toHaveBeenCalledTimes(1);
@@ -55,7 +80,9 @@ describe('api-keys list command', () => {
   test('outputs JSON list when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { listApiKeysCommand } = await import('../../../src/commands/api-keys/list');
+    const { listApiKeysCommand } = await import(
+      '../../../src/commands/api-keys/list'
+    );
     await listApiKeysCommand.parseAsync([], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -73,8 +100,12 @@ describe('api-keys list command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listApiKeysCommand } = await import('../../../src/commands/api-keys/list');
-    await expectExit1(() => listApiKeysCommand.parseAsync([], { from: 'user' }));
+    const { listApiKeysCommand } = await import(
+      '../../../src/commands/api-keys/list'
+    );
+    await expectExit1(() =>
+      listApiKeysCommand.parseAsync([], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -82,13 +113,19 @@ describe('api-keys list command', () => {
 
   test('errors with list_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockList.mockResolvedValueOnce({ data: null, error: { message: 'Unauthorized', name: 'unauthorized' } } as any);
+    mockList.mockResolvedValueOnce(
+      mockSdkError('Unauthorized', 'unauthorized'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { listApiKeysCommand } = await import('../../../src/commands/api-keys/list');
-    await expectExit1(() => listApiKeysCommand.parseAsync([], { from: 'user' }));
+    const { listApiKeysCommand } = await import(
+      '../../../src/commands/api-keys/list'
+    );
+    await expectExit1(() =>
+      listApiKeysCommand.parseAsync([], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('list_error');
