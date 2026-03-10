@@ -31,7 +31,7 @@ can delete itself — the API does not prevent self-deletion.`,
       id,
       !!opts.yes,
       {
-        confirmMessage: `Delete API key ${id}? Any services using this key will stop working.`,
+        confirmMessage: `Delete API key ${id}?\nAny services using this key will stop working.`,
         spinner: {
           loading: 'Deleting API key...',
           success: 'API key deleted',

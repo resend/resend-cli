@@ -30,7 +30,7 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
       id,
       !!opts.yes,
       {
-        confirmMessage: `Delete broadcast ${id}? If scheduled, delivery will be cancelled.`,
+        confirmMessage: `Delete broadcast ${id}?\nIf scheduled, delivery will be cancelled.`,
         spinner: {
           loading: 'Deleting broadcast...',
           success: 'Broadcast deleted',

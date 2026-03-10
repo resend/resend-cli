@@ -31,7 +31,7 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
       id,
       !!opts.yes,
       {
-        confirmMessage: `Delete topic ${id}? All contact subscriptions and broadcast associations will be removed.`,
+        confirmMessage: `Delete topic ${id}?\nAll contact subscriptions and broadcast associations will be removed.`,
         spinner: {
           loading: 'Deleting topic...',
           success: 'Topic deleted',

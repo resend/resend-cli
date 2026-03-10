@@ -33,7 +33,7 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
       id,
       !!opts.yes,
       {
-        confirmMessage: `Delete contact ${id}? This cannot be undone.`,
+        confirmMessage: `Delete contact ${id}?\nThis cannot be undone.`,
         spinner: {
           loading: 'Deleting contact...',
           success: 'Contact deleted',

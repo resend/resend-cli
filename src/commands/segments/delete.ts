@@ -31,7 +31,7 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
       id,
       !!opts.yes,
       {
-        confirmMessage: `Delete segment ${id}? Contacts will not be deleted, but broadcasts targeting this segment will no longer work.`,
+        confirmMessage: `Delete segment ${id}?\nContacts will not be deleted, but broadcasts targeting this segment will no longer work.`,
         spinner: {
           loading: 'Deleting segment...',
           success: 'Segment deleted',

@@ -32,7 +32,7 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
       id,
       !!opts.yes,
       {
-        confirmMessage: `Delete contact property "${id}"? This will remove this property from ALL contacts permanently.`,
+        confirmMessage: `Delete contact property "${id}"?\nThis will remove this property from ALL contacts permanently.`,
         spinner: {
           loading: 'Deleting contact property...',
           success: 'Contact property deleted',

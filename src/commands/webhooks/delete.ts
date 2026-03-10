@@ -33,7 +33,7 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
       id,
       !!opts.yes,
       {
-        confirmMessage: `Delete webhook ${id}? Events will no longer be delivered to this endpoint.`,
+        confirmMessage: `Delete webhook ${id}?\nEvents will no longer be delivered to this endpoint.`,
         spinner: {
           loading: 'Deleting webhook...',
           success: 'Webhook deleted',
