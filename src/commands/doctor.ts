@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { Command } from '@commander-js/extra-typings';
 import { Resend } from 'resend';
 import type { GlobalOpts } from '../lib/client';
-import { resolveApiKey } from '../lib/config';
+import { maskKey, resolveApiKey } from '../lib/config';
 import { buildHelpText } from '../lib/help-text';
 import { errorMessage, outputResult } from '../lib/output';
 import { createSpinner } from '../lib/spinner';
@@ -25,13 +25,6 @@ const statusIcons: Record<CheckStatus, string> = {
   warn: '\x1B[33m!\x1B[0m',
   fail: '\x1B[31m✗\x1B[0m',
 };
-
-function maskKey(key: string): string {
-  if (key.length <= 7) {
-    return `${key.slice(0, 3)}...`;
-  }
-  return `${key.slice(0, 3)}...${key.slice(-4)}`;
-}
 
 async function checkCliVersion(): Promise<CheckResult> {
   try {

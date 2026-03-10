@@ -15,6 +15,7 @@ import { skillsCommand } from './commands/skills/index';
 import { teamsCommand } from './commands/teams/index';
 import { topicsCommand } from './commands/topics/index';
 import { webhooksCommand } from './commands/webhooks/index';
+import { whoamiCommand } from './commands/whoami';
 import { PACKAGE_NAME, VERSION } from './lib/version';
 
 const program = new Command()
@@ -62,6 +63,7 @@ Examples:
   .addCommand(doctorCommand)
   .addCommand(setupCommand)
   .addCommand(skillsCommand)
-  .addCommand(teamsCommand);
+  .addCommand(teamsCommand)
+  .addCommand(whoamiCommand);
 
 program.parse();

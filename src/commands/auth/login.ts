@@ -3,7 +3,7 @@ import * as p from '@clack/prompts';
 import { Command } from '@commander-js/extra-typings';
 import { Resend } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
-import { resolveApiKey, storeApiKey } from '../../lib/config';
+import { listTeams, resolveApiKey, storeApiKey } from '../../lib/config';
 import { buildHelpText } from '../../lib/help-text';
 import { errorMessage, outputError, outputResult } from '../../lib/output';
 import { cancelAndExit } from '../../lib/prompts';
@@ -148,7 +148,44 @@ Credentials stored at: ~/.config/resend/credentials.json
       );
     }
 
-    const teamName = globalOpts.team;
+    let teamName = globalOpts.team;
+
+    if (!teamName && isInteractive()) {
+      const existingTeams = listTeams();
+      if (existingTeams.length > 0) {
+        const options = [
+          ...existingTeams.map((t) => ({
+            value: t.name,
+            label: `${t.name} (overwrite)`,
+          })),
+          { value: '__new__' as const, label: '+ Create new team' },
+        ];
+
+        const choice = await p.select({
+          message: 'Save API key to which team?',
+          options,
+        });
+
+        if (p.isCancel(choice)) {
+          cancelAndExit('Login cancelled.');
+        }
+
+        if (choice === '__new__') {
+          const newName = await p.text({
+            message: 'Enter a name for the new team:',
+            validate: (v) =>
+              !v || v.length === 0 ? 'Team name is required' : undefined,
+          });
+          if (p.isCancel(newName)) {
+            cancelAndExit('Login cancelled.');
+          }
+          teamName = newName;
+        } else {
+          teamName = choice;
+        }
+      }
+    }
+
     const configPath = storeApiKey(apiKey, teamName);
     const teamLabel = teamName || 'default';
 

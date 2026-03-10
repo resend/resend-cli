@@ -7,7 +7,7 @@ import {
   spyOn,
   test,
 } from 'bun:test';
-import { mkdirSync, readFileSync, rmSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -88,5 +88,32 @@ describe('login command', () => {
     expect(errorSpy).toBeDefined();
     const output = errorSpy?.mock.calls[0][0] as string;
     expect(output).toContain('missing_key');
+  });
+
+  test('non-interactive login stores as default when teams exist', async () => {
+    // Pre-populate credentials with an existing team
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_team: 'production',
+        teams: { production: { api_key: 're_old_key_1234' } },
+      }),
+    );
+
+    spies = setupOutputSpies();
+
+    const { loginCommand } = await import('../../../src/commands/auth/login');
+    await loginCommand.parseAsync(['--key', 're_new_key_5678'], {
+      from: 'user',
+    });
+
+    const configPath = join(tmpDir, 'resend', 'credentials.json');
+    const data = JSON.parse(readFileSync(configPath, 'utf-8'));
+    // Non-interactive without --team flag stores as 'default' (no picker)
+    expect(data.teams.default.api_key).toBe('re_new_key_5678');
+    // Original team should still exist
+    expect(data.teams.production.api_key).toBe('re_old_key_1234');
   });
 });
