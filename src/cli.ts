@@ -10,8 +10,6 @@ import { doctorCommand } from './commands/doctor';
 import { domainsCommand } from './commands/domains/index';
 import { emailsCommand } from './commands/emails/index';
 import { segmentsCommand } from './commands/segments/index';
-import { setupCommand } from './commands/setup/index';
-import { skillsCommand } from './commands/skills/index';
 import { teamsCommand } from './commands/teams/index';
 import { topicsCommand } from './commands/topics/index';
 import { webhooksCommand } from './commands/webhooks/index';
@@ -61,8 +59,6 @@ Examples:
   .addCommand(topicsCommand)
   .addCommand(webhooksCommand)
   .addCommand(doctorCommand)
-  .addCommand(setupCommand)
-  .addCommand(skillsCommand)
   .addCommand(teamsCommand)
   .addCommand(whoamiCommand);
 
