@@ -7,8 +7,7 @@ import {
   spyOn,
   test,
 } from 'bun:test';
-import { unlinkSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import * as files from '../../../src/lib/files';
 import {
   captureTestEnv,
   expectExit1,
@@ -35,6 +34,7 @@ describe('broadcasts create command', () => {
   let errorSpy: ReturnType<typeof spyOn> | undefined;
   let stderrSpy: ReturnType<typeof spyOn> | undefined;
   let exitSpy: ReturnType<typeof spyOn> | undefined;
+  let readFileSpy: ReturnType<typeof spyOn> | undefined;
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
@@ -47,10 +47,12 @@ describe('broadcasts create command', () => {
     errorSpy?.mockRestore();
     stderrSpy?.mockRestore();
     exitSpy?.mockRestore();
+    readFileSpy?.mockRestore();
     spies = undefined;
     errorSpy = undefined;
     stderrSpy = undefined;
     exitSpy = undefined;
+    readFileSpy = undefined;
   });
 
   test('creates broadcast with required flags', async () => {
@@ -370,32 +372,28 @@ describe('broadcasts create command', () => {
 
   test('reads html body from --html-file and passes it to SDK', async () => {
     spies = setupOutputSpies();
+    readFileSpy = spyOn(files, 'readFile').mockReturnValue('<p>From file</p>');
 
-    const tmpFile = join(import.meta.dir, 'tmp-broadcast.html');
-    writeFileSync(tmpFile, '<p>From file</p>', 'utf-8');
-    try {
-      const { createBroadcastCommand } = await import(
-        '../../../src/commands/broadcasts/create'
-      );
-      await createBroadcastCommand.parseAsync(
-        [
-          '--from',
-          'hello@domain.com',
-          '--subject',
-          'News',
-          '--segment-id',
-          'seg_123',
-          '--html-file',
-          tmpFile,
-        ],
-        { from: 'user' },
-      );
+    const { createBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/create'
+    );
+    await createBroadcastCommand.parseAsync(
+      [
+        '--from',
+        'hello@domain.com',
+        '--subject',
+        'News',
+        '--segment-id',
+        'seg_123',
+        '--html-file',
+        '/fake/email.html',
+      ],
+      { from: 'user' },
+    );
 
-      const args = mockCreate.mock.calls[0][0] as any;
-      expect(args.html).toBe('<p>From file</p>');
-    } finally {
-      unlinkSync(tmpFile);
-    }
+    expect(readFileSpy).toHaveBeenCalledTimes(1);
+    const args = mockCreate.mock.calls[0][0] as any;
+    expect(args.html).toBe('<p>From file</p>');
   });
 
   test('errors with file_read_error when --html-file path is unreadable', async () => {
@@ -403,6 +401,19 @@ describe('broadcasts create command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
+
+    const { outputError } = await import('../../../src/lib/output');
+    readFileSpy = spyOn(files, 'readFile').mockImplementation(
+      (filePath: string, globalOpts: { json?: boolean }) => {
+        outputError(
+          {
+            message: `Failed to read file: ${filePath}`,
+            code: 'file_read_error',
+          },
+          { json: globalOpts.json },
+        );
+      },
+    );
 
     const { createBroadcastCommand } = await import(
       '../../../src/commands/broadcasts/create'

@@ -7,8 +7,7 @@ import {
   spyOn,
   test,
 } from 'bun:test';
-import { unlinkSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import * as files from '../../../src/lib/files';
 import {
   captureTestEnv,
   expectExit1,
@@ -35,6 +34,7 @@ describe('broadcasts update command', () => {
   let errorSpy: ReturnType<typeof spyOn> | undefined;
   let stderrSpy: ReturnType<typeof spyOn> | undefined;
   let exitSpy: ReturnType<typeof spyOn> | undefined;
+  let readFileSpy: ReturnType<typeof spyOn> | undefined;
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
@@ -47,10 +47,12 @@ describe('broadcasts update command', () => {
     errorSpy?.mockRestore();
     stderrSpy?.mockRestore();
     exitSpy?.mockRestore();
+    readFileSpy?.mockRestore();
     spies = undefined;
     errorSpy = undefined;
     stderrSpy = undefined;
     exitSpy = undefined;
+    readFileSpy = undefined;
   });
 
   test('updates broadcast subject', async () => {
@@ -210,23 +212,21 @@ describe('broadcasts update command', () => {
 
   test('reads html body from --html-file and passes it to SDK', async () => {
     spies = setupOutputSpies();
+    readFileSpy = spyOn(files, 'readFile').mockReturnValue(
+      '<p>Updated from file</p>',
+    );
 
-    const tmpFile = join(import.meta.dir, 'tmp-update-broadcast.html');
-    writeFileSync(tmpFile, '<p>Updated from file</p>', 'utf-8');
-    try {
-      const { updateBroadcastCommand } = await import(
-        '../../../src/commands/broadcasts/update'
-      );
-      await updateBroadcastCommand.parseAsync(
-        ['bcast_abc123', '--html-file', tmpFile],
-        { from: 'user' },
-      );
+    const { updateBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/update'
+    );
+    await updateBroadcastCommand.parseAsync(
+      ['bcast_abc123', '--html-file', '/fake/email.html'],
+      { from: 'user' },
+    );
 
-      const payload = mockUpdate.mock.calls[0][1] as any;
-      expect(payload.html).toBe('<p>Updated from file</p>');
-    } finally {
-      unlinkSync(tmpFile);
-    }
+    expect(readFileSpy).toHaveBeenCalledTimes(1);
+    const payload = mockUpdate.mock.calls[0][1] as any;
+    expect(payload.html).toBe('<p>Updated from file</p>');
   });
 
   test('errors with file_read_error when --html-file path is unreadable', async () => {
@@ -234,6 +234,19 @@ describe('broadcasts update command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
+
+    const { outputError } = await import('../../../src/lib/output');
+    readFileSpy = spyOn(files, 'readFile').mockImplementation(
+      (filePath: string, globalOpts: { json?: boolean }) => {
+        outputError(
+          {
+            message: `Failed to read file: ${filePath}`,
+            code: 'file_read_error',
+          },
+          { json: globalOpts.json },
+        );
+      },
+    );
 
     const { updateBroadcastCommand } = await import(
       '../../../src/commands/broadcasts/update'
