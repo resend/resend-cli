@@ -44,8 +44,8 @@ Credentials stored at: ~/.config/resend/credentials.json
       output: `  {"success":true,"config_path":"<path>"}`,
       errorCodes: ['missing_key', 'invalid_key_format', 'validation_failed'],
       examples: [
-        'resend auth login --key re_123456789',
-        'resend auth login                      (interactive — prompts and opens browser)',
+        'resend login --key re_123456789',
+        'resend login                      (interactive — prompts and opens browser)',
         'RESEND_API_KEY=re_123 resend emails send ...  (skip login; use env var directly)',
       ],
     }),

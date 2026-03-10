@@ -24,7 +24,7 @@ export const logoutCommand = new Command('logout')
 If no credentials file exists, exits cleanly with no error.`,
       output: `  {"success":true,"config_path":"<path>"}`,
       errorCodes: ['remove_failed'],
-      examples: ['resend auth logout', 'resend auth logout --json'],
+      examples: ['resend logout', 'resend logout --json'],
     }),
   )
   .action(async (_opts, cmd) => {

@@ -10,9 +10,9 @@ export const authCommand = new Command('auth')
     buildHelpText({
       setup: true,
       examples: [
-        'resend auth login',
-        'resend auth login --key re_123456789',
-        'resend auth logout',
+        'resend login',
+        'resend login --key re_123456789',
+        'resend logout',
       ],
     }),
   )

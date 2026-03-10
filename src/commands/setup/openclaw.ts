@@ -27,7 +27,7 @@ export RESEND_API_KEY=re_your_key_here
 Or store it permanently:
 
 \`\`\`
-resend auth login
+resend login
 \`\`\`
 
 ## Key Commands
@@ -143,7 +143,7 @@ export const openclawCommand = new Command('openclaw')
 Skill file path: ~/.openclaw/skills/resend/SKILL.md
 
 The skill file covers:
-  - Authentication via RESEND_API_KEY or \`resend auth login\`
+  - Authentication via RESEND_API_KEY or \`resend login\`
   - Sending emails (plain text and HTML)
   - Managing domains, contacts, segments, and broadcasts
   - JSON output format for scripting

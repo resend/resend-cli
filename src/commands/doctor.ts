@@ -80,7 +80,7 @@ function checkApiKeyPresence(): CheckResult {
       name: 'API Key',
       status: 'fail',
       message: 'No API key found',
-      detail: 'Run: resend auth login',
+      detail: 'Run: resend login',
     };
   }
   return {
