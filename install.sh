@@ -101,7 +101,7 @@ if [[ $target == linux-* ]]; then
     error "Alpine Linux (musl) is not currently supported.
 
   The compiled binary requires glibc. Use one of these alternatives:
-    - npm install -g @resend/cli  (requires Bun)
+    - npm install -g resend-cli
     - Run in a glibc-based container (e.g., ubuntu, debian)"
   fi
 fi

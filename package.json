@@ -1,5 +1,5 @@
 {
-  "name": "@resend/cli",
+  "name": "resend-cli",
   "version": "0.7.0",
   "description": "Resend CLI — email for developers",
   "license": "MIT",
