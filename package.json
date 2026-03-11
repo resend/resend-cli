@@ -1,7 +1,7 @@
 {
   "name": "resend-cli",
   "version": "1.2.0",
-  "description": "Resend CLI — email for developers",
+  "description": "The official CLI for Resend",
   "license": "MIT",
   "repository": {
     "type": "git",

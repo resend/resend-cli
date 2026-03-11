@@ -1,8 +1,8 @@
 # Resend CLI
 
-Command-line tool for [Resend](https://resend.com).
+The official CLI for [Resend](https://resend.com).
 
-Works for humans, AI agents, and CI/CD pipelines.
+Built for humans, AI agents, and CI/CD pipelines.
 
 ```
 ██████╗ ███████╗███████╗███████╗███╗   ██╗██████╗
