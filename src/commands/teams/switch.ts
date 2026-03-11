@@ -24,6 +24,7 @@ export const switchCommand = new Command('switch')
           },
           { json: globalOpts.json },
         );
+        return;
       }
 
       const teams = listTeams();
@@ -35,6 +36,7 @@ export const switchCommand = new Command('switch')
           },
           { json: globalOpts.json },
         );
+        return;
       }
 
       const choice = await p.select({
@@ -63,6 +65,7 @@ export const switchCommand = new Command('switch')
         },
         { json: globalOpts.json },
       );
+      return;
     }
 
     if (globalOpts.json) {

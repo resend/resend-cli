@@ -31,6 +31,6 @@
     }
   },
   "files": {
-    "includes": ["**", "!**/dist", "!**/bun.lock"]
+    "includes": ["**", "!**/dist", "!**/bun.lock", "!.claude"]
   }
 }

@@ -5,11 +5,12 @@ import { join } from 'node:path';
 import {
   getConfigDir,
   listTeams,
-  removeTeam,
+  removeApiKey,
   resolveApiKey,
   resolveTeamName,
   setActiveTeam,
   storeApiKey,
+  validateTeamName,
 } from '../../src/lib/config';
 import { captureTestEnv } from '../helpers';
 
@@ -354,7 +355,7 @@ describe('setActiveTeam', () => {
   });
 });
 
-describe('removeTeam', () => {
+describe('removeApiKey', () => {
   const restoreEnv = captureTestEnv();
   let tmpDir: string;
 
@@ -375,7 +376,7 @@ describe('removeTeam', () => {
     storeApiKey('re_default', 'default');
     storeApiKey('re_staging', 'staging');
 
-    removeTeam('staging');
+    removeApiKey('staging');
 
     const teams = listTeams();
     expect(teams).toEqual([{ name: 'default', active: true }]);
@@ -386,7 +387,7 @@ describe('removeTeam', () => {
     storeApiKey('re_staging', 'staging');
     setActiveTeam('staging');
 
-    removeTeam('staging');
+    removeApiKey('staging');
 
     const configPath = join(tmpDir, 'resend', 'credentials.json');
     const data = JSON.parse(readFileSync(configPath, 'utf-8'));
@@ -396,7 +397,7 @@ describe('removeTeam', () => {
   test('deletes file when last team removed', () => {
     storeApiKey('re_only', 'only');
 
-    removeTeam('only');
+    removeApiKey('only');
 
     const { existsSync } = require('node:fs');
     const configPath = join(tmpDir, 'resend', 'credentials.json');
@@ -405,10 +406,40 @@ describe('removeTeam', () => {
 
   test('throws when team does not exist', () => {
     storeApiKey('re_default');
-    expect(() => removeTeam('nonexistent')).toThrow('not found');
+    expect(() => removeApiKey('nonexistent')).toThrow('not found');
   });
 
   test('throws when no credentials file', () => {
-    expect(() => removeTeam('any')).toThrow('No credentials file');
+    expect(() => removeApiKey('any')).toThrow('No credentials file');
+  });
+});
+
+describe('validateTeamName', () => {
+  test('accepts valid names', () => {
+    expect(validateTeamName('default')).toBeUndefined();
+    expect(validateTeamName('my-team')).toBeUndefined();
+    expect(validateTeamName('team_1')).toBeUndefined();
+    expect(validateTeamName('prod-2024')).toBeUndefined();
+    expect(validateTeamName('Production')).toBeUndefined();
+    expect(validateTeamName('MyTeam')).toBeUndefined();
+  });
+
+  test('rejects spaces and special characters', () => {
+    expect(validateTeamName('my team')).toContain('letters');
+    expect(validateTeamName('team@org')).toContain('letters');
+  });
+
+  test('rejects empty name', () => {
+    expect(validateTeamName('')).toContain('empty');
+  });
+
+  test('rejects names longer than 64 characters', () => {
+    const longName = 'a'.repeat(65);
+    expect(validateTeamName(longName)).toContain('64');
+  });
+
+  test('accepts name exactly 64 characters', () => {
+    const maxName = 'a'.repeat(64);
+    expect(validateTeamName(maxName)).toBeUndefined();
   });
 });

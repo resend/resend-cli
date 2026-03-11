@@ -3,7 +3,13 @@ import * as p from '@clack/prompts';
 import { Command } from '@commander-js/extra-typings';
 import { Resend } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
-import { listTeams, resolveApiKey, storeApiKey } from '../../lib/config';
+import {
+  listTeams,
+  resolveApiKey,
+  setActiveTeam,
+  storeApiKey,
+  validateTeamName,
+} from '../../lib/config';
 import { buildHelpText } from '../../lib/help-text';
 import { errorMessage, outputError, outputResult } from '../../lib/output';
 import { cancelAndExit } from '../../lib/prompts';
@@ -150,6 +156,17 @@ export const loginCommand = new Command('login')
 
     let teamName = globalOpts.team;
 
+    if (teamName) {
+      const teamError = validateTeamName(teamName);
+      if (teamError) {
+        outputError(
+          { message: teamError, code: 'invalid_team_name' },
+          { json: globalOpts.json },
+        );
+        return;
+      }
+    }
+
     if (!teamName && isInteractive()) {
       const existingTeams = listTeams();
       if (existingTeams.length > 0) {
@@ -173,8 +190,7 @@ export const loginCommand = new Command('login')
         if (choice === '__new__') {
           const newName = await p.text({
             message: 'Enter a name for the new team:',
-            validate: (v) =>
-              !v || v.length === 0 ? 'Team name is required' : undefined,
+            validate: (v) => validateTeamName(v as string),
           });
           if (p.isCancel(newName)) {
             cancelAndExit('Login cancelled.');
@@ -190,6 +206,21 @@ export const loginCommand = new Command('login')
 
     const configPath = storeApiKey(apiKey, teamName);
     const teamLabel = teamName || 'default';
+
+    // Auto-switch to the newly added team
+    if (teamName) {
+      try {
+        setActiveTeam(teamName);
+      } catch (err) {
+        outputError(
+          {
+            message: errorMessage(err, 'Failed to switch team'),
+            code: 'switch_failed',
+          },
+          { json: globalOpts.json },
+        );
+      }
+    }
 
     if (globalOpts.json) {
       outputResult(

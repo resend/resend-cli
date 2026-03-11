@@ -17,3 +17,5 @@ Thumbs.db
 # Environment
 .env
 .env.*
+
+.claude/worktrees/
