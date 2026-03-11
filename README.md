@@ -10,12 +10,6 @@ Command-line interface for the [Resend](https://resend.com) email API. Works for
 brew install resend/cli/resend
 ```
 
-To update to the latest version:
-
-```bash
-brew upgrade resend
-```
-
 ### Shell script (macOS and Linux)
 
 ```bash
