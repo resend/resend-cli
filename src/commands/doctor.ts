@@ -6,6 +6,7 @@ import { buildHelpText } from '../lib/help-text';
 import { errorMessage, outputResult } from '../lib/output';
 import { createSpinner } from '../lib/spinner';
 import { isInteractive } from '../lib/tty';
+import { GITHUB_RELEASES_URL } from '../lib/update-check';
 import { VERSION } from '../lib/version';
 
 type CheckStatus = 'pass' | 'warn' | 'fail';
@@ -19,13 +20,10 @@ type CheckResult = {
 
 async function checkCliVersion(): Promise<CheckResult> {
   try {
-    const res = await fetch(
-      'https://api.github.com/repos/resend/resend-cli/releases/latest',
-      {
-        headers: { Accept: 'application/vnd.github.v3+json' },
-        signal: AbortSignal.timeout(5000),
-      },
-    );
+    const res = await fetch(GITHUB_RELEASES_URL, {
+      headers: { Accept: 'application/vnd.github.v3+json' },
+      signal: AbortSignal.timeout(5000),
+    });
     if (!res.ok) {
       return {
         name: 'CLI Version',

@@ -4,7 +4,7 @@ import { getConfigDir } from './config';
 import { VERSION } from './version';
 
 const CHECK_INTERVAL_MS = 1 * 60 * 60 * 1000; // 1 hour
-const GITHUB_RELEASES_URL =
+export const GITHUB_RELEASES_URL =
   'https://api.github.com/repos/resend/resend-cli/releases/latest';
 
 type UpdateState = {
