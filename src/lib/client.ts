@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
 import { resolveApiKey } from './config';
 import { errorMessage, outputError } from './output';
+import { VERSION } from './version';
 
 export type GlobalOpts = {
   apiKey?: string;
@@ -8,6 +9,8 @@ export type GlobalOpts = {
   quiet?: boolean;
   team?: string;
 };
+
+process.env.RESEND_USER_AGENT = `resend-cli:${VERSION}`;
 
 export function createClient(flagValue?: string, teamName?: string): Resend {
   const resolved = resolveApiKey(flagValue, teamName);
