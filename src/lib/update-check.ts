@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { getConfigDir } from './config';
 import { VERSION } from './version';
 
-const CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const CHECK_INTERVAL_MS = 1 * 60 * 60 * 1000; // 1 hour
 const GITHUB_RELEASES_URL =
   'https://api.github.com/repos/resend/resend-cli/releases/latest';
 
