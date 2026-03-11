@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - chore/test-windows-build
   pull_request:
     paths:
       - src/**

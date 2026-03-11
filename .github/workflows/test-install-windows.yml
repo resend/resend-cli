@@ -1,9 +1,6 @@
 name: Test Windows Installer
 
 on:
-  push:
-    branches:
-      - chore/test-windows-installer
   pull_request:
     paths:
       - install.ps1
