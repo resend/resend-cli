@@ -135,7 +135,6 @@ export const loginCommand = new Command('login')
 
     const spinner = createSpinner(
       'Validating API key...',
-      'braille',
       globalOpts.quiet,
     );
 

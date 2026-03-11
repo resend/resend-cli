@@ -1,4 +1,3 @@
-import spinners from 'unicode-animations';
 import type { GlobalOpts } from './client';
 import { errorMessage, outputError } from './output';
 import { isInteractive, isUnicodeSupported } from './tty';
@@ -8,6 +7,13 @@ import { isInteractive, isUnicodeSupported } from './tty';
 const TICK = isUnicodeSupported ? String.fromCodePoint(0x2714) : 'v'; // ✔
 const WARN = isUnicodeSupported ? String.fromCodePoint(0x26a0) : '!'; // ⚠
 const CROSS = isUnicodeSupported ? String.fromCodePoint(0x2717) : 'x'; // ✗
+
+// Braille spinner: cycle through U+2800-block dot patterns.
+const SPINNER_FRAMES = [
+  '\u2839', '\u2838', '\u2834', '\u2826',
+  '\u2807', '\u280F', '\u2819', '\u2839',
+];
+const SPINNER_INTERVAL = 80;
 
 type SdkResponse<T> = { data: T | null; error: { message: string } | null };
 
@@ -21,7 +27,7 @@ export async function withSpinner<T>(
   errorCode: string,
   globalOpts: GlobalOpts,
 ): Promise<T> {
-  const spinner = createSpinner(messages.loading, 'braille', globalOpts.quiet);
+  const spinner = createSpinner(messages.loading, globalOpts.quiet);
   try {
     const { data, error } = await call();
     if (error) {
@@ -49,11 +55,8 @@ export async function withSpinner<T>(
   }
 }
 
-export type SpinnerName = keyof typeof spinners;
-
 export function createSpinner(
   message: string,
-  name: SpinnerName = 'braille',
   quiet?: boolean,
 ) {
   if (quiet || !isInteractive()) {
@@ -65,7 +68,8 @@ export function createSpinner(
     };
   }
 
-  const { frames, interval } = spinners[name];
+  const frames = isUnicodeSupported ? SPINNER_FRAMES : ['-', '\\', '|', '/'];
+  const interval = SPINNER_INTERVAL;
   let i = 0;
   let text = message;
 
