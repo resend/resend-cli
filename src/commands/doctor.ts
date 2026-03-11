@@ -1,6 +1,3 @@
-import { existsSync } from 'node:fs';
-import { homedir } from 'node:os';
-import { join } from 'node:path';
 import { Command } from '@commander-js/extra-typings';
 import { Resend } from 'resend';
 import type { GlobalOpts } from '../lib/client';
@@ -66,8 +63,8 @@ async function checkCliVersion(): Promise<CheckResult> {
   }
 }
 
-function checkApiKeyPresence(): CheckResult {
-  const resolved = resolveApiKey();
+function checkApiKeyPresence(flagValue?: string): CheckResult {
+  const resolved = resolveApiKey(flagValue);
   if (!resolved) {
     return {
       name: 'API Key',
@@ -143,73 +140,8 @@ async function checkApiValidationAndDomains(): Promise<CheckResult> {
   }
 }
 
-function checkAgentDetection(): CheckResult {
-  const home = homedir();
-  const agents: { name: string; found: boolean }[] = [];
-
-  // OpenClaw
-  agents.push({
-    name: 'OpenClaw',
-    found: existsSync(join(home, 'clawd', 'skills')),
-  });
-
-  // Cursor
-  agents.push({ name: 'Cursor', found: existsSync(join(home, '.cursor')) });
-
-  // Claude Desktop
-  const claudeConfigPaths =
-    process.platform === 'darwin'
-      ? [
-          join(
-            home,
-            'Library',
-            'Application Support',
-            'Claude',
-            'claude_desktop_config.json',
-          ),
-        ]
-      : process.platform === 'win32'
-        ? [
-            join(
-              process.env.APPDATA ?? '',
-              'Claude',
-              'claude_desktop_config.json',
-            ),
-          ]
-        : [join(home, '.config', 'Claude', 'claude_desktop_config.json')];
-  agents.push({
-    name: 'Claude Desktop',
-    found: claudeConfigPaths.some(existsSync),
-  });
-
-  // VS Code MCP
-  agents.push({
-    name: 'VS Code',
-    found: existsSync(join(process.cwd(), '.vscode', 'mcp.json')),
-  });
-
-  const detected = agents.filter((a) => a.found);
-
-  if (detected.length === 0) {
-    return {
-      name: 'AI Agents',
-      status: 'pass',
-      message: 'No AI agents detected',
-    };
-  }
-
-  return {
-    name: 'AI Agents',
-    status: 'pass',
-    message: `Detected: ${detected.map((a) => a.name).join(', ')}`,
-    detail: 'Future: run `resend setup <agent>` to configure integration',
-  };
-}
-
 export const doctorCommand = new Command('doctor')
-  .description(
-    'Check CLI version, API key, domain status, and AI agent detection',
-  )
+  .description('Check CLI version, API key, and domain status')
   .addHelpText(
     'after',
     buildHelpText({
@@ -217,9 +149,8 @@ export const doctorCommand = new Command('doctor')
       context: `Checks performed:
   CLI Version    Is the installed version up to date?
   API Key        Is a key present (--api-key, RESEND_API_KEY, or credentials file)?
-  API Validation Is the key valid and accepted by the Resend API?
-  AI Agents      Detected: Claude Desktop, Cursor, VS Code MCP, OpenClaw`,
-      output: `  {\n    "ok": true,\n    "checks": [\n      {"name":"CLI Version","status":"pass","message":"v0.1.0 (latest)"},\n      {"name":"API Key","status":"pass","message":"re_...abcd (source: env)"},\n      {"name":"Domains","status":"pass","message":"1 verified, 0 pending"},\n      {"name":"AI Agents","status":"pass","message":"Detected: Claude Desktop"}\n    ]\n  }\n  status values: "pass" | "warn" | "fail"\n  Exit code 1 if any check has status "fail"`,
+  API Validation Is the key valid and accepted by the Resend API?`,
+      output: `  {\n    "ok": true,\n    "checks": [\n      {"name":"CLI Version","status":"pass","message":"v0.1.0 (latest)"},\n      {"name":"API Key","status":"pass","message":"re_...abcd (source: env)"},\n      {"name":"Domains","status":"pass","message":"1 verified, 0 pending"}\n    ]\n  }\n  status values: "pass" | "warn" | "fail"\n  Exit code 1 if any check has status "fail"`,
       examples: ['resend doctor', 'resend doctor --json'],
     }),
   )
@@ -246,7 +177,7 @@ export const doctorCommand = new Command('doctor')
 
     // Check 2: API Key
     spinner = interactive ? createSpinner('Checking API key...', 'scan') : null;
-    const keyCheck = checkApiKeyPresence();
+    const keyCheck = checkApiKeyPresence(globalOpts.apiKey);
     checks.push(keyCheck);
     if (keyCheck.status === 'fail') {
       spinner?.fail(keyCheck.message);
@@ -268,25 +199,9 @@ export const doctorCommand = new Command('doctor')
       spinner?.stop(domainCheck.message);
     }
 
-    // Check 4: Agent Detection
-    spinner = interactive
-      ? createSpinner('Detecting AI agents...', 'scan')
-      : null;
-    const agentCheck = checkAgentDetection();
-    checks.push(agentCheck);
-    spinner?.stop(agentCheck.message);
-
     const hasFails = checks.some((c) => c.status === 'fail');
 
     if (!globalOpts.json && isInteractive()) {
-      console.log('');
-      for (const check of checks) {
-        const icon = statusIcons[check.status];
-        console.log(`  ${icon} ${check.name}: ${check.message}`);
-        if (check.detail) {
-          console.log(`    ${check.detail}`);
-        }
-      }
       console.log('');
     } else {
       outputResult({ ok: !hasFails, checks }, { json: globalOpts.json });

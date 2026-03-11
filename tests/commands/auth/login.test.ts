@@ -116,4 +116,39 @@ describe('login command', () => {
     // Original team should still exist
     expect(data.teams.production.api_key).toBe('re_old_key_1234');
   });
+
+  // This test must be last — addCommand permanently modifies the shared loginCommand singleton
+  test('auto-switches to team specified via --team flag', async () => {
+    spies = setupOutputSpies();
+
+    const { Command } = await import('@commander-js/extra-typings');
+    const { loginCommand } = await import('../../../src/commands/auth/login');
+    const program = new Command()
+      .option('--team <name>')
+      .option('--json')
+      .option('--api-key <key>')
+      .option('-q, --quiet')
+      .addCommand(loginCommand);
+
+    // First store a default key
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_team: 'default',
+        teams: { default: { api_key: 're_old_key_1234' } },
+      }),
+    );
+
+    await program.parseAsync(
+      ['login', '--key', 're_staging_key_123', '--team', 'staging'],
+      { from: 'user' },
+    );
+
+    const configPath = join(tmpDir, 'resend', 'credentials.json');
+    const data = JSON.parse(readFileSync(configPath, 'utf-8'));
+    expect(data.active_team).toBe('staging');
+    expect(data.teams.staging.api_key).toBe('re_staging_key_123');
+  });
 });

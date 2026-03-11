@@ -1,4 +1,11 @@
-import { chmodSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
@@ -102,6 +109,10 @@ export function resolveApiKey(
 
 export function storeApiKey(apiKey: string, teamName?: string): string {
   const team = teamName || 'default';
+  const validationError = validateTeamName(team);
+  if (validationError) {
+    throw new Error(validationError);
+  }
   const creds = readCredentials() || { active_team: 'default', teams: {} };
 
   creds.teams[team] = { api_key: apiKey };
@@ -116,7 +127,6 @@ export function storeApiKey(apiKey: string, teamName?: string): string {
 
 export function removeAllApiKeys(): string {
   const configPath = getCredentialsPath();
-  const { unlinkSync } = require('node:fs');
   unlinkSync(configPath);
   return configPath;
 }
@@ -125,13 +135,20 @@ export function removeApiKey(teamName?: string): string {
   const creds = readCredentials();
   if (!creds) {
     const configPath = getCredentialsPath();
+    if (!existsSync(configPath)) {
+      throw new Error('No credentials file found.');
+    }
     // Try to delete legacy file
-    const { unlinkSync } = require('node:fs');
     unlinkSync(configPath);
     return configPath;
   }
 
   const team = teamName || resolveTeamName();
+  if (!creds.teams[team]) {
+    throw new Error(
+      `Team "${team}" not found. Available teams: ${Object.keys(creds.teams).join(', ')}`,
+    );
+  }
   delete creds.teams[team];
 
   // If we removed the active team, switch to first available or "default"
@@ -142,7 +159,6 @@ export function removeApiKey(teamName?: string): string {
 
   // If no teams left, delete the file
   if (Object.keys(creds.teams).length === 0) {
-    const { unlinkSync } = require('node:fs');
     const configPath = getCredentialsPath();
     unlinkSync(configPath);
     return configPath;
@@ -152,6 +168,10 @@ export function removeApiKey(teamName?: string): string {
 }
 
 export function setActiveTeam(teamName: string): void {
+  const validationError = validateTeamName(teamName);
+  if (validationError) {
+    throw new Error(validationError);
+  }
   const creds = readCredentials();
   if (!creds) {
     throw new Error('No credentials file found. Run: resend login');
@@ -176,6 +196,19 @@ export function listTeams(): Array<{ name: string; active: boolean }> {
   }));
 }
 
+export function validateTeamName(name: string): string | undefined {
+  if (!name || name.length === 0) {
+    return 'Team name must not be empty';
+  }
+  if (name.length > 64) {
+    return 'Team name must be 64 characters or fewer';
+  }
+  if (!/^[a-zA-Z0-9_-]+$/.test(name)) {
+    return 'Team name must contain only letters, numbers, dashes, and underscores';
+  }
+  return undefined;
+}
+
 export function maskKey(key: string): string {
   if (key.length <= 7) {
     return `${key.slice(0, 3)}...`;
@@ -183,29 +216,3 @@ export function maskKey(key: string): string {
   return `${key.slice(0, 3)}...${key.slice(-4)}`;
 }
 
-export function removeTeam(teamName: string): void {
-  const creds = readCredentials();
-  if (!creds) {
-    throw new Error('No credentials file found.');
-  }
-  if (!creds.teams[teamName]) {
-    throw new Error(
-      `Team "${teamName}" not found. Available teams: ${Object.keys(creds.teams).join(', ')}`,
-    );
-  }
-
-  delete creds.teams[teamName];
-
-  if (creds.active_team === teamName) {
-    const remaining = Object.keys(creds.teams);
-    creds.active_team = remaining[0] || 'default';
-  }
-
-  if (Object.keys(creds.teams).length === 0) {
-    const { unlinkSync } = require('node:fs');
-    unlinkSync(getCredentialsPath());
-    return;
-  }
-
-  writeCredentials(creds);
-}

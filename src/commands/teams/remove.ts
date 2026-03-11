@@ -1,7 +1,7 @@
 import * as p from '@clack/prompts';
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
-import { listTeams, removeTeam } from '../../lib/config';
+import { listTeams, removeApiKey } from '../../lib/config';
 import { errorMessage, outputError, outputResult } from '../../lib/output';
 import { cancelAndExit } from '../../lib/prompts';
 import { isInteractive } from '../../lib/tty';
@@ -24,6 +24,7 @@ export const removeCommand = new Command('remove')
           },
           { json: globalOpts.json },
         );
+        return;
       }
 
       const teams = listTeams();
@@ -35,6 +36,7 @@ export const removeCommand = new Command('remove')
           },
           { json: globalOpts.json },
         );
+        return;
       }
 
       const choice = await p.select({
@@ -64,7 +66,7 @@ export const removeCommand = new Command('remove')
     }
 
     try {
-      removeTeam(teamName);
+      removeApiKey(teamName);
     } catch (err) {
       outputError(
         {
@@ -73,6 +75,7 @@ export const removeCommand = new Command('remove')
         },
         { json: globalOpts.json },
       );
+      return;
     }
 
     if (globalOpts.json) {
