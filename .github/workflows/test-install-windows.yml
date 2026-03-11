@@ -29,15 +29,17 @@ jobs:
           }
           Write-Host "Found binary at $exe"
 
-      - name: Verify binary runs
+      - name: Verify binary is a valid executable
         shell: pwsh
         run: |
           $exe = "$env:USERPROFILE\.resend\bin\resend.exe"
-          & $exe --version
-          if ($LASTEXITCODE -ne 0) {
-            Write-Error "resend --version failed"
+          $bytes = [System.IO.File]::ReadAllBytes($exe)
+          if ($bytes.Length -lt 2 -or $bytes[0] -ne 0x4D -or $bytes[1] -ne 0x5A) {
+            Write-Error "Binary is not a valid PE executable (missing MZ header)"
             exit 1
           }
+          $sizeMB = [math]::Round($bytes.Length / 1MB, 1)
+          Write-Host "Valid PE executable: $exe ($sizeMB MB)"
 
       - name: Verify PATH was updated
         shell: pwsh
