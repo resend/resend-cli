@@ -4,6 +4,7 @@ import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 
 export const deleteTopicCommand = new Command('delete')
+  .alias('rm')
   .description('Delete a topic')
   .argument('<id>', 'Topic UUID')
   .option(

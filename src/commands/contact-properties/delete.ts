@@ -4,6 +4,7 @@ import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 
 export const deleteContactPropertyCommand = new Command('delete')
+  .alias('rm')
   .description('Delete a contact property definition')
   .argument('<id>', 'Contact property UUID')
   .option(

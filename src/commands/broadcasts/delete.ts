@@ -4,6 +4,7 @@ import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 
 export const deleteBroadcastCommand = new Command('delete')
+  .alias('rm')
   .description(
     'Delete a broadcast — draft broadcasts are removed; scheduled broadcasts are cancelled before delivery',
   )

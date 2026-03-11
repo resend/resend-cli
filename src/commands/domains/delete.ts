@@ -4,6 +4,7 @@ import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 
 export const deleteDomainCommand = new Command('delete')
+  .alias('rm')
   .description('Delete a domain')
   .argument('<id>', 'Domain ID')
   .option('--yes', 'Skip confirmation prompt')

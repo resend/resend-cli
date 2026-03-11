@@ -4,6 +4,7 @@ import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 
 export const deleteWebhookCommand = new Command('delete')
+  .alias('rm')
   .description('Delete a webhook endpoint and stop all event deliveries to it')
   .argument('<id>', 'Webhook UUID')
   .option(

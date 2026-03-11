@@ -4,6 +4,7 @@ import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 
 export const deleteApiKeyCommand = new Command('delete')
+  .alias('rm')
   .description(
     'Delete an API key — any services using it will immediately lose access',
   )

@@ -4,6 +4,7 @@ import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 
 export const deleteSegmentCommand = new Command('delete')
+  .alias('rm')
   .description('Delete a segment')
   .argument('<id>', 'Segment UUID')
   .option(
