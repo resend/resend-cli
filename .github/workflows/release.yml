@@ -64,12 +64,6 @@ jobs:
             ```pwsh
             irm https://resend.com/install.ps1 | iex
             ```
-
-            **GitHub CLI** _(use while repo is private)_
-            ```sh
-            gh release download --repo resend/resend-cli --pattern "resend-darwin-arm64.tar.gz"
-            tar -xzf resend-darwin-arm64.tar.gz && sudo mv resend /usr/local/bin/ && rm resend-darwin-arm64.tar.gz
-            ```
           files: |
             dist/resend-darwin-arm64.tar.gz
             dist/resend-darwin-x64.tar.gz
