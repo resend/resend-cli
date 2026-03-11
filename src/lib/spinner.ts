@@ -10,8 +10,14 @@ const CROSS = isUnicodeSupported ? String.fromCodePoint(0x2717) : 'x'; // ✗
 
 // Braille spinner: cycle through U+2800-block dot patterns.
 const SPINNER_FRAMES = [
-  '\u2839', '\u2838', '\u2834', '\u2826',
-  '\u2807', '\u280F', '\u2819', '\u2839',
+  '\u2839',
+  '\u2838',
+  '\u2834',
+  '\u2826',
+  '\u2807',
+  '\u280F',
+  '\u2819',
+  '\u2839',
 ];
 const SPINNER_INTERVAL = 80;
 
@@ -55,10 +61,7 @@ export async function withSpinner<T>(
   }
 }
 
-export function createSpinner(
-  message: string,
-  quiet?: boolean,
-) {
+export function createSpinner(message: string, quiet?: boolean) {
   if (quiet || !isInteractive()) {
     return {
       update(_msg: string) {},

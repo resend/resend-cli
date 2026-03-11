@@ -169,9 +169,7 @@ export const doctorCommand = new Command('doctor')
     }
 
     // Check 1: CLI Version
-    let spinner = interactive
-      ? createSpinner('Checking CLI version...')
-      : null;
+    let spinner = interactive ? createSpinner('Checking CLI version...') : null;
     const versionCheck = await checkCliVersion();
     checks.push(versionCheck);
     if (versionCheck.status === 'warn') {

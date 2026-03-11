@@ -133,10 +133,7 @@ export const loginCommand = new Command('login')
       );
     }
 
-    const spinner = createSpinner(
-      'Validating API key...',
-      globalOpts.quiet,
-    );
+    const spinner = createSpinner('Validating API key...', globalOpts.quiet);
 
     try {
       const resend = new Resend(apiKey);
