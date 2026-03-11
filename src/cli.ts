@@ -15,6 +15,7 @@ import { teamsCommand } from './commands/teams/index';
 import { topicsCommand } from './commands/topics/index';
 import { webhooksCommand } from './commands/webhooks/index';
 import { whoamiCommand } from './commands/whoami';
+import { checkForUpdates } from './lib/update-check';
 import { PACKAGE_NAME, VERSION } from './lib/version';
 
 const BANNER = `
@@ -79,4 +80,4 @@ Examples:
   .addCommand(openCommand)
   .addCommand(whoamiCommand);
 
-program.parse();
+program.parseAsync().then(() => checkForUpdates()).catch(() => {});

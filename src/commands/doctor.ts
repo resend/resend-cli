@@ -19,10 +19,10 @@ type CheckResult = {
 
 async function checkCliVersion(): Promise<CheckResult> {
   try {
-    const encodedName = encodeURIComponent(PACKAGE_NAME);
     const res = await fetch(
-      `https://registry.npmjs.org/${encodedName}/latest`,
+      'https://api.github.com/repos/resend/resend-cli/releases/latest',
       {
+        headers: { Accept: 'application/vnd.github.v3+json' },
         signal: AbortSignal.timeout(5000),
       },
     );
@@ -33,8 +33,19 @@ async function checkCliVersion(): Promise<CheckResult> {
         message: `v${VERSION} (could not check for updates)`,
       };
     }
-    const data = (await res.json()) as { version?: string };
-    const latest = data.version ?? 'unknown';
+    const data = (await res.json()) as {
+      tag_name?: string;
+      prerelease?: boolean;
+      draft?: boolean;
+    };
+    if (data.prerelease || data.draft) {
+      return {
+        name: 'CLI Version',
+        status: 'warn',
+        message: `v${VERSION} (could not check for updates)`,
+      };
+    }
+    const latest = data.tag_name?.replace(/^v/, '') ?? 'unknown';
     if (latest === VERSION) {
       return {
         name: 'CLI Version',
