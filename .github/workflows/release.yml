@@ -3,13 +3,46 @@ on:
   push:
     tags:
       - 'v*'
-permissions:
-  contents: write
 concurrency:
   group: release
   cancel-in-progress: false
 jobs:
+  test-binary:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            target: bun-darwin-arm64
+            binary: dist/resend
+            flags: "--bytecode"
+          - os: ubuntu-latest
+            target: bun-linux-x64
+            binary: dist/resend
+            flags: "--bytecode"
+          - os: windows-latest
+            target: bun-windows-x64
+            binary: dist/resend.exe
+            flags: ""
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build binary
+        run: bun build --compile --minify --sourcemap ${{ matrix.flags }} src/cli.ts --target=${{ matrix.target }} --outfile ${{ matrix.binary }}
+
+      - name: Verify binary runs
+        run: ${{ matrix.binary }} --version
+
   release:
+    needs: test-binary
+    permissions:
+      contents: write
     runs-on: blacksmith-2vcpu-ubuntu-2204
     steps:
       - uses: actions/checkout@v6
