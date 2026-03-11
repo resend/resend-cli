@@ -17,8 +17,8 @@ The <segmentId> argument must be a segment UUID (not an email).`,
       output: `  {"id":"<segment-id>","deleted":true}`,
       errorCodes: ['auth_error', 'remove_segment_error'],
       examples: [
-        'resend contacts remove-segment 479e3145-dd38-4932-8c0c-e58b548c9e76 seg_123',
-        'resend contacts remove-segment user@example.com seg_123 --json',
+        'resend contacts remove-segment 479e3145-dd38-4932-8c0c-e58b548c9e76 7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
+        'resend contacts remove-segment user@example.com 7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d --json',
       ],
     }),
   )

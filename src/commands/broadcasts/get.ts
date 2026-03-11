@@ -17,8 +17,8 @@ Use this command to retrieve the full broadcast payload.`,
       output: `  {"id":"...","object":"broadcast","name":"...","segment_id":"...","from":"...","subject":"...","status":"draft|queued|sent","created_at":"...","scheduled_at":null,"sent_at":null}`,
       errorCodes: ['auth_error', 'fetch_error'],
       examples: [
-        'resend broadcasts get bcast_123abc',
-        'resend broadcasts get bcast_123abc --json',
+        'resend broadcasts get d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+        'resend broadcasts get d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6 --json',
       ],
     }),
   )

@@ -18,7 +18,7 @@ import {
 } from '../../helpers';
 
 const mockCreate = mock(async () => ({
-  data: { id: 'bcast_abc123' },
+  data: { id: 'd1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6' },
   error: null,
 }));
 
@@ -69,7 +69,7 @@ describe('broadcasts create command', () => {
         '--subject',
         'Weekly Update',
         '--segment-id',
-        'seg_123',
+        '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
         '--html',
         '<p>Hi</p>',
       ],
@@ -80,7 +80,7 @@ describe('broadcasts create command', () => {
     const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.from).toBe('hello@domain.com');
     expect(args.subject).toBe('Weekly Update');
-    expect(args.segmentId).toBe('seg_123');
+    expect(args.segmentId).toBe('7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d');
     expect(args.html).toBe('<p>Hi</p>');
   });
 
@@ -97,7 +97,7 @@ describe('broadcasts create command', () => {
         '--subject',
         'News',
         '--segment-id',
-        'seg_123',
+        '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
         '--text',
         'Hello!',
       ],
@@ -106,7 +106,7 @@ describe('broadcasts create command', () => {
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
-    expect(parsed.id).toBe('bcast_abc123');
+    expect(parsed.id).toBe('d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
   });
 
   test('passes --send flag to SDK', async () => {
@@ -122,7 +122,7 @@ describe('broadcasts create command', () => {
         '--subject',
         'Go',
         '--segment-id',
-        'seg_123',
+        '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
         '--text',
         'Hi',
         '--send',
@@ -147,7 +147,7 @@ describe('broadcasts create command', () => {
         '--subject',
         'Go',
         '--segment-id',
-        'seg_123',
+        '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
         '--text',
         'Hi',
         '--send',
@@ -174,7 +174,7 @@ describe('broadcasts create command', () => {
         '--subject',
         'News',
         '--segment-id',
-        'seg_123',
+        '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
         '--html',
         '<p>Hi</p>',
         '--name',
@@ -206,7 +206,7 @@ describe('broadcasts create command', () => {
     );
     await expectExit1(() =>
       createBroadcastCommand.parseAsync(
-        ['--subject', 'News', '--segment-id', 'seg_123', '--html', '<p>Hi</p>'],
+        ['--subject', 'News', '--segment-id', '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d', '--html', '<p>Hi</p>'],
         { from: 'user' },
       ),
     );
@@ -229,7 +229,7 @@ describe('broadcasts create command', () => {
           '--from',
           'hello@domain.com',
           '--segment-id',
-          'seg_123',
+          '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
           '--html',
           '<p>Hi</p>',
         ],
@@ -283,7 +283,7 @@ describe('broadcasts create command', () => {
           '--subject',
           'News',
           '--segment-id',
-          'seg_123',
+          '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
         ],
         { from: 'user' },
       ),
@@ -311,7 +311,7 @@ describe('broadcasts create command', () => {
           '--subject',
           'News',
           '--segment-id',
-          'seg_123',
+          '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
           '--html',
           '<p>Hi</p>',
         ],
@@ -343,7 +343,7 @@ describe('broadcasts create command', () => {
           '--subject',
           'News',
           '--segment-id',
-          'seg_bad',
+          '00000000-0000-0000-0000-000000000bad',
           '--html',
           '<p>Hi</p>',
         ],
@@ -384,7 +384,7 @@ describe('broadcasts create command', () => {
         '--subject',
         'News',
         '--segment-id',
-        'seg_123',
+        '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
         '--html-file',
         '/fake/email.html',
       ],
@@ -426,7 +426,7 @@ describe('broadcasts create command', () => {
           '--subject',
           'News',
           '--segment-id',
-          'seg_123',
+          '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
           '--html-file',
           '/nonexistent/file.html',
         ],

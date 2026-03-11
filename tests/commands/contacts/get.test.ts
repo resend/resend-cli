@@ -19,7 +19,7 @@ import {
 const mockGet = mock(async () => ({
   data: {
     object: 'contact' as const,
-    id: 'contact_abc123',
+    id: 'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
     email: 'jane@example.com',
     first_name: 'Jane',
     last_name: 'Smith',
@@ -67,10 +67,10 @@ describe('contacts get command', () => {
     const { getContactCommand } = await import(
       '../../../src/commands/contacts/get'
     );
-    await getContactCommand.parseAsync(['contact_abc123'], { from: 'user' });
+    await getContactCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], { from: 'user' });
 
     expect(mockGet).toHaveBeenCalledTimes(1);
-    expect(mockGet.mock.calls[0][0]).toBe('contact_abc123');
+    expect(mockGet.mock.calls[0][0]).toBe('a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
   });
 
   test('calls SDK with email address', async () => {
@@ -90,11 +90,11 @@ describe('contacts get command', () => {
     const { getContactCommand } = await import(
       '../../../src/commands/contacts/get'
     );
-    await getContactCommand.parseAsync(['contact_abc123'], { from: 'user' });
+    await getContactCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
-    expect(parsed.id).toBe('contact_abc123');
+    expect(parsed.id).toBe('a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
     expect(parsed.email).toBe('jane@example.com');
   });
 
@@ -109,7 +109,7 @@ describe('contacts get command', () => {
       '../../../src/commands/contacts/get'
     );
     await expectExit1(() =>
-      getContactCommand.parseAsync(['contact_abc123'], { from: 'user' }),
+      getContactCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], { from: 'user' }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

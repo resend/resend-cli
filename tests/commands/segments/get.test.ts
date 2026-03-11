@@ -19,7 +19,7 @@ import {
 const mockGet = mock(async () => ({
   data: {
     object: 'segment' as const,
-    id: 'seg_abc123',
+    id: '3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c',
     name: 'Newsletter Subscribers',
     created_at: '2026-01-01T00:00:00.000Z',
   },
@@ -63,10 +63,10 @@ describe('segments get command', () => {
     const { getSegmentCommand } = await import(
       '../../../src/commands/segments/get'
     );
-    await getSegmentCommand.parseAsync(['seg_abc123'], { from: 'user' });
+    await getSegmentCommand.parseAsync(['3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c'], { from: 'user' });
 
     expect(mockGet).toHaveBeenCalledTimes(1);
-    expect(mockGet.mock.calls[0][0]).toBe('seg_abc123');
+    expect(mockGet.mock.calls[0][0]).toBe('3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c');
   });
 
   test('outputs JSON segment data when non-interactive', async () => {
@@ -75,12 +75,12 @@ describe('segments get command', () => {
     const { getSegmentCommand } = await import(
       '../../../src/commands/segments/get'
     );
-    await getSegmentCommand.parseAsync(['seg_abc123'], { from: 'user' });
+    await getSegmentCommand.parseAsync(['3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c'], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
     expect(parsed.object).toBe('segment');
-    expect(parsed.id).toBe('seg_abc123');
+    expect(parsed.id).toBe('3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c');
     expect(parsed.name).toBe('Newsletter Subscribers');
     expect(parsed.created_at).toBe('2026-01-01T00:00:00.000Z');
   });
@@ -96,7 +96,7 @@ describe('segments get command', () => {
       '../../../src/commands/segments/get'
     );
     await expectExit1(() =>
-      getSegmentCommand.parseAsync(['seg_abc123'], { from: 'user' }),
+      getSegmentCommand.parseAsync(['3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c'], { from: 'user' }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -116,7 +116,7 @@ describe('segments get command', () => {
       '../../../src/commands/segments/get'
     );
     await expectExit1(() =>
-      getSegmentCommand.parseAsync(['seg_nonexistent'], { from: 'user' }),
+      getSegmentCommand.parseAsync(['00000000-0000-0000-0000-000000000000'], { from: 'user' }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

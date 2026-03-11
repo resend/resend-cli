@@ -17,7 +17,7 @@ import {
 } from '../../helpers';
 
 const mockRemove = mock(async () => ({
-  data: { object: 'segment' as const, id: 'seg_abc123', deleted: true },
+  data: { object: 'segment' as const, id: '3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c', deleted: true },
   error: null,
 }));
 
@@ -58,12 +58,12 @@ describe('segments delete command', () => {
     const { deleteSegmentCommand } = await import(
       '../../../src/commands/segments/delete'
     );
-    await deleteSegmentCommand.parseAsync(['seg_abc123', '--yes'], {
+    await deleteSegmentCommand.parseAsync(['3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c', '--yes'], {
       from: 'user',
     });
 
     expect(mockRemove).toHaveBeenCalledTimes(1);
-    expect(mockRemove.mock.calls[0][0]).toBe('seg_abc123');
+    expect(mockRemove.mock.calls[0][0]).toBe('3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c');
   });
 
   test('outputs synthesized JSON result when non-interactive', async () => {
@@ -72,14 +72,14 @@ describe('segments delete command', () => {
     const { deleteSegmentCommand } = await import(
       '../../../src/commands/segments/delete'
     );
-    await deleteSegmentCommand.parseAsync(['seg_abc123', '--yes'], {
+    await deleteSegmentCommand.parseAsync(['3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c', '--yes'], {
       from: 'user',
     });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
     expect(parsed.object).toBe('segment');
-    expect(parsed.id).toBe('seg_abc123');
+    expect(parsed.id).toBe('3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c');
     expect(parsed.deleted).toBe(true);
   });
 
@@ -92,7 +92,7 @@ describe('segments delete command', () => {
       '../../../src/commands/segments/delete'
     );
     await expectExit1(() =>
-      deleteSegmentCommand.parseAsync(['seg_abc123'], { from: 'user' }),
+      deleteSegmentCommand.parseAsync(['3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c'], { from: 'user' }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -108,7 +108,7 @@ describe('segments delete command', () => {
       '../../../src/commands/segments/delete'
     );
     await expectExit1(() =>
-      deleteSegmentCommand.parseAsync(['seg_abc123'], { from: 'user' }),
+      deleteSegmentCommand.parseAsync(['3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c'], { from: 'user' }),
     );
 
     expect(mockRemove).not.toHaveBeenCalled();
@@ -125,7 +125,7 @@ describe('segments delete command', () => {
       '../../../src/commands/segments/delete'
     );
     await expectExit1(() =>
-      deleteSegmentCommand.parseAsync(['seg_abc123', '--yes'], {
+      deleteSegmentCommand.parseAsync(['3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c', '--yes'], {
         from: 'user',
       }),
     );
@@ -147,7 +147,7 @@ describe('segments delete command', () => {
       '../../../src/commands/segments/delete'
     );
     await expectExit1(() =>
-      deleteSegmentCommand.parseAsync(['seg_nonexistent', '--yes'], {
+      deleteSegmentCommand.parseAsync(['00000000-0000-0000-0000-000000000000', '--yes'], {
         from: 'user',
       }),
     );

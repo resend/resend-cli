@@ -19,7 +19,7 @@ import {
 const mockCreate = mock(async () => ({
   data: {
     object: 'segment' as const,
-    id: 'seg_abc123',
+    id: '3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c',
     name: 'Newsletter Subscribers',
   },
   error: null,
@@ -86,7 +86,7 @@ describe('segments create command', () => {
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
     expect(parsed.object).toBe('segment');
-    expect(parsed.id).toBe('seg_abc123');
+    expect(parsed.id).toBe('3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c');
     expect(parsed.name).toBe('Newsletter Subscribers');
   });
 

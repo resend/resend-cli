@@ -21,7 +21,7 @@ const mockList = mock(async () => ({
     object: 'list' as const,
     data: [
       {
-        id: 'seg_abc123',
+        id: '3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c',
         name: 'Newsletter Subscribers',
         created_at: '2026-01-01T00:00:00.000Z',
       },

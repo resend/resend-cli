@@ -17,7 +17,7 @@ import {
 } from '../../helpers';
 
 const mockAddSegment = mock(async () => ({
-  data: { id: 'seg_123' },
+  data: { id: '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d' },
   error: null,
 }));
 
@@ -61,14 +61,14 @@ describe('contacts add-segment command', () => {
       '../../../src/commands/contacts/add-segment'
     );
     await addContactSegmentCommand.parseAsync(
-      ['contact_abc123', '--segment-id', 'seg_123'],
+      ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--segment-id', '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d'],
       { from: 'user' },
     );
 
     expect(mockAddSegment).toHaveBeenCalledTimes(1);
     const args = mockAddSegment.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.contactId).toBe('contact_abc123');
-    expect(args.segmentId).toBe('seg_123');
+    expect(args.contactId).toBe('a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
+    expect(args.segmentId).toBe('7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d');
   });
 
   test('adds contact to segment by email', async () => {
@@ -78,13 +78,13 @@ describe('contacts add-segment command', () => {
       '../../../src/commands/contacts/add-segment'
     );
     await addContactSegmentCommand.parseAsync(
-      ['jane@example.com', '--segment-id', 'seg_123'],
+      ['jane@example.com', '--segment-id', '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d'],
       { from: 'user' },
     );
 
     const args = mockAddSegment.mock.calls[0][0] as Record<string, unknown>;
     expect(args.email).toBe('jane@example.com');
-    expect(args.segmentId).toBe('seg_123');
+    expect(args.segmentId).toBe('7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d');
   });
 
   test('outputs JSON result when non-interactive', async () => {
@@ -94,13 +94,13 @@ describe('contacts add-segment command', () => {
       '../../../src/commands/contacts/add-segment'
     );
     await addContactSegmentCommand.parseAsync(
-      ['contact_abc123', '--segment-id', 'seg_123'],
+      ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--segment-id', '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d'],
       { from: 'user' },
     );
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
-    expect(parsed.id).toBe('seg_123');
+    expect(parsed.id).toBe('7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d');
   });
 
   test('errors with missing_segment_id when --segment-id absent in non-interactive mode', async () => {
@@ -112,7 +112,7 @@ describe('contacts add-segment command', () => {
       '../../../src/commands/contacts/add-segment'
     );
     await expectExit1(() =>
-      addContactSegmentCommand.parseAsync(['contact_abc123'], { from: 'user' }),
+      addContactSegmentCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], { from: 'user' }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -131,7 +131,7 @@ describe('contacts add-segment command', () => {
     );
     await expectExit1(() =>
       addContactSegmentCommand.parseAsync(
-        ['contact_abc123', '--segment-id', 'seg_123'],
+        ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--segment-id', '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d'],
         { from: 'user' },
       ),
     );
@@ -154,7 +154,7 @@ describe('contacts add-segment command', () => {
     );
     await expectExit1(() =>
       addContactSegmentCommand.parseAsync(
-        ['contact_abc123', '--segment-id', 'bad_seg'],
+        ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--segment-id', '00000000-0000-0000-0000-00000bad0seg'],
         { from: 'user' },
       ),
     );

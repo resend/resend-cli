@@ -20,7 +20,7 @@ const mockRemove = mock(async () => ({
   data: {
     object: 'contact' as const,
     deleted: true,
-    contact: 'contact_abc123',
+    contact: 'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
   },
   error: null,
 }));
@@ -62,12 +62,12 @@ describe('contacts delete command', () => {
     const { deleteContactCommand } = await import(
       '../../../src/commands/contacts/delete'
     );
-    await deleteContactCommand.parseAsync(['contact_abc123', '--yes'], {
+    await deleteContactCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--yes'], {
       from: 'user',
     });
 
     expect(mockRemove).toHaveBeenCalledTimes(1);
-    expect(mockRemove.mock.calls[0][0]).toBe('contact_abc123');
+    expect(mockRemove.mock.calls[0][0]).toBe('a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
   });
 
   test('deletes contact by email with --yes', async () => {
@@ -89,14 +89,14 @@ describe('contacts delete command', () => {
     const { deleteContactCommand } = await import(
       '../../../src/commands/contacts/delete'
     );
-    await deleteContactCommand.parseAsync(['contact_abc123', '--yes'], {
+    await deleteContactCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--yes'], {
       from: 'user',
     });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
     expect(parsed.object).toBe('contact');
-    expect(parsed.id).toBe('contact_abc123');
+    expect(parsed.id).toBe('a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
     expect(parsed.deleted).toBe(true);
   });
 
@@ -109,7 +109,7 @@ describe('contacts delete command', () => {
       '../../../src/commands/contacts/delete'
     );
     await expectExit1(() =>
-      deleteContactCommand.parseAsync(['contact_abc123'], { from: 'user' }),
+      deleteContactCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], { from: 'user' }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -125,7 +125,7 @@ describe('contacts delete command', () => {
       '../../../src/commands/contacts/delete'
     );
     await expectExit1(() =>
-      deleteContactCommand.parseAsync(['contact_abc123'], { from: 'user' }),
+      deleteContactCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], { from: 'user' }),
     );
 
     expect(mockRemove).not.toHaveBeenCalled();
@@ -142,7 +142,7 @@ describe('contacts delete command', () => {
       '../../../src/commands/contacts/delete'
     );
     await expectExit1(() =>
-      deleteContactCommand.parseAsync(['contact_abc123', '--yes'], {
+      deleteContactCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--yes'], {
         from: 'user',
       }),
     );

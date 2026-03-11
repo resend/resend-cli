@@ -19,8 +19,8 @@ export const getContactPropertyCommand = new Command('get')
   }`,
       errorCodes: ['auth_error', 'fetch_error'],
       examples: [
-        'resend contact-properties get prop_abc123',
-        'resend contact-properties get prop_abc123 --json',
+        'resend contact-properties get b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d',
+        'resend contact-properties get b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d --json',
       ],
     }),
   )

@@ -21,7 +21,7 @@ const mockListSegments = mock(async () => ({
     object: 'list' as const,
     data: [
       {
-        id: 'seg_123',
+        id: '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
         name: 'Newsletter',
         created_at: '2026-01-01T00:00:00.000Z',
       },
@@ -70,13 +70,13 @@ describe('contacts segments command', () => {
     const { listContactSegmentsCommand } = await import(
       '../../../src/commands/contacts/segments'
     );
-    await listContactSegmentsCommand.parseAsync(['contact_abc123'], {
+    await listContactSegmentsCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], {
       from: 'user',
     });
 
     expect(mockListSegments).toHaveBeenCalledTimes(1);
     const args = mockListSegments.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.contactId).toBe('contact_abc123');
+    expect(args.contactId).toBe('a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
     expect(args.email).toBeUndefined();
   });
 
@@ -101,7 +101,7 @@ describe('contacts segments command', () => {
     const { listContactSegmentsCommand } = await import(
       '../../../src/commands/contacts/segments'
     );
-    await listContactSegmentsCommand.parseAsync(['contact_abc123'], {
+    await listContactSegmentsCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], {
       from: 'user',
     });
 
@@ -122,7 +122,7 @@ describe('contacts segments command', () => {
       '../../../src/commands/contacts/segments'
     );
     await expectExit1(() =>
-      listContactSegmentsCommand.parseAsync(['contact_abc123'], {
+      listContactSegmentsCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], {
         from: 'user',
       }),
     );
@@ -144,7 +144,7 @@ describe('contacts segments command', () => {
       '../../../src/commands/contacts/segments'
     );
     await expectExit1(() =>
-      listContactSegmentsCommand.parseAsync(['contact_abc123'], {
+      listContactSegmentsCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], {
         from: 'user',
       }),
     );

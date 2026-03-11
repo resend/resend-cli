@@ -17,7 +17,7 @@ import {
 } from '../../helpers';
 
 const mockCreate = mock(async () => ({
-  data: { object: 'contact' as const, id: 'contact_abc123' },
+  data: { object: 'contact' as const, id: 'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6' },
   error: null,
 }));
 
@@ -79,7 +79,7 @@ describe('contacts create command', () => {
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
-    expect(parsed.id).toBe('contact_abc123');
+    expect(parsed.id).toBe('a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
     expect(parsed.object).toBe('contact');
   });
 
@@ -148,12 +148,12 @@ describe('contacts create command', () => {
       '../../../src/commands/contacts/create'
     );
     await createContactCommand.parseAsync(
-      ['--email', 'jane@example.com', '--segment-id', 'seg_123'],
+      ['--email', 'jane@example.com', '--segment-id', '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d'],
       { from: 'user' },
     );
 
     const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.segments).toEqual([{ id: 'seg_123' }]);
+    expect(args.segments).toEqual([{ id: '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d' }]);
   });
 
   test('passes multiple --segment-id values to SDK', async () => {
@@ -167,15 +167,15 @@ describe('contacts create command', () => {
         '--email',
         'jane@example.com',
         '--segment-id',
-        'seg_abc',
+        '3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c',
         '--segment-id',
-        'seg_def',
+        'e8d7c6b5-a4f3-2e1d-0c9b-8a7f6e5d4c3b',
       ],
       { from: 'user' },
     );
 
     const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.segments).toEqual([{ id: 'seg_abc' }, { id: 'seg_def' }]);
+    expect(args.segments).toEqual([{ id: '3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c' }, { id: 'e8d7c6b5-a4f3-2e1d-0c9b-8a7f6e5d4c3b' }]);
   });
 
   test('errors with missing_email in non-interactive mode', async () => {

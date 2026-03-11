@@ -24,9 +24,9 @@ Scheduling:
       output: `  {"id":"<broadcast-id>"}`,
       errorCodes: ['auth_error', 'send_error'],
       examples: [
-        'resend broadcasts send bcast_123abc',
-        'resend broadcasts send bcast_123abc --scheduled-at "in 1 hour"',
-        'resend broadcasts send bcast_123abc --scheduled-at "2026-08-05T11:52:01Z" --json',
+        'resend broadcasts send d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+        'resend broadcasts send d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6 --scheduled-at "in 1 hour"',
+        'resend broadcasts send d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6 --scheduled-at "2026-08-05T11:52:01Z" --json',
       ],
     }),
   )

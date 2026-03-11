@@ -71,13 +71,13 @@ describe('contacts topics command', () => {
     const { listContactTopicsCommand } = await import(
       '../../../src/commands/contacts/topics'
     );
-    await listContactTopicsCommand.parseAsync(['contact_abc123'], {
+    await listContactTopicsCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], {
       from: 'user',
     });
 
     expect(mockListTopics).toHaveBeenCalledTimes(1);
     const args = mockListTopics.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.id).toBe('contact_abc123');
+    expect(args.id).toBe('a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
   });
 
   test('lists topics by contact email', async () => {
@@ -100,7 +100,7 @@ describe('contacts topics command', () => {
     const { listContactTopicsCommand } = await import(
       '../../../src/commands/contacts/topics'
     );
-    await listContactTopicsCommand.parseAsync(['contact_abc123'], {
+    await listContactTopicsCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], {
       from: 'user',
     });
 
@@ -122,7 +122,7 @@ describe('contacts topics command', () => {
       '../../../src/commands/contacts/topics'
     );
     await expectExit1(() =>
-      listContactTopicsCommand.parseAsync(['contact_abc123'], { from: 'user' }),
+      listContactTopicsCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], { from: 'user' }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -142,7 +142,7 @@ describe('contacts topics command', () => {
       '../../../src/commands/contacts/topics'
     );
     await expectExit1(() =>
-      listContactTopicsCommand.parseAsync(['contact_abc123'], { from: 'user' }),
+      listContactTopicsCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], { from: 'user' }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

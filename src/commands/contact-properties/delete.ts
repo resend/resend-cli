@@ -21,8 +21,8 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
       output: `  {"object":"contact_property","id":"<id>","deleted":true}`,
       errorCodes: ['auth_error', 'confirmation_required', 'delete_error'],
       examples: [
-        'resend contact-properties delete prop_abc123 --yes',
-        'resend contact-properties delete prop_abc123 --yes --json',
+        'resend contact-properties delete b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d --yes',
+        'resend contact-properties delete b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d --yes --json',
       ],
     }),
   )

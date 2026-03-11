@@ -33,7 +33,7 @@ To retrieve full details (html, from, subject), use: resend broadcasts get <id>`
       examples: [
         'resend broadcasts list',
         'resend broadcasts list --limit 5',
-        'resend broadcasts list --after bcast_abc --limit 10',
+        'resend broadcasts list --after d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6 --limit 10',
         'resend broadcasts list --json',
       ],
     }),

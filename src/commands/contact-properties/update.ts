@@ -34,10 +34,10 @@ The fallback value is used in broadcast template interpolation when a contact ha
         'update_error',
       ],
       examples: [
-        'resend contact-properties update prop_abc123 --fallback-value "Acme Corp"',
-        'resend contact-properties update prop_abc123 --fallback-value 42',
-        'resend contact-properties update prop_abc123 --clear-fallback-value',
-        'resend contact-properties update prop_abc123 --fallback-value "Unknown" --json',
+        'resend contact-properties update b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d --fallback-value "Acme Corp"',
+        'resend contact-properties update b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d --fallback-value 42',
+        'resend contact-properties update b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d --clear-fallback-value',
+        'resend contact-properties update b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d --fallback-value "Unknown" --json',
       ],
     }),
   )

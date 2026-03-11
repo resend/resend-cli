@@ -22,7 +22,7 @@ const mockList = mock(async () => ({
     has_more: false,
     data: [
       {
-        id: 'prop_abc123',
+        id: 'b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d',
         key: 'company_name',
         type: 'string' as const,
         fallbackValue: null,
@@ -98,12 +98,12 @@ describe('contact-properties list command', () => {
       '../../../src/commands/contact-properties/list'
     );
     await listContactPropertiesCommand.parseAsync(
-      ['--after', 'prop_cursor_xyz'],
+      ['--after', 'c0c0c0c0-d1d1-e2e2-f3f3-b5b5b5b5b5b5'],
       { from: 'user' },
     );
 
     const args = mockList.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.after).toBe('prop_cursor_xyz');
+    expect(args.after).toBe('c0c0c0c0-d1d1-e2e2-f3f3-b5b5b5b5b5b5');
   });
 
   test('outputs JSON list when non-interactive', async () => {

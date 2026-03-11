@@ -26,12 +26,12 @@ Scheduling:
   --scheduled-at accepts ISO 8601 or natural language e.g. "in 1 hour", "tomorrow at 9am ET".`,
       examples: [
         'resend broadcasts list',
-        'resend broadcasts create --from hello@domain.com --subject "Launch" --segment-id seg_123 --html "<p>Hi {{{FIRST_NAME|there}}}</p>"',
-        'resend broadcasts send bcast_123abc',
-        'resend broadcasts send bcast_123abc --scheduled-at "in 1 hour"',
-        'resend broadcasts get bcast_123abc',
-        'resend broadcasts update bcast_123abc --subject "Updated Subject"',
-        'resend broadcasts delete bcast_123abc --yes',
+        'resend broadcasts create --from hello@domain.com --subject "Launch" --segment-id 7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d --html "<p>Hi {{{FIRST_NAME|there}}}</p>"',
+        'resend broadcasts send d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+        'resend broadcasts send d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6 --scheduled-at "in 1 hour"',
+        'resend broadcasts get d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+        'resend broadcasts update d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6 --subject "Updated Subject"',
+        'resend broadcasts delete d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6 --yes',
       ],
     }),
   )

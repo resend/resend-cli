@@ -17,7 +17,7 @@ import {
 } from '../../helpers';
 
 const mockRemoveSegment = mock(async () => ({
-  data: { id: 'seg_123', deleted: true },
+  data: { id: '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d', deleted: true },
   error: null,
 }));
 
@@ -61,14 +61,14 @@ describe('contacts remove-segment command', () => {
       '../../../src/commands/contacts/remove-segment'
     );
     await removeContactSegmentCommand.parseAsync(
-      ['contact_abc123', 'seg_123'],
+      ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d'],
       { from: 'user' },
     );
 
     expect(mockRemoveSegment).toHaveBeenCalledTimes(1);
     const args = mockRemoveSegment.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.contactId).toBe('contact_abc123');
-    expect(args.segmentId).toBe('seg_123');
+    expect(args.contactId).toBe('a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
+    expect(args.segmentId).toBe('7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d');
   });
 
   test('removes contact from segment by email', async () => {
@@ -78,13 +78,13 @@ describe('contacts remove-segment command', () => {
       '../../../src/commands/contacts/remove-segment'
     );
     await removeContactSegmentCommand.parseAsync(
-      ['jane@example.com', 'seg_123'],
+      ['jane@example.com', '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d'],
       { from: 'user' },
     );
 
     const args = mockRemoveSegment.mock.calls[0][0] as Record<string, unknown>;
     expect(args.email).toBe('jane@example.com');
-    expect(args.segmentId).toBe('seg_123');
+    expect(args.segmentId).toBe('7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d');
   });
 
   test('outputs JSON result when non-interactive', async () => {
@@ -94,13 +94,13 @@ describe('contacts remove-segment command', () => {
       '../../../src/commands/contacts/remove-segment'
     );
     await removeContactSegmentCommand.parseAsync(
-      ['contact_abc123', 'seg_123'],
+      ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d'],
       { from: 'user' },
     );
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
-    expect(parsed.id).toBe('seg_123');
+    expect(parsed.id).toBe('7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d');
     expect(parsed.deleted).toBe(true);
   });
 
@@ -115,7 +115,7 @@ describe('contacts remove-segment command', () => {
       '../../../src/commands/contacts/remove-segment'
     );
     await expectExit1(() =>
-      removeContactSegmentCommand.parseAsync(['contact_abc123', 'seg_123'], {
+      removeContactSegmentCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d'], {
         from: 'user',
       }),
     );
@@ -137,7 +137,7 @@ describe('contacts remove-segment command', () => {
       '../../../src/commands/contacts/remove-segment'
     );
     await expectExit1(() =>
-      removeContactSegmentCommand.parseAsync(['contact_abc123', 'bad_seg'], {
+      removeContactSegmentCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '00000000-0000-0000-0000-00000bad0seg'], {
         from: 'user',
       }),
     );

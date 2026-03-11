@@ -17,7 +17,7 @@ import {
 } from '../../helpers';
 
 const mockRemove = mock(async () => ({
-  data: { object: 'broadcast' as const, id: 'bcast_abc123', deleted: true },
+  data: { object: 'broadcast' as const, id: 'd1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', deleted: true },
   error: null,
 }));
 
@@ -58,12 +58,12 @@ describe('broadcasts delete command', () => {
     const { deleteBroadcastCommand } = await import(
       '../../../src/commands/broadcasts/delete'
     );
-    await deleteBroadcastCommand.parseAsync(['bcast_abc123', '--yes'], {
+    await deleteBroadcastCommand.parseAsync(['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--yes'], {
       from: 'user',
     });
 
     expect(mockRemove).toHaveBeenCalledTimes(1);
-    expect(mockRemove.mock.calls[0][0]).toBe('bcast_abc123');
+    expect(mockRemove.mock.calls[0][0]).toBe('d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
   });
 
   test('outputs JSON result when non-interactive', async () => {
@@ -72,14 +72,14 @@ describe('broadcasts delete command', () => {
     const { deleteBroadcastCommand } = await import(
       '../../../src/commands/broadcasts/delete'
     );
-    await deleteBroadcastCommand.parseAsync(['bcast_abc123', '--yes'], {
+    await deleteBroadcastCommand.parseAsync(['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--yes'], {
       from: 'user',
     });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
     expect(parsed.deleted).toBe(true);
-    expect(parsed.id).toBe('bcast_abc123');
+    expect(parsed.id).toBe('d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
     expect(parsed.object).toBe('broadcast');
   });
 
@@ -92,7 +92,7 @@ describe('broadcasts delete command', () => {
       '../../../src/commands/broadcasts/delete'
     );
     await expectExit1(() =>
-      deleteBroadcastCommand.parseAsync(['bcast_abc123'], { from: 'user' }),
+      deleteBroadcastCommand.parseAsync(['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], { from: 'user' }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -108,7 +108,7 @@ describe('broadcasts delete command', () => {
       '../../../src/commands/broadcasts/delete'
     );
     await expectExit1(() =>
-      deleteBroadcastCommand.parseAsync(['bcast_abc123'], { from: 'user' }),
+      deleteBroadcastCommand.parseAsync(['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], { from: 'user' }),
     );
 
     expect(mockRemove).not.toHaveBeenCalled();
@@ -125,7 +125,7 @@ describe('broadcasts delete command', () => {
       '../../../src/commands/broadcasts/delete'
     );
     await expectExit1(() =>
-      deleteBroadcastCommand.parseAsync(['bcast_abc123', '--yes'], {
+      deleteBroadcastCommand.parseAsync(['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--yes'], {
         from: 'user',
       }),
     );
@@ -147,7 +147,7 @@ describe('broadcasts delete command', () => {
       '../../../src/commands/broadcasts/delete'
     );
     await expectExit1(() =>
-      deleteBroadcastCommand.parseAsync(['bcast_sent', '--yes'], {
+      deleteBroadcastCommand.parseAsync(['s1e2n3t4-5a6b-7c8d-9e0f-a1b2c3d4e5f6', '--yes'], {
         from: 'user',
       }),
     );

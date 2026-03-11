@@ -22,9 +22,9 @@ const mockList = mock(async () => ({
     has_more: false,
     data: [
       {
-        id: 'bcast_abc123',
+        id: 'd1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
         name: 'Weekly Newsletter',
-        segment_id: 'seg_123',
+        segment_id: '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
         audience_id: null,
         status: 'sent' as const,
         created_at: '2026-02-18T12:00:00.000Z',
@@ -90,7 +90,7 @@ describe('broadcasts list command', () => {
     const parsed = JSON.parse(output);
     expect(parsed.object).toBe('list');
     expect(parsed.data).toHaveLength(1);
-    expect(parsed.data[0].id).toBe('bcast_abc123');
+    expect(parsed.data[0].id).toBe('d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
   });
 
   test('passes --limit to SDK', async () => {
@@ -111,12 +111,12 @@ describe('broadcasts list command', () => {
     const { listBroadcastsCommand } = await import(
       '../../../src/commands/broadcasts/list'
     );
-    await listBroadcastsCommand.parseAsync(['--after', 'bcast_cursor'], {
+    await listBroadcastsCommand.parseAsync(['--after', 'c0c0c0c0-d1d1-e2e2-f3f3-a4a4a4a4a4a4'], {
       from: 'user',
     });
 
     const opts = mockList.mock.calls[0][0] as Record<string, unknown>;
-    expect(opts.after).toBe('bcast_cursor');
+    expect(opts.after).toBe('c0c0c0c0-d1d1-e2e2-f3f3-a4a4a4a4a4a4');
   });
 
   test('passes --before cursor to SDK', async () => {
@@ -125,12 +125,12 @@ describe('broadcasts list command', () => {
     const { listBroadcastsCommand } = await import(
       '../../../src/commands/broadcasts/list'
     );
-    await listBroadcastsCommand.parseAsync(['--before', 'bcast_cursor'], {
+    await listBroadcastsCommand.parseAsync(['--before', 'c0c0c0c0-d1d1-e2e2-f3f3-a4a4a4a4a4a4'], {
       from: 'user',
     });
 
     const opts = mockList.mock.calls[0][0] as Record<string, unknown>;
-    expect(opts.before).toBe('bcast_cursor');
+    expect(opts.before).toBe('c0c0c0c0-d1d1-e2e2-f3f3-a4a4a4a4a4a4');
   });
 
   test('errors with invalid_limit when --limit is out of range', async () => {

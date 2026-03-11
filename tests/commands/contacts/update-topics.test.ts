@@ -17,7 +17,7 @@ import {
 } from '../../helpers';
 
 const mockUpdateTopics = mock(async () => ({
-  data: { id: 'contact_abc123' },
+  data: { id: 'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6' },
   error: null,
 }));
 
@@ -62,7 +62,7 @@ describe('contacts update-topics command', () => {
     );
     await updateContactTopicsCommand.parseAsync(
       [
-        'contact_abc123',
+        'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
         '--topics',
         '[{"id":"topic_abc","subscription":"opt_in"}]',
       ],
@@ -71,7 +71,7 @@ describe('contacts update-topics command', () => {
 
     expect(mockUpdateTopics).toHaveBeenCalledTimes(1);
     const args = mockUpdateTopics.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.id).toBe('contact_abc123');
+    expect(args.id).toBe('a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
     expect(args.topics).toEqual([{ id: 'topic_abc', subscription: 'opt_in' }]);
   });
 
@@ -103,7 +103,7 @@ describe('contacts update-topics command', () => {
     );
     await updateContactTopicsCommand.parseAsync(
       [
-        'contact_abc123',
+        'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
         '--topics',
         '[{"id":"t1","subscription":"opt_in"},{"id":"t2","subscription":"opt_out"}]',
       ],
@@ -122,7 +122,7 @@ describe('contacts update-topics command', () => {
     );
     await updateContactTopicsCommand.parseAsync(
       [
-        'contact_abc123',
+        'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
         '--topics',
         '[{"id":"topic_abc","subscription":"opt_in"}]',
       ],
@@ -131,7 +131,7 @@ describe('contacts update-topics command', () => {
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
-    expect(parsed.id).toBe('contact_abc123');
+    expect(parsed.id).toBe('a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
   });
 
   test('errors with missing_topics when --topics absent in non-interactive mode', async () => {
@@ -143,7 +143,7 @@ describe('contacts update-topics command', () => {
       '../../../src/commands/contacts/update-topics'
     );
     await expectExit1(() =>
-      updateContactTopicsCommand.parseAsync(['contact_abc123'], {
+      updateContactTopicsCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], {
         from: 'user',
       }),
     );
@@ -162,7 +162,7 @@ describe('contacts update-topics command', () => {
     );
     await expectExit1(() =>
       updateContactTopicsCommand.parseAsync(
-        ['contact_abc123', '--topics', 'not-json'],
+        ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--topics', 'not-json'],
         { from: 'user' },
       ),
     );
@@ -181,7 +181,7 @@ describe('contacts update-topics command', () => {
     );
     await expectExit1(() =>
       updateContactTopicsCommand.parseAsync(
-        ['contact_abc123', '--topics', '{"id":"t1"}'],
+        ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--topics', '{"id":"t1"}'],
         { from: 'user' },
       ),
     );
@@ -202,7 +202,7 @@ describe('contacts update-topics command', () => {
     );
     await expectExit1(() =>
       updateContactTopicsCommand.parseAsync(
-        ['contact_abc123', '--topics', '[{"id":"t1","subscription":"opt_in"}]'],
+        ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--topics', '[{"id":"t1","subscription":"opt_in"}]'],
         { from: 'user' },
       ),
     );
@@ -226,7 +226,7 @@ describe('contacts update-topics command', () => {
     await expectExit1(() =>
       updateContactTopicsCommand.parseAsync(
         [
-          'contact_abc123',
+          'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
           '--topics',
           '[{"id":"bad_topic","subscription":"opt_in"}]',
         ],

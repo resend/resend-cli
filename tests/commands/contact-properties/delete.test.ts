@@ -19,7 +19,7 @@ import {
 const mockRemove = mock(async () => ({
   data: {
     object: 'contact_property' as const,
-    id: 'prop_abc123',
+    id: 'b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d',
     deleted: true,
   },
   error: null,
@@ -62,12 +62,12 @@ describe('contact-properties delete command', () => {
     const { deleteContactPropertyCommand } = await import(
       '../../../src/commands/contact-properties/delete'
     );
-    await deleteContactPropertyCommand.parseAsync(['prop_abc123', '--yes'], {
+    await deleteContactPropertyCommand.parseAsync(['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d', '--yes'], {
       from: 'user',
     });
 
     expect(mockRemove).toHaveBeenCalledTimes(1);
-    expect(mockRemove.mock.calls[0][0]).toBe('prop_abc123');
+    expect(mockRemove.mock.calls[0][0]).toBe('b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d');
   });
 
   test('outputs synthesized JSON result when non-interactive', async () => {
@@ -76,14 +76,14 @@ describe('contact-properties delete command', () => {
     const { deleteContactPropertyCommand } = await import(
       '../../../src/commands/contact-properties/delete'
     );
-    await deleteContactPropertyCommand.parseAsync(['prop_abc123', '--yes'], {
+    await deleteContactPropertyCommand.parseAsync(['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d', '--yes'], {
       from: 'user',
     });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
     expect(parsed.object).toBe('contact_property');
-    expect(parsed.id).toBe('prop_abc123');
+    expect(parsed.id).toBe('b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d');
     expect(parsed.deleted).toBe(true);
   });
 
@@ -96,7 +96,7 @@ describe('contact-properties delete command', () => {
       '../../../src/commands/contact-properties/delete'
     );
     await expectExit1(() =>
-      deleteContactPropertyCommand.parseAsync(['prop_abc123'], {
+      deleteContactPropertyCommand.parseAsync(['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d'], {
         from: 'user',
       }),
     );
@@ -114,7 +114,7 @@ describe('contact-properties delete command', () => {
       '../../../src/commands/contact-properties/delete'
     );
     await expectExit1(() =>
-      deleteContactPropertyCommand.parseAsync(['prop_abc123'], {
+      deleteContactPropertyCommand.parseAsync(['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d'], {
         from: 'user',
       }),
     );
@@ -133,7 +133,7 @@ describe('contact-properties delete command', () => {
       '../../../src/commands/contact-properties/delete'
     );
     await expectExit1(() =>
-      deleteContactPropertyCommand.parseAsync(['prop_abc123', '--yes'], {
+      deleteContactPropertyCommand.parseAsync(['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d', '--yes'], {
         from: 'user',
       }),
     );

@@ -17,7 +17,7 @@ import {
 } from '../../helpers';
 
 const mockCreate = mock(async () => ({
-  data: { object: 'contact_property' as const, id: 'prop_abc123' },
+  data: { object: 'contact_property' as const, id: 'b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d' },
   error: null,
 }));
 
@@ -136,7 +136,7 @@ describe('contact-properties create command', () => {
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
     expect(parsed.object).toBe('contact_property');
-    expect(parsed.id).toBe('prop_abc123');
+    expect(parsed.id).toBe('b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d');
   });
 
   test('errors with missing_key in non-interactive mode', async () => {

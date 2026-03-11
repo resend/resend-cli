@@ -17,7 +17,7 @@ import {
 } from '../../helpers';
 
 const mockSend = mock(async () => ({
-  data: { id: 'bcast_abc123' },
+  data: { id: 'd1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6' },
   error: null,
 }));
 
@@ -58,10 +58,10 @@ describe('broadcasts send command', () => {
     const { sendBroadcastCommand } = await import(
       '../../../src/commands/broadcasts/send'
     );
-    await sendBroadcastCommand.parseAsync(['bcast_abc123'], { from: 'user' });
+    await sendBroadcastCommand.parseAsync(['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], { from: 'user' });
 
     expect(mockSend).toHaveBeenCalledTimes(1);
-    expect(mockSend.mock.calls[0][0]).toBe('bcast_abc123');
+    expect(mockSend.mock.calls[0][0]).toBe('d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
   });
 
   test('outputs JSON id when non-interactive', async () => {
@@ -70,11 +70,11 @@ describe('broadcasts send command', () => {
     const { sendBroadcastCommand } = await import(
       '../../../src/commands/broadcasts/send'
     );
-    await sendBroadcastCommand.parseAsync(['bcast_abc123'], { from: 'user' });
+    await sendBroadcastCommand.parseAsync(['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
-    expect(parsed.id).toBe('bcast_abc123');
+    expect(parsed.id).toBe('d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
   });
 
   test('passes --scheduled-at to SDK', async () => {
@@ -84,7 +84,7 @@ describe('broadcasts send command', () => {
       '../../../src/commands/broadcasts/send'
     );
     await sendBroadcastCommand.parseAsync(
-      ['bcast_abc123', '--scheduled-at', 'in 1 hour'],
+      ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--scheduled-at', 'in 1 hour'],
       { from: 'user' },
     );
 
@@ -98,7 +98,7 @@ describe('broadcasts send command', () => {
     const { sendBroadcastCommand } = await import(
       '../../../src/commands/broadcasts/send'
     );
-    await sendBroadcastCommand.parseAsync(['bcast_abc123'], { from: 'user' });
+    await sendBroadcastCommand.parseAsync(['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], { from: 'user' });
 
     const payload = mockSend.mock.calls[0][1] as Record<string, unknown>;
     expect(payload.scheduledAt).toBeUndefined();
@@ -115,7 +115,7 @@ describe('broadcasts send command', () => {
       '../../../src/commands/broadcasts/send'
     );
     await expectExit1(() =>
-      sendBroadcastCommand.parseAsync(['bcast_abc123'], { from: 'user' }),
+      sendBroadcastCommand.parseAsync(['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], { from: 'user' }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -135,7 +135,7 @@ describe('broadcasts send command', () => {
       '../../../src/commands/broadcasts/send'
     );
     await expectExit1(() =>
-      sendBroadcastCommand.parseAsync(['bcast_bad'], { from: 'user' }),
+      sendBroadcastCommand.parseAsync(['00000000-0000-0000-0000-00000000bad0'], { from: 'user' }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

@@ -17,7 +17,7 @@ import {
 } from '../../helpers';
 
 const mockUpdate = mock(async () => ({
-  data: { object: 'contact' as const, id: 'contact_abc123' },
+  data: { object: 'contact' as const, id: 'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6' },
   error: null,
 }));
 
@@ -59,13 +59,13 @@ describe('contacts update command', () => {
       '../../../src/commands/contacts/update'
     );
     await updateContactCommand.parseAsync(
-      ['contact_abc123', '--unsubscribed'],
+      ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--unsubscribed'],
       { from: 'user' },
     );
 
     expect(mockUpdate).toHaveBeenCalledTimes(1);
     const args = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.id).toBe('contact_abc123');
+    expect(args.id).toBe('a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
     expect(args.unsubscribed).toBe(true);
   });
 
@@ -92,7 +92,7 @@ describe('contacts update command', () => {
       '../../../src/commands/contacts/update'
     );
     await updateContactCommand.parseAsync(
-      ['contact_abc123', '--properties', '{"plan":"pro"}'],
+      ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--properties', '{"plan":"pro"}'],
       { from: 'user' },
     );
 
@@ -106,7 +106,7 @@ describe('contacts update command', () => {
     const { updateContactCommand } = await import(
       '../../../src/commands/contacts/update'
     );
-    await updateContactCommand.parseAsync(['contact_abc123'], { from: 'user' });
+    await updateContactCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], { from: 'user' });
 
     const args = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.unsubscribed).toBeUndefined();
@@ -119,13 +119,13 @@ describe('contacts update command', () => {
       '../../../src/commands/contacts/update'
     );
     await updateContactCommand.parseAsync(
-      ['contact_abc123', '--unsubscribed'],
+      ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--unsubscribed'],
       { from: 'user' },
     );
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
-    expect(parsed.id).toBe('contact_abc123');
+    expect(parsed.id).toBe('a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
     expect(parsed.object).toBe('contact');
   });
 
@@ -139,7 +139,7 @@ describe('contacts update command', () => {
     );
     await expectExit1(() =>
       updateContactCommand.parseAsync(
-        ['contact_abc123', '--properties', 'bad-json'],
+        ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--properties', 'bad-json'],
         { from: 'user' },
       ),
     );
@@ -159,7 +159,7 @@ describe('contacts update command', () => {
       '../../../src/commands/contacts/update'
     );
     await expectExit1(() =>
-      updateContactCommand.parseAsync(['contact_abc123', '--unsubscribed'], {
+      updateContactCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--unsubscribed'], {
         from: 'user',
       }),
     );

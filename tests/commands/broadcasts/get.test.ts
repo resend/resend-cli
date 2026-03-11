@@ -19,9 +19,9 @@ import {
 const mockGet = mock(async () => ({
   data: {
     object: 'broadcast' as const,
-    id: 'bcast_abc123',
+    id: 'd1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
     name: 'Weekly Newsletter',
-    segment_id: 'seg_123',
+    segment_id: '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
     audience_id: null,
     from: 'hello@domain.com',
     subject: 'This week in Resend',
@@ -75,10 +75,10 @@ describe('broadcasts get command', () => {
     const { getBroadcastCommand } = await import(
       '../../../src/commands/broadcasts/get'
     );
-    await getBroadcastCommand.parseAsync(['bcast_abc123'], { from: 'user' });
+    await getBroadcastCommand.parseAsync(['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], { from: 'user' });
 
     expect(mockGet).toHaveBeenCalledTimes(1);
-    expect(mockGet.mock.calls[0][0]).toBe('bcast_abc123');
+    expect(mockGet.mock.calls[0][0]).toBe('d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
   });
 
   test('outputs full JSON when non-interactive', async () => {
@@ -87,11 +87,11 @@ describe('broadcasts get command', () => {
     const { getBroadcastCommand } = await import(
       '../../../src/commands/broadcasts/get'
     );
-    await getBroadcastCommand.parseAsync(['bcast_abc123'], { from: 'user' });
+    await getBroadcastCommand.parseAsync(['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
-    expect(parsed.id).toBe('bcast_abc123');
+    expect(parsed.id).toBe('d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
     expect(parsed.status).toBe('sent');
     expect(parsed.subject).toBe('This week in Resend');
   });
@@ -107,7 +107,7 @@ describe('broadcasts get command', () => {
       '../../../src/commands/broadcasts/get'
     );
     await expectExit1(() =>
-      getBroadcastCommand.parseAsync(['bcast_abc123'], { from: 'user' }),
+      getBroadcastCommand.parseAsync(['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], { from: 'user' }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -125,7 +125,7 @@ describe('broadcasts get command', () => {
       '../../../src/commands/broadcasts/get'
     );
     await expectExit1(() =>
-      getBroadcastCommand.parseAsync(['bcast_bad'], { from: 'user' }),
+      getBroadcastCommand.parseAsync(['00000000-0000-0000-0000-00000000bad0'], { from: 'user' }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
