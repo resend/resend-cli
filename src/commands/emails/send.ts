@@ -1,21 +1,29 @@
+import * as p from '@clack/prompts';
 import { Command } from '@commander-js/extra-typings';
 import type { Resend } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
-import { promptForMissing, cancelAndExit } from '../../lib/prompts';
-import { withSpinner } from '../../lib/spinner';
-import { outputError, outputResult } from '../../lib/output';
 import { readFile } from '../../lib/files';
-import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
-import * as p from '@clack/prompts';
+import { outputResult } from '../../lib/output';
+import {
+  cancelAndExit,
+  promptForMissing,
+  requireText,
+} from '../../lib/prompts';
+import { withSpinner } from '../../lib/spinner';
+import { isInteractive } from '../../lib/tty';
 
 export async function fetchVerifiedDomains(resend: Resend): Promise<string[]> {
   try {
     const { data, error } = await resend.domains.list();
-    if (error || !data) return [];
+    if (error || !data) {
+      return [];
+    }
     return data.data
-      .filter((d) => d.status === 'verified' && d.capabilities.sending === 'enabled')
+      .filter(
+        (d) => d.status === 'verified' && d.capabilities.sending === 'enabled',
+      )
       .map((d) => d.name);
   } catch {
     return [];
@@ -33,29 +41,37 @@ async function promptForFromAddress(domains: string[]): Promise<string> {
       message: 'Select a verified domain',
       options: domains.map((d) => ({ value: d, label: d })),
     });
-    if (p.isCancel(result)) cancelAndExit('Send cancelled.');
+    if (p.isCancel(result)) {
+      cancelAndExit('Send cancelled.');
+    }
     domain = result;
   }
 
-  const options: Array<{ value: string | null; label: string }> = FROM_PREFIXES.map((prefix) => ({
-    value: `${prefix}@${domain}`,
-    label: `${prefix}@${domain}`,
-  }));
+  const options: Array<{ value: string | null; label: string }> =
+    FROM_PREFIXES.map((prefix) => ({
+      value: `${prefix}@${domain}`,
+      label: `${prefix}@${domain}`,
+    }));
   options.push({ value: null, label: 'Custom address...' });
 
   const result = await p.select({
     message: `From address (@${domain})`,
     options,
   });
-  if (p.isCancel(result)) cancelAndExit('Send cancelled.');
+  if (p.isCancel(result)) {
+    cancelAndExit('Send cancelled.');
+  }
 
   if (result === null) {
     const custom = await p.text({
       message: 'From address',
       placeholder: `you@${domain}`,
-      validate: (v) => (!v || !v.includes('@') ? 'Enter a valid email address' : undefined),
+      validate: (v) =>
+        !v || !v.includes('@') ? 'Enter a valid email address' : undefined,
     });
-    if (p.isCancel(custom)) cancelAndExit('Send cancelled.');
+    if (p.isCancel(custom)) {
+      cancelAndExit('Send cancelled.');
+    }
     return custom;
   }
 
@@ -76,7 +92,8 @@ export const sendCommand = new Command('send')
   .addHelpText(
     'after',
     buildHelpText({
-      context: 'Required: --from, --to, --subject, and one of --text | --html | --html-file',
+      context:
+        'Required: --from, --to, --subject, and one of --text | --html | --html-file',
       output: '  {"id":"<email-id>"}',
       errorCodes: ['auth_error', 'missing_body', 'send_error'],
       examples: [
@@ -85,7 +102,7 @@ export const sendCommand = new Command('send')
         'resend emails send --from you@domain.com --to user@example.com --subject "Hi" --html-file ./email.html --json',
         'RESEND_API_KEY=re_123 resend emails send --from you@domain.com --to user@example.com --subject "Hi" --text "Hi"',
       ],
-    })
+    }),
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
@@ -105,11 +122,19 @@ export const sendCommand = new Command('send')
     const filled = await promptForMissing(
       { from: fromAddress, to: opts.to?.[0], subject: opts.subject },
       [
-        { flag: 'from', message: 'From address', placeholder: 'you@example.com' },
-        { flag: 'to', message: 'To address', placeholder: 'recipient@example.com' },
+        {
+          flag: 'from',
+          message: 'From address',
+          placeholder: 'you@example.com',
+        },
+        {
+          flag: 'to',
+          message: 'To address',
+          placeholder: 'recipient@example.com',
+        },
         { flag: 'subject', message: 'Subject', placeholder: 'Hello!' },
       ],
-      globalOpts
+      globalOpts,
     );
 
     let html = opts.html;
@@ -121,34 +146,38 @@ export const sendCommand = new Command('send')
 
     let body: string | undefined = text;
     if (!html && !text) {
-      if (!isInteractive()) {
-        outputError(
-          { message: 'Missing email body. Provide --html, --html-file, or --text', code: 'missing_body' },
-          { json: globalOpts.json }
-        );
-      }
-      const bodyResult = await p.text({
-        message: 'Email body (plain text)',
-        placeholder: 'Type your message...',
-        validate: (v) => (!v || v.length === 0 ? 'Body is required' : undefined),
-      });
-      if (p.isCancel(bodyResult)) cancelAndExit('Send cancelled.');
-      body = bodyResult;
+      body = await requireText(
+        undefined,
+        {
+          message: 'Email body (plain text)',
+          placeholder: 'Type your message...',
+        },
+        {
+          message: 'Missing email body. Provide --html, --html-file, or --text',
+          code: 'missing_body',
+        },
+        globalOpts,
+      );
     }
 
-    const toAddresses = opts.to ?? [filled.to!];
+    const toAddresses = opts.to ?? [filled.to];
 
     const data = await withSpinner(
-      { loading: 'Sending email...', success: 'Email sent', fail: 'Failed to send email' },
-      () => resend.emails.send({
-        from: filled.from!,
-        to: toAddresses,
-        subject: filled.subject!,
-        ...(html ? { html } : { text: body! }),
-        ...(opts.cc && { cc: opts.cc }),
-        ...(opts.bcc && { bcc: opts.bcc }),
-        ...(opts.replyTo && { replyTo: opts.replyTo }),
-      }),
+      {
+        loading: 'Sending email...',
+        success: 'Email sent',
+        fail: 'Failed to send email',
+      },
+      () =>
+        resend.emails.send({
+          from: filled.from,
+          to: toAddresses,
+          subject: filled.subject,
+          ...(html ? { html } : { text: body as string }),
+          ...(opts.cc && { cc: opts.cc }),
+          ...(opts.bcc && { bcc: opts.bcc }),
+          ...(opts.replyTo && { replyTo: opts.replyTo }),
+        }),
       'send_error',
       globalOpts,
     );

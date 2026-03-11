@@ -1,18 +1,29 @@
 import { Command, Option } from '@commander-js/extra-typings';
-import * as p from '@clack/prompts';
 import type { CreateContactPropertyOptions } from 'resend';
-import type { GlobalOpts } from '../../lib/client';
 import { runCreate } from '../../lib/actions';
-import { cancelAndExit } from '../../lib/prompts';
-import { outputError } from '../../lib/output';
-import { isInteractive } from '../../lib/tty';
+import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
+import { outputError } from '../../lib/output';
+import { requireSelect, requireText } from '../../lib/prompts';
 
 export const createContactPropertyCommand = new Command('create')
   .description('Create a new contact property definition')
-  .addOption(new Option('--key <key>', 'Property key name, used in broadcast template interpolation (e.g. company_name, department)'))
-  .addOption(new Option('--type <type>', "Property data type: 'string' for text values, 'number' for numeric values").choices(['string', 'number'] as const))
-  .option('--fallback-value <value>', 'Default value used in broadcast templates when a contact has no value set for this property')
+  .addOption(
+    new Option(
+      '--key <key>',
+      'Property key name, used in broadcast template interpolation (e.g. company_name, department)',
+    ),
+  )
+  .addOption(
+    new Option(
+      '--type <type>',
+      "Property data type: 'string' for text values, 'number' for numeric values",
+    ).choices(['string', 'number'] as const),
+  )
+  .option(
+    '--fallback-value <value>',
+    'Default value used in broadcast templates when a contact has no value set for this property',
+  )
   .addHelpText(
     'after',
     buildHelpText({
@@ -26,7 +37,13 @@ Non-interactive: --key and --type are required. --fallback-value is optional.
 Warning: do not create properties with reserved key names — they will conflict with
 built-in contact fields and may cause unexpected behavior in broadcasts.`,
       output: `  {"object":"contact_property","id":"<id>"}`,
-      errorCodes: ['auth_error', 'missing_key', 'missing_type', 'invalid_fallback_value', 'create_error'],
+      errorCodes: [
+        'auth_error',
+        'missing_key',
+        'missing_type',
+        'invalid_fallback_value',
+        'create_error',
+      ],
       examples: [
         'resend contact-properties create --key company_name --type string',
         'resend contact-properties create --key company_name --type string --fallback-value "Unknown"',
@@ -38,45 +55,38 @@ built-in contact fields and may cause unexpected behavior in broadcasts.`,
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
-    let key = opts.key;
-    let type = opts.type;
+    const key = await requireText(
+      opts.key,
+      { message: 'Property key', placeholder: 'company_name' },
+      { message: 'Missing --key flag.', code: 'missing_key' },
+      globalOpts,
+    );
 
-    if (!key) {
-      if (!isInteractive()) {
-        outputError({ message: 'Missing --key flag.', code: 'missing_key' }, { json: globalOpts.json });
-      }
-      const result = await p.text({
-        message: 'Property key',
-        placeholder: 'company_name',
-        validate: (v) => (!v ? 'Key is required' : undefined),
-      });
-      if (p.isCancel(result)) cancelAndExit('Cancelled.');
-      key = result;
-    }
-
-    if (!type) {
-      if (!isInteractive()) {
-        outputError({ message: 'Missing --type flag.', code: 'missing_type' }, { json: globalOpts.json });
-      }
-      const result = await p.select({
+    const type = await requireSelect(
+      opts.type,
+      {
         message: 'Property data type',
         options: [
           { value: 'string' as const, label: 'string — text values' },
           { value: 'number' as const, label: 'number — numeric values' },
         ],
-      });
-      if (p.isCancel(result)) cancelAndExit('Cancelled.');
-      type = result;
-    }
+      },
+      { message: 'Missing --type flag.', code: 'missing_type' },
+      globalOpts,
+    );
 
     let fallbackValue: string | number | undefined;
     if (opts.fallbackValue !== undefined) {
       if (type === 'number') {
         const parsed = parseFloat(opts.fallbackValue);
-        if (isNaN(parsed)) {
+        if (Number.isNaN(parsed)) {
           outputError(
-            { message: '--fallback-value must be a valid number for number-type properties.', code: 'invalid_fallback_value' },
-            { json: globalOpts.json }
+            {
+              message:
+                '--fallback-value must be a valid number for number-type properties.',
+              code: 'invalid_fallback_value',
+            },
+            { json: globalOpts.json },
           );
         }
         fallbackValue = parsed;
@@ -86,16 +96,23 @@ built-in contact fields and may cause unexpected behavior in broadcasts.`,
     }
 
     const payload = {
-      key: key!,
-      type: type!,
+      key,
+      type,
       ...(fallbackValue !== undefined && { fallbackValue }),
     } as CreateContactPropertyOptions;
 
-    await runCreate({
-      spinner: { loading: 'Creating contact property...', success: 'Contact property created', fail: 'Failed to create contact property' },
-      sdkCall: (resend) => resend.contactProperties.create(payload),
-      onInteractive: (data) => {
-        console.log(`\nContact property created: ${data.id}`);
+    await runCreate(
+      {
+        spinner: {
+          loading: 'Creating contact property...',
+          success: 'Contact property created',
+          fail: 'Failed to create contact property',
+        },
+        sdkCall: (resend) => resend.contactProperties.create(payload),
+        onInteractive: (data) => {
+          console.log(`\nContact property created: ${data.id}`);
+        },
       },
-    }, globalOpts);
+      globalOpts,
+    );
   });

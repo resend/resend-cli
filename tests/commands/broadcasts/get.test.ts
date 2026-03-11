@@ -1,12 +1,27 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
-import { setNonInteractive, mockExitThrow, captureTestEnv, setupOutputSpies, expectExit1 } from '../../helpers';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  mockSdkError,
+  setNonInteractive,
+  setupOutputSpies,
+} from '../../helpers';
 
 const mockGet = mock(async () => ({
   data: {
     object: 'broadcast' as const,
-    id: 'bcast_abc123',
+    id: 'd1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
     name: 'Weekly Newsletter',
-    segment_id: 'seg_123',
+    segment_id: '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
     audience_id: null,
     from: 'hello@domain.com',
     subject: 'This week in Resend',
@@ -57,22 +72,34 @@ describe('broadcasts get command', () => {
   test('fetches broadcast by id', async () => {
     spies = setupOutputSpies();
 
-    const { getBroadcastCommand } = await import('../../../src/commands/broadcasts/get');
-    await getBroadcastCommand.parseAsync(['bcast_abc123'], { from: 'user' });
+    const { getBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/get'
+    );
+    await getBroadcastCommand.parseAsync(
+      ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
+      { from: 'user' },
+    );
 
     expect(mockGet).toHaveBeenCalledTimes(1);
-    expect(mockGet.mock.calls[0][0]).toBe('bcast_abc123');
+    expect(mockGet.mock.calls[0][0]).toBe(
+      'd1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+    );
   });
 
   test('outputs full JSON when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { getBroadcastCommand } = await import('../../../src/commands/broadcasts/get');
-    await getBroadcastCommand.parseAsync(['bcast_abc123'], { from: 'user' });
+    const { getBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/get'
+    );
+    await getBroadcastCommand.parseAsync(
+      ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
+      { from: 'user' },
+    );
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
-    expect(parsed.id).toBe('bcast_abc123');
+    expect(parsed.id).toBe('d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
     expect(parsed.status).toBe('sent');
     expect(parsed.subject).toBe('This week in Resend');
   });
@@ -84,8 +111,14 @@ describe('broadcasts get command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { getBroadcastCommand } = await import('../../../src/commands/broadcasts/get');
-    await expectExit1(() => getBroadcastCommand.parseAsync(['bcast_abc123'], { from: 'user' }));
+    const { getBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/get'
+    );
+    await expectExit1(() =>
+      getBroadcastCommand.parseAsync(['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], {
+        from: 'user',
+      }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -93,13 +126,19 @@ describe('broadcasts get command', () => {
 
   test('errors with fetch_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockGet.mockResolvedValueOnce({ data: null, error: { message: 'Not found', name: 'not_found' } } as any);
+    mockGet.mockResolvedValueOnce(mockSdkError('Not found', 'not_found'));
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { getBroadcastCommand } = await import('../../../src/commands/broadcasts/get');
-    await expectExit1(() => getBroadcastCommand.parseAsync(['bcast_bad'], { from: 'user' }));
+    const { getBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/get'
+    );
+    await expectExit1(() =>
+      getBroadcastCommand.parseAsync(['00000000-0000-0000-0000-00000000bad0'], {
+        from: 'user',
+      }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('fetch_error');

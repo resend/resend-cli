@@ -9,5 +9,9 @@ export function renderContactPropertiesTable(props: ContactProperty[]): string {
     prop.id,
     prop.createdAt,
   ]);
-  return renderTable(['Key', 'Type', 'Fallback Value', 'ID', 'Created'], rows, '(no contact properties)');
+  return renderTable(
+    ['Key', 'Type', 'Fallback Value', 'ID', 'Created'],
+    rows,
+    '(no contact properties)',
+  );
 }

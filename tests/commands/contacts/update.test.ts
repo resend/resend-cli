@@ -1,8 +1,26 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
-import { setNonInteractive, mockExitThrow, captureTestEnv, setupOutputSpies, expectExit1 } from '../../helpers';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  mockSdkError,
+  setNonInteractive,
+  setupOutputSpies,
+} from '../../helpers';
 
 const mockUpdate = mock(async () => ({
-  data: { object: 'contact' as const, id: 'contact_abc123' },
+  data: {
+    object: 'contact' as const,
+    id: 'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+  },
   error: null,
 }));
 
@@ -40,22 +58,32 @@ describe('contacts update command', () => {
   test('updates contact by ID with --unsubscribed', async () => {
     spies = setupOutputSpies();
 
-    const { updateContactCommand } = await import('../../../src/commands/contacts/update');
-    await updateContactCommand.parseAsync(['contact_abc123', '--unsubscribed'], { from: 'user' });
+    const { updateContactCommand } = await import(
+      '../../../src/commands/contacts/update'
+    );
+    await updateContactCommand.parseAsync(
+      ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--unsubscribed'],
+      { from: 'user' },
+    );
 
     expect(mockUpdate).toHaveBeenCalledTimes(1);
-    const args = mockUpdate.mock.calls[0][0] as any;
-    expect(args.id).toBe('contact_abc123');
+    const args = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.id).toBe('a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
     expect(args.unsubscribed).toBe(true);
   });
 
   test('updates contact by email with --no-unsubscribed', async () => {
     spies = setupOutputSpies();
 
-    const { updateContactCommand } = await import('../../../src/commands/contacts/update');
-    await updateContactCommand.parseAsync(['jane@example.com', '--no-unsubscribed'], { from: 'user' });
+    const { updateContactCommand } = await import(
+      '../../../src/commands/contacts/update'
+    );
+    await updateContactCommand.parseAsync(
+      ['jane@example.com', '--no-unsubscribed'],
+      { from: 'user' },
+    );
 
-    const args = mockUpdate.mock.calls[0][0] as any;
+    const args = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.email).toBe('jane@example.com');
     expect(args.unsubscribed).toBe(false);
   });
@@ -63,35 +91,51 @@ describe('contacts update command', () => {
   test('parses --properties JSON and passes to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { updateContactCommand } = await import('../../../src/commands/contacts/update');
+    const { updateContactCommand } = await import(
+      '../../../src/commands/contacts/update'
+    );
     await updateContactCommand.parseAsync(
-      ['contact_abc123', '--properties', '{"plan":"pro"}'],
-      { from: 'user' }
+      [
+        'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+        '--properties',
+        '{"plan":"pro"}',
+      ],
+      { from: 'user' },
     );
 
-    const args = mockUpdate.mock.calls[0][0] as any;
+    const args = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.properties).toEqual({ plan: 'pro' });
   });
 
   test('does not include unsubscribed when neither flag is passed', async () => {
     spies = setupOutputSpies();
 
-    const { updateContactCommand } = await import('../../../src/commands/contacts/update');
-    await updateContactCommand.parseAsync(['contact_abc123'], { from: 'user' });
+    const { updateContactCommand } = await import(
+      '../../../src/commands/contacts/update'
+    );
+    await updateContactCommand.parseAsync(
+      ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
+      { from: 'user' },
+    );
 
-    const args = mockUpdate.mock.calls[0][0] as any;
+    const args = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.unsubscribed).toBeUndefined();
   });
 
   test('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { updateContactCommand } = await import('../../../src/commands/contacts/update');
-    await updateContactCommand.parseAsync(['contact_abc123', '--unsubscribed'], { from: 'user' });
+    const { updateContactCommand } = await import(
+      '../../../src/commands/contacts/update'
+    );
+    await updateContactCommand.parseAsync(
+      ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--unsubscribed'],
+      { from: 'user' },
+    );
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
-    expect(parsed.id).toBe('contact_abc123');
+    expect(parsed.id).toBe('a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
     expect(parsed.object).toBe('contact');
   });
 
@@ -100,8 +144,15 @@ describe('contacts update command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateContactCommand } = await import('../../../src/commands/contacts/update');
-    await expectExit1(() => updateContactCommand.parseAsync(['contact_abc123', '--properties', 'bad-json'], { from: 'user' }));
+    const { updateContactCommand } = await import(
+      '../../../src/commands/contacts/update'
+    );
+    await expectExit1(() =>
+      updateContactCommand.parseAsync(
+        ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--properties', 'bad-json'],
+        { from: 'user' },
+      ),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('invalid_properties');
@@ -114,8 +165,17 @@ describe('contacts update command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateContactCommand } = await import('../../../src/commands/contacts/update');
-    await expectExit1(() => updateContactCommand.parseAsync(['contact_abc123', '--unsubscribed'], { from: 'user' }));
+    const { updateContactCommand } = await import(
+      '../../../src/commands/contacts/update'
+    );
+    await expectExit1(() =>
+      updateContactCommand.parseAsync(
+        ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--unsubscribed'],
+        {
+          from: 'user',
+        },
+      ),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -123,13 +183,21 @@ describe('contacts update command', () => {
 
   test('errors with update_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockUpdate.mockResolvedValueOnce({ data: null, error: { message: 'Contact not found', name: 'not_found' } } as any);
+    mockUpdate.mockResolvedValueOnce(
+      mockSdkError('Contact not found', 'not_found'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { updateContactCommand } = await import('../../../src/commands/contacts/update');
-    await expectExit1(() => updateContactCommand.parseAsync(['nonexistent_id', '--unsubscribed'], { from: 'user' }));
+    const { updateContactCommand } = await import(
+      '../../../src/commands/contacts/update'
+    );
+    await expectExit1(() =>
+      updateContactCommand.parseAsync(['nonexistent_id', '--unsubscribed'], {
+        from: 'user',
+      }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('update_error');

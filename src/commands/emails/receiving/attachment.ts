@@ -1,10 +1,10 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../../lib/client';
 import { requireClient } from '../../../lib/client';
-import { withSpinner } from '../../../lib/spinner';
-import { outputResult } from '../../../lib/output';
-import { isInteractive } from '../../../lib/tty';
 import { buildHelpText } from '../../../lib/help-text';
+import { outputResult } from '../../../lib/output';
+import { withSpinner } from '../../../lib/spinner';
+import { isInteractive } from '../../../lib/tty';
 
 export const getAttachmentCommand = new Command('attachment')
   .description('Retrieve a single attachment from a received (inbound) email')
@@ -22,15 +22,20 @@ export const getAttachmentCommand = new Command('attachment')
         'resend emails receiving attachment <email-id> <attachment-id>',
         'resend emails receiving attachment <email-id> <attachment-id> --json',
       ],
-    })
+    }),
   )
   .action(async (emailId, attachmentId, _opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const resend = requireClient(globalOpts);
 
     const data = await withSpinner(
-      { loading: 'Fetching attachment...', success: 'Attachment fetched', fail: 'Failed to fetch attachment' },
-      () => resend.emails.receiving.attachments.get({ emailId, id: attachmentId }),
+      {
+        loading: 'Fetching attachment...',
+        success: 'Attachment fetched',
+        fail: 'Failed to fetch attachment',
+      },
+      () =>
+        resend.emails.receiving.attachments.get({ emailId, id: attachmentId }),
       'fetch_error',
       globalOpts,
     );

@@ -4,32 +4,69 @@ Command-line interface for the [Resend](https://resend.com) email API. Works for
 
 ## Install
 
-**macOS / Linux** (no Node.js required):
-
 ```bash
 curl -fsSL https://resend.com/install.sh | bash
 ```
 
-Install a specific version:
+## Local development
+
+Use this when you want to change the CLI and run your build locally.
+
+### Prerequisites
+
+- [Bun](https://bun.sh) (runtime and package manager)
+
+### Setup
+
+1. **Clone the repo**
+
+   ```bash
+   git clone https://github.com/resend/resend-cli.git
+   cd resend-cli
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   bun install
+   ```
+
+3. **Build locally**
+
+   ```bash
+   bun run build
+   ```
+
+   Output: `./dist/resend`
+
+### Running the CLI locally
+
+Use the built binary directly:
 
 ```bash
-curl -fsSL https://resend.com/install.sh | bash -s v0.1.0
+./dist/resend --version
 ```
 
-**From source** (requires [Bun](https://bun.sh)):
+Or add the project to your `PATH`:
 
 ```bash
-git clone https://github.com/resend/resend-cli.git
-cd resend-cli
-bun install
-bun run build  # outputs ./dist/resend
+export PATH="$(pwd)/dist:$PATH"
+resend doctor
+```
+
+### Making changes
+
+After editing source files, rebuild:
+
+```bash
+bun run build
 ```
 
 ## Quick start
 
 ```bash
 # Authenticate
-resend auth login
+resend login
 
 # Send an email
 resend emails send \
@@ -52,7 +89,7 @@ The CLI resolves your API key using the following priority chain:
 |----------|--------|------------|
 | 1 (highest) | `--api-key` flag | `resend --api-key re_xxx emails send ...` |
 | 2 | `RESEND_API_KEY` env var | `export RESEND_API_KEY=re_xxx` |
-| 3 (lowest) | Config file | `resend auth login` |
+| 3 (lowest) | Config file | `resend login` |
 
 If no key is found from any source, the CLI errors with code `auth_error`.
 
@@ -60,12 +97,12 @@ If no key is found from any source, the CLI errors with code `auth_error`.
 
 ## Commands
 
-### `resend auth login`
+### `resend login`
 
 Authenticate by storing your API key locally. The key is validated against the Resend API before being saved.
 
 ```bash
-resend auth login
+resend login
 ```
 
 #### Interactive mode (default in terminals)
@@ -82,7 +119,7 @@ The key is entered via a masked password input and must start with `re_`.
 When stdin is not a TTY, the `--key` flag is required:
 
 ```bash
-resend auth login --key re_xxxxxxxxxxxxx
+resend login --key re_xxxxxxxxxxxxx
 ```
 
 Omitting `--key` in non-interactive mode exits with error code `missing_key`.
@@ -99,7 +136,7 @@ On success, credentials are saved to `~/.config/resend/credentials.json` with `0
 
 ```bash
 # JSON output
-resend auth login --key re_xxx --json
+resend login --key re_xxx --json
 # => {"success":true,"config_path":"/Users/you/.config/resend/credentials.json"}
 ```
 
@@ -340,7 +377,7 @@ Errors always exit with code `1` and output structured JSON to stdout:
 
 ### CI/CD
 
-Set `RESEND_API_KEY` as an environment variable — no `resend auth login` needed:
+Set `RESEND_API_KEY` as an environment variable — no `resend login` needed:
 
 ```yaml
 # GitHub Actions

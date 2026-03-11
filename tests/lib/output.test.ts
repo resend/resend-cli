@@ -1,5 +1,5 @@
-import { describe, test, expect, spyOn, afterEach } from 'bun:test';
-import { outputResult, outputError } from '../../src/lib/output';
+import { afterEach, describe, expect, spyOn, test } from 'bun:test';
+import { outputError, outputResult } from '../../src/lib/output';
 
 describe('outputResult', () => {
   let logSpy: ReturnType<typeof spyOn>;
@@ -7,7 +7,10 @@ describe('outputResult', () => {
 
   afterEach(() => {
     logSpy?.mockRestore();
-    Object.defineProperty(process.stdout, 'isTTY', { value: originalIsTTY, writable: true });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: originalIsTTY,
+      writable: true,
+    });
   });
 
   test('outputs JSON when json option is true', () => {
@@ -17,21 +20,30 @@ describe('outputResult', () => {
   });
 
   test('outputs JSON when stdout is not TTY', () => {
-    Object.defineProperty(process.stdout, 'isTTY', { value: undefined, writable: true });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: undefined,
+      writable: true,
+    });
     logSpy = spyOn(console, 'log').mockImplementation(() => {});
     outputResult({ id: '123' });
     expect(logSpy).toHaveBeenCalledWith(JSON.stringify({ id: '123' }, null, 2));
   });
 
   test('outputs string directly for human-readable mode', () => {
-    Object.defineProperty(process.stdout, 'isTTY', { value: true, writable: true });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
     logSpy = spyOn(console, 'log').mockImplementation(() => {});
     outputResult('Email sent successfully');
     expect(logSpy).toHaveBeenCalledWith('Email sent successfully');
   });
 
   test('outputs JSON for objects in human mode (fallback)', () => {
-    Object.defineProperty(process.stdout, 'isTTY', { value: true, writable: true });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
     logSpy = spyOn(console, 'log').mockImplementation(() => {});
     outputResult({ id: '123' });
     expect(logSpy).toHaveBeenCalledWith(JSON.stringify({ id: '123' }, null, 2));
@@ -46,24 +58,38 @@ describe('outputError', () => {
   afterEach(() => {
     errorSpy?.mockRestore();
     exitSpy?.mockRestore();
-    Object.defineProperty(process.stdout, 'isTTY', { value: originalIsTTY, writable: true });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: originalIsTTY,
+      writable: true,
+    });
   });
 
   test('outputs JSON error when json is true', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
-    exitSpy = spyOn(process, 'exit').mockImplementation(() => undefined as never);
+    exitSpy = spyOn(process, 'exit').mockImplementation(
+      () => undefined as never,
+    );
 
     outputError({ message: 'not found', code: 'not_found' }, { json: true });
 
-    const expected = JSON.stringify({ error: { message: 'not found', code: 'not_found' } }, null, 2);
+    const expected = JSON.stringify(
+      { error: { message: 'not found', code: 'not_found' } },
+      null,
+      2,
+    );
     expect(errorSpy).toHaveBeenCalledWith(expected);
     expect(exitSpy).toHaveBeenCalledWith(1);
   });
 
   test('outputs text error when TTY and no json flag', () => {
-    Object.defineProperty(process.stdout, 'isTTY', { value: true, writable: true });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
-    exitSpy = spyOn(process, 'exit').mockImplementation(() => undefined as never);
+    exitSpy = spyOn(process, 'exit').mockImplementation(
+      () => undefined as never,
+    );
 
     outputError({ message: 'something broke' });
 
@@ -73,7 +99,9 @@ describe('outputError', () => {
 
   test('uses custom exit code', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
-    exitSpy = spyOn(process, 'exit').mockImplementation(() => undefined as never);
+    exitSpy = spyOn(process, 'exit').mockImplementation(
+      () => undefined as never,
+    );
 
     outputError({ message: 'error' }, { exitCode: 2, json: true });
 
@@ -81,9 +109,14 @@ describe('outputError', () => {
   });
 
   test('defaults error code to "unknown" when not provided', () => {
-    Object.defineProperty(process.stdout, 'isTTY', { value: undefined, writable: true });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: undefined,
+      writable: true,
+    });
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
-    exitSpy = spyOn(process, 'exit').mockImplementation(() => undefined as never);
+    exitSpy = spyOn(process, 'exit').mockImplementation(
+      () => undefined as never,
+    );
 
     outputError({ message: 'oops' });
 

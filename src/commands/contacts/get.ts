@@ -1,11 +1,14 @@
 import { Command } from '@commander-js/extra-typings';
-import type { GlobalOpts } from '../../lib/client';
 import { runGet } from '../../lib/actions';
+import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 
 export const getContactCommand = new Command('get')
   .description('Retrieve a contact by ID or email address')
-  .argument('<id>', 'Contact UUID or email address — both are accepted by the API')
+  .argument(
+    '<id>',
+    'Contact UUID or email address — both are accepted by the API',
+  )
   .addHelpText(
     'after',
     buildHelpText({
@@ -20,22 +23,31 @@ export const getContactCommand = new Command('get')
   )
   .action(async (id, _opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    await runGet({
-      spinner: { loading: 'Fetching contact...', success: 'Contact fetched', fail: 'Failed to fetch contact' },
-      sdkCall: (resend) => resend.contacts.get(id),
-      onInteractive: (data) => {
-        const name = [data.first_name, data.last_name].filter(Boolean).join(' ');
-        console.log(`\n${data.email}${name ? ` (${name})` : ''}`);
-        console.log(`ID: ${data.id}`);
-        console.log(`Created: ${data.created_at}`);
-        console.log(`Unsubscribed: ${data.unsubscribed ? 'yes' : 'no'}`);
-        const propEntries = Object.entries(data.properties ?? {});
-        if (propEntries.length > 0) {
-          console.log('Properties:');
-          for (const [key, val] of propEntries) {
-            console.log(`  ${key}: ${val.value}`);
+    await runGet(
+      {
+        spinner: {
+          loading: 'Fetching contact...',
+          success: 'Contact fetched',
+          fail: 'Failed to fetch contact',
+        },
+        sdkCall: (resend) => resend.contacts.get(id),
+        onInteractive: (data) => {
+          const name = [data.first_name, data.last_name]
+            .filter(Boolean)
+            .join(' ');
+          console.log(`\n${data.email}${name ? ` (${name})` : ''}`);
+          console.log(`ID: ${data.id}`);
+          console.log(`Created: ${data.created_at}`);
+          console.log(`Unsubscribed: ${data.unsubscribed ? 'yes' : 'no'}`);
+          const propEntries = Object.entries(data.properties ?? {});
+          if (propEntries.length > 0) {
+            console.log('Properties:');
+            for (const [key, val] of propEntries) {
+              console.log(`  ${key}: ${val.value}`);
+            }
           }
-        }
+        },
       },
-    }, globalOpts);
+      globalOpts,
+    );
   });

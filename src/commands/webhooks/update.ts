@@ -1,19 +1,26 @@
 import { Command, Option } from '@commander-js/extra-typings';
 import type { WebhookEvent } from 'resend';
-import type { GlobalOpts } from '../../lib/client';
 import { runWrite } from '../../lib/actions';
-import { outputError } from '../../lib/output';
+import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
+import { outputError } from '../../lib/output';
 import { ALL_WEBHOOK_EVENTS } from './utils';
 
 export const updateWebhookCommand = new Command('update')
-  .description("Update a webhook's endpoint URL, event subscriptions, or enabled status")
+  .description(
+    "Update a webhook's endpoint URL, event subscriptions, or enabled status",
+  )
   .argument('<id>', 'Webhook UUID')
   .option('--endpoint <endpoint>', 'New HTTPS URL for this webhook')
-  .option('--events <events...>', 'Replace the full event subscription list. Use "all" for all 17 events.')
+  .option(
+    '--events <events...>',
+    'Replace the full event subscription list. Use "all" for all 17 events.',
+  )
   .addOption(
-    new Option('--status <status>', 'Enable or disable event delivery for this webhook')
-      .choices(['enabled', 'disabled'] as const)
+    new Option(
+      '--status <status>',
+      'Enable or disable event delivery for this webhook',
+    ).choices(['enabled', 'disabled'] as const),
   )
   .addHelpText(
     'after',
@@ -35,15 +42,19 @@ Use "all" as a shorthand for all 17 event types.
         'resend webhooks update wh_abc123 --status disabled',
         'resend webhooks update wh_abc123 --endpoint https://new-app.example.com/hooks/resend --events all --json',
       ],
-    })
+    }),
   )
   .action(async (id, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
     if (!opts.endpoint && !opts.events?.length && !opts.status) {
       outputError(
-        { message: 'Provide at least one option to update: --endpoint, --events, or --status.', code: 'no_changes' },
-        { json: globalOpts.json }
+        {
+          message:
+            'Provide at least one option to update: --endpoint, --events, or --status.',
+          code: 'no_changes',
+        },
+        { json: globalOpts.json },
       );
     }
 
@@ -51,14 +62,22 @@ Use "all" as a shorthand for all 17 event types.
       ? ALL_WEBHOOK_EVENTS
       : (opts.events as WebhookEvent[] | undefined);
 
-    await runWrite({
-      spinner: { loading: 'Updating webhook...', success: 'Webhook updated', fail: 'Failed to update webhook' },
-      sdkCall: (resend) => resend.webhooks.update(id, {
-        ...(opts.endpoint && { endpoint: opts.endpoint }),
-        ...(selectedEvents?.length && { events: selectedEvents }),
-        ...(opts.status && { status: opts.status }),
-      }),
-      errorCode: 'update_error',
-      successMsg: `Webhook updated: ${id}`,
-    }, globalOpts);
+    await runWrite(
+      {
+        spinner: {
+          loading: 'Updating webhook...',
+          success: 'Webhook updated',
+          fail: 'Failed to update webhook',
+        },
+        sdkCall: (resend) =>
+          resend.webhooks.update(id, {
+            ...(opts.endpoint && { endpoint: opts.endpoint }),
+            ...(selectedEvents?.length && { events: selectedEvents }),
+            ...(opts.status && { status: opts.status }),
+          }),
+        errorCode: 'update_error',
+        successMsg: `Webhook updated: ${id}`,
+      },
+      globalOpts,
+    );
   });

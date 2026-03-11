@@ -1,10 +1,19 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
 import {
-  setNonInteractive,
-  mockExitThrow,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
   captureTestEnv,
-  setupOutputSpies,
   expectExit1,
+  mockExitThrow,
+  mockSdkError,
+  setNonInteractive,
+  setupOutputSpies,
 } from '../../helpers';
 
 const mockGet = mock(async () => ({
@@ -12,7 +21,7 @@ const mockGet = mock(async () => ({
     object: 'webhook' as const,
     id: 'wh_abc123',
     endpoint: 'https://app.example.com/hooks/resend',
-    events: ['email.sent', 'email.bounced'] as any,
+    events: ['email.sent', 'email.bounced'] as string[],
     status: 'enabled' as const,
     created_at: '2026-01-01T00:00:00.000Z',
     signing_secret: 'whsec_test1234',
@@ -54,7 +63,9 @@ describe('webhooks get command', () => {
   test('calls SDK get with the provided id', async () => {
     spies = setupOutputSpies();
 
-    const { getWebhookCommand } = await import('../../../src/commands/webhooks/get');
+    const { getWebhookCommand } = await import(
+      '../../../src/commands/webhooks/get'
+    );
     await getWebhookCommand.parseAsync(['wh_abc123'], { from: 'user' });
 
     expect(mockGet).toHaveBeenCalledTimes(1);
@@ -64,7 +75,9 @@ describe('webhooks get command', () => {
   test('outputs JSON with webhook fields when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { getWebhookCommand } = await import('../../../src/commands/webhooks/get');
+    const { getWebhookCommand } = await import(
+      '../../../src/commands/webhooks/get'
+    );
     await getWebhookCommand.parseAsync(['wh_abc123'], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -81,8 +94,12 @@ describe('webhooks get command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { getWebhookCommand } = await import('../../../src/commands/webhooks/get');
-    await expectExit1(() => getWebhookCommand.parseAsync(['wh_abc123'], { from: 'user' }));
+    const { getWebhookCommand } = await import(
+      '../../../src/commands/webhooks/get'
+    );
+    await expectExit1(() =>
+      getWebhookCommand.parseAsync(['wh_abc123'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -90,13 +107,17 @@ describe('webhooks get command', () => {
 
   test('errors with fetch_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockGet.mockResolvedValueOnce({ data: null, error: { message: 'Not found', name: 'not_found' } } as any);
+    mockGet.mockResolvedValueOnce(mockSdkError('Not found', 'not_found'));
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { getWebhookCommand } = await import('../../../src/commands/webhooks/get');
-    await expectExit1(() => getWebhookCommand.parseAsync(['wh_nonexistent'], { from: 'user' }));
+    const { getWebhookCommand } = await import(
+      '../../../src/commands/webhooks/get'
+    );
+    await expectExit1(() =>
+      getWebhookCommand.parseAsync(['wh_nonexistent'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('fetch_error');

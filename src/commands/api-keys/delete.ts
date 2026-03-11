@@ -1,10 +1,13 @@
 import { Command } from '@commander-js/extra-typings';
-import type { GlobalOpts } from '../../lib/client';
 import { runDelete } from '../../lib/actions';
+import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 
 export const deleteApiKeyCommand = new Command('delete')
-  .description('Delete an API key — any services using it will immediately lose access')
+  .alias('rm')
+  .description(
+    'Delete an API key — any services using it will immediately lose access',
+  )
   .argument('<id>', 'API key ID')
   .option('--yes', 'Skip confirmation prompt')
   .addHelpText(
@@ -21,15 +24,24 @@ can delete itself — the API does not prevent self-deletion.`,
         'resend api-keys delete dacf4072-aa82-4ff3-97de-514ae3000ee0 --yes',
         'resend api-keys delete dacf4072-aa82-4ff3-97de-514ae3000ee0 --yes --json',
       ],
-    })
+    }),
   )
   .action(async (id, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    await runDelete(id, !!opts.yes, {
-      confirmMessage: `Delete API key ${id}? Any services using this key will stop working.`,
-      spinner: { loading: 'Deleting API key...', success: 'API key deleted', fail: 'Failed to delete API key' },
-      object: 'api-key',
-      successMsg: 'API key deleted.',
-      sdkCall: (resend) => resend.apiKeys.remove(id),
-    }, globalOpts);
+    await runDelete(
+      id,
+      !!opts.yes,
+      {
+        confirmMessage: `Delete API key ${id}?\nAny services using this key will stop working.`,
+        spinner: {
+          loading: 'Deleting API key...',
+          success: 'API key deleted',
+          fail: 'Failed to delete API key',
+        },
+        object: 'api-key',
+        successMsg: 'API key deleted.',
+        sdkCall: (resend) => resend.apiKeys.remove(id),
+      },
+      globalOpts,
+    );
   });

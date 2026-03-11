@@ -1,12 +1,16 @@
 import { Command } from '@commander-js/extra-typings';
-import type { GlobalOpts } from '../../lib/client';
 import { runDelete } from '../../lib/actions';
+import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 
 export const deleteSegmentCommand = new Command('delete')
+  .alias('rm')
   .description('Delete a segment')
   .argument('<id>', 'Segment UUID')
-  .option('--yes', 'Skip the confirmation prompt (required in non-interactive mode)')
+  .option(
+    '--yes',
+    'Skip the confirmation prompt (required in non-interactive mode)',
+  )
   .addHelpText(
     'after',
     buildHelpText({
@@ -24,11 +28,20 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
   )
   .action(async (id, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    await runDelete(id, !!opts.yes, {
-      confirmMessage: `Delete segment ${id}? Contacts will not be deleted, but broadcasts targeting this segment will no longer work.`,
-      spinner: { loading: 'Deleting segment...', success: 'Segment deleted', fail: 'Failed to delete segment' },
-      object: 'segment',
-      successMsg: 'Segment deleted.',
-      sdkCall: (resend) => resend.segments.remove(id),
-    }, globalOpts);
+    await runDelete(
+      id,
+      !!opts.yes,
+      {
+        confirmMessage: `Delete segment ${id}?\nContacts will not be deleted, but broadcasts targeting this segment will no longer work.`,
+        spinner: {
+          loading: 'Deleting segment...',
+          success: 'Segment deleted',
+          fail: 'Failed to delete segment',
+        },
+        object: 'segment',
+        successMsg: 'Segment deleted.',
+        sdkCall: (resend) => resend.segments.remove(id),
+      },
+      globalOpts,
+    );
   });

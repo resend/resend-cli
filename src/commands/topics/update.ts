@@ -1,8 +1,8 @@
 import { Command } from '@commander-js/extra-typings';
-import type { GlobalOpts } from '../../lib/client';
 import { runWrite } from '../../lib/actions';
-import { outputError } from '../../lib/output';
+import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
+import { outputError } from '../../lib/output';
 
 export const updateTopicCommand = new Command('update')
   .description("Update a topic's name or description")
@@ -29,19 +29,31 @@ To change the default subscription, delete the topic and recreate it.`,
 
     if (!opts.name && !opts.description) {
       outputError(
-        { message: 'Provide at least one option to update: --name or --description.', code: 'no_changes' },
-        { json: globalOpts.json }
+        {
+          message:
+            'Provide at least one option to update: --name or --description.',
+          code: 'no_changes',
+        },
+        { json: globalOpts.json },
       );
     }
 
-    await runWrite({
-      spinner: { loading: 'Updating topic...', success: 'Topic updated', fail: 'Failed to update topic' },
-      sdkCall: (resend) => resend.topics.update({
-        id,
-        ...(opts.name && { name: opts.name }),
-        ...(opts.description && { description: opts.description }),
-      }),
-      errorCode: 'update_error',
-      successMsg: `Topic updated: ${id}`,
-    }, globalOpts);
+    await runWrite(
+      {
+        spinner: {
+          loading: 'Updating topic...',
+          success: 'Topic updated',
+          fail: 'Failed to update topic',
+        },
+        sdkCall: (resend) =>
+          resend.topics.update({
+            id,
+            ...(opts.name && { name: opts.name }),
+            ...(opts.description && { description: opts.description }),
+          }),
+        errorCode: 'update_error',
+        successMsg: `Topic updated: ${id}`,
+      },
+      globalOpts,
+    );
   });

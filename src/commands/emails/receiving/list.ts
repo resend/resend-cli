@@ -1,15 +1,25 @@
 import { Command } from '@commander-js/extra-typings';
-import type { GlobalOpts } from '../../../lib/client';
 import { runList } from '../../../lib/actions';
-import { parseLimitOpt, buildPaginationOpts, printPaginationHint } from '../../../lib/pagination';
+import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
+import {
+  buildPaginationOpts,
+  parseLimitOpt,
+  printPaginationHint,
+} from '../../../lib/pagination';
 import { renderReceivingEmailsTable } from './utils';
 
 export const listReceivingCommand = new Command('list')
-  .description('List received (inbound) emails for domains with receiving enabled')
+  .alias('ls')
+  .description(
+    'List received (inbound) emails for domains with receiving enabled',
+  )
   .option('--limit <n>', 'Maximum number of emails to return (1-100)', '10')
   .option('--after <cursor>', 'Return emails after this cursor (next page)')
-  .option('--before <cursor>', 'Return emails before this cursor (previous page)')
+  .option(
+    '--before <cursor>',
+    'Return emails before this cursor (previous page)',
+  )
   .addHelpText(
     'after',
     buildHelpText({
@@ -23,7 +33,7 @@ export const listReceivingCommand = new Command('list')
         'resend emails receiving list --limit 25 --json',
         'resend emails receiving list --after <email-id> --json',
       ],
-    })
+    }),
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
@@ -31,12 +41,19 @@ export const listReceivingCommand = new Command('list')
     const limit = parseLimitOpt(opts.limit, globalOpts);
     const paginationOpts = buildPaginationOpts(limit, opts.after, opts.before);
 
-    await runList({
-      spinner: { loading: 'Fetching received emails...', success: 'Received emails fetched', fail: 'Failed to list received emails' },
-      sdkCall: (resend) => resend.emails.receiving.list(paginationOpts),
-      onInteractive: (list) => {
-        console.log(renderReceivingEmailsTable(list.data));
-        printPaginationHint(list);
+    await runList(
+      {
+        spinner: {
+          loading: 'Fetching received emails...',
+          success: 'Received emails fetched',
+          fail: 'Failed to list received emails',
+        },
+        sdkCall: (resend) => resend.emails.receiving.list(paginationOpts),
+        onInteractive: (list) => {
+          console.log(renderReceivingEmailsTable(list.data));
+          printPaginationHint(list);
+        },
       },
-    }, globalOpts);
+      globalOpts,
+    );
   });

@@ -1,12 +1,12 @@
-import { Command } from '@commander-js/extra-typings';
 import * as p from '@clack/prompts';
+import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
+import { buildHelpText } from '../../lib/help-text';
+import { outputError, outputResult } from '../../lib/output';
 import { cancelAndExit } from '../../lib/prompts';
 import { withSpinner } from '../../lib/spinner';
-import { outputError, outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
-import { buildHelpText } from '../../lib/help-text';
 import { contactIdentifier, parseTopicsJson } from './utils';
 
 export const updateContactTopicsCommand = new Command('update-topics')
@@ -14,7 +14,7 @@ export const updateContactTopicsCommand = new Command('update-topics')
   .argument('<id>', 'Contact UUID or email address')
   .option(
     '--topics <json>',
-    'JSON array of topic subscriptions (required) — e.g. \'[{"id":"topic-uuid","subscription":"opt_in"}]\''
+    'JSON array of topic subscriptions (required) — e.g. \'[{"id":"topic-uuid","subscription":"opt_in"}]\'',
   )
   .addHelpText(
     'after',
@@ -30,7 +30,12 @@ Topics JSON format:
 This operation replaces all topic subscriptions for the specified topics.
 Topics not included in the array are left unchanged.`,
       output: `  {"id":"<contact-id>"}`,
-      errorCodes: ['auth_error', 'missing_topics', 'invalid_topics', 'update_topics_error'],
+      errorCodes: [
+        'auth_error',
+        'missing_topics',
+        'invalid_topics',
+        'update_topics_error',
+      ],
       examples: [
         `resend contacts update-topics 479e3145-dd38-4932-8c0c-e58b548c9e76 --topics '[{"id":"topic-uuid","subscription":"opt_in"}]'`,
         `resend contacts update-topics user@example.com --topics '[{"id":"t1","subscription":"opt_out"},{"id":"t2","subscription":"opt_in"}]' --json`,
@@ -45,14 +50,20 @@ Topics not included in the array are left unchanged.`,
 
     if (!topicsJson) {
       if (!isInteractive()) {
-        outputError({ message: 'Missing --topics flag.', code: 'missing_topics' }, { json: globalOpts.json });
+        outputError(
+          { message: 'Missing --topics flag.', code: 'missing_topics' },
+          { json: globalOpts.json },
+        );
       }
       const result = await p.text({
-        message: "Topics JSON (e.g. '[{\"id\":\"topic-uuid\",\"subscription\":\"opt_in\"}]')",
+        message:
+          'Topics JSON (e.g. \'[{"id":"topic-uuid","subscription":"opt_in"}]\')',
         placeholder: '[{"id":"topic-uuid","subscription":"opt_in"}]',
         validate: (v) => (!v ? 'Required' : undefined),
       });
-      if (p.isCancel(result)) cancelAndExit('Cancelled.');
+      if (p.isCancel(result)) {
+        cancelAndExit('Cancelled.');
+      }
       topicsJson = result;
     }
 
@@ -61,7 +72,11 @@ Topics not included in the array are left unchanged.`,
     // contactIdentifier's result is directly assignable: UpdateContactTopicsBaseOptions
     // uses optional { id?, email? } (not a discriminated union).
     const data = await withSpinner(
-      { loading: 'Updating topic subscriptions...', success: 'Topic subscriptions updated', fail: 'Failed to update topic subscriptions' },
+      {
+        loading: 'Updating topic subscriptions...',
+        success: 'Topic subscriptions updated',
+        fail: 'Failed to update topic subscriptions',
+      },
       () => resend.contacts.topics.update({ ...contactIdentifier(id), topics }),
       'update_topics_error',
       globalOpts,

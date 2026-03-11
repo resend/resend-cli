@@ -1,4 +1,4 @@
-import { describe, test, expect, afterEach } from 'bun:test';
+import { afterEach, describe, expect, test } from 'bun:test';
 import { captureTestEnv } from '../helpers';
 
 // We need to import the module fresh per test to pick up env changes,
@@ -12,8 +12,14 @@ describe('isInteractive', () => {
   });
 
   function setTTY(stdin: boolean, stdout: boolean) {
-    Object.defineProperty(process.stdin, 'isTTY', { value: stdin ? true : undefined, writable: true });
-    Object.defineProperty(process.stdout, 'isTTY', { value: stdout ? true : undefined, writable: true });
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: stdin ? true : undefined,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: stdout ? true : undefined,
+      writable: true,
+    });
   }
 
   test('returns true when stdin and stdout are TTY and no CI env', () => {

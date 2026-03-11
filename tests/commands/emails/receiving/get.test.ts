@@ -1,10 +1,19 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
 import {
-  setNonInteractive,
-  mockExitThrow,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
   captureTestEnv,
-  setupOutputSpies,
   expectExit1,
+  mockExitThrow,
+  mockSdkError,
+  setNonInteractive,
+  setupOutputSpies,
 } from '../../../helpers';
 
 const mockGet = mock(async () => ({
@@ -65,7 +74,9 @@ describe('emails receiving get command', () => {
   test('calls SDK get with the provided id', async () => {
     spies = setupOutputSpies();
 
-    const { getReceivingCommand } = await import('../../../../src/commands/emails/receiving/get');
+    const { getReceivingCommand } = await import(
+      '../../../../src/commands/emails/receiving/get'
+    );
     await getReceivingCommand.parseAsync(['rcv_abc123'], { from: 'user' });
 
     expect(mockGet).toHaveBeenCalledTimes(1);
@@ -75,7 +86,9 @@ describe('emails receiving get command', () => {
   test('outputs JSON with full email fields when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { getReceivingCommand } = await import('../../../../src/commands/emails/receiving/get');
+    const { getReceivingCommand } = await import(
+      '../../../../src/commands/emails/receiving/get'
+    );
     await getReceivingCommand.parseAsync(['rcv_abc123'], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -84,7 +97,9 @@ describe('emails receiving get command', () => {
     expect(parsed.from).toBe('sender@external.com');
     expect(parsed.subject).toBe('Hello from outside');
     expect(parsed.text).toBe('Hello!');
-    expect(parsed.raw.download_url).toBe('https://storage.example.com/signed/raw-email');
+    expect(parsed.raw.download_url).toBe(
+      'https://storage.example.com/signed/raw-email',
+    );
   });
 
   test('errors with auth_error when no API key', async () => {
@@ -94,8 +109,12 @@ describe('emails receiving get command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { getReceivingCommand } = await import('../../../../src/commands/emails/receiving/get');
-    await expectExit1(() => getReceivingCommand.parseAsync(['rcv_abc123'], { from: 'user' }));
+    const { getReceivingCommand } = await import(
+      '../../../../src/commands/emails/receiving/get'
+    );
+    await expectExit1(() =>
+      getReceivingCommand.parseAsync(['rcv_abc123'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -103,13 +122,17 @@ describe('emails receiving get command', () => {
 
   test('errors with fetch_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockGet.mockResolvedValueOnce({ data: null, error: { message: 'Not found', name: 'not_found' } } as any);
+    mockGet.mockResolvedValueOnce(mockSdkError('Not found', 'not_found'));
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { getReceivingCommand } = await import('../../../../src/commands/emails/receiving/get');
-    await expectExit1(() => getReceivingCommand.parseAsync(['rcv_nonexistent'], { from: 'user' }));
+    const { getReceivingCommand } = await import(
+      '../../../../src/commands/emails/receiving/get'
+    );
+    await expectExit1(() =>
+      getReceivingCommand.parseAsync(['rcv_nonexistent'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('fetch_error');

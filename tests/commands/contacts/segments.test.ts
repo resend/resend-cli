@@ -1,10 +1,31 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
-import { setNonInteractive, mockExitThrow, captureTestEnv, setupOutputSpies, expectExit1 } from '../../helpers';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  mockSdkError,
+  setNonInteractive,
+  setupOutputSpies,
+} from '../../helpers';
 
 const mockListSegments = mock(async () => ({
   data: {
     object: 'list' as const,
-    data: [{ id: 'seg_123', name: 'Newsletter', created_at: '2026-01-01T00:00:00.000Z' }],
+    data: [
+      {
+        id: '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
+        name: 'Newsletter',
+        created_at: '2026-01-01T00:00:00.000Z',
+      },
+    ],
     has_more: false,
   },
   error: null,
@@ -46,22 +67,33 @@ describe('contacts segments command', () => {
   test('lists segments by contact ID', async () => {
     spies = setupOutputSpies();
 
-    const { listContactSegmentsCommand } = await import('../../../src/commands/contacts/segments');
-    await listContactSegmentsCommand.parseAsync(['contact_abc123'], { from: 'user' });
+    const { listContactSegmentsCommand } = await import(
+      '../../../src/commands/contacts/segments'
+    );
+    await listContactSegmentsCommand.parseAsync(
+      ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
+      {
+        from: 'user',
+      },
+    );
 
     expect(mockListSegments).toHaveBeenCalledTimes(1);
-    const args = mockListSegments.mock.calls[0][0] as any;
-    expect(args.contactId).toBe('contact_abc123');
+    const args = mockListSegments.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.contactId).toBe('a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
     expect(args.email).toBeUndefined();
   });
 
   test('lists segments by contact email', async () => {
     spies = setupOutputSpies();
 
-    const { listContactSegmentsCommand } = await import('../../../src/commands/contacts/segments');
-    await listContactSegmentsCommand.parseAsync(['jane@example.com'], { from: 'user' });
+    const { listContactSegmentsCommand } = await import(
+      '../../../src/commands/contacts/segments'
+    );
+    await listContactSegmentsCommand.parseAsync(['jane@example.com'], {
+      from: 'user',
+    });
 
-    const args = mockListSegments.mock.calls[0][0] as any;
+    const args = mockListSegments.mock.calls[0][0] as Record<string, unknown>;
     expect(args.email).toBe('jane@example.com');
     expect(args.contactId).toBeUndefined();
   });
@@ -69,8 +101,15 @@ describe('contacts segments command', () => {
   test('outputs JSON list when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { listContactSegmentsCommand } = await import('../../../src/commands/contacts/segments');
-    await listContactSegmentsCommand.parseAsync(['contact_abc123'], { from: 'user' });
+    const { listContactSegmentsCommand } = await import(
+      '../../../src/commands/contacts/segments'
+    );
+    await listContactSegmentsCommand.parseAsync(
+      ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
+      {
+        from: 'user',
+      },
+    );
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
@@ -85,8 +124,17 @@ describe('contacts segments command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listContactSegmentsCommand } = await import('../../../src/commands/contacts/segments');
-    await expectExit1(() => listContactSegmentsCommand.parseAsync(['contact_abc123'], { from: 'user' }));
+    const { listContactSegmentsCommand } = await import(
+      '../../../src/commands/contacts/segments'
+    );
+    await expectExit1(() =>
+      listContactSegmentsCommand.parseAsync(
+        ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
+        {
+          from: 'user',
+        },
+      ),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -94,13 +142,24 @@ describe('contacts segments command', () => {
 
   test('errors with list_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockListSegments.mockResolvedValueOnce({ data: null, error: { message: 'Not found', name: 'not_found' } } as any);
+    mockListSegments.mockResolvedValueOnce(
+      mockSdkError('Not found', 'not_found'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { listContactSegmentsCommand } = await import('../../../src/commands/contacts/segments');
-    await expectExit1(() => listContactSegmentsCommand.parseAsync(['contact_abc123'], { from: 'user' }));
+    const { listContactSegmentsCommand } = await import(
+      '../../../src/commands/contacts/segments'
+    );
+    await expectExit1(() =>
+      listContactSegmentsCommand.parseAsync(
+        ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
+        {
+          from: 'user',
+        },
+      ),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('list_error');

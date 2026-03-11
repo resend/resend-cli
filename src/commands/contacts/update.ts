@@ -1,16 +1,28 @@
 import { Command } from '@commander-js/extra-typings';
 import type { UpdateContactOptions } from 'resend';
-import type { GlobalOpts } from '../../lib/client';
 import { runWrite } from '../../lib/actions';
+import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { contactIdentifier, parsePropertiesJson } from './utils';
 
 export const updateContactCommand = new Command('update')
   .description("Update a contact's subscription status or custom properties")
-  .argument('<id>', 'Contact UUID or email address — both are accepted by the API')
-  .option('--unsubscribed', 'Globally unsubscribe the contact from all broadcasts')
-  .option('--no-unsubscribed', 'Re-subscribe the contact (clears the global unsubscribe flag)')
-  .option('--properties <json>', "JSON object of properties to merge (e.g. '{\"company\":\"Acme\"}'); set a key to null to clear it")
+  .argument(
+    '<id>',
+    'Contact UUID or email address — both are accepted by the API',
+  )
+  .option(
+    '--unsubscribed',
+    'Globally unsubscribe the contact from all broadcasts',
+  )
+  .option(
+    '--no-unsubscribed',
+    'Re-subscribe the contact (clears the global unsubscribe flag)',
+  )
+  .option(
+    '--properties <json>',
+    'JSON object of properties to merge (e.g. \'{"company":"Acme"}\'); set a key to null to clear it',
+  )
   .addHelpText(
     'after',
     buildHelpText({
@@ -43,14 +55,23 @@ Properties: --properties merges the given JSON object with existing properties.
     // through a spread at the call site.
     const payload = {
       ...contactIdentifier(id),
-      ...(opts.unsubscribed !== undefined && { unsubscribed: opts.unsubscribed }),
+      ...(opts.unsubscribed !== undefined && {
+        unsubscribed: opts.unsubscribed,
+      }),
       ...(properties && { properties }),
     } as UpdateContactOptions;
 
-    await runWrite({
-      spinner: { loading: 'Updating contact...', success: 'Contact updated', fail: 'Failed to update contact' },
-      sdkCall: (resend) => resend.contacts.update(payload),
-      errorCode: 'update_error',
-      successMsg: `Contact updated: ${id}`,
-    }, globalOpts);
+    await runWrite(
+      {
+        spinner: {
+          loading: 'Updating contact...',
+          success: 'Contact updated',
+          fail: 'Failed to update contact',
+        },
+        sdkCall: (resend) => resend.contacts.update(payload),
+        errorCode: 'update_error',
+        successMsg: `Contact updated: ${id}`,
+      },
+      globalOpts,
+    );
   });

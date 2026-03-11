@@ -1,6 +1,6 @@
 import { Command } from '@commander-js/extra-typings';
-import type { GlobalOpts } from '../../lib/client';
 import { runWrite } from '../../lib/actions';
+import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 
 export const verifyDomainCommand = new Command('verify')
@@ -17,15 +17,22 @@ Poll the status with: resend domains get <id>`,
         'resend domains verify 4dd369bc-aa82-4ff3-97de-514ae3000ee0',
         'resend domains verify 4dd369bc-aa82-4ff3-97de-514ae3000ee0 --json',
       ],
-    })
+    }),
   )
   .action(async (id, _opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
-    await runWrite({
-      spinner: { loading: 'Verifying domain...', success: 'Verification started', fail: 'Failed to verify domain' },
-      sdkCall: (resend) => resend.domains.verify(id),
-      errorCode: 'verify_error',
-      successMsg: `Domain verification started. Check status with resend domains get ${id}.`,
-    }, globalOpts);
+    await runWrite(
+      {
+        spinner: {
+          loading: 'Verifying domain...',
+          success: 'Verification started',
+          fail: 'Failed to verify domain',
+        },
+        sdkCall: (resend) => resend.domains.verify(id),
+        errorCode: 'verify_error',
+        successMsg: `Domain verification started. Check status with resend domains get ${id}.`,
+      },
+      globalOpts,
+    );
   });

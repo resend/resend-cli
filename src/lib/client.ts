@@ -2,13 +2,13 @@ import { Resend } from 'resend';
 import { resolveApiKey } from './config';
 import { errorMessage, outputError } from './output';
 
-export type GlobalOpts = { apiKey?: string; json?: boolean };
+export type GlobalOpts = { apiKey?: string; json?: boolean; team?: string };
 
-export function createClient(flagValue?: string): Resend {
-  const resolved = resolveApiKey(flagValue);
+export function createClient(flagValue?: string, teamName?: string): Resend {
+  const resolved = resolveApiKey(flagValue, teamName);
   if (!resolved) {
     throw new Error(
-      'No API key found. Set RESEND_API_KEY, use --api-key, or run: resend auth login'
+      'No API key found. Set RESEND_API_KEY, use --api-key, or run: resend login',
     );
   }
   return new Resend(resolved.key);
@@ -16,11 +16,14 @@ export function createClient(flagValue?: string): Resend {
 
 export function requireClient(opts: GlobalOpts): Resend {
   try {
-    return createClient(opts.apiKey);
+    return createClient(opts.apiKey, opts.team);
   } catch (err) {
     outputError(
-      { message: errorMessage(err, 'Failed to create client'), code: 'auth_error' },
-      { json: opts.json }
+      {
+        message: errorMessage(err, 'Failed to create client'),
+        code: 'auth_error',
+      },
+      { json: opts.json },
     );
   }
 }

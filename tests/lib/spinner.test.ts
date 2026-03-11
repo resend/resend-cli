@@ -1,4 +1,4 @@
-import { describe, test, expect, spyOn, afterEach, mock } from 'bun:test';
+import { afterEach, describe, expect, spyOn, test } from 'bun:test';
 
 describe('createSpinner', () => {
   const originalStdinIsTTY = process.stdin.isTTY;
@@ -7,14 +7,26 @@ describe('createSpinner', () => {
 
   afterEach(() => {
     stderrSpy?.mockRestore();
-    Object.defineProperty(process.stdin, 'isTTY', { value: originalStdinIsTTY, writable: true });
-    Object.defineProperty(process.stdout, 'isTTY', { value: originalStdoutIsTTY, writable: true });
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: originalStdinIsTTY,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: originalStdoutIsTTY,
+      writable: true,
+    });
     delete process.env.CI;
   });
 
   test('returns no-op spinner in non-interactive mode', () => {
-    Object.defineProperty(process.stdin, 'isTTY', { value: undefined, writable: true });
-    Object.defineProperty(process.stdout, 'isTTY', { value: undefined, writable: true });
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: undefined,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: undefined,
+      writable: true,
+    });
 
     const { createSpinner } = require('../../src/lib/spinner');
     const spinner = createSpinner('test message');
@@ -27,8 +39,14 @@ describe('createSpinner', () => {
   });
 
   test('returns functional spinner in interactive mode', () => {
-    Object.defineProperty(process.stdin, 'isTTY', { value: true, writable: true });
-    Object.defineProperty(process.stdout, 'isTTY', { value: true, writable: true });
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
     delete process.env.CI;
     delete process.env.GITHUB_ACTIONS;
     delete process.env.TERM;
@@ -49,8 +67,14 @@ describe('createSpinner', () => {
   });
 
   test('stop writes checkmark to stderr', () => {
-    Object.defineProperty(process.stdin, 'isTTY', { value: true, writable: true });
-    Object.defineProperty(process.stdout, 'isTTY', { value: true, writable: true });
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
     delete process.env.CI;
     delete process.env.GITHUB_ACTIONS;
     delete process.env.TERM;
@@ -61,14 +85,22 @@ describe('createSpinner', () => {
     const spinner = createSpinner('loading...');
     spinner.stop('completed');
 
-    const lastCall = stderrSpy.mock.calls[stderrSpy.mock.calls.length - 1][0] as string;
+    const lastCall = stderrSpy.mock.calls[
+      stderrSpy.mock.calls.length - 1
+    ][0] as string;
     expect(lastCall).toContain('✔');
     expect(lastCall).toContain('completed');
   });
 
   test('fail writes cross mark to stderr', () => {
-    Object.defineProperty(process.stdin, 'isTTY', { value: true, writable: true });
-    Object.defineProperty(process.stdout, 'isTTY', { value: true, writable: true });
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
     delete process.env.CI;
     delete process.env.GITHUB_ACTIONS;
     delete process.env.TERM;
@@ -79,14 +111,22 @@ describe('createSpinner', () => {
     const spinner = createSpinner('loading...');
     spinner.fail('error occurred');
 
-    const lastCall = stderrSpy.mock.calls[stderrSpy.mock.calls.length - 1][0] as string;
+    const lastCall = stderrSpy.mock.calls[
+      stderrSpy.mock.calls.length - 1
+    ][0] as string;
     expect(lastCall).toContain('✗');
     expect(lastCall).toContain('error occurred');
   });
 
   test('warn writes warning icon to stderr', () => {
-    Object.defineProperty(process.stdin, 'isTTY', { value: true, writable: true });
-    Object.defineProperty(process.stdout, 'isTTY', { value: true, writable: true });
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
     delete process.env.CI;
     delete process.env.GITHUB_ACTIONS;
     delete process.env.TERM;
@@ -97,7 +137,9 @@ describe('createSpinner', () => {
     const spinner = createSpinner('loading...');
     spinner.warn('watch out');
 
-    const lastCall = stderrSpy.mock.calls[stderrSpy.mock.calls.length - 1][0] as string;
+    const lastCall = stderrSpy.mock.calls[
+      stderrSpy.mock.calls.length - 1
+    ][0] as string;
     expect(lastCall).toContain('⚠');
     expect(lastCall).toContain('watch out');
   });

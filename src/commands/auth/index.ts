@@ -5,13 +5,16 @@ import { logoutCommand } from './logout';
 
 export const authCommand = new Command('auth')
   .description('Manage authentication')
-  .addHelpText('after', buildHelpText({
-    setup: true,
-    examples: [
-      'resend auth login',
-      'resend auth login --key re_123456789',
-      'resend auth logout',
-    ],
-  }))
+  .addHelpText(
+    'after',
+    buildHelpText({
+      setup: true,
+      examples: [
+        'resend login',
+        'resend login --key re_123456789',
+        'resend logout',
+      ],
+    }),
+  )
   .addCommand(loginCommand)
   .addCommand(logoutCommand);

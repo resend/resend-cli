@@ -1,13 +1,15 @@
 import { Command } from '@commander-js/extra-typings';
+import { buildHelpText } from '../../lib/help-text';
 import { createContactPropertyCommand } from './create';
+import { deleteContactPropertyCommand } from './delete';
 import { getContactPropertyCommand } from './get';
 import { listContactPropertiesCommand } from './list';
 import { updateContactPropertyCommand } from './update';
-import { deleteContactPropertyCommand } from './delete';
-import { buildHelpText } from '../../lib/help-text';
 
 export const contactPropertiesCommand = new Command('contact-properties')
-  .description('Manage contact property definitions — schema for custom data on contacts')
+  .description(
+    'Manage contact property definitions — schema for custom data on contacts',
+  )
   .addHelpText(
     'after',
     buildHelpText({
@@ -32,15 +34,15 @@ be updated. Deleting a property removes it from all contacts.`,
         'resend contact-properties create --key company_name --type string',
         'resend contact-properties create --key plan --type string --fallback-value "free"',
         'resend contact-properties create --key score --type number --fallback-value 0',
-        'resend contact-properties get prop_abc123',
-        'resend contact-properties update prop_abc123 --fallback-value "Unknown"',
-        'resend contact-properties update prop_abc123 --clear-fallback-value',
-        'resend contact-properties delete prop_abc123 --yes',
+        'resend contact-properties get b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d',
+        'resend contact-properties update b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d --fallback-value "Unknown"',
+        'resend contact-properties update b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d --clear-fallback-value',
+        'resend contact-properties delete b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d --yes',
       ],
     }),
   )
   .addCommand(createContactPropertyCommand)
   .addCommand(getContactPropertyCommand)
-  .addCommand(listContactPropertiesCommand)
+  .addCommand(listContactPropertiesCommand, { isDefault: true })
   .addCommand(updateContactPropertyCommand)
   .addCommand(deleteContactPropertyCommand);

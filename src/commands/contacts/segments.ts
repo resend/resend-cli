@@ -1,6 +1,6 @@
 import { Command } from '@commander-js/extra-typings';
-import type { GlobalOpts } from '../../lib/client';
 import { runList } from '../../lib/actions';
+import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { renderSegmentsTable } from '../segments/utils';
 import { segmentContactIdentifier } from './utils';
@@ -23,9 +23,17 @@ export const listContactSegmentsCommand = new Command('segments')
   )
   .action(async (id, _opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    await runList({
-      spinner: { loading: 'Fetching segments...', success: 'Segments fetched', fail: 'Failed to list segments' },
-      sdkCall: (resend) => resend.contacts.segments.list(segmentContactIdentifier(id)),
-      onInteractive: (list) => console.log(renderSegmentsTable(list.data)),
-    }, globalOpts);
+    await runList(
+      {
+        spinner: {
+          loading: 'Fetching segments...',
+          success: 'Segments fetched',
+          fail: 'Failed to list segments',
+        },
+        sdkCall: (resend) =>
+          resend.contacts.segments.list(segmentContactIdentifier(id)),
+        onInteractive: (list) => console.log(renderSegmentsTable(list.data)),
+      },
+      globalOpts,
+    );
   });

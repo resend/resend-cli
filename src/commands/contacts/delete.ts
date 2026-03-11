@@ -1,12 +1,19 @@
 import { Command } from '@commander-js/extra-typings';
-import type { GlobalOpts } from '../../lib/client';
 import { runDelete } from '../../lib/actions';
+import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 
 export const deleteContactCommand = new Command('delete')
+  .alias('rm')
   .description('Delete a contact')
-  .argument('<id>', 'Contact UUID or email address — both are accepted by the API')
-  .option('--yes', 'Skip the confirmation prompt (required in non-interactive mode)')
+  .argument(
+    '<id>',
+    'Contact UUID or email address — both are accepted by the API',
+  )
+  .option(
+    '--yes',
+    'Skip the confirmation prompt (required in non-interactive mode)',
+  )
   .addHelpText(
     'after',
     buildHelpText({
@@ -23,11 +30,20 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
   )
   .action(async (id, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    await runDelete(id, !!opts.yes, {
-      confirmMessage: `Delete contact ${id}? This cannot be undone.`,
-      spinner: { loading: 'Deleting contact...', success: 'Contact deleted', fail: 'Failed to delete contact' },
-      object: 'contact',
-      successMsg: 'Contact deleted.',
-      sdkCall: (resend) => resend.contacts.remove(id),
-    }, globalOpts);
+    await runDelete(
+      id,
+      !!opts.yes,
+      {
+        confirmMessage: `Delete contact ${id}?\nThis cannot be undone.`,
+        spinner: {
+          loading: 'Deleting contact...',
+          success: 'Contact deleted',
+          fail: 'Failed to delete contact',
+        },
+        object: 'contact',
+        successMsg: 'Contact deleted.',
+        sdkCall: (resend) => resend.contacts.remove(id),
+      },
+      globalOpts,
+    );
   });

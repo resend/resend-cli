@@ -1,15 +1,23 @@
 import { Command } from '@commander-js/extra-typings';
-import type { GlobalOpts } from '../../lib/client';
 import { runList } from '../../lib/actions';
-import { parseLimitOpt, buildPaginationOpts, printPaginationHint } from '../../lib/pagination';
+import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
+import {
+  buildPaginationOpts,
+  parseLimitOpt,
+  printPaginationHint,
+} from '../../lib/pagination';
 import { renderContactsTable } from './utils';
 
 export const listContactsCommand = new Command('list')
+  .alias('ls')
   .description('List all contacts')
   .option('--limit <n>', 'Maximum number of contacts to return (1-100)', '10')
   .option('--after <cursor>', 'Return contacts after this cursor (next page)')
-  .option('--before <cursor>', 'Return contacts before this cursor (previous page)')
+  .option(
+    '--before <cursor>',
+    'Return contacts before this cursor (previous page)',
+  )
   .addHelpText(
     'after',
     buildHelpText({
@@ -31,9 +39,19 @@ Pagination: use --after or --before with a contact ID as the cursor.
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const limit = parseLimitOpt(opts.limit, globalOpts);
     const paginationOpts = buildPaginationOpts(limit, opts.after, opts.before);
-    await runList({
-      spinner: { loading: 'Fetching contacts...', success: 'Contacts fetched', fail: 'Failed to list contacts' },
-      sdkCall: (resend) => resend.contacts.list(paginationOpts),
-      onInteractive: (list) => { console.log(renderContactsTable(list.data)); printPaginationHint(list); },
-    }, globalOpts);
+    await runList(
+      {
+        spinner: {
+          loading: 'Fetching contacts...',
+          success: 'Contacts fetched',
+          fail: 'Failed to list contacts',
+        },
+        sdkCall: (resend) => resend.contacts.list(paginationOpts),
+        onInteractive: (list) => {
+          console.log(renderContactsTable(list.data));
+          printPaginationHint(list);
+        },
+      },
+      globalOpts,
+    );
   });

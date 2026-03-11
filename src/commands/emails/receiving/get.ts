@@ -1,10 +1,12 @@
 import { Command } from '@commander-js/extra-typings';
-import type { GlobalOpts } from '../../../lib/client';
 import { runGet } from '../../../lib/actions';
+import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 
 export const getReceivingCommand = new Command('get')
-  .description('Retrieve a single received (inbound) email with full details including HTML, text, and headers')
+  .description(
+    'Retrieve a single received (inbound) email with full details including HTML, text, and headers',
+  )
   .argument('<id>', 'Received email UUID')
   .addHelpText(
     'after',
@@ -18,27 +20,39 @@ export const getReceivingCommand = new Command('get')
         'resend emails receiving get <email-id>',
         'resend emails receiving get <email-id> --json',
       ],
-    })
+    }),
   )
   .action(async (id, _opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    await runGet({
-      spinner: { loading: 'Fetching received email...', success: 'Received email fetched', fail: 'Failed to fetch received email' },
-      sdkCall: (resend) => resend.emails.receiving.get(id),
-      onInteractive: (data) => {
-        console.log(`\nFrom:    ${data.from}`);
-        console.log(`To:      ${data.to.join(', ')}`);
-        console.log(`Subject: ${data.subject}`);
-        console.log(`Date:    ${data.created_at}`);
-        if (data.attachments.length > 0) {
-          console.log(`Files:   ${data.attachments.length} attachment(s)`);
-        }
-        if (data.text) {
-          const snippet = data.text.length > 200 ? `${data.text.slice(0, 197)}...` : data.text;
-          console.log(`\n${snippet}`);
-        } else if (data.html) {
-          console.log('\n(HTML body only — use --json to view or pipe to a browser)');
-        }
+    await runGet(
+      {
+        spinner: {
+          loading: 'Fetching received email...',
+          success: 'Received email fetched',
+          fail: 'Failed to fetch received email',
+        },
+        sdkCall: (resend) => resend.emails.receiving.get(id),
+        onInteractive: (data) => {
+          console.log(`\nFrom:    ${data.from}`);
+          console.log(`To:      ${data.to.join(', ')}`);
+          console.log(`Subject: ${data.subject}`);
+          console.log(`Date:    ${data.created_at}`);
+          if (data.attachments.length > 0) {
+            console.log(`Files:   ${data.attachments.length} attachment(s)`);
+          }
+          if (data.text) {
+            const snippet =
+              data.text.length > 200
+                ? `${data.text.slice(0, 197)}...`
+                : data.text;
+            console.log(`\n${snippet}`);
+          } else if (data.html) {
+            console.log(
+              '\n(HTML body only — use --json to view or pipe to a browser)',
+            );
+          }
+        },
       },
-    }, globalOpts);
+      globalOpts,
+    );
   });

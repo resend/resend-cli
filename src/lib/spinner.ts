@@ -1,12 +1,12 @@
 import spinners from 'unicode-animations';
-import { isInteractive, isUnicodeSupported } from './tty';
 import type { GlobalOpts } from './client';
 import { errorMessage, outputError } from './output';
+import { isInteractive, isUnicodeSupported } from './tty';
 
 // Status symbols generated via String.fromCodePoint() — never literal Unicode in
 // source — to prevent UTF-8 → Latin-1 corruption when the npm package is bundled.
-const TICK  = isUnicodeSupported ? String.fromCodePoint(0x2714) : 'v'; // ✔
-const WARN  = isUnicodeSupported ? String.fromCodePoint(0x26a0) : '!'; // ⚠
+const TICK = isUnicodeSupported ? String.fromCodePoint(0x2714) : 'v'; // ✔
+const WARN = isUnicodeSupported ? String.fromCodePoint(0x26a0) : '!'; // ⚠
 const CROSS = isUnicodeSupported ? String.fromCodePoint(0x2717) : 'x'; // ✗
 
 type SdkResponse<T> = { data: T | null; error: { message: string } | null };
@@ -26,10 +26,20 @@ export async function withSpinner<T>(
     const { data, error } = await call();
     if (error) {
       spinner.fail(messages.fail);
-      outputError({ message: error.message, code: errorCode }, { json: globalOpts.json });
+      outputError(
+        { message: error.message, code: errorCode },
+        { json: globalOpts.json },
+      );
+    }
+    if (data === null) {
+      spinner.fail(messages.fail);
+      outputError(
+        { message: 'Unexpected empty response', code: errorCode },
+        { json: globalOpts.json },
+      );
     }
     spinner.stop(messages.success);
-    return data!;
+    return data;
   } catch (err) {
     spinner.fail(messages.fail);
     return outputError(

@@ -1,6 +1,6 @@
 import { Command } from '@commander-js/extra-typings';
-import type { GlobalOpts } from '../../lib/client';
 import { runGet } from '../../lib/actions';
+import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 
 export const getContactPropertyCommand = new Command('get')
@@ -19,21 +19,28 @@ export const getContactPropertyCommand = new Command('get')
   }`,
       errorCodes: ['auth_error', 'fetch_error'],
       examples: [
-        'resend contact-properties get prop_abc123',
-        'resend contact-properties get prop_abc123 --json',
+        'resend contact-properties get b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d',
+        'resend contact-properties get b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d --json',
       ],
     }),
   )
   .action(async (id, _opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    await runGet({
-      spinner: { loading: 'Fetching contact property...', success: 'Contact property fetched', fail: 'Failed to fetch contact property' },
-      sdkCall: (resend) => resend.contactProperties.get(id),
-      onInteractive: (data) => {
-        console.log(`\n${data.key} (${data.type})`);
-        console.log(`ID: ${data.id}`);
-        console.log(`Created: ${data.createdAt}`);
-        console.log(`Fallback value: ${data.fallbackValue ?? '(none)'}`);
+    await runGet(
+      {
+        spinner: {
+          loading: 'Fetching contact property...',
+          success: 'Contact property fetched',
+          fail: 'Failed to fetch contact property',
+        },
+        sdkCall: (resend) => resend.contactProperties.get(id),
+        onInteractive: (data) => {
+          console.log(`\n${data.key} (${data.type})`);
+          console.log(`ID: ${data.id}`);
+          console.log(`Created: ${data.createdAt}`);
+          console.log(`Fallback value: ${data.fallbackValue ?? '(none)'}`);
+        },
       },
-    }, globalOpts);
+      globalOpts,
+    );
   });

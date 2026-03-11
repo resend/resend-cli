@@ -1,10 +1,13 @@
 import { Command } from '@commander-js/extra-typings';
-import type { GlobalOpts } from '../../lib/client';
 import { runDelete } from '../../lib/actions';
+import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 
 export const deleteBroadcastCommand = new Command('delete')
-  .description('Delete a broadcast — draft broadcasts are removed; scheduled broadcasts are cancelled before delivery')
+  .alias('rm')
+  .description(
+    'Delete a broadcast — draft broadcasts are removed; scheduled broadcasts are cancelled before delivery',
+  )
   .argument('<id>', 'Broadcast ID')
   .option('--yes', 'Skip confirmation prompt')
   .addHelpText(
@@ -17,18 +20,27 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
       output: `  {"object":"broadcast","id":"<id>","deleted":true}`,
       errorCodes: ['auth_error', 'confirmation_required', 'delete_error'],
       examples: [
-        'resend broadcasts delete bcast_123abc --yes',
-        'resend broadcasts delete bcast_123abc --yes --json',
+        'resend broadcasts delete d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6 --yes',
+        'resend broadcasts delete d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6 --yes --json',
       ],
-    })
+    }),
   )
   .action(async (id, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    await runDelete(id, !!opts.yes, {
-      confirmMessage: `Delete broadcast ${id}? If scheduled, delivery will be cancelled.`,
-      spinner: { loading: 'Deleting broadcast...', success: 'Broadcast deleted', fail: 'Failed to delete broadcast' },
-      object: 'broadcast',
-      successMsg: 'Broadcast deleted.',
-      sdkCall: (resend) => resend.broadcasts.remove(id),
-    }, globalOpts);
+    await runDelete(
+      id,
+      !!opts.yes,
+      {
+        confirmMessage: `Delete broadcast ${id}?\nIf scheduled, delivery will be cancelled.`,
+        spinner: {
+          loading: 'Deleting broadcast...',
+          success: 'Broadcast deleted',
+          fail: 'Failed to delete broadcast',
+        },
+        object: 'broadcast',
+        successMsg: 'Broadcast deleted.',
+        sdkCall: (resend) => resend.broadcasts.remove(id),
+      },
+      globalOpts,
+    );
   });

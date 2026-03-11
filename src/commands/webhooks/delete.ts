@@ -1,12 +1,16 @@
 import { Command } from '@commander-js/extra-typings';
-import type { GlobalOpts } from '../../lib/client';
 import { runDelete } from '../../lib/actions';
+import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 
 export const deleteWebhookCommand = new Command('delete')
+  .alias('rm')
   .description('Delete a webhook endpoint and stop all event deliveries to it')
   .argument('<id>', 'Webhook UUID')
-  .option('--yes', 'Skip the confirmation prompt (required in non-interactive mode)')
+  .option(
+    '--yes',
+    'Skip the confirmation prompt (required in non-interactive mode)',
+  )
   .addHelpText(
     'after',
     buildHelpText({
@@ -22,15 +26,24 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
         'resend webhooks delete wh_abc123 --yes',
         'resend webhooks delete wh_abc123 --yes --json',
       ],
-    })
+    }),
   )
   .action(async (id, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    await runDelete(id, !!opts.yes, {
-      confirmMessage: `Delete webhook ${id}? Events will no longer be delivered to this endpoint.`,
-      spinner: { loading: 'Deleting webhook...', success: 'Webhook deleted', fail: 'Failed to delete webhook' },
-      object: 'webhook',
-      successMsg: 'Webhook deleted.',
-      sdkCall: (resend) => resend.webhooks.remove(id),
-    }, globalOpts);
+    await runDelete(
+      id,
+      !!opts.yes,
+      {
+        confirmMessage: `Delete webhook ${id}?\nEvents will no longer be delivered to this endpoint.`,
+        spinner: {
+          loading: 'Deleting webhook...',
+          success: 'Webhook deleted',
+          fail: 'Failed to delete webhook',
+        },
+        object: 'webhook',
+        successMsg: 'Webhook deleted.',
+        sdkCall: (resend) => resend.webhooks.remove(id),
+      },
+      globalOpts,
+    );
   });

@@ -1,10 +1,19 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
 import {
-  setNonInteractive,
-  mockExitThrow,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
   captureTestEnv,
-  setupOutputSpies,
   expectExit1,
+  mockExitThrow,
+  mockSdkError,
+  setNonInteractive,
+  setupOutputSpies,
 } from '../../helpers';
 
 const mockRemove = mock(async () => ({
@@ -46,8 +55,12 @@ describe('topics delete command', () => {
   test('deletes topic with --yes flag', async () => {
     spies = setupOutputSpies();
 
-    const { deleteTopicCommand } = await import('../../../src/commands/topics/delete');
-    await deleteTopicCommand.parseAsync(['top_abc123', '--yes'], { from: 'user' });
+    const { deleteTopicCommand } = await import(
+      '../../../src/commands/topics/delete'
+    );
+    await deleteTopicCommand.parseAsync(['top_abc123', '--yes'], {
+      from: 'user',
+    });
 
     expect(mockRemove).toHaveBeenCalledTimes(1);
     expect(mockRemove.mock.calls[0][0]).toBe('top_abc123');
@@ -56,8 +69,12 @@ describe('topics delete command', () => {
   test('outputs synthesized JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { deleteTopicCommand } = await import('../../../src/commands/topics/delete');
-    await deleteTopicCommand.parseAsync(['top_abc123', '--yes'], { from: 'user' });
+    const { deleteTopicCommand } = await import(
+      '../../../src/commands/topics/delete'
+    );
+    await deleteTopicCommand.parseAsync(['top_abc123', '--yes'], {
+      from: 'user',
+    });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
@@ -71,8 +88,12 @@ describe('topics delete command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteTopicCommand } = await import('../../../src/commands/topics/delete');
-    await expectExit1(() => deleteTopicCommand.parseAsync(['top_abc123'], { from: 'user' }));
+    const { deleteTopicCommand } = await import(
+      '../../../src/commands/topics/delete'
+    );
+    await expectExit1(() =>
+      deleteTopicCommand.parseAsync(['top_abc123'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('confirmation_required');
@@ -83,8 +104,12 @@ describe('topics delete command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteTopicCommand } = await import('../../../src/commands/topics/delete');
-    await expectExit1(() => deleteTopicCommand.parseAsync(['top_abc123'], { from: 'user' }));
+    const { deleteTopicCommand } = await import(
+      '../../../src/commands/topics/delete'
+    );
+    await expectExit1(() =>
+      deleteTopicCommand.parseAsync(['top_abc123'], { from: 'user' }),
+    );
 
     expect(mockRemove).not.toHaveBeenCalled();
   });
@@ -96,8 +121,12 @@ describe('topics delete command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteTopicCommand } = await import('../../../src/commands/topics/delete');
-    await expectExit1(() => deleteTopicCommand.parseAsync(['top_abc123', '--yes'], { from: 'user' }));
+    const { deleteTopicCommand } = await import(
+      '../../../src/commands/topics/delete'
+    );
+    await expectExit1(() =>
+      deleteTopicCommand.parseAsync(['top_abc123', '--yes'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -105,13 +134,21 @@ describe('topics delete command', () => {
 
   test('errors with delete_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockRemove.mockResolvedValueOnce({ data: null, error: { message: 'Topic not found', name: 'not_found' } } as any);
+    mockRemove.mockResolvedValueOnce(
+      mockSdkError('Topic not found', 'not_found'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { deleteTopicCommand } = await import('../../../src/commands/topics/delete');
-    await expectExit1(() => deleteTopicCommand.parseAsync(['top_nonexistent', '--yes'], { from: 'user' }));
+    const { deleteTopicCommand } = await import(
+      '../../../src/commands/topics/delete'
+    );
+    await expectExit1(() =>
+      deleteTopicCommand.parseAsync(['top_nonexistent', '--yes'], {
+        from: 'user',
+      }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('delete_error');

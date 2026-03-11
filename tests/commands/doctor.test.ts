@@ -1,6 +1,19 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
 import { Command } from '@commander-js/extra-typings';
-import { captureTestEnv, setupOutputSpies, expectExit1, mockExitThrow } from '../helpers';
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  setupOutputSpies,
+} from '../helpers';
 
 // Mock resend SDK for doctor
 mock.module('resend', () => ({
@@ -85,7 +98,9 @@ describe('doctor command', () => {
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
-    const keyCheck = parsed.checks.find((c: any) => c.name === 'API Key');
+    const keyCheck = parsed.checks.find(
+      (c: Record<string, unknown>) => c.name === 'API Key',
+    );
 
     expect(keyCheck).toBeDefined();
     expect(keyCheck.status).toBe('pass');
@@ -98,7 +113,9 @@ describe('doctor command', () => {
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
 
     spies = setupOutputSpies();
-    exitSpy = spyOn(process, 'exit').mockImplementation(() => undefined as never);
+    exitSpy = spyOn(process, 'exit').mockImplementation(
+      () => undefined as never,
+    );
 
     const program = await createDoctorProgram();
     await program.parseAsync(['doctor', '--json'], { from: 'user' });
@@ -107,7 +124,9 @@ describe('doctor command', () => {
     const parsed = JSON.parse(output);
 
     expect(parsed.ok).toBe(false);
-    const keyCheck = parsed.checks.find((c: any) => c.name === 'API Key');
+    const keyCheck = parsed.checks.find(
+      (c: Record<string, unknown>) => c.name === 'API Key',
+    );
     expect(keyCheck.status).toBe('fail');
   });
 
@@ -120,7 +139,9 @@ describe('doctor command', () => {
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
-    const keyCheck = parsed.checks.find((c: any) => c.name === 'API Key');
+    const keyCheck = parsed.checks.find(
+      (c: Record<string, unknown>) => c.name === 'API Key',
+    );
 
     // Should not contain full key
     expect(keyCheck.message).not.toContain('re_abcdefghijklmnop');
@@ -137,6 +158,8 @@ describe('doctor command', () => {
     exitSpy = mockExitThrow();
 
     const program = await createDoctorProgram();
-    await expectExit1(() => program.parseAsync(['doctor', '--json'], { from: 'user' }));
+    await expectExit1(() =>
+      program.parseAsync(['doctor', '--json'], { from: 'user' }),
+    );
   });
 });

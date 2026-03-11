@@ -19,8 +19,17 @@ export function renderBroadcastsTable(
     name: string | null;
     status: string;
     created_at: string;
-  }>
+  }>,
 ): string {
-  const rows = broadcasts.map((b) => [b.name ?? '(untitled)', b.status, b.created_at, b.id]);
-  return renderTable(['Name', 'Status', 'Created', 'ID'], rows, '(no broadcasts)');
+  const rows = broadcasts.map((b) => [
+    b.name ?? '(untitled)',
+    b.status,
+    b.created_at,
+    b.id,
+  ]);
+  return renderTable(
+    ['Name', 'Status', 'Created', 'ID'],
+    rows,
+    '(no broadcasts)',
+  );
 }

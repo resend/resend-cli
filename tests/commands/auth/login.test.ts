@@ -1,8 +1,21 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
-import { mkdirSync, readFileSync, rmSync } from 'node:fs';
-import { join } from 'node:path';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { captureTestEnv, setupOutputSpies, expectExit1, mockExitThrow } from '../../helpers';
+import { join } from 'node:path';
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  setupOutputSpies,
+} from '../../helpers';
 
 // Mock the Resend SDK
 mock.module('resend', () => ({
@@ -22,7 +35,10 @@ describe('login command', () => {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = join(tmpdir(), `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    tmpDir = join(
+      tmpdir(),
+      `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
     mkdirSync(tmpDir, { recursive: true });
     process.env.XDG_CONFIG_HOME = tmpDir;
   });
@@ -43,28 +59,61 @@ describe('login command', () => {
     exitSpy = mockExitThrow();
 
     const { loginCommand } = await import('../../../src/commands/auth/login');
-    await expectExit1(() => loginCommand.parseAsync(['--key', 'bad_key'], { from: 'user' }));
+    await expectExit1(() =>
+      loginCommand.parseAsync(['--key', 'bad_key'], { from: 'user' }),
+    );
   });
 
   test('stores valid key to credentials.json', async () => {
     spies = setupOutputSpies();
 
     const { loginCommand } = await import('../../../src/commands/auth/login');
-    await loginCommand.parseAsync(['--key', 're_valid_test_key_123'], { from: 'user' });
+    await loginCommand.parseAsync(['--key', 're_valid_test_key_123'], {
+      from: 'user',
+    });
 
     const configPath = join(tmpDir, 'resend', 'credentials.json');
     const data = JSON.parse(readFileSync(configPath, 'utf-8'));
-    expect(data.api_key).toBe('re_valid_test_key_123');
+    expect(data.teams.default.api_key).toBe('re_valid_test_key_123');
   });
 
   test('requires --key in non-interactive mode', async () => {
+    spies = setupOutputSpies();
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { loginCommand } = await import('../../../src/commands/auth/login');
     await expectExit1(() => loginCommand.parseAsync([], { from: 'user' }));
 
-    const output = errorSpy!.mock.calls[0][0] as string;
+    expect(errorSpy).toBeDefined();
+    const output = errorSpy?.mock.calls[0][0] as string;
     expect(output).toContain('missing_key');
+  });
+
+  test('non-interactive login stores as default when teams exist', async () => {
+    // Pre-populate credentials with an existing team
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_team: 'production',
+        teams: { production: { api_key: 're_old_key_1234' } },
+      }),
+    );
+
+    spies = setupOutputSpies();
+
+    const { loginCommand } = await import('../../../src/commands/auth/login');
+    await loginCommand.parseAsync(['--key', 're_new_key_5678'], {
+      from: 'user',
+    });
+
+    const configPath = join(tmpDir, 'resend', 'credentials.json');
+    const data = JSON.parse(readFileSync(configPath, 'utf-8'));
+    // Non-interactive without --team flag stores as 'default' (no picker)
+    expect(data.teams.default.api_key).toBe('re_new_key_5678');
+    // Original team should still exist
+    expect(data.teams.production.api_key).toBe('re_old_key_1234');
   });
 });

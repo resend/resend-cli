@@ -1,6 +1,20 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
 import { join } from 'node:path';
-import { setNonInteractive, mockExitThrow, captureTestEnv, setupOutputSpies, expectExit1 } from '../../helpers';
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  setNonInteractive,
+  setupOutputSpies,
+} from '../../helpers';
 
 const mockBatchSend = mock(async () => ({
   data: { data: [{ id: 'abc123' }, { id: 'def456' }] },
@@ -15,8 +29,18 @@ mock.module('resend', () => ({
 }));
 
 const VALID_EMAILS = [
-  { from: 'you@domain.com', to: ['user1@example.com'], subject: 'Hello 1', html: '<p>Hello 1</p>' },
-  { from: 'you@domain.com', to: ['user2@example.com'], subject: 'Hello 2', text: 'Hello 2' },
+  {
+    from: 'you@domain.com',
+    to: ['user1@example.com'],
+    subject: 'Hello 1',
+    html: '<p>Hello 1</p>',
+  },
+  {
+    from: 'you@domain.com',
+    to: ['user2@example.com'],
+    subject: 'Hello 2',
+    text: 'Hello 2',
+  },
 ];
 
 describe('batch command', () => {
@@ -44,7 +68,9 @@ describe('batch command', () => {
     exitSpy = undefined;
     if (tmpFile) {
       const { unlinkSync } = require('node:fs');
-      try { unlinkSync(tmpFile); } catch {}
+      try {
+        unlinkSync(tmpFile);
+      } catch {}
       tmpFile = '';
     }
   });
@@ -99,7 +125,12 @@ describe('batch command', () => {
     exitSpy = mockExitThrow();
 
     const { batchCommand } = await import('../../../src/commands/emails/batch');
-    await expectExit1(() => batchCommand.parseAsync(['--file', '/tmp/nonexistent-resend-batch.json'], { from: 'user' }));
+    await expectExit1(() =>
+      batchCommand.parseAsync(
+        ['--file', '/tmp/nonexistent-resend-batch.json'],
+        { from: 'user' },
+      ),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('file_read_error');
@@ -115,7 +146,9 @@ describe('batch command', () => {
     tmpFile = path;
 
     const { batchCommand } = await import('../../../src/commands/emails/batch');
-    await expectExit1(() => batchCommand.parseAsync(['--file', path], { from: 'user' }));
+    await expectExit1(() =>
+      batchCommand.parseAsync(['--file', path], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('invalid_json');
@@ -126,9 +159,14 @@ describe('batch command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const file = await writeTmpJson({ from: 'you@domain.com', to: ['user@example.com'] });
+    const file = await writeTmpJson({
+      from: 'you@domain.com',
+      to: ['user@example.com'],
+    });
     const { batchCommand } = await import('../../../src/commands/emails/batch');
-    await expectExit1(() => batchCommand.parseAsync(['--file', file], { from: 'user' }));
+    await expectExit1(() =>
+      batchCommand.parseAsync(['--file', file], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('invalid_format');
@@ -143,11 +181,16 @@ describe('batch command', () => {
     exitSpy = mockExitThrow();
 
     const emails = [
-      { ...VALID_EMAILS[0], attachments: [{ filename: 'test.txt', content: 'hello' }] },
+      {
+        ...VALID_EMAILS[0],
+        attachments: [{ filename: 'test.txt', content: 'hello' }],
+      },
     ];
     const file = await writeTmpJson(emails);
     const { batchCommand } = await import('../../../src/commands/emails/batch');
-    await expectExit1(() => batchCommand.parseAsync(['--file', file], { from: 'user' }));
+    await expectExit1(() =>
+      batchCommand.parseAsync(['--file', file], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('attachments');
@@ -163,7 +206,9 @@ describe('batch command', () => {
     ];
     const file = await writeTmpJson(emails);
     const { batchCommand } = await import('../../../src/commands/emails/batch');
-    await expectExit1(() => batchCommand.parseAsync(['--file', file], { from: 'user' }));
+    await expectExit1(() =>
+      batchCommand.parseAsync(['--file', file], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('scheduled_at');
@@ -193,10 +238,13 @@ describe('batch command', () => {
 
     const file = await writeTmpJson(VALID_EMAILS);
     const { batchCommand } = await import('../../../src/commands/emails/batch');
-    await batchCommand.parseAsync(['--file', file, '--idempotency-key', 'my-key-123'], { from: 'user' });
+    await batchCommand.parseAsync(
+      ['--file', file, '--idempotency-key', 'my-key-123'],
+      { from: 'user' },
+    );
 
     expect(mockBatchSend).toHaveBeenCalledTimes(1);
-    const opts = mockBatchSend.mock.calls[0][1] as any;
+    const opts = mockBatchSend.mock.calls[0][1] as Record<string, unknown>;
     expect(opts?.idempotencyKey).toBe('my-key-123');
   });
 
@@ -209,7 +257,9 @@ describe('batch command', () => {
 
     const file = await writeTmpJson(VALID_EMAILS);
     const { batchCommand } = await import('../../../src/commands/emails/batch');
-    await expectExit1(() => batchCommand.parseAsync(['--file', file], { from: 'user' }));
+    await expectExit1(() =>
+      batchCommand.parseAsync(['--file', file], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -217,8 +267,14 @@ describe('batch command', () => {
 
   test('outputs human-readable summary in terminal mode', async () => {
     // Make it look like a TTY so outputResult uses human-readable format
-    Object.defineProperty(process.stdin, 'isTTY', { value: true, writable: true });
-    Object.defineProperty(process.stdout, 'isTTY', { value: true, writable: true });
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
     const logSpy = spyOn(console, 'log').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
 
@@ -247,7 +303,9 @@ describe('batch command', () => {
 
     const file = await writeTmpJson(VALID_EMAILS);
     const { batchCommand } = await import('../../../src/commands/emails/batch');
-    await expectExit1(() => batchCommand.parseAsync(['--file', file], { from: 'user' }));
+    await expectExit1(() =>
+      batchCommand.parseAsync(['--file', file], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('batch_error');

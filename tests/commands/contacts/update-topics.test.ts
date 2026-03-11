@@ -1,8 +1,23 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
-import { setNonInteractive, mockExitThrow, captureTestEnv, setupOutputSpies, expectExit1 } from '../../helpers';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  mockSdkError,
+  setNonInteractive,
+  setupOutputSpies,
+} from '../../helpers';
 
 const mockUpdateTopics = mock(async () => ({
-  data: { id: 'contact_abc123' },
+  data: { id: 'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6' },
   error: null,
 }));
 
@@ -42,28 +57,40 @@ describe('contacts update-topics command', () => {
   test('updates topics by contact ID', async () => {
     spies = setupOutputSpies();
 
-    const { updateContactTopicsCommand } = await import('../../../src/commands/contacts/update-topics');
+    const { updateContactTopicsCommand } = await import(
+      '../../../src/commands/contacts/update-topics'
+    );
     await updateContactTopicsCommand.parseAsync(
-      ['contact_abc123', '--topics', '[{"id":"topic_abc","subscription":"opt_in"}]'],
-      { from: 'user' }
+      [
+        'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+        '--topics',
+        '[{"id":"topic_abc","subscription":"opt_in"}]',
+      ],
+      { from: 'user' },
     );
 
     expect(mockUpdateTopics).toHaveBeenCalledTimes(1);
-    const args = mockUpdateTopics.mock.calls[0][0] as any;
-    expect(args.id).toBe('contact_abc123');
+    const args = mockUpdateTopics.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.id).toBe('a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
     expect(args.topics).toEqual([{ id: 'topic_abc', subscription: 'opt_in' }]);
   });
 
   test('updates topics by contact email', async () => {
     spies = setupOutputSpies();
 
-    const { updateContactTopicsCommand } = await import('../../../src/commands/contacts/update-topics');
+    const { updateContactTopicsCommand } = await import(
+      '../../../src/commands/contacts/update-topics'
+    );
     await updateContactTopicsCommand.parseAsync(
-      ['jane@example.com', '--topics', '[{"id":"topic_abc","subscription":"opt_out"}]'],
-      { from: 'user' }
+      [
+        'jane@example.com',
+        '--topics',
+        '[{"id":"topic_abc","subscription":"opt_out"}]',
+      ],
+      { from: 'user' },
     );
 
-    const args = mockUpdateTopics.mock.calls[0][0] as any;
+    const args = mockUpdateTopics.mock.calls[0][0] as Record<string, unknown>;
     expect(args.email).toBe('jane@example.com');
     expect(args.topics[0].subscription).toBe('opt_out');
   });
@@ -71,28 +98,40 @@ describe('contacts update-topics command', () => {
   test('passes multiple topics in array', async () => {
     spies = setupOutputSpies();
 
-    const { updateContactTopicsCommand } = await import('../../../src/commands/contacts/update-topics');
+    const { updateContactTopicsCommand } = await import(
+      '../../../src/commands/contacts/update-topics'
+    );
     await updateContactTopicsCommand.parseAsync(
-      ['contact_abc123', '--topics', '[{"id":"t1","subscription":"opt_in"},{"id":"t2","subscription":"opt_out"}]'],
-      { from: 'user' }
+      [
+        'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+        '--topics',
+        '[{"id":"t1","subscription":"opt_in"},{"id":"t2","subscription":"opt_out"}]',
+      ],
+      { from: 'user' },
     );
 
-    const args = mockUpdateTopics.mock.calls[0][0] as any;
+    const args = mockUpdateTopics.mock.calls[0][0] as Record<string, unknown>;
     expect(args.topics).toHaveLength(2);
   });
 
   test('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { updateContactTopicsCommand } = await import('../../../src/commands/contacts/update-topics');
+    const { updateContactTopicsCommand } = await import(
+      '../../../src/commands/contacts/update-topics'
+    );
     await updateContactTopicsCommand.parseAsync(
-      ['contact_abc123', '--topics', '[{"id":"topic_abc","subscription":"opt_in"}]'],
-      { from: 'user' }
+      [
+        'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+        '--topics',
+        '[{"id":"topic_abc","subscription":"opt_in"}]',
+      ],
+      { from: 'user' },
     );
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
-    expect(parsed.id).toBe('contact_abc123');
+    expect(parsed.id).toBe('a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
   });
 
   test('errors with missing_topics when --topics absent in non-interactive mode', async () => {
@@ -100,8 +139,17 @@ describe('contacts update-topics command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateContactTopicsCommand } = await import('../../../src/commands/contacts/update-topics');
-    await expectExit1(() => updateContactTopicsCommand.parseAsync(['contact_abc123'], { from: 'user' }));
+    const { updateContactTopicsCommand } = await import(
+      '../../../src/commands/contacts/update-topics'
+    );
+    await expectExit1(() =>
+      updateContactTopicsCommand.parseAsync(
+        ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
+        {
+          from: 'user',
+        },
+      ),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('missing_topics');
@@ -112,8 +160,15 @@ describe('contacts update-topics command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateContactTopicsCommand } = await import('../../../src/commands/contacts/update-topics');
-    await expectExit1(() => updateContactTopicsCommand.parseAsync(['contact_abc123', '--topics', 'not-json'], { from: 'user' }));
+    const { updateContactTopicsCommand } = await import(
+      '../../../src/commands/contacts/update-topics'
+    );
+    await expectExit1(() =>
+      updateContactTopicsCommand.parseAsync(
+        ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--topics', 'not-json'],
+        { from: 'user' },
+      ),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('invalid_topics');
@@ -124,8 +179,15 @@ describe('contacts update-topics command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateContactTopicsCommand } = await import('../../../src/commands/contacts/update-topics');
-    await expectExit1(() => updateContactTopicsCommand.parseAsync(['contact_abc123', '--topics', '{"id":"t1"}'], { from: 'user' }));
+    const { updateContactTopicsCommand } = await import(
+      '../../../src/commands/contacts/update-topics'
+    );
+    await expectExit1(() =>
+      updateContactTopicsCommand.parseAsync(
+        ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--topics', '{"id":"t1"}'],
+        { from: 'user' },
+      ),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('invalid_topics');
@@ -138,11 +200,19 @@ describe('contacts update-topics command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateContactTopicsCommand } = await import('../../../src/commands/contacts/update-topics');
-    await expectExit1(() => updateContactTopicsCommand.parseAsync(
-      ['contact_abc123', '--topics', '[{"id":"t1","subscription":"opt_in"}]'],
-      { from: 'user' }
-    ));
+    const { updateContactTopicsCommand } = await import(
+      '../../../src/commands/contacts/update-topics'
+    );
+    await expectExit1(() =>
+      updateContactTopicsCommand.parseAsync(
+        [
+          'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+          '--topics',
+          '[{"id":"t1","subscription":"opt_in"}]',
+        ],
+        { from: 'user' },
+      ),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -150,16 +220,26 @@ describe('contacts update-topics command', () => {
 
   test('errors with update_topics_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockUpdateTopics.mockResolvedValueOnce({ data: null, error: { message: 'Topic not found', name: 'not_found' } } as any);
+    mockUpdateTopics.mockResolvedValueOnce(
+      mockSdkError('Topic not found', 'not_found'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { updateContactTopicsCommand } = await import('../../../src/commands/contacts/update-topics');
-    await expectExit1(() => updateContactTopicsCommand.parseAsync(
-      ['contact_abc123', '--topics', '[{"id":"bad_topic","subscription":"opt_in"}]'],
-      { from: 'user' }
-    ));
+    const { updateContactTopicsCommand } = await import(
+      '../../../src/commands/contacts/update-topics'
+    );
+    await expectExit1(() =>
+      updateContactTopicsCommand.parseAsync(
+        [
+          'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+          '--topics',
+          '[{"id":"bad_topic","subscription":"opt_in"}]',
+        ],
+        { from: 'user' },
+      ),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('update_topics_error');

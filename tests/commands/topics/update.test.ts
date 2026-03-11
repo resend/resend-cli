@@ -1,10 +1,19 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
 import {
-  setNonInteractive,
-  mockExitThrow,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
   captureTestEnv,
-  setupOutputSpies,
   expectExit1,
+  mockExitThrow,
+  mockSdkError,
+  setNonInteractive,
+  setupOutputSpies,
 } from '../../helpers';
 
 const mockUpdate = mock(async () => ({
@@ -46,11 +55,16 @@ describe('topics update command', () => {
   test('calls SDK with id and name when --name is provided', async () => {
     spies = setupOutputSpies();
 
-    const { updateTopicCommand } = await import('../../../src/commands/topics/update');
-    await updateTopicCommand.parseAsync(['top_abc123', '--name', 'Security Alerts'], { from: 'user' });
+    const { updateTopicCommand } = await import(
+      '../../../src/commands/topics/update'
+    );
+    await updateTopicCommand.parseAsync(
+      ['top_abc123', '--name', 'Security Alerts'],
+      { from: 'user' },
+    );
 
     expect(mockUpdate).toHaveBeenCalledTimes(1);
-    const payload = mockUpdate.mock.calls[0][0] as any;
+    const payload = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
     expect(payload.id).toBe('top_abc123');
     expect(payload.name).toBe('Security Alerts');
   });
@@ -58,10 +72,15 @@ describe('topics update command', () => {
   test('calls SDK with id and description when --description is provided', async () => {
     spies = setupOutputSpies();
 
-    const { updateTopicCommand } = await import('../../../src/commands/topics/update');
-    await updateTopicCommand.parseAsync(['top_abc123', '--description', 'Updated desc'], { from: 'user' });
+    const { updateTopicCommand } = await import(
+      '../../../src/commands/topics/update'
+    );
+    await updateTopicCommand.parseAsync(
+      ['top_abc123', '--description', 'Updated desc'],
+      { from: 'user' },
+    );
 
-    const payload = mockUpdate.mock.calls[0][0] as any;
+    const payload = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
     expect(payload.id).toBe('top_abc123');
     expect(payload.description).toBe('Updated desc');
     expect(payload.name).toBeUndefined();
@@ -70,8 +89,13 @@ describe('topics update command', () => {
   test('outputs JSON with id when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { updateTopicCommand } = await import('../../../src/commands/topics/update');
-    await updateTopicCommand.parseAsync(['top_abc123', '--name', 'Security Alerts'], { from: 'user' });
+    const { updateTopicCommand } = await import(
+      '../../../src/commands/topics/update'
+    );
+    await updateTopicCommand.parseAsync(
+      ['top_abc123', '--name', 'Security Alerts'],
+      { from: 'user' },
+    );
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
@@ -83,8 +107,12 @@ describe('topics update command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateTopicCommand } = await import('../../../src/commands/topics/update');
-    await expectExit1(() => updateTopicCommand.parseAsync(['top_abc123'], { from: 'user' }));
+    const { updateTopicCommand } = await import(
+      '../../../src/commands/topics/update'
+    );
+    await expectExit1(() =>
+      updateTopicCommand.parseAsync(['top_abc123'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('no_changes');
@@ -95,8 +123,12 @@ describe('topics update command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateTopicCommand } = await import('../../../src/commands/topics/update');
-    await expectExit1(() => updateTopicCommand.parseAsync(['top_abc123'], { from: 'user' }));
+    const { updateTopicCommand } = await import(
+      '../../../src/commands/topics/update'
+    );
+    await expectExit1(() =>
+      updateTopicCommand.parseAsync(['top_abc123'], { from: 'user' }),
+    );
 
     expect(mockUpdate).not.toHaveBeenCalled();
   });
@@ -108,9 +140,13 @@ describe('topics update command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateTopicCommand } = await import('../../../src/commands/topics/update');
+    const { updateTopicCommand } = await import(
+      '../../../src/commands/topics/update'
+    );
     await expectExit1(() =>
-      updateTopicCommand.parseAsync(['top_abc123', '--name', 'Test'], { from: 'user' })
+      updateTopicCommand.parseAsync(['top_abc123', '--name', 'Test'], {
+        from: 'user',
+      }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -119,14 +155,20 @@ describe('topics update command', () => {
 
   test('errors with update_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockUpdate.mockResolvedValueOnce({ data: null, error: { message: 'Topic not found', name: 'not_found' } } as any);
+    mockUpdate.mockResolvedValueOnce(
+      mockSdkError('Topic not found', 'not_found'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { updateTopicCommand } = await import('../../../src/commands/topics/update');
+    const { updateTopicCommand } = await import(
+      '../../../src/commands/topics/update'
+    );
     await expectExit1(() =>
-      updateTopicCommand.parseAsync(['top_nonexistent', '--name', 'Test'], { from: 'user' })
+      updateTopicCommand.parseAsync(['top_nonexistent', '--name', 'Test'], {
+        from: 'user',
+      }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

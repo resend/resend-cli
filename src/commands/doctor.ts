@@ -1,15 +1,15 @@
-import { Command } from '@commander-js/extra-typings';
 import { existsSync } from 'node:fs';
-import { join } from 'node:path';
 import { homedir } from 'node:os';
+import { join } from 'node:path';
+import { Command } from '@commander-js/extra-typings';
 import { Resend } from 'resend';
-import { resolveApiKey } from '../lib/config';
-import { createSpinner } from '../lib/spinner';
 import type { GlobalOpts } from '../lib/client';
-import { outputResult, errorMessage } from '../lib/output';
-import { isInteractive } from '../lib/tty';
-import { VERSION, PACKAGE_NAME } from '../lib/version';
+import { maskKey, resolveApiKey } from '../lib/config';
 import { buildHelpText } from '../lib/help-text';
+import { errorMessage, outputResult } from '../lib/output';
+import { createSpinner } from '../lib/spinner';
+import { isInteractive } from '../lib/tty';
+import { PACKAGE_NAME, VERSION } from '../lib/version';
 
 type CheckStatus = 'pass' | 'warn' | 'fail';
 
@@ -26,24 +26,30 @@ const statusIcons: Record<CheckStatus, string> = {
   fail: '\x1B[31m✗\x1B[0m',
 };
 
-function maskKey(key: string): string {
-  if (key.length <= 7) return key.slice(0, 3) + '...';
-  return key.slice(0, 3) + '...' + key.slice(-4);
-}
-
 async function checkCliVersion(): Promise<CheckResult> {
   try {
     const encodedName = encodeURIComponent(PACKAGE_NAME);
-    const res = await fetch(`https://registry.npmjs.org/${encodedName}/latest`, {
-      signal: AbortSignal.timeout(5000),
-    });
+    const res = await fetch(
+      `https://registry.npmjs.org/${encodedName}/latest`,
+      {
+        signal: AbortSignal.timeout(5000),
+      },
+    );
     if (!res.ok) {
-      return { name: 'CLI Version', status: 'warn', message: `v${VERSION} (could not check for updates)` };
+      return {
+        name: 'CLI Version',
+        status: 'warn',
+        message: `v${VERSION} (could not check for updates)`,
+      };
     }
     const data = (await res.json()) as { version?: string };
     const latest = data.version ?? 'unknown';
     if (latest === VERSION) {
-      return { name: 'CLI Version', status: 'pass', message: `v${VERSION} (latest)` };
+      return {
+        name: 'CLI Version',
+        status: 'pass',
+        message: `v${VERSION} (latest)`,
+      };
     }
     return {
       name: 'CLI Version',
@@ -52,7 +58,11 @@ async function checkCliVersion(): Promise<CheckResult> {
       detail: 'Update available',
     };
   } catch {
-    return { name: 'CLI Version', status: 'warn', message: `v${VERSION} (could not check for updates)` };
+    return {
+      name: 'CLI Version',
+      status: 'warn',
+      message: `v${VERSION} (could not check for updates)`,
+    };
   }
 }
 
@@ -63,13 +73,14 @@ function checkApiKeyPresence(): CheckResult {
       name: 'API Key',
       status: 'fail',
       message: 'No API key found',
-      detail: 'Run: resend auth login',
+      detail: 'Run: resend login',
     };
   }
+  const teamInfo = resolved.team ? `, team: ${resolved.team}` : '';
   return {
     name: 'API Key',
     status: 'pass',
-    message: `${maskKey(resolved.key)} (source: ${resolved.source})`,
+    message: `${maskKey(resolved.key)} (source: ${resolved.source}${teamInfo})`,
   };
 }
 
@@ -137,7 +148,10 @@ function checkAgentDetection(): CheckResult {
   const agents: { name: string; found: boolean }[] = [];
 
   // OpenClaw
-  agents.push({ name: 'OpenClaw', found: existsSync(join(home, 'clawd', 'skills')) });
+  agents.push({
+    name: 'OpenClaw',
+    found: existsSync(join(home, 'clawd', 'skills')),
+  });
 
   // Cursor
   agents.push({ name: 'Cursor', found: existsSync(join(home, '.cursor')) });
@@ -145,14 +159,34 @@ function checkAgentDetection(): CheckResult {
   // Claude Desktop
   const claudeConfigPaths =
     process.platform === 'darwin'
-      ? [join(home, 'Library', 'Application Support', 'Claude', 'claude_desktop_config.json')]
+      ? [
+          join(
+            home,
+            'Library',
+            'Application Support',
+            'Claude',
+            'claude_desktop_config.json',
+          ),
+        ]
       : process.platform === 'win32'
-        ? [join(process.env.APPDATA ?? '', 'Claude', 'claude_desktop_config.json')]
+        ? [
+            join(
+              process.env.APPDATA ?? '',
+              'Claude',
+              'claude_desktop_config.json',
+            ),
+          ]
         : [join(home, '.config', 'Claude', 'claude_desktop_config.json')];
-  agents.push({ name: 'Claude Desktop', found: claudeConfigPaths.some(existsSync) });
+  agents.push({
+    name: 'Claude Desktop',
+    found: claudeConfigPaths.some(existsSync),
+  });
 
   // VS Code MCP
-  agents.push({ name: 'VS Code', found: existsSync(join(process.cwd(), '.vscode', 'mcp.json')) });
+  agents.push({
+    name: 'VS Code',
+    found: existsSync(join(process.cwd(), '.vscode', 'mcp.json')),
+  });
 
   const detected = agents.filter((a) => a.found);
 
@@ -173,20 +207,22 @@ function checkAgentDetection(): CheckResult {
 }
 
 export const doctorCommand = new Command('doctor')
-  .description('Check CLI version, API key, domain status, and AI agent detection')
-  .addHelpText('after', buildHelpText({
-    setup: true,
-    context: `Checks performed:
+  .description(
+    'Check CLI version, API key, domain status, and AI agent detection',
+  )
+  .addHelpText(
+    'after',
+    buildHelpText({
+      setup: true,
+      context: `Checks performed:
   CLI Version    Is the installed version up to date?
   API Key        Is a key present (--api-key, RESEND_API_KEY, or credentials file)?
   API Validation Is the key valid and accepted by the Resend API?
   AI Agents      Detected: Claude Desktop, Cursor, VS Code MCP, OpenClaw`,
-    output: `  {\n    "ok": true,\n    "checks": [\n      {"name":"CLI Version","status":"pass","message":"v0.1.0 (latest)"},\n      {"name":"API Key","status":"pass","message":"re_...abcd (source: env)"},\n      {"name":"Domains","status":"pass","message":"1 verified, 0 pending"},\n      {"name":"AI Agents","status":"pass","message":"Detected: Claude Desktop"}\n    ]\n  }\n  status values: "pass" | "warn" | "fail"\n  Exit code 1 if any check has status "fail"`,
-    examples: [
-      'resend doctor',
-      'resend doctor --json',
-    ],
-  }))
+      output: `  {\n    "ok": true,\n    "checks": [\n      {"name":"CLI Version","status":"pass","message":"v0.1.0 (latest)"},\n      {"name":"API Key","status":"pass","message":"re_...abcd (source: env)"},\n      {"name":"Domains","status":"pass","message":"1 verified, 0 pending"},\n      {"name":"AI Agents","status":"pass","message":"Detected: Claude Desktop"}\n    ]\n  }\n  status values: "pass" | "warn" | "fail"\n  Exit code 1 if any check has status "fail"`,
+      examples: ['resend doctor', 'resend doctor --json'],
+    }),
+  )
   .action(async (_opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const checks: CheckResult[] = [];
@@ -197,7 +233,9 @@ export const doctorCommand = new Command('doctor')
     }
 
     // Check 1: CLI Version
-    let spinner = interactive ? createSpinner('Checking CLI version...', 'orbit') : null;
+    let spinner = interactive
+      ? createSpinner('Checking CLI version...', 'orbit')
+      : null;
     const versionCheck = await checkCliVersion();
     checks.push(versionCheck);
     if (versionCheck.status === 'warn') {
@@ -217,7 +255,9 @@ export const doctorCommand = new Command('doctor')
     }
 
     // Check 3: API Validation + Domains
-    spinner = interactive ? createSpinner('Validating API key & domains...', 'scan') : null;
+    spinner = interactive
+      ? createSpinner('Validating API key & domains...', 'scan')
+      : null;
     const domainCheck = await checkApiValidationAndDomains();
     checks.push(domainCheck);
     if (domainCheck.status === 'fail') {
@@ -229,7 +269,9 @@ export const doctorCommand = new Command('doctor')
     }
 
     // Check 4: Agent Detection
-    spinner = interactive ? createSpinner('Detecting AI agents...', 'scan') : null;
+    spinner = interactive
+      ? createSpinner('Detecting AI agents...', 'scan')
+      : null;
     const agentCheck = checkAgentDetection();
     checks.push(agentCheck);
     spinner?.stop(agentCheck.message);

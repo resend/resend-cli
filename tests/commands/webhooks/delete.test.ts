@@ -1,10 +1,19 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
 import {
-  setNonInteractive,
-  mockExitThrow,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
   captureTestEnv,
-  setupOutputSpies,
   expectExit1,
+  mockExitThrow,
+  mockSdkError,
+  setNonInteractive,
+  setupOutputSpies,
 } from '../../helpers';
 
 const mockRemove = mock(async () => ({
@@ -46,8 +55,12 @@ describe('webhooks delete command', () => {
   test('deletes webhook with --yes flag', async () => {
     spies = setupOutputSpies();
 
-    const { deleteWebhookCommand } = await import('../../../src/commands/webhooks/delete');
-    await deleteWebhookCommand.parseAsync(['wh_abc123', '--yes'], { from: 'user' });
+    const { deleteWebhookCommand } = await import(
+      '../../../src/commands/webhooks/delete'
+    );
+    await deleteWebhookCommand.parseAsync(['wh_abc123', '--yes'], {
+      from: 'user',
+    });
 
     expect(mockRemove).toHaveBeenCalledTimes(1);
     expect(mockRemove.mock.calls[0][0]).toBe('wh_abc123');
@@ -56,8 +69,12 @@ describe('webhooks delete command', () => {
   test('outputs synthesized JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { deleteWebhookCommand } = await import('../../../src/commands/webhooks/delete');
-    await deleteWebhookCommand.parseAsync(['wh_abc123', '--yes'], { from: 'user' });
+    const { deleteWebhookCommand } = await import(
+      '../../../src/commands/webhooks/delete'
+    );
+    await deleteWebhookCommand.parseAsync(['wh_abc123', '--yes'], {
+      from: 'user',
+    });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
@@ -71,8 +88,12 @@ describe('webhooks delete command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteWebhookCommand } = await import('../../../src/commands/webhooks/delete');
-    await expectExit1(() => deleteWebhookCommand.parseAsync(['wh_abc123'], { from: 'user' }));
+    const { deleteWebhookCommand } = await import(
+      '../../../src/commands/webhooks/delete'
+    );
+    await expectExit1(() =>
+      deleteWebhookCommand.parseAsync(['wh_abc123'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('confirmation_required');
@@ -83,8 +104,12 @@ describe('webhooks delete command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteWebhookCommand } = await import('../../../src/commands/webhooks/delete');
-    await expectExit1(() => deleteWebhookCommand.parseAsync(['wh_abc123'], { from: 'user' }));
+    const { deleteWebhookCommand } = await import(
+      '../../../src/commands/webhooks/delete'
+    );
+    await expectExit1(() =>
+      deleteWebhookCommand.parseAsync(['wh_abc123'], { from: 'user' }),
+    );
 
     expect(mockRemove).not.toHaveBeenCalled();
   });
@@ -96,8 +121,12 @@ describe('webhooks delete command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteWebhookCommand } = await import('../../../src/commands/webhooks/delete');
-    await expectExit1(() => deleteWebhookCommand.parseAsync(['wh_abc123', '--yes'], { from: 'user' }));
+    const { deleteWebhookCommand } = await import(
+      '../../../src/commands/webhooks/delete'
+    );
+    await expectExit1(() =>
+      deleteWebhookCommand.parseAsync(['wh_abc123', '--yes'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -105,14 +134,20 @@ describe('webhooks delete command', () => {
 
   test('errors with delete_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockRemove.mockResolvedValueOnce({ data: null, error: { message: 'Webhook not found', name: 'not_found' } } as any);
+    mockRemove.mockResolvedValueOnce(
+      mockSdkError('Webhook not found', 'not_found'),
+    );
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { deleteWebhookCommand } = await import('../../../src/commands/webhooks/delete');
+    const { deleteWebhookCommand } = await import(
+      '../../../src/commands/webhooks/delete'
+    );
     await expectExit1(() =>
-      deleteWebhookCommand.parseAsync(['wh_nonexistent', '--yes'], { from: 'user' })
+      deleteWebhookCommand.parseAsync(['wh_nonexistent', '--yes'], {
+        from: 'user',
+      }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

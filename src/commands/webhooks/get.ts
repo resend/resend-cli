@@ -1,6 +1,6 @@
 import { Command } from '@commander-js/extra-typings';
-import type { GlobalOpts } from '../../lib/client';
 import { runGet } from '../../lib/actions';
+import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 
 export const getWebhookCommand = new Command('get')
@@ -17,19 +17,26 @@ To rotate secrets, delete the webhook and recreate it.`,
         'resend webhooks get wh_abc123',
         'resend webhooks get wh_abc123 --json',
       ],
-    })
+    }),
   )
   .action(async (id, _opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    await runGet({
-      spinner: { loading: 'Fetching webhook...', success: 'Webhook fetched', fail: 'Failed to fetch webhook' },
-      sdkCall: (resend) => resend.webhooks.get(id),
-      onInteractive: (d) => {
-        console.log(`\n${d.endpoint}`);
-        console.log(`ID:      ${d.id}`);
-        console.log(`Status:  ${d.status}`);
-        console.log(`Events:  ${(d.events ?? []).join(', ') || '(none)'}`);
-        console.log(`Created: ${d.created_at}`);
+    await runGet(
+      {
+        spinner: {
+          loading: 'Fetching webhook...',
+          success: 'Webhook fetched',
+          fail: 'Failed to fetch webhook',
+        },
+        sdkCall: (resend) => resend.webhooks.get(id),
+        onInteractive: (d) => {
+          console.log(`\n${d.endpoint}`);
+          console.log(`ID:      ${d.id}`);
+          console.log(`Status:  ${d.status}`);
+          console.log(`Events:  ${(d.events ?? []).join(', ') || '(none)'}`);
+          console.log(`Created: ${d.created_at}`);
+        },
       },
-    }, globalOpts);
+      globalOpts,
+    );
   });
