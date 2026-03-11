@@ -1,0 +1,51 @@
+name: Test Windows Installer
+
+on:
+  push:
+    paths:
+      - install.ps1
+  pull_request:
+    paths:
+      - install.ps1
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run install.ps1 from repo
+        shell: pwsh
+        run: .\install.ps1
+
+      - name: Verify binary exists
+        shell: pwsh
+        run: |
+          $exe = "$env:USERPROFILE\.resend\bin\resend.exe"
+          if (-not (Test-Path $exe)) {
+            Write-Error "Binary not found at $exe"
+            exit 1
+          }
+          Write-Host "Found binary at $exe"
+
+      - name: Verify binary runs
+        shell: pwsh
+        run: |
+          $exe = "$env:USERPROFILE\.resend\bin\resend.exe"
+          & $exe --version
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "resend --version failed"
+            exit 1
+          }
+
+      - name: Verify PATH was updated
+        shell: pwsh
+        run: |
+          $binDir = "$env:USERPROFILE\.resend\bin"
+          $path = [Environment]::GetEnvironmentVariable("PATH", "User")
+          if ($path -notlike "*$binDir*") {
+            Write-Error "$binDir was not added to PATH"
+            exit 1
+          }
+          Write-Host "PATH correctly updated"
