@@ -117,7 +117,6 @@ describe('login command', () => {
     expect(data.teams.production.api_key).toBe('re_old_key_1234');
   });
 
-  // This test must be last — addCommand permanently modifies the shared loginCommand singleton
   test('auto-switches to team specified via --team flag', async () => {
     spies = setupOutputSpies();
 
@@ -145,6 +144,9 @@ describe('login command', () => {
       ['login', '--key', 're_staging_key_123', '--team', 'staging'],
       { from: 'user' },
     );
+
+    // @ts-expect-error — reset parent to avoid polluting the shared singleton
+    loginCommand.parent = null;
 
     const configPath = join(tmpDir, 'resend', 'credentials.json');
     const data = JSON.parse(readFileSync(configPath, 'utf-8'));

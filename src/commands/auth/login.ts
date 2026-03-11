@@ -211,8 +211,14 @@ export const loginCommand = new Command('login')
     if (teamName) {
       try {
         setActiveTeam(teamName);
-      } catch {
-        // Team was just stored, so this should not fail
+      } catch (err) {
+        outputError(
+          {
+            message: errorMessage(err, 'Failed to switch team'),
+            code: 'switch_failed',
+          },
+          { json: globalOpts.json },
+        );
       }
     }
 

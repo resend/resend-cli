@@ -75,8 +75,10 @@ function checkApiKeyPresence(flagValue?: string): CheckResult {
   };
 }
 
-async function checkApiValidationAndDomains(): Promise<CheckResult> {
-  const resolved = resolveApiKey();
+async function checkApiValidationAndDomains(
+  flagValue?: string,
+): Promise<CheckResult> {
+  const resolved = resolveApiKey(flagValue);
   if (!resolved) {
     return {
       name: 'API Validation',
@@ -183,7 +185,7 @@ export const doctorCommand = new Command('doctor')
     spinner = interactive
       ? createSpinner('Validating API key & domains...', 'scan')
       : null;
-    const domainCheck = await checkApiValidationAndDomains();
+    const domainCheck = await checkApiValidationAndDomains(globalOpts.apiKey);
     checks.push(domainCheck);
     if (domainCheck.status === 'fail') {
       spinner?.fail(domainCheck.message);
