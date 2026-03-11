@@ -138,3 +138,4 @@ Write-Host ""
 Write-Host "    `$env:RESEND_API_KEY = 're_...'" -ForegroundColor Cyan
 Write-Host "    resend --help" -ForegroundColor Cyan
 Write-Host ""
+exit 0
