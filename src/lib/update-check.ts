@@ -82,6 +82,11 @@ function detectInstallMethod(): string {
     return 'brew upgrade resend';
   }
 
+  // npm / npx global install
+  if (/node_modules/.test(execPath) || process.env.npm_execpath) {
+    return 'npm install -g resend-cli';
+  }
+
   // Install script (default install location)
   if (/[/\\]\.resend[/\\]bin[/\\]/.test(execPath)) {
     if (process.platform === 'win32') {
@@ -90,7 +95,11 @@ function detectInstallMethod(): string {
     return 'curl -fsSL https://resend.com/install.sh | bash';
   }
 
-  return 'https://github.com/resend/resend-cli/releases/latest';
+  // Default: install script
+  if (process.platform === 'win32') {
+    return 'irm https://resend.com/install.ps1 | iex';
+  }
+  return 'curl -fsSL https://resend.com/install.sh | bash';
 }
 
 function formatNotice(latestVersion: string): string {
