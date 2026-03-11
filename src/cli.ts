@@ -17,9 +17,19 @@ import { webhooksCommand } from './commands/webhooks/index';
 import { whoamiCommand } from './commands/whoami';
 import { PACKAGE_NAME, VERSION } from './lib/version';
 
+const BANNER = `
+██████╗ ███████╗███████╗███████╗███╗   ██╗██████╗
+██╔══██╗██╔════╝██╔════╝██╔════╝████╗  ██║██╔══██╗
+██████╔╝█████╗  ███████╗█████╗  ██╔██╗ ██║██║  ██║
+██╔══██╗██╔══╝  ╚════██║██╔══╝  ██║╚██╗██║██║  ██║
+██║  ██║███████╗███████║███████╗██║ ╚████║██████╔╝
+╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝╚═╝  ╚═══╝╚═════╝
+`;
+
 const program = new Command()
   .name('resend')
   .description('Resend CLI — email for developers')
+  .addHelpText('beforeAll', BANNER)
   .version(
     `${PACKAGE_NAME} v${VERSION}`,
     '-v, --version',
@@ -50,10 +60,8 @@ Output:
   Errors always exit with code 1: {"error":{"message":"...","code":"..."}}
 
 Examples:
-  $ resend login --key re_123456789
-  $ resend emails send --from you@domain.com --to user@example.com --subject "Hi" --text "Hello"
-  $ resend emails batch --file ./emails.json --json
-  $ resend doctor --json`,
+  $ resend login
+  $ resend emails send`,
   )
   .addCommand(loginCommand)
   .addCommand(logoutCommand)
