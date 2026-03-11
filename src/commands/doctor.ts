@@ -17,12 +17,6 @@ type CheckResult = {
   detail?: string;
 };
 
-const statusIcons: Record<CheckStatus, string> = {
-  pass: '\x1B[32m✔\x1B[0m',
-  warn: '\x1B[33m!\x1B[0m',
-  fail: '\x1B[31m✗\x1B[0m',
-};
-
 async function checkCliVersion(): Promise<CheckResult> {
   try {
     const encodedName = encodeURIComponent(PACKAGE_NAME);

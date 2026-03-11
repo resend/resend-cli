@@ -215,4 +215,3 @@ export function maskKey(key: string): string {
   }
   return `${key.slice(0, 3)}...${key.slice(-4)}`;
 }
-

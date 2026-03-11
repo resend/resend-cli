@@ -190,7 +190,7 @@ export const loginCommand = new Command('login')
         if (choice === '__new__') {
           const newName = await p.text({
             message: 'Enter a name for the new team:',
-            validate: (v) => validateTeamName(v),
+            validate: (v) => validateTeamName(v as string),
           });
           if (p.isCancel(newName)) {
             cancelAndExit('Login cancelled.');
