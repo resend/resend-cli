@@ -143,9 +143,12 @@ describe('contacts update-topics command', () => {
       '../../../src/commands/contacts/update-topics'
     );
     await expectExit1(() =>
-      updateContactTopicsCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], {
-        from: 'user',
-      }),
+      updateContactTopicsCommand.parseAsync(
+        ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
+        {
+          from: 'user',
+        },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -202,7 +205,11 @@ describe('contacts update-topics command', () => {
     );
     await expectExit1(() =>
       updateContactTopicsCommand.parseAsync(
-        ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--topics', '[{"id":"t1","subscription":"opt_in"}]'],
+        [
+          'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+          '--topics',
+          '[{"id":"t1","subscription":"opt_in"}]',
+        ],
         { from: 'user' },
       ),
     );

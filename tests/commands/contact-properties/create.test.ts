@@ -17,7 +17,10 @@ import {
 } from '../../helpers';
 
 const mockCreate = mock(async () => ({
-  data: { object: 'contact_property' as const, id: 'b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d' },
+  data: {
+    object: 'contact_property' as const,
+    id: 'b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d',
+  },
   error: null,
 }));
 

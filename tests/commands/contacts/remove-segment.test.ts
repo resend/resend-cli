@@ -61,7 +61,10 @@ describe('contacts remove-segment command', () => {
       '../../../src/commands/contacts/remove-segment'
     );
     await removeContactSegmentCommand.parseAsync(
-      ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d'],
+      [
+        'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+        '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
+      ],
       { from: 'user' },
     );
 
@@ -94,7 +97,10 @@ describe('contacts remove-segment command', () => {
       '../../../src/commands/contacts/remove-segment'
     );
     await removeContactSegmentCommand.parseAsync(
-      ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d'],
+      [
+        'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+        '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
+      ],
       { from: 'user' },
     );
 
@@ -115,9 +121,15 @@ describe('contacts remove-segment command', () => {
       '../../../src/commands/contacts/remove-segment'
     );
     await expectExit1(() =>
-      removeContactSegmentCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d'], {
-        from: 'user',
-      }),
+      removeContactSegmentCommand.parseAsync(
+        [
+          'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+          '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
+        ],
+        {
+          from: 'user',
+        },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -137,9 +149,15 @@ describe('contacts remove-segment command', () => {
       '../../../src/commands/contacts/remove-segment'
     );
     await expectExit1(() =>
-      removeContactSegmentCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '00000000-0000-0000-0000-00000bad0seg'], {
-        from: 'user',
-      }),
+      removeContactSegmentCommand.parseAsync(
+        [
+          'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+          '00000000-0000-0000-0000-00000bad0seg',
+        ],
+        {
+          from: 'user',
+        },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

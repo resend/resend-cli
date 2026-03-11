@@ -65,12 +65,17 @@ describe('contact-properties get command', () => {
     const { getContactPropertyCommand } = await import(
       '../../../src/commands/contact-properties/get'
     );
-    await getContactPropertyCommand.parseAsync(['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d'], {
-      from: 'user',
-    });
+    await getContactPropertyCommand.parseAsync(
+      ['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d'],
+      {
+        from: 'user',
+      },
+    );
 
     expect(mockGet).toHaveBeenCalledTimes(1);
-    expect(mockGet.mock.calls[0][0]).toBe('b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d');
+    expect(mockGet.mock.calls[0][0]).toBe(
+      'b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d',
+    );
   });
 
   test('outputs JSON when non-interactive', async () => {
@@ -79,9 +84,12 @@ describe('contact-properties get command', () => {
     const { getContactPropertyCommand } = await import(
       '../../../src/commands/contact-properties/get'
     );
-    await getContactPropertyCommand.parseAsync(['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d'], {
-      from: 'user',
-    });
+    await getContactPropertyCommand.parseAsync(
+      ['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d'],
+      {
+        from: 'user',
+      },
+    );
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
@@ -102,7 +110,10 @@ describe('contact-properties get command', () => {
       '../../../src/commands/contact-properties/get'
     );
     await expectExit1(() =>
-      getContactPropertyCommand.parseAsync(['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d'], { from: 'user' }),
+      getContactPropertyCommand.parseAsync(
+        ['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d'],
+        { from: 'user' },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

@@ -61,7 +61,11 @@ describe('contacts add-segment command', () => {
       '../../../src/commands/contacts/add-segment'
     );
     await addContactSegmentCommand.parseAsync(
-      ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--segment-id', '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d'],
+      [
+        'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+        '--segment-id',
+        '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
+      ],
       { from: 'user' },
     );
 
@@ -78,7 +82,11 @@ describe('contacts add-segment command', () => {
       '../../../src/commands/contacts/add-segment'
     );
     await addContactSegmentCommand.parseAsync(
-      ['jane@example.com', '--segment-id', '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d'],
+      [
+        'jane@example.com',
+        '--segment-id',
+        '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
+      ],
       { from: 'user' },
     );
 
@@ -94,7 +102,11 @@ describe('contacts add-segment command', () => {
       '../../../src/commands/contacts/add-segment'
     );
     await addContactSegmentCommand.parseAsync(
-      ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--segment-id', '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d'],
+      [
+        'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+        '--segment-id',
+        '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
+      ],
       { from: 'user' },
     );
 
@@ -112,7 +124,10 @@ describe('contacts add-segment command', () => {
       '../../../src/commands/contacts/add-segment'
     );
     await expectExit1(() =>
-      addContactSegmentCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], { from: 'user' }),
+      addContactSegmentCommand.parseAsync(
+        ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
+        { from: 'user' },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -131,7 +146,11 @@ describe('contacts add-segment command', () => {
     );
     await expectExit1(() =>
       addContactSegmentCommand.parseAsync(
-        ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--segment-id', '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d'],
+        [
+          'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+          '--segment-id',
+          '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
+        ],
         { from: 'user' },
       ),
     );
@@ -154,7 +173,11 @@ describe('contacts add-segment command', () => {
     );
     await expectExit1(() =>
       addContactSegmentCommand.parseAsync(
-        ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--segment-id', '00000000-0000-0000-0000-00000bad0seg'],
+        [
+          'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+          '--segment-id',
+          '00000000-0000-0000-0000-00000bad0seg',
+        ],
         { from: 'user' },
       ),
     );

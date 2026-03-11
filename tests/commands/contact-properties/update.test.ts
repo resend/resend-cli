@@ -17,7 +17,10 @@ import {
 } from '../../helpers';
 
 const mockUpdate = mock(async () => ({
-  data: { object: 'contact_property' as const, id: 'b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d' },
+  data: {
+    object: 'contact_property' as const,
+    id: 'b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d',
+  },
   error: null,
 }));
 
@@ -95,7 +98,12 @@ describe('contact-properties update command', () => {
     );
     await expectExit1(() =>
       updateContactPropertyCommand.parseAsync(
-        ['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d', '--fallback-value', 'Acme', '--clear-fallback-value'],
+        [
+          'b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d',
+          '--fallback-value',
+          'Acme',
+          '--clear-fallback-value',
+        ],
         { from: 'user' },
       ),
     );
@@ -130,9 +138,12 @@ describe('contact-properties update command', () => {
       '../../../src/commands/contact-properties/update'
     );
     await expectExit1(() =>
-      updateContactPropertyCommand.parseAsync(['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d'], {
-        from: 'user',
-      }),
+      updateContactPropertyCommand.parseAsync(
+        ['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d'],
+        {
+          from: 'user',
+        },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -148,9 +159,12 @@ describe('contact-properties update command', () => {
       '../../../src/commands/contact-properties/update'
     );
     await expectExit1(() =>
-      updateContactPropertyCommand.parseAsync(['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d'], {
-        from: 'user',
-      }),
+      updateContactPropertyCommand.parseAsync(
+        ['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d'],
+        {
+          from: 'user',
+        },
+      ),
     );
 
     expect(mockUpdate).not.toHaveBeenCalled();

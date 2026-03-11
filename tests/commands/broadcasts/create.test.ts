@@ -206,7 +206,14 @@ describe('broadcasts create command', () => {
     );
     await expectExit1(() =>
       createBroadcastCommand.parseAsync(
-        ['--subject', 'News', '--segment-id', '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d', '--html', '<p>Hi</p>'],
+        [
+          '--subject',
+          'News',
+          '--segment-id',
+          '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
+          '--html',
+          '<p>Hi</p>',
+        ],
         { from: 'user' },
       ),
     );

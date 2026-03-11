@@ -75,10 +75,15 @@ describe('broadcasts get command', () => {
     const { getBroadcastCommand } = await import(
       '../../../src/commands/broadcasts/get'
     );
-    await getBroadcastCommand.parseAsync(['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], { from: 'user' });
+    await getBroadcastCommand.parseAsync(
+      ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
+      { from: 'user' },
+    );
 
     expect(mockGet).toHaveBeenCalledTimes(1);
-    expect(mockGet.mock.calls[0][0]).toBe('d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
+    expect(mockGet.mock.calls[0][0]).toBe(
+      'd1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+    );
   });
 
   test('outputs full JSON when non-interactive', async () => {
@@ -87,7 +92,10 @@ describe('broadcasts get command', () => {
     const { getBroadcastCommand } = await import(
       '../../../src/commands/broadcasts/get'
     );
-    await getBroadcastCommand.parseAsync(['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], { from: 'user' });
+    await getBroadcastCommand.parseAsync(
+      ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
+      { from: 'user' },
+    );
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
@@ -107,7 +115,9 @@ describe('broadcasts get command', () => {
       '../../../src/commands/broadcasts/get'
     );
     await expectExit1(() =>
-      getBroadcastCommand.parseAsync(['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], { from: 'user' }),
+      getBroadcastCommand.parseAsync(['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], {
+        from: 'user',
+      }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -125,7 +135,9 @@ describe('broadcasts get command', () => {
       '../../../src/commands/broadcasts/get'
     );
     await expectExit1(() =>
-      getBroadcastCommand.parseAsync(['00000000-0000-0000-0000-00000000bad0'], { from: 'user' }),
+      getBroadcastCommand.parseAsync(['00000000-0000-0000-0000-00000000bad0'], {
+        from: 'user',
+      }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

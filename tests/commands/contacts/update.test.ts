@@ -17,7 +17,10 @@ import {
 } from '../../helpers';
 
 const mockUpdate = mock(async () => ({
-  data: { object: 'contact' as const, id: 'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6' },
+  data: {
+    object: 'contact' as const,
+    id: 'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+  },
   error: null,
 }));
 
@@ -92,7 +95,11 @@ describe('contacts update command', () => {
       '../../../src/commands/contacts/update'
     );
     await updateContactCommand.parseAsync(
-      ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--properties', '{"plan":"pro"}'],
+      [
+        'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+        '--properties',
+        '{"plan":"pro"}',
+      ],
       { from: 'user' },
     );
 
@@ -106,7 +113,10 @@ describe('contacts update command', () => {
     const { updateContactCommand } = await import(
       '../../../src/commands/contacts/update'
     );
-    await updateContactCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], { from: 'user' });
+    await updateContactCommand.parseAsync(
+      ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
+      { from: 'user' },
+    );
 
     const args = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.unsubscribed).toBeUndefined();
@@ -159,9 +169,12 @@ describe('contacts update command', () => {
       '../../../src/commands/contacts/update'
     );
     await expectExit1(() =>
-      updateContactCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--unsubscribed'], {
-        from: 'user',
-      }),
+      updateContactCommand.parseAsync(
+        ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--unsubscribed'],
+        {
+          from: 'user',
+        },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

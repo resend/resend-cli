@@ -70,9 +70,12 @@ describe('contacts segments command', () => {
     const { listContactSegmentsCommand } = await import(
       '../../../src/commands/contacts/segments'
     );
-    await listContactSegmentsCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], {
-      from: 'user',
-    });
+    await listContactSegmentsCommand.parseAsync(
+      ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
+      {
+        from: 'user',
+      },
+    );
 
     expect(mockListSegments).toHaveBeenCalledTimes(1);
     const args = mockListSegments.mock.calls[0][0] as Record<string, unknown>;
@@ -101,9 +104,12 @@ describe('contacts segments command', () => {
     const { listContactSegmentsCommand } = await import(
       '../../../src/commands/contacts/segments'
     );
-    await listContactSegmentsCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], {
-      from: 'user',
-    });
+    await listContactSegmentsCommand.parseAsync(
+      ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
+      {
+        from: 'user',
+      },
+    );
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
@@ -122,9 +128,12 @@ describe('contacts segments command', () => {
       '../../../src/commands/contacts/segments'
     );
     await expectExit1(() =>
-      listContactSegmentsCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], {
-        from: 'user',
-      }),
+      listContactSegmentsCommand.parseAsync(
+        ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
+        {
+          from: 'user',
+        },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -144,9 +153,12 @@ describe('contacts segments command', () => {
       '../../../src/commands/contacts/segments'
     );
     await expectExit1(() =>
-      listContactSegmentsCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], {
-        from: 'user',
-      }),
+      listContactSegmentsCommand.parseAsync(
+        ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
+        {
+          from: 'user',
+        },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

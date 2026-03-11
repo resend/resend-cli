@@ -111,9 +111,12 @@ describe('broadcasts list command', () => {
     const { listBroadcastsCommand } = await import(
       '../../../src/commands/broadcasts/list'
     );
-    await listBroadcastsCommand.parseAsync(['--after', 'c0c0c0c0-d1d1-e2e2-f3f3-a4a4a4a4a4a4'], {
-      from: 'user',
-    });
+    await listBroadcastsCommand.parseAsync(
+      ['--after', 'c0c0c0c0-d1d1-e2e2-f3f3-a4a4a4a4a4a4'],
+      {
+        from: 'user',
+      },
+    );
 
     const opts = mockList.mock.calls[0][0] as Record<string, unknown>;
     expect(opts.after).toBe('c0c0c0c0-d1d1-e2e2-f3f3-a4a4a4a4a4a4');
@@ -125,9 +128,12 @@ describe('broadcasts list command', () => {
     const { listBroadcastsCommand } = await import(
       '../../../src/commands/broadcasts/list'
     );
-    await listBroadcastsCommand.parseAsync(['--before', 'c0c0c0c0-d1d1-e2e2-f3f3-a4a4a4a4a4a4'], {
-      from: 'user',
-    });
+    await listBroadcastsCommand.parseAsync(
+      ['--before', 'c0c0c0c0-d1d1-e2e2-f3f3-a4a4a4a4a4a4'],
+      {
+        from: 'user',
+      },
+    );
 
     const opts = mockList.mock.calls[0][0] as Record<string, unknown>;
     expect(opts.before).toBe('c0c0c0c0-d1d1-e2e2-f3f3-a4a4a4a4a4a4');

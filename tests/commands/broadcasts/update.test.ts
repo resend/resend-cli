@@ -68,7 +68,9 @@ describe('broadcasts update command', () => {
     );
 
     expect(mockUpdate).toHaveBeenCalledTimes(1);
-    expect(mockUpdate.mock.calls[0][0]).toBe('d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
+    expect(mockUpdate.mock.calls[0][0]).toBe(
+      'd1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+    );
     const payload = mockUpdate.mock.calls[0][1] as Record<string, unknown>;
     expect(payload.subject).toBe('Updated Subject');
   });
@@ -143,7 +145,10 @@ describe('broadcasts update command', () => {
       '../../../src/commands/broadcasts/update'
     );
     await expectExit1(() =>
-      updateBroadcastCommand.parseAsync(['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], { from: 'user' }),
+      updateBroadcastCommand.parseAsync(
+        ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
+        { from: 'user' },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -159,7 +164,10 @@ describe('broadcasts update command', () => {
       '../../../src/commands/broadcasts/update'
     );
     await expectExit1(() =>
-      updateBroadcastCommand.parseAsync(['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], { from: 'user' }),
+      updateBroadcastCommand.parseAsync(
+        ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
+        { from: 'user' },
+      ),
     );
 
     expect(mockUpdate).not.toHaveBeenCalled();
@@ -176,9 +184,12 @@ describe('broadcasts update command', () => {
       '../../../src/commands/broadcasts/update'
     );
     await expectExit1(() =>
-      updateBroadcastCommand.parseAsync(['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--subject', 'X'], {
-        from: 'user',
-      }),
+      updateBroadcastCommand.parseAsync(
+        ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--subject', 'X'],
+        {
+          from: 'user',
+        },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -198,9 +209,12 @@ describe('broadcasts update command', () => {
       '../../../src/commands/broadcasts/update'
     );
     await expectExit1(() =>
-      updateBroadcastCommand.parseAsync(['s1e2n3t4-5a6b-7c8d-9e0f-a1b2c3d4e5f6', '--subject', 'New'], {
-        from: 'user',
-      }),
+      updateBroadcastCommand.parseAsync(
+        ['s1e2n3t4-5a6b-7c8d-9e0f-a1b2c3d4e5f6', '--subject', 'New'],
+        {
+          from: 'user',
+        },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -217,7 +231,11 @@ describe('broadcasts update command', () => {
       '../../../src/commands/broadcasts/update'
     );
     await updateBroadcastCommand.parseAsync(
-      ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--html-file', '/fake/email.html'],
+      [
+        'd1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+        '--html-file',
+        '/fake/email.html',
+      ],
       { from: 'user' },
     );
 
@@ -250,7 +268,11 @@ describe('broadcasts update command', () => {
     );
     await expectExit1(() =>
       updateBroadcastCommand.parseAsync(
-        ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--html-file', '/nonexistent/file.html'],
+        [
+          'd1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+          '--html-file',
+          '/nonexistent/file.html',
+        ],
         { from: 'user' },
       ),
     );
