@@ -13,6 +13,7 @@ import { segmentsCommand } from './commands/segments/index';
 import { teamsCommand } from './commands/teams/index';
 import { topicsCommand } from './commands/topics/index';
 import { webhooksCommand } from './commands/webhooks/index';
+import { openCommand } from './commands/open';
 import { whoamiCommand } from './commands/whoami';
 import { PACKAGE_NAME, VERSION } from './lib/version';
 
@@ -60,6 +61,7 @@ Examples:
   .addCommand(webhooksCommand)
   .addCommand(doctorCommand)
   .addCommand(teamsCommand)
+  .addCommand(openCommand)
   .addCommand(whoamiCommand);
 
 program.parse();
