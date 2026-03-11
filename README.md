@@ -4,6 +4,14 @@ Command-line interface for the [Resend](https://resend.com) email API. Works for
 
 ## Install
 
+Via Homebrew:
+
+```
+brew install resend/cli/resend
+```
+
+Via terminal:
+
 ```bash
 curl -fsSL https://resend.com/install.sh | bash
 ```
