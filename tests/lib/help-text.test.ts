@@ -20,7 +20,8 @@ describe('buildHelpText', () => {
         'Global options:\n' +
         '  --api-key <key>   API key (or set RESEND_API_KEY env var)\n' +
         '  --team <name>     Team profile to use (overrides RESEND_TEAM)\n' +
-        '  --json            Force JSON output (also auto-enabled when stdout is piped)' +
+        '  --json            Force JSON output (also auto-enabled when stdout is piped)\n' +
+        '  -q, --quiet       Suppress spinners and status output (implies --json)' +
         '\n\n' +
         'Output (--json or piped):\n' +
         '  {"id":"em_123"}' +

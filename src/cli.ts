@@ -29,8 +29,8 @@ const program = new Command()
   .option('--json', 'Force JSON output')
   .option('-q, --quiet', 'Suppress spinners and status output (implies --json)')
   .configureHelp({ showGlobalOptions: true })
-  .hook('preAction', (thisCommand) => {
-    if (thisCommand.opts().quiet) {
+  .hook('preAction', (thisCommand, actionCommand) => {
+    if (actionCommand.optsWithGlobals().quiet) {
       thisCommand.setOptionValue('json', true);
     }
   })
