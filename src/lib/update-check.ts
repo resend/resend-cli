@@ -39,8 +39,12 @@ function isNewer(local: string, remote: string): boolean {
   const parse = (v: string) => v.replace(/^v/, '').split('.').map(Number);
   const [lMaj, lMin, lPat] = parse(local);
   const [rMaj, rMin, rPat] = parse(remote);
-  if (rMaj !== lMaj) return rMaj > lMaj;
-  if (rMin !== lMin) return rMin > lMin;
+  if (rMaj !== lMaj) {
+    return rMaj > lMaj;
+  }
+  if (rMin !== lMin) {
+    return rMin > lMin;
+  }
   return rPat > lPat;
 }
 
@@ -50,16 +54,22 @@ async function fetchLatestVersion(): Promise<string | null> {
       headers: { Accept: 'application/vnd.github.v3+json' },
       signal: AbortSignal.timeout(5000),
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      return null;
+    }
     const data = (await res.json()) as {
       tag_name?: string;
       prerelease?: boolean;
       draft?: boolean;
     };
     // /releases/latest already excludes prereleases, but guard anyway
-    if (data.prerelease || data.draft) return null;
+    if (data.prerelease || data.draft) {
+      return null;
+    }
     const version = data.tag_name?.replace(/^v/, '');
-    if (!version || !/^\d+\.\d+\.\d+$/.test(version)) return null;
+    if (!version || !/^\d+\.\d+\.\d+$/.test(version)) {
+      return null;
+    }
     return version;
   } catch {
     return null;
@@ -67,10 +77,18 @@ async function fetchLatestVersion(): Promise<string | null> {
 }
 
 function shouldSkipCheck(): boolean {
-  if (process.env.RESEND_NO_UPDATE_NOTIFIER === '1') return true;
-  if (process.env.CI === 'true' || process.env.CI === '1') return true;
-  if (process.env.GITHUB_ACTIONS) return true;
-  if (!process.stdout.isTTY) return true;
+  if (process.env.RESEND_NO_UPDATE_NOTIFIER === '1') {
+    return true;
+  }
+  if (process.env.CI === 'true' || process.env.CI === '1') {
+    return true;
+  }
+  if (process.env.GITHUB_ACTIONS) {
+    return true;
+  }
+  if (!process.stdout.isTTY) {
+    return true;
+  }
   return false;
 }
 
@@ -125,7 +143,9 @@ function formatNotice(latestVersion: string): string {
  * or throws.
  */
 export async function checkForUpdates(): Promise<void> {
-  if (shouldSkipCheck()) return;
+  if (shouldSkipCheck()) {
+    return;
+  }
 
   const state = readState();
   const now = Date.now();
@@ -140,7 +160,9 @@ export async function checkForUpdates(): Promise<void> {
 
   // Stale or missing — fetch in the background
   const latest = await fetchLatestVersion();
-  if (!latest) return;
+  if (!latest) {
+    return;
+  }
 
   writeState({ lastChecked: now, latestVersion: latest });
 

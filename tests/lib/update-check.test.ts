@@ -1,10 +1,16 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
-import { captureTestEnv } from '../helpers';
-import { VERSION } from '../../src/lib/version';
+import { join } from 'node:path';
 import { checkForUpdates } from '../../src/lib/update-check';
+import { VERSION } from '../../src/lib/version';
+import { captureTestEnv } from '../helpers';
 
 // Use a version guaranteed to be "newer" than whatever VERSION is
 const NEWER_VERSION = '99.0.0';
@@ -31,7 +37,10 @@ describe('checkForUpdates', () => {
     process.env.XDG_CONFIG_HOME = testConfigDir;
 
     // Ensure TTY and no CI
-    Object.defineProperty(process.stdout, 'isTTY', { value: true, writable: true });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
     delete process.env.CI;
     delete process.env.GITHUB_ACTIONS;
     delete process.env.RESEND_NO_UPDATE_NOTIFIER;
@@ -39,7 +48,9 @@ describe('checkForUpdates', () => {
 
   afterEach(() => {
     stderrSpy.mockRestore();
-    if (fetchSpy) fetchSpy.mockRestore();
+    if (fetchSpy) {
+      fetchSpy.mockRestore();
+    }
     restoreEnv();
     if (existsSync(testConfigDir)) {
       rmSync(testConfigDir, { recursive: true, force: true });
@@ -54,7 +65,9 @@ describe('checkForUpdates', () => {
   }
 
   function mockFetchFailure() {
-    fetchSpy = spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network error'));
+    fetchSpy = spyOn(globalThis, 'fetch').mockRejectedValue(
+      new Error('network error'),
+    );
   }
 
   test('skips check when RESEND_NO_UPDATE_NOTIFIER=1', async () => {
@@ -70,7 +83,10 @@ describe('checkForUpdates', () => {
   });
 
   test('skips check when not a TTY', async () => {
-    Object.defineProperty(process.stdout, 'isTTY', { value: undefined, writable: true });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: undefined,
+      writable: true,
+    });
     await checkForUpdates();
     expect(stderrOutput).toBe('');
   });

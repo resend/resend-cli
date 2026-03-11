@@ -6,7 +6,7 @@ import { buildHelpText } from '../lib/help-text';
 import { errorMessage, outputResult } from '../lib/output';
 import { createSpinner } from '../lib/spinner';
 import { isInteractive } from '../lib/tty';
-import { PACKAGE_NAME, VERSION } from '../lib/version';
+import { VERSION } from '../lib/version';
 
 type CheckStatus = 'pass' | 'warn' | 'fail';
 

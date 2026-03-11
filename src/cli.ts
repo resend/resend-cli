@@ -80,4 +80,7 @@ Examples:
   .addCommand(openCommand)
   .addCommand(whoamiCommand);
 
-program.parseAsync().then(() => checkForUpdates()).catch(() => {});
+program
+  .parseAsync()
+  .then(() => checkForUpdates())
+  .catch(() => {});
