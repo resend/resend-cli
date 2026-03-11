@@ -15,6 +15,7 @@ import { teamsCommand } from './commands/teams/index';
 import { topicsCommand } from './commands/topics/index';
 import { webhooksCommand } from './commands/webhooks/index';
 import { whoamiCommand } from './commands/whoami';
+import { errorMessage, outputError } from './lib/output';
 import { checkForUpdates } from './lib/update-check';
 import { PACKAGE_NAME, VERSION } from './lib/version';
 
@@ -84,6 +85,8 @@ program
   .parseAsync()
   .then(() => checkForUpdates().catch(() => {}))
   .catch((err) => {
-    console.error(err);
-    process.exit(1);
+    outputError({
+      message: errorMessage(err, 'An unexpected error occurred'),
+      code: 'unexpected_error',
+    });
   });
