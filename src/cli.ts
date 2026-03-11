@@ -82,5 +82,8 @@ Examples:
 
 program
   .parseAsync()
-  .then(() => checkForUpdates())
-  .catch(() => {});
+  .then(() => checkForUpdates().catch(() => {}))
+  .catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
