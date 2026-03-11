@@ -13,12 +13,12 @@ export const openCommand = new Command('open')
   .action(async () => {
     const url = 'https://resend.com/emails';
     const { platform } = process;
-    const cmd =
+    const args =
       platform === 'darwin'
-        ? 'open'
+        ? ['open', url]
         : platform === 'win32'
-          ? 'start'
-          : 'xdg-open';
+          ? ['cmd', '/c', 'start', url]
+          : ['xdg-open', url];
 
-    Bun.spawn([cmd, url], { stdio: ['ignore', 'ignore', 'ignore'] });
+    Bun.spawn(args, { stdio: ['ignore', 'ignore', 'ignore'] });
   });
