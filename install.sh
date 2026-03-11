@@ -217,10 +217,17 @@ shell_name=$(basename "${SHELL:-}")
 config=""
 shell_line=""
 
+# Build a $HOME-relative path for shell config (~ doesn't expand inside quotes)
+if [[ $bin_dir == "$HOME"/* ]]; then
+  shell_bin_dir="\$HOME${bin_dir#"$HOME"}"
+else
+  shell_bin_dir="$bin_dir"
+fi
+
 case $shell_name in
   zsh)
     config="${ZDOTDIR:-$HOME}/.zshrc"
-    shell_line="export PATH=\"$(tildify "$bin_dir"):\$PATH\""
+    shell_line="export PATH=\"${shell_bin_dir}:\$PATH\""
     ;;
   bash)
     # macOS bash opens login shells — .bash_profile is loaded, not .bashrc.
@@ -242,12 +249,12 @@ case $shell_name in
         config="$HOME/.bashrc"
       fi
     fi
-    shell_line="export PATH=\"$(tildify "$bin_dir"):\$PATH\""
+    shell_line="export PATH=\"${shell_bin_dir}:\$PATH\""
     ;;
   fish)
     config="${XDG_CONFIG_HOME:-$HOME/.config}/fish/conf.d/resend.fish"
     mkdir -p "$(dirname "$config")"
-    shell_line="fish_add_path $(tildify "$bin_dir")"
+    shell_line="fish_add_path ${shell_bin_dir}"
     ;;
 esac
 
@@ -277,7 +284,7 @@ else
   echo ""
   info "  Add to your shell config:"
   echo ""
-  bold "    export PATH=\"$(tildify "$bin_dir"):\$PATH\""
+  bold "    export PATH=\"${shell_bin_dir}:\$PATH\""
 fi
 
 echo ""
