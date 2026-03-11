@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 import { Command } from '@commander-js/extra-typings';
 import { apiKeysCommand } from './commands/api-keys/index';
 import { loginCommand } from './commands/auth/login';

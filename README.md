@@ -27,13 +27,20 @@ brew install resend/cli/resend
 curl -fsSL https://resend.com/install.sh | bash
 ```
 
+### npx
+
+```bash
+npx resend-cli
+```
+
 ## Local development
 
 Use this when you want to change the CLI and run your build locally.
 
 ### Prerequisites
 
-- [Bun](https://bun.sh) (runtime and package manager)
+- [Node.js](https://nodejs.org) 22+ (runtime and development)
+- [Bun](https://bun.sh) (only needed for running tests and building native binaries)
 
 ### Setup
 
@@ -47,30 +54,29 @@ Use this when you want to change the CLI and run your build locally.
 2. **Install dependencies**
 
    ```bash
-   bun install
+   npm install
    ```
 
 3. **Build locally**
 
    ```bash
-   bun run build
+   npm run build
    ```
 
-   Output: `./dist/resend`
+   Output: `./dist/cli.js`
 
 ### Running the CLI locally
 
-Use the built binary directly:
+Use the dev script:
 
 ```bash
-./dist/resend --version
+npm run dev -- --version
 ```
 
-Or add the project to your `PATH`:
+Or run the built JS bundle:
 
 ```bash
-export PATH="$(pwd)/dist:$PATH"
-resend doctor
+node dist/cli.js --version
 ```
 
 ### Making changes
@@ -78,8 +84,18 @@ resend doctor
 After editing source files, rebuild:
 
 ```bash
-bun run build
+npm run build
 ```
+
+### Building native binaries
+
+To build a standalone native binary (requires Bun):
+
+```bash
+npm run build:bin
+```
+
+Output: `./dist/resend`
 
 ## Quick start
 

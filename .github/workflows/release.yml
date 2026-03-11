@@ -28,10 +28,14 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
       - uses: oven-sh/setup-bun@v2
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: npm ci
 
       - name: Build binary
         run: bun build --compile --minify --sourcemap ${{ matrix.flags }} src/cli.ts --target=${{ matrix.target }} --outfile ${{ matrix.binary }}
@@ -47,10 +51,14 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
       - uses: oven-sh/setup-bun@v2
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: npm ci
 
       - name: Build binaries
         run: |
@@ -96,6 +104,11 @@ jobs:
             **Windows (PowerShell)**
             ```pwsh
             irm https://resend.com/install.ps1 | iex
+            ```
+
+            **npx**
+            ```sh
+            npx resend-cli
             ```
           files: |
             dist/resend-darwin-arm64.tar.gz
