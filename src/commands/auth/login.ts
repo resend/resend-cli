@@ -180,15 +180,7 @@ export const loginCommand = new Command('login')
           teamName = choice;
         }
       } else {
-        const newName = await p.text({
-          message: 'Enter a team name (or press Enter for "default"):',
-          defaultValue: 'default',
-          placeholder: 'default',
-        });
-        if (p.isCancel(newName)) {
-          cancelAndExit('Login cancelled.');
-        }
-        teamName = newName;
+        teamName = 'default';
       }
     }
 
