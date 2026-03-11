@@ -25,7 +25,7 @@ jobs:
           bun build --compile --minify --sourcemap --bytecode src/cli.ts --target=bun-darwin-x64    --outfile dist/resend-darwin-x64
           bun build --compile --minify --sourcemap --bytecode src/cli.ts --target=bun-linux-x64     --outfile dist/resend-linux-x64
           bun build --compile --minify --sourcemap --bytecode src/cli.ts --target=bun-linux-arm64   --outfile dist/resend-linux-arm64
-          bun build --compile --minify --sourcemap --bytecode src/cli.ts --target=bun-windows-x64   --outfile dist/resend-windows-x64.exe
+          bun build --compile --minify --sourcemap src/cli.ts --target=bun-windows-x64   --outfile dist/resend-windows-x64.exe
 
       - name: Verify binaries
         run: |
