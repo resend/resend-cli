@@ -127,7 +127,11 @@ export const loginCommand = new Command('login')
       );
     }
 
-    const spinner = createSpinner('Validating API key...');
+    const spinner = createSpinner(
+      'Validating API key...',
+      'braille',
+      globalOpts.quiet,
+    );
 
     try {
       const resend = new Resend(apiKey);

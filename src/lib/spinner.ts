@@ -21,7 +21,7 @@ export async function withSpinner<T>(
   errorCode: string,
   globalOpts: GlobalOpts,
 ): Promise<T> {
-  const spinner = createSpinner(messages.loading);
+  const spinner = createSpinner(messages.loading, 'braille', globalOpts.quiet);
   try {
     const { data, error } = await call();
     if (error) {
@@ -51,8 +51,12 @@ export async function withSpinner<T>(
 
 export type SpinnerName = keyof typeof spinners;
 
-export function createSpinner(message: string, name: SpinnerName = 'braille') {
-  if (!isInteractive()) {
+export function createSpinner(
+  message: string,
+  name: SpinnerName = 'braille',
+  quiet?: boolean,
+) {
+  if (quiet || !isInteractive()) {
     return {
       update(_msg: string) {},
       stop(_msg: string) {},

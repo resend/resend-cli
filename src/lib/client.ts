@@ -2,7 +2,12 @@ import { Resend } from 'resend';
 import { resolveApiKey } from './config';
 import { errorMessage, outputError } from './output';
 
-export type GlobalOpts = { apiKey?: string; json?: boolean; team?: string };
+export type GlobalOpts = {
+  apiKey?: string;
+  json?: boolean;
+  quiet?: boolean;
+  team?: string;
+};
 
 export function createClient(flagValue?: string, teamName?: string): Resend {
   const resolved = resolveApiKey(flagValue, teamName);
