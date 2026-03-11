@@ -9,6 +9,7 @@ import { contactsCommand } from './commands/contacts/index';
 import { doctorCommand } from './commands/doctor';
 import { domainsCommand } from './commands/domains/index';
 import { emailsCommand } from './commands/emails/index';
+import { openCommand } from './commands/open';
 import { segmentsCommand } from './commands/segments/index';
 import { teamsCommand } from './commands/teams/index';
 import { topicsCommand } from './commands/topics/index';
@@ -60,6 +61,7 @@ Examples:
   .addCommand(webhooksCommand)
   .addCommand(doctorCommand)
   .addCommand(teamsCommand)
+  .addCommand(openCommand)
   .addCommand(whoamiCommand);
 
 program.parse();
