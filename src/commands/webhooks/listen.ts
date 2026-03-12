@@ -133,7 +133,7 @@ export const listenWebhookCommand = new Command('listen')
     buildHelpText({
       context: `Start a local server that receives Resend webhook events in real time.
 
-You must provide a public URL (e.g. from cloudflared, ngrok, or localtunnel) that
+You must provide a public URL (e.g. from ngrok or localtunnel) that
 points to the local server port. The CLI will:
   1. Start a local HTTP server on --port (default 4318)
   2. Register a temporary Resend webhook pointing at --url
@@ -141,12 +141,13 @@ points to the local server port. The CLI will:
   4. Optionally forward payloads to --forward-to (with original Svix headers)
   5. Delete the temporary webhook on exit (Ctrl+C)
 
-The tunnel must point to the same port as --port.`,
+Important: your tunnel must forward traffic to the same port as --port (default 4318).
+For example, if using ngrok: ngrok http 4318`,
       examples: [
-        'resend webhooks listen --url https://abc.trycloudflare.com',
-        'resend webhooks listen --url https://abc.trycloudflare.com --forward-to localhost:3000/webhook',
-        'resend webhooks listen --url https://abc.trycloudflare.com --events email.sent email.bounced',
-        'resend webhooks listen --url https://abc.trycloudflare.com --port 8080',
+        'resend webhooks listen --url https://example.ngrok-free.app',
+        'resend webhooks listen --url https://example.ngrok-free.app --forward-to localhost:3000/webhook',
+        'resend webhooks listen --url https://example.ngrok-free.app --events email.sent email.bounced',
+        'resend webhooks listen --url https://example.ngrok-free.app --port 8080',
       ],
     }),
   )
@@ -157,7 +158,7 @@ The tunnel must point to the same port as --port.`,
       opts.url,
       {
         message: 'Public tunnel URL',
-        placeholder: 'https://abc.trycloudflare.com',
+        placeholder: 'https://example.ngrok-free.app',
         validate: (v) => {
           if (!v) {
             return 'URL is required';
