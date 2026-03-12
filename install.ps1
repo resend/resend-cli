@@ -32,7 +32,7 @@ function Write-Fail {
 
 if ($env:PROCESSOR_ARCHITECTURE -notin @('AMD64', 'EM64T')) {
   Write-Fail "Unsupported architecture: $env:PROCESSOR_ARCHITECTURE`n`n  Resend CLI currently supports Windows x64 only."
-  return
+  throw "Installation failed."
 }
 
 # --- Version + Download URL --------------------------------------------------
@@ -44,7 +44,7 @@ if ($Version) {
   $Version = $Version.TrimStart('v')
   if ($Version -notmatch '^\d+\.\d+\.\d+(-[a-zA-Z0-9.]+)?$') {
     Write-Fail "Invalid version format: $Version`n`n  Expected: semantic version like 0.1.0 or 1.2.3-beta.1`n  Usage:    `$env:RESEND_VERSION = 'v0.1.0'; irm https://resend.com/install.ps1 | iex"
-    return
+    throw "Installation failed."
   }
   $url = "$repo/releases/download/v$Version/resend-$target.zip"
 } else {
@@ -82,14 +82,14 @@ try {
   } catch {
     if ($Version) { $ver = $Version } else { $ver = 'latest' }
     Write-Fail "Download failed.`n`n  Possible causes:`n    - No internet connection`n    - The version does not exist: $ver`n    - GitHub is unreachable`n`n  URL: $url"
-    return
+    throw "Installation failed."
   }
 
   try {
     Expand-Archive -Path $tmpZip -DestinationPath $binDir -Force
   } catch {
     Write-Fail "Failed to extract archive: $_"
-    return
+    throw "Installation failed."
   }
 } finally {
   Remove-Item -Recurse -Force $tmpDir -ErrorAction SilentlyContinue
@@ -97,7 +97,7 @@ try {
 
 if (-not (Test-Path $exe)) {
   Write-Fail "Binary not found after extraction. The download may be corrupted -- try again."
-  return
+  throw "Installation failed."
 }
 
 # --- Verify installation -----------------------------------------------------
