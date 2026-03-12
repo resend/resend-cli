@@ -1,8 +1,15 @@
-import { afterEach, describe, expect, spyOn, test } from 'bun:test';
+import {
+  afterEach,
+  describe,
+  expect,
+  type MockInstance,
+  test,
+  vi,
+} from 'vitest';
 import { outputError, outputResult } from '../../src/lib/output';
 
 describe('outputResult', () => {
-  let logSpy: ReturnType<typeof spyOn>;
+  let logSpy: MockInstance;
   const originalIsTTY = process.stdout.isTTY;
 
   afterEach(() => {
@@ -14,7 +21,7 @@ describe('outputResult', () => {
   });
 
   test('outputs JSON when json option is true', () => {
-    logSpy = spyOn(console, 'log').mockImplementation(() => {});
+    logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     outputResult({ id: '123' }, { json: true });
     expect(logSpy).toHaveBeenCalledWith(JSON.stringify({ id: '123' }, null, 2));
   });
@@ -24,7 +31,7 @@ describe('outputResult', () => {
       value: undefined,
       writable: true,
     });
-    logSpy = spyOn(console, 'log').mockImplementation(() => {});
+    logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     outputResult({ id: '123' });
     expect(logSpy).toHaveBeenCalledWith(JSON.stringify({ id: '123' }, null, 2));
   });
@@ -34,7 +41,7 @@ describe('outputResult', () => {
       value: true,
       writable: true,
     });
-    logSpy = spyOn(console, 'log').mockImplementation(() => {});
+    logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     outputResult('Email sent successfully');
     expect(logSpy).toHaveBeenCalledWith('Email sent successfully');
   });
@@ -44,15 +51,15 @@ describe('outputResult', () => {
       value: true,
       writable: true,
     });
-    logSpy = spyOn(console, 'log').mockImplementation(() => {});
+    logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     outputResult({ id: '123' });
     expect(logSpy).toHaveBeenCalledWith(JSON.stringify({ id: '123' }, null, 2));
   });
 });
 
 describe('outputError', () => {
-  let errorSpy: ReturnType<typeof spyOn>;
-  let exitSpy: ReturnType<typeof spyOn>;
+  let errorSpy: MockInstance;
+  let exitSpy: MockInstance;
   const originalIsTTY = process.stdout.isTTY;
 
   afterEach(() => {
@@ -65,10 +72,10 @@ describe('outputError', () => {
   });
 
   test('outputs JSON error when json is true', () => {
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
-    exitSpy = spyOn(process, 'exit').mockImplementation(
-      () => undefined as never,
-    );
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = vi
+      .spyOn(process, 'exit')
+      .mockImplementation(() => undefined as never);
 
     outputError({ message: 'not found', code: 'not_found' }, { json: true });
 
@@ -86,22 +93,24 @@ describe('outputError', () => {
       value: true,
       writable: true,
     });
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
-    exitSpy = spyOn(process, 'exit').mockImplementation(
-      () => undefined as never,
-    );
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = vi
+      .spyOn(process, 'exit')
+      .mockImplementation(() => undefined as never);
 
     outputError({ message: 'something broke' });
 
-    expect(errorSpy).toHaveBeenCalledWith('Error: something broke');
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('something broke'),
+    );
     expect(exitSpy).toHaveBeenCalledWith(1);
   });
 
   test('uses custom exit code', () => {
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
-    exitSpy = spyOn(process, 'exit').mockImplementation(
-      () => undefined as never,
-    );
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = vi
+      .spyOn(process, 'exit')
+      .mockImplementation(() => undefined as never);
 
     outputError({ message: 'error' }, { exitCode: 2, json: true });
 
@@ -113,10 +122,10 @@ describe('outputError', () => {
       value: undefined,
       writable: true,
     });
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
-    exitSpy = spyOn(process, 'exit').mockImplementation(
-      () => undefined as never,
-    );
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = vi
+      .spyOn(process, 'exit')
+      .mockImplementation(() => undefined as never);
 
     outputError({ message: 'oops' });
 

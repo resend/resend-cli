@@ -1,9 +1,21 @@
-import { afterEach, describe, expect, spyOn, test } from 'bun:test';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  type MockInstance,
+  test,
+  vi,
+} from 'vitest';
 
 describe('createSpinner', () => {
   const originalStdinIsTTY = process.stdin.isTTY;
   const originalStdoutIsTTY = process.stdout.isTTY;
-  let stderrSpy: ReturnType<typeof spyOn>;
+  let stderrSpy: MockInstance;
+
+  beforeEach(() => {
+    vi.resetModules();
+  });
 
   afterEach(() => {
     stderrSpy?.mockRestore();
@@ -18,7 +30,7 @@ describe('createSpinner', () => {
     delete process.env.CI;
   });
 
-  test('returns no-op spinner in non-interactive mode', () => {
+  test('returns no-op spinner in non-interactive mode', async () => {
     Object.defineProperty(process.stdin, 'isTTY', {
       value: undefined,
       writable: true,
@@ -28,7 +40,7 @@ describe('createSpinner', () => {
       writable: true,
     });
 
-    const { createSpinner } = require('../../src/lib/spinner');
+    const { createSpinner } = await import('../../src/lib/spinner');
     const spinner = createSpinner('test message');
 
     // Should not throw when calling any method
@@ -38,7 +50,7 @@ describe('createSpinner', () => {
     expect(() => spinner.update('updating')).not.toThrow();
   });
 
-  test('returns functional spinner in interactive mode', () => {
+  test('returns functional spinner in interactive mode', async () => {
     Object.defineProperty(process.stdin, 'isTTY', {
       value: true,
       writable: true,
@@ -51,9 +63,11 @@ describe('createSpinner', () => {
     delete process.env.GITHUB_ACTIONS;
     delete process.env.TERM;
 
-    stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
+    stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
 
-    const { createSpinner } = require('../../src/lib/spinner');
+    const { createSpinner } = await import('../../src/lib/spinner');
     const spinner = createSpinner('loading...');
 
     expect(spinner).toHaveProperty('stop');
@@ -66,7 +80,7 @@ describe('createSpinner', () => {
     expect(stderrSpy).toHaveBeenCalled();
   });
 
-  test('stop writes checkmark to stderr', () => {
+  test('stop writes checkmark to stderr', async () => {
     Object.defineProperty(process.stdin, 'isTTY', {
       value: true,
       writable: true,
@@ -79,9 +93,11 @@ describe('createSpinner', () => {
     delete process.env.GITHUB_ACTIONS;
     delete process.env.TERM;
 
-    stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
+    stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
 
-    const { createSpinner } = require('../../src/lib/spinner');
+    const { createSpinner } = await import('../../src/lib/spinner');
     const spinner = createSpinner('loading...');
     spinner.stop('completed');
 
@@ -92,7 +108,7 @@ describe('createSpinner', () => {
     expect(lastCall).toContain('completed');
   });
 
-  test('fail writes cross mark to stderr', () => {
+  test('fail writes cross mark to stderr', async () => {
     Object.defineProperty(process.stdin, 'isTTY', {
       value: true,
       writable: true,
@@ -105,9 +121,11 @@ describe('createSpinner', () => {
     delete process.env.GITHUB_ACTIONS;
     delete process.env.TERM;
 
-    stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
+    stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
 
-    const { createSpinner } = require('../../src/lib/spinner');
+    const { createSpinner } = await import('../../src/lib/spinner');
     const spinner = createSpinner('loading...');
     spinner.fail('error occurred');
 
@@ -118,7 +136,7 @@ describe('createSpinner', () => {
     expect(lastCall).toContain('error occurred');
   });
 
-  test('warn writes warning icon to stderr', () => {
+  test('warn writes warning icon to stderr', async () => {
     Object.defineProperty(process.stdin, 'isTTY', {
       value: true,
       writable: true,
@@ -131,9 +149,11 @@ describe('createSpinner', () => {
     delete process.env.GITHUB_ACTIONS;
     delete process.env.TERM;
 
-    stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
+    stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
 
-    const { createSpinner } = require('../../src/lib/spinner');
+    const { createSpinner } = await import('../../src/lib/spinner');
     const spinner = createSpinner('loading...');
     spinner.warn('watch out');
 

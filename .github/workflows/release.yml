@@ -13,52 +13,102 @@ jobs:
       matrix:
         include:
           - os: macos-latest
-            target: bun-darwin-arm64
+            target: node24-macos-arm64
             binary: dist/resend
-            flags: "--bytecode"
+          - os: macos-13
+            target: node24-macos-x64
+            binary: dist/resend
           - os: ubuntu-latest
-            target: bun-linux-x64
+            target: node24-linux-x64
             binary: dist/resend
-            flags: "--bytecode"
           - os: windows-latest
-            target: bun-windows-x64
+            target: node24-win-x64
             binary: dist/resend.exe
-            flags: ""
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Node bundle
+        run: pnpm build
 
       - name: Build binary
-        run: bun build --compile --minify --sourcemap ${{ matrix.flags }} src/cli.ts --target=${{ matrix.target }} --outfile ${{ matrix.binary }}
+        run: pnpm exec pkg dist/cli.cjs --compress Brotli --target ${{ matrix.target }} --output ${{ matrix.binary }}
 
       - name: Verify binary runs
-        run: ${{ matrix.binary }} --version
+        run: |
+          ${{ matrix.binary }} --version
+          ${{ matrix.binary }} --help
+
+  test-binary-linux-arm64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Node bundle
+        run: pnpm build
+
+      - name: Build binary
+        run: pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-linux-arm64 --output dist/resend
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Verify binary runs on arm64
+        run: |
+          docker run --rm --platform linux/arm64 \
+            -v "$PWD/dist:/dist" \
+            node:24-slim sh -c "/dist/resend --version && /dist/resend --help"
 
   release:
-    needs: test-binary
+    needs: [test-binary, test-binary-linux-arm64]
     permissions:
       contents: write
     runs-on: blacksmith-2vcpu-ubuntu-2204
     steps:
       - uses: actions/checkout@v6
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Node bundle
+        run: pnpm build
 
       - name: Build binaries
         run: |
-          bun build --compile --minify --sourcemap --bytecode src/cli.ts --target=bun-darwin-arm64  --outfile dist/resend-darwin-arm64
-          bun build --compile --minify --sourcemap --bytecode src/cli.ts --target=bun-darwin-x64    --outfile dist/resend-darwin-x64
-          bun build --compile --minify --sourcemap --bytecode src/cli.ts --target=bun-linux-x64     --outfile dist/resend-linux-x64
-          bun build --compile --minify --sourcemap --bytecode src/cli.ts --target=bun-linux-arm64   --outfile dist/resend-linux-arm64
-          bun build --compile --minify --sourcemap src/cli.ts --target=bun-windows-x64   --outfile dist/resend-windows-x64.exe
+          pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-macos-arm64 --output dist/resend-darwin-arm64
+          pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-macos-x64   --output dist/resend-darwin-x64
+          pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-linux-x64   --output dist/resend-linux-x64
+          pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-linux-arm64 --output dist/resend-linux-arm64
+          pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-win-x64     --output dist/resend-windows-x64.exe
 
       - name: Verify binaries
         run: |
@@ -96,6 +146,11 @@ jobs:
             **Windows (PowerShell)**
             ```pwsh
             irm https://resend.com/install.ps1 | iex
+            ```
+
+            **npx**
+            ```sh
+            npx resend-cli
             ```
           files: |
             dist/resend-darwin-arm64.tar.gz

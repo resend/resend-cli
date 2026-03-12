@@ -1,4 +1,3 @@
-import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
 import {
   existsSync,
   mkdirSync,
@@ -8,6 +7,15 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  type MockInstance,
+  test,
+  vi,
+} from 'vitest';
 import { checkForUpdates } from '../../src/lib/update-check';
 import { VERSION } from '../../src/lib/version';
 import { captureTestEnv } from '../helpers';
@@ -22,16 +30,18 @@ const statePath = join(testResendDir, 'update-state.json');
 describe('checkForUpdates', () => {
   const restoreEnv = captureTestEnv();
   let stderrOutput: string;
-  let stderrSpy: ReturnType<typeof spyOn>;
-  let fetchSpy: ReturnType<typeof spyOn>;
+  let stderrSpy: MockInstance;
+  let fetchSpy: MockInstance;
 
   beforeEach(() => {
     mkdirSync(testResendDir, { recursive: true });
     stderrOutput = '';
-    stderrSpy = spyOn(process.stderr, 'write').mockImplementation((chunk) => {
-      stderrOutput += String(chunk);
-      return true;
-    });
+    stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation((chunk) => {
+        stderrOutput += String(chunk);
+        return true;
+      });
 
     // Point getConfigDir() at our temp dir via XDG_CONFIG_HOME
     process.env.XDG_CONFIG_HOME = testConfigDir;
@@ -58,16 +68,16 @@ describe('checkForUpdates', () => {
   });
 
   function mockFetch(tagName: string, extra: Record<string, unknown> = {}) {
-    fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue({
+    fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({ tag_name: tagName, ...extra }),
     } as Response);
   }
 
   function mockFetchFailure() {
-    fetchSpy = spyOn(globalThis, 'fetch').mockRejectedValue(
-      new Error('network error'),
-    );
+    fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockRejectedValue(new Error('network error'));
   }
 
   test('skips check when RESEND_NO_UPDATE_NOTIFIER=1', async () => {
@@ -152,7 +162,7 @@ describe('checkForUpdates', () => {
   });
 
   test('ignores prerelease versions', async () => {
-    fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue({
+    fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({ tag_name: 'v99.0.0', prerelease: true }),
     } as Response);

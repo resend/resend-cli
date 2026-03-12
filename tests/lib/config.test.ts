@@ -1,7 +1,13 @@
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
-import { mkdirSync, readFileSync, rmSync, statSync } from 'node:fs';
+import {
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import {
   getConfigDir,
   listTeams,
@@ -67,7 +73,7 @@ describe('resolveApiKey', () => {
     process.env.XDG_CONFIG_HOME = tmpDir;
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
-    Bun.write(
+    writeFileSync(
       join(configDir, 'credentials.json'),
       JSON.stringify({
         active_team: 'default',
@@ -88,7 +94,7 @@ describe('resolveApiKey', () => {
     process.env.XDG_CONFIG_HOME = tmpDir;
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
-    Bun.write(
+    writeFileSync(
       join(configDir, 'credentials.json'),
       JSON.stringify({ api_key: 're_legacy_key' }),
     );
@@ -106,7 +112,7 @@ describe('resolveApiKey', () => {
     process.env.XDG_CONFIG_HOME = tmpDir;
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
-    Bun.write(
+    writeFileSync(
       join(configDir, 'credentials.json'),
       JSON.stringify({
         active_team: 'default',
@@ -137,7 +143,7 @@ describe('resolveApiKey', () => {
     process.env.XDG_CONFIG_HOME = tmpDir;
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
-    Bun.write(join(configDir, 'credentials.json'), 'not json');
+    writeFileSync(join(configDir, 'credentials.json'), 'not json');
 
     const result = resolveApiKey();
     expect(result).toBeNull();
@@ -148,7 +154,7 @@ describe('resolveApiKey', () => {
     process.env.XDG_CONFIG_HOME = tmpDir;
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
-    Bun.write(
+    writeFileSync(
       join(configDir, 'credentials.json'),
       JSON.stringify({
         active_team: 'default',
@@ -193,7 +199,7 @@ describe('resolveTeamName', () => {
     delete process.env.RESEND_TEAM;
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
-    Bun.write(
+    writeFileSync(
       join(configDir, 'credentials.json'),
       JSON.stringify({
         active_team: 'production',
