@@ -1,3 +1,5 @@
+import pc from 'picocolors';
+
 export function errorMessage(err: unknown, fallback: string): string {
   return err instanceof Error ? err.message : fallback;
 }
@@ -47,7 +49,7 @@ export function outputError(
       ),
     );
   } else {
-    console.error(`Error: ${error.message}`);
+    console.error(`${pc.red('Error:')} ${error.message}`);
   }
 
   process.exit(exitCode);
