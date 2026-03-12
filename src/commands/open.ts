@@ -21,5 +21,7 @@ export const openCommand = new Command('open')
           ? ['cmd', '/c', 'start', url]
           : ['xdg-open', url];
 
-    spawn(args[0], args.slice(1), { stdio: 'ignore', detached: true }).unref();
+    spawn(args[0], args.slice(1), { stdio: 'ignore', detached: true })
+      .on('error', () => {})
+      .unref();
   });
