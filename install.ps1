@@ -26,13 +26,13 @@ function Write-Ok   { param($msg) Write-Host "  $msg" -ForegroundColor Green }
 function Write-Fail {
   param($msg)
   Write-Host "  error: $msg" -ForegroundColor Red
-  exit 1
 }
 
 # ─── Architecture detection ───────────────────────────────────────────────────
 
 if ($env:PROCESSOR_ARCHITECTURE -notin @('AMD64', 'EM64T')) {
   Write-Fail "Unsupported architecture: $env:PROCESSOR_ARCHITECTURE`n`n  Resend CLI currently supports Windows x64 only."
+  return
 }
 
 # ─── Version + Download URL ───────────────────────────────────────────────────
@@ -44,6 +44,7 @@ if ($Version) {
   $Version = $Version.TrimStart('v')
   if ($Version -notmatch '^\d+\.\d+\.\d+(-[a-zA-Z0-9.]+)?$') {
     Write-Fail "Invalid version format: $Version`n`n  Expected: semantic version like 0.1.0 or 1.2.3-beta.1`n  Usage:    `$env:RESEND_VERSION = 'v0.1.0'; irm https://resend.com/install.ps1 | iex"
+    return
   }
   $url = "$repo/releases/download/v$Version/resend-$target.zip"
 } else {
@@ -80,12 +81,14 @@ try {
     Invoke-WebRequest -Uri $url -OutFile $tmpZip -UseBasicParsing
   } catch {
     Write-Fail "Download failed.`n`n  Possible causes:`n    - No internet connection`n    - The version does not exist: $(if ($Version) { $Version } else { 'latest' })`n    - GitHub is unreachable`n`n  URL: $url"
+    return
   }
 
   try {
     Expand-Archive -Path $tmpZip -DestinationPath $binDir -Force
   } catch {
     Write-Fail "Failed to extract archive: $_"
+    return
   }
 }
 finally {
@@ -94,6 +97,7 @@ finally {
 
 if (-not (Test-Path $exe)) {
   Write-Fail "Binary not found after extraction. The download may be corrupted — try again."
+  return
 }
 
 # ─── Verify installation ──────────────────────────────────────────────────────
@@ -111,7 +115,8 @@ Write-Info "Binary:  $exe"
 
 # ─── PATH setup ───────────────────────────────────────────────────────────────
 
-$userPath    = [Environment]::GetEnvironmentVariable('PATH', 'User') ?? ''
+$userPath    = [Environment]::GetEnvironmentVariable('PATH', 'User')
+if (-not $userPath) { $userPath = '' }
 $pathEntries = $userPath -split ';' | Where-Object { $_ -ne '' }
 
 if ($pathEntries -contains $binDir) {
@@ -121,7 +126,7 @@ if ($pathEntries -contains $binDir) {
   Write-Host "resend --help" -ForegroundColor Cyan -NoNewline
   Write-Host " to get started"
   Write-Host ""
-  exit 0
+  return
 }
 
 # Add to user PATH (persists across sessions — no admin rights needed)
@@ -138,4 +143,4 @@ Write-Host ""
 Write-Host "    `$env:RESEND_API_KEY = 're_...'" -ForegroundColor Cyan
 Write-Host "    resend --help" -ForegroundColor Cyan
 Write-Host ""
-exit 0
+return
