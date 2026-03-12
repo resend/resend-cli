@@ -14,6 +14,7 @@ import { emailsCommand } from './commands/emails/index';
 import { openCommand } from './commands/open';
 import { segmentsCommand } from './commands/segments/index';
 import { teamsDeprecatedCommand } from './commands/teams-deprecated';
+import { templatesCommand } from './commands/templates/index';
 import { topicsCommand } from './commands/topics/index';
 import { webhooksCommand } from './commands/webhooks/index';
 import { whoamiCommand } from './commands/whoami';
@@ -82,6 +83,7 @@ ${pc.gray('Examples:')}
   .addCommand(contactsCommand)
   .addCommand(contactPropertiesCommand)
   .addCommand(segmentsCommand)
+  .addCommand(templatesCommand)
   .addCommand(topicsCommand)
   .addCommand(webhooksCommand)
   .addCommand(doctorCommand)
