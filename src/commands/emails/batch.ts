@@ -139,6 +139,10 @@ export const batchCommand = new Command('batch')
     );
 
     const emailIds = batchData.data;
+    const batchErrors = (
+      batchData as { errors?: { index: number; message: string }[] }
+    ).errors;
+
     if (!globalOpts.json && isInteractive()) {
       console.log(
         `Sent ${emailIds.length} email${emailIds.length === 1 ? '' : 's'}`,
@@ -146,7 +150,20 @@ export const batchCommand = new Command('batch')
       for (const email of emailIds) {
         console.log(`  ${email.id}`);
       }
+      if (batchErrors && batchErrors.length > 0) {
+        console.warn(
+          `\n${batchErrors.length} email${batchErrors.length === 1 ? '' : 's'} failed:`,
+        );
+        for (const err of batchErrors) {
+          console.warn(`  [${err.index}] ${err.message}`);
+        }
+      }
     } else {
-      outputResult(emailIds, { json: globalOpts.json });
+      outputResult(
+        batchErrors && batchErrors.length > 0
+          ? { data: emailIds, errors: batchErrors }
+          : emailIds,
+        { json: globalOpts.json },
+      );
     }
   });

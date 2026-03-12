@@ -1,3 +1,5 @@
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
   afterEach,
   beforeEach,
@@ -79,7 +81,10 @@ describe('emails cancel command', () => {
   test('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
-    process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
+    process.env.XDG_CONFIG_HOME = join(
+      tmpdir(),
+      `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 

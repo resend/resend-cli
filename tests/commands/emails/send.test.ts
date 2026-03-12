@@ -1,4 +1,5 @@
 import { unlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -158,7 +159,10 @@ describe('send command', () => {
   test('errors when no API key and non-interactive', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
-    process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
+    process.env.XDG_CONFIG_HOME = join(
+      tmpdir(),
+      `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 

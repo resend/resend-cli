@@ -1,4 +1,5 @@
 import { writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -273,7 +274,10 @@ describe('batch command', () => {
   test('errors with auth_error when no API key in non-interactive mode', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
-    process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
+    process.env.XDG_CONFIG_HOME = join(
+      tmpdir(),
+      `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
@@ -312,6 +316,84 @@ describe('batch command', () => {
     expect(allOutput).toContain('def456');
 
     logSpy.mockRestore();
+  });
+
+  test('surfaces partial errors in permissive mode (JSON output)', async () => {
+    spies = setupOutputSpies();
+
+    mockBatchSend.mockImplementationOnce(async () => ({
+      data: {
+        data: [{ id: 'abc123' }],
+        errors: [{ index: 1, message: 'Invalid email address' }],
+      },
+      error: null,
+    }));
+
+    const file = await writeTmpJson(VALID_EMAILS);
+    const { batchCommand } = await import('../../../src/commands/emails/batch');
+    await batchCommand.parseAsync(
+      ['--file', file, '--batch-validation', 'permissive'],
+      { from: 'user' },
+    );
+
+    const output = spies.logSpy.mock.calls[0][0] as string;
+    const parsed = JSON.parse(output);
+    expect(parsed.data).toEqual([{ id: 'abc123' }]);
+    expect(parsed.errors).toEqual([
+      { index: 1, message: 'Invalid email address' },
+    ]);
+  });
+
+  test('surfaces partial errors in permissive mode (interactive output)', async () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
+
+    mockBatchSend.mockImplementationOnce(async () => ({
+      data: {
+        data: [{ id: 'abc123' }],
+        errors: [{ index: 1, message: 'Invalid email address' }],
+      },
+      error: null,
+    }));
+
+    const file = await writeTmpJson(VALID_EMAILS);
+    const { batchCommand } = await import('../../../src/commands/emails/batch');
+    await batchCommand.parseAsync(
+      ['--file', file, '--batch-validation', 'permissive'],
+      { from: 'user' },
+    );
+
+    const warnOutput = warnSpy.mock.calls.map((c) => c[0]).join('\n');
+    expect(warnOutput).toContain('1 email failed');
+    expect(warnOutput).toContain('[1] Invalid email address');
+
+    logSpy.mockRestore();
+    warnSpy.mockRestore();
+  });
+
+  test('does not include errors key in JSON output when no batch errors', async () => {
+    spies = setupOutputSpies();
+
+    const file = await writeTmpJson(VALID_EMAILS);
+    const { batchCommand } = await import('../../../src/commands/emails/batch');
+    await batchCommand.parseAsync(['--file', file], { from: 'user' });
+
+    const output = spies.logSpy.mock.calls[0][0] as string;
+    const parsed = JSON.parse(output);
+    // When no errors, output should be the plain array (no wrapper object)
+    expect(Array.isArray(parsed)).toBe(true);
+    expect(parsed).toEqual([{ id: 'abc123' }, { id: 'def456' }]);
   });
 
   test('errors with batch_error when SDK returns an error', async () => {
