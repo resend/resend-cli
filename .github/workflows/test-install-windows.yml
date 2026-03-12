@@ -62,17 +62,22 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Run installer with bogus version and capture output
+      - name: Run installer with bogus version and verify error
         run: |
           $env:RESEND_VERSION = 'v99.99.99'
-          $output = Invoke-Expression (Get-Content -Raw .\install.ps1) *>&1 | Out-String
-          Write-Host $output
-          if ($output -notmatch 'error:') {
-            Write-Error "Expected error message not found in output"
+          $errorThrown = $false
+          $output = ''
+          try {
+            $output = Invoke-Expression (Get-Content -Raw .\install.ps1) *>&1 | Out-String
+          } catch {
+            $errorThrown = $true
+          }
+          if (-not $errorThrown) {
+            Write-Error "Expected installer to throw on bogus version"
             exit 1
           }
-          Write-Host "Error message was correctly printed"
-
-      - name: Assert shell is still alive
-        run: |
-          Write-Host "Shell is still running -- exit/return handling is correct"
+          if ($output -notmatch 'error:') {
+            Write-Error "Expected 'error:' in output"
+            exit 1
+          }
+          Write-Host "Error path handled correctly and shell survived"
