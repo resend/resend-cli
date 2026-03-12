@@ -53,7 +53,7 @@ if ($Version) {
 
 # ─── Install directory ────────────────────────────────────────────────────────
 
-$installDir = if ($env:RESEND_INSTALL) { $env:RESEND_INSTALL } else { Join-Path $HOME '.resend' }
+$installDir = $(if ($env:RESEND_INSTALL) { $env:RESEND_INSTALL } else { Join-Path $HOME '.resend' })
 $binDir     = Join-Path $installDir 'bin'
 $exe        = Join-Path $binDir 'resend.exe'
 
