@@ -1,4 +1,8 @@
-import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
+import {
+  createServer,
+  type IncomingMessage,
+  type ServerResponse,
+} from 'node:http';
 import { Command } from '@commander-js/extra-typings';
 import pc from 'picocolors';
 import type { Resend, WebhookEvent } from 'resend';
@@ -17,9 +21,11 @@ function timestamp(): string {
   return new Date().toLocaleTimeString('en-GB', { hour12: false });
 }
 
-function summarizeEvent(
-  body: Record<string, unknown>,
-): { type: string; resourceId: string; detail: string } {
+function summarizeEvent(body: Record<string, unknown>): {
+  type: string;
+  resourceId: string;
+  detail: string;
+} {
   const type = (body.type as string) ?? 'unknown';
   const data = (body.data as Record<string, unknown>) ?? {};
 
@@ -43,8 +49,12 @@ function summarizeEvent(
 
 function formatStatus(status: number): string {
   const text = `${status} ${statusText(status)}`;
-  if (status >= 200 && status < 300) return pc.green(text);
-  if (status >= 400 && status < 500) return pc.yellow(text);
+  if (status >= 200 && status < 300) {
+    return pc.green(text);
+  }
+  if (status >= 400 && status < 500) {
+    return pc.yellow(text);
+  }
   return pc.red(text);
 }
 
@@ -74,12 +84,12 @@ async function forwardPayload(
   };
   for (const h of SVIX_HEADERS) {
     const val = headers[h];
-    if (val) forwardHeaders[h] = val;
+    if (val) {
+      forwardHeaders[h] = val;
+    }
   }
 
-  const url = forwardTo.startsWith('http')
-    ? forwardTo
-    : `http://${forwardTo}`;
+  const url = forwardTo.startsWith('http') ? forwardTo : `http://${forwardTo}`;
   const resp = await fetch(url, {
     method: 'POST',
     headers: forwardHeaders,
@@ -114,15 +124,9 @@ async function cleanup(
 
 export const listenWebhookCommand = new Command('listen')
   .description('Listen for webhook events locally during development')
-  .option(
-    '--url <url>',
-    'Public URL for receiving webhooks (your tunnel URL)',
-  )
+  .option('--url <url>', 'Public URL for receiving webhooks (your tunnel URL)')
   .option('--forward-to <url>', 'Forward payloads to this local URL')
-  .option(
-    '--events <events...>',
-    'Event types to listen for (default: all)',
-  )
+  .option('--events <events...>', 'Event types to listen for (default: all)')
   .option('--port <port>', 'Local server port', '4318')
   .addHelpText(
     'after',
@@ -155,9 +159,12 @@ The tunnel must point to the same port as --port.`,
         message: 'Public tunnel URL',
         placeholder: 'https://abc.trycloudflare.com',
         validate: (v) => {
-          if (!v) return 'URL is required';
-          if (!v.startsWith('https://') && !v.startsWith('http://'))
+          if (!v) {
+            return 'URL is required';
+          }
+          if (!v.startsWith('https://') && !v.startsWith('http://')) {
             return 'URL must start with http:// or https://';
+          }
           return undefined;
         },
       },
@@ -186,87 +193,88 @@ The tunnel must point to the same port as --port.`,
     const jsonMode = globalOpts.json || !isInteractive();
 
     // Start local server
-    const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
-      if (req.method !== 'POST') {
-        res.writeHead(405).end('Method not allowed');
-        return;
-      }
+    const server = createServer(
+      async (req: IncomingMessage, res: ServerResponse) => {
+        if (req.method !== 'POST') {
+          res.writeHead(405).end('Method not allowed');
+          return;
+        }
 
-      const rawBody = await readBody(req);
-      let body: Record<string, unknown>;
-      try {
-        body = JSON.parse(rawBody);
-      } catch {
-        res.writeHead(400).end('Invalid JSON');
-        return;
-      }
+        const rawBody = await readBody(req);
+        let body: Record<string, unknown>;
+        try {
+          body = JSON.parse(rawBody);
+        } catch {
+          res.writeHead(400).end('Invalid JSON');
+          return;
+        }
 
-      const svixHeaders: Record<string, string | undefined> = {};
-      for (const h of SVIX_HEADERS) {
-        const val = req.headers[h];
-        svixHeaders[h] = Array.isArray(val) ? val[0] : val;
-      }
+        const svixHeaders: Record<string, string | undefined> = {};
+        for (const h of SVIX_HEADERS) {
+          const val = req.headers[h];
+          svixHeaders[h] = Array.isArray(val) ? val[0] : val;
+        }
 
-      const { type, resourceId, detail } = summarizeEvent(body);
+        const { type, resourceId, detail } = summarizeEvent(body);
 
-      if (jsonMode) {
-        const entry: Record<string, unknown> = {
-          timestamp: new Date().toISOString(),
-          type,
-          resource_id: resourceId,
-          payload: body,
-        };
+        if (jsonMode) {
+          const entry: Record<string, unknown> = {
+            timestamp: new Date().toISOString(),
+            type,
+            resource_id: resourceId,
+            payload: body,
+          };
 
-        if (opts.forwardTo) {
-          try {
-            const { status } = await forwardPayload(
-              opts.forwardTo,
-              rawBody,
-              svixHeaders,
-            );
-            entry.forwarded = { url: opts.forwardTo, status };
-          } catch (err) {
-            entry.forwarded = {
-              url: opts.forwardTo,
-              error: err instanceof Error ? err.message : 'Unknown error',
-            };
+          if (opts.forwardTo) {
+            try {
+              const { status } = await forwardPayload(
+                opts.forwardTo,
+                rawBody,
+                svixHeaders,
+              );
+              entry.forwarded = { url: opts.forwardTo, status };
+            } catch (err) {
+              entry.forwarded = {
+                url: opts.forwardTo,
+                error: err instanceof Error ? err.message : 'Unknown error',
+              };
+            }
+          }
+
+          console.log(JSON.stringify(entry));
+        } else {
+          const ts = pc.dim(`[${timestamp()}]`);
+          const typePad = type.padEnd(20);
+          const idPad = resourceId.padEnd(14);
+          process.stderr.write(
+            `${ts} ${pc.bold(typePad)} ${pc.cyan(idPad)} ${detail}\n`,
+          );
+
+          if (opts.forwardTo) {
+            const target = opts.forwardTo.startsWith('http')
+              ? opts.forwardTo
+              : `http://${opts.forwardTo}`;
+            try {
+              const { status } = await forwardPayload(
+                opts.forwardTo,
+                rawBody,
+                svixHeaders,
+              );
+              process.stderr.write(
+                `${pc.dim('           -> POST')} ${target} ${pc.dim(`[${formatStatus(status)}]`)}\n`,
+              );
+            } catch (err) {
+              const msg = err instanceof Error ? err.message : 'Unknown error';
+              process.stderr.write(
+                `${pc.dim('           -> POST')} ${target} ${pc.red(`[Error: ${msg}]`)}\n`,
+              );
+            }
           }
         }
 
-        console.log(JSON.stringify(entry));
-      } else {
-        const ts = pc.dim(`[${timestamp()}]`);
-        const typePad = type.padEnd(20);
-        const idPad = resourceId.padEnd(14);
-        process.stderr.write(
-          `${ts} ${pc.bold(typePad)} ${pc.cyan(idPad)} ${detail}\n`,
-        );
-
-        if (opts.forwardTo) {
-          const target = opts.forwardTo.startsWith('http')
-            ? opts.forwardTo
-            : `http://${opts.forwardTo}`;
-          try {
-            const { status } = await forwardPayload(
-              opts.forwardTo,
-              rawBody,
-              svixHeaders,
-            );
-            process.stderr.write(
-              `${pc.dim('           -> POST')} ${target} ${pc.dim(`[${formatStatus(status)}]`)}\n`,
-            );
-          } catch (err) {
-            const msg =
-              err instanceof Error ? err.message : 'Unknown error';
-            process.stderr.write(
-              `${pc.dim('           -> POST')} ${target} ${pc.red(`[Error: ${msg}]`)}\n`,
-            );
-          }
-        }
-      }
-
-      res.writeHead(200).end('OK');
-    });
+        res.writeHead(200).end('OK');
+      },
+    );
 
     await new Promise<void>((resolve) => {
       server.listen(port, resolve);
@@ -340,7 +348,9 @@ The tunnel must point to the same port as --port.`,
     // Cleanup handler
     let cleaningUp = false;
     const handleSignal = async () => {
-      if (cleaningUp) return;
+      if (cleaningUp) {
+        return;
+      }
       cleaningUp = true;
       await cleanup(resend, webhookId, server);
       process.exit(0);
