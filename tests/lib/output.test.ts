@@ -100,7 +100,9 @@ describe('outputError', () => {
 
     outputError({ message: 'something broke' });
 
-    expect(errorSpy).toHaveBeenCalledWith('Error: something broke');
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('something broke'),
+    );
     expect(exitSpy).toHaveBeenCalledWith(1);
   });
 

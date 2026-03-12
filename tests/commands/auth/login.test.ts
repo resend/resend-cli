@@ -29,7 +29,6 @@ vi.mock('resend', () => ({
 
 describe('login command', () => {
   const restoreEnv = captureTestEnv();
-  let spies: ReturnType<typeof setupOutputSpies> | undefined;
   let errorSpy: MockInstance | undefined;
   let exitSpy: MockInstance | undefined;
   let tmpDir: string;
@@ -45,7 +44,6 @@ describe('login command', () => {
 
   afterEach(() => {
     restoreEnv();
-    spies = undefined;
     errorSpy?.mockRestore();
     errorSpy = undefined;
     exitSpy?.mockRestore();
@@ -64,7 +62,7 @@ describe('login command', () => {
   });
 
   test('stores valid key to credentials.json', async () => {
-    spies = setupOutputSpies();
+    setupOutputSpies();
 
     const { loginCommand } = await import('../../../src/commands/auth/login');
     await loginCommand.parseAsync(['--key', 're_valid_test_key_123'], {
@@ -77,7 +75,7 @@ describe('login command', () => {
   });
 
   test('requires --key in non-interactive mode', async () => {
-    spies = setupOutputSpies();
+    setupOutputSpies();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
@@ -101,7 +99,7 @@ describe('login command', () => {
       }),
     );
 
-    spies = setupOutputSpies();
+    setupOutputSpies();
 
     const { loginCommand } = await import('../../../src/commands/auth/login');
     await loginCommand.parseAsync(['--key', 're_new_key_5678'], {
@@ -117,7 +115,7 @@ describe('login command', () => {
   });
 
   test('auto-switches to team specified via --team flag', async () => {
-    spies = setupOutputSpies();
+    setupOutputSpies();
 
     const { Command } = await import('@commander-js/extra-typings');
     const { loginCommand } = await import('../../../src/commands/auth/login');
