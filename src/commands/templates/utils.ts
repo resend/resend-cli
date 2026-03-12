@@ -6,6 +6,7 @@ import type {
 type TemplateVariableCreationOptions = NonNullable<
   CreateTemplateOptions['variables']
 >[number];
+
 import { renderTable } from '../../lib/table';
 
 /**
@@ -16,8 +17,24 @@ export function parseVariables(
 ): TemplateVariableCreationOptions[] {
   return vars.map((v) => {
     const [key, type, ...rest] = v.split(':');
+
+    if (!key) {
+      throw new Error(`Invalid --var "${v}": key is required.`);
+    }
+    if (type !== 'string' && type !== 'number') {
+      throw new Error(
+        `Invalid --var "${v}": type must be "string" or "number".`,
+      );
+    }
+
     const fallback = rest.length ? rest.join(':') : undefined;
+
     if (type === 'number') {
+      if (fallback != null && Number.isNaN(Number(fallback))) {
+        throw new Error(
+          `Invalid --var "${v}": fallback "${fallback}" is not a valid number.`,
+        );
+      }
       return {
         key,
         type: 'number' as const,
