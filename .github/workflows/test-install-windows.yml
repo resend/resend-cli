@@ -65,7 +65,7 @@ jobs:
       - name: Run installer with bogus version and capture output
         run: |
           $env:RESEND_VERSION = 'v99.99.99'
-          $output = Invoke-Expression (Get-Content -Raw .\install.ps1) 2>&1 | Out-String
+          $output = Invoke-Expression (Get-Content -Raw .\install.ps1) *>&1 | Out-String
           Write-Host $output
           if ($output -notmatch 'error:') {
             Write-Error "Expected error message not found in output"
@@ -75,4 +75,4 @@ jobs:
 
       - name: Assert shell is still alive
         run: |
-          Write-Host "Shell is still running — exit/return handling is correct"
+          Write-Host "Shell is still running -- exit/return handling is correct"
