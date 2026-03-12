@@ -3,10 +3,10 @@ import {
   beforeEach,
   describe,
   expect,
-  mock,
-  spyOn,
+  type MockInstance,
   test,
-} from 'bun:test';
+  vi,
+} from 'vitest';
 import {
   captureTestEnv,
   expectExit1,
@@ -16,7 +16,7 @@ import {
   setupOutputSpies,
 } from '../../helpers';
 
-const mockGet = mock(async () => ({
+const mockGet = vi.fn(async () => ({
   data: {
     object: 'email' as const,
     id: 'email_abc123',
@@ -35,7 +35,7 @@ const mockGet = mock(async () => ({
   error: null,
 }));
 
-mock.module('resend', () => ({
+vi.mock('resend', () => ({
   Resend: class MockResend {
     constructor(public key: string) {}
     emails = { get: mockGet };
@@ -45,9 +45,9 @@ mock.module('resend', () => ({
 describe('emails get command', () => {
   const restoreEnv = captureTestEnv();
   let spies: ReturnType<typeof setupOutputSpies> | undefined;
-  let errorSpy: ReturnType<typeof spyOn> | undefined;
-  let stderrSpy: ReturnType<typeof spyOn> | undefined;
-  let exitSpy: ReturnType<typeof spyOn> | undefined;
+  let errorSpy: MockInstance | undefined;
+  let stderrSpy: MockInstance | undefined;
+  let exitSpy: MockInstance | undefined;
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
@@ -56,7 +56,6 @@ describe('emails get command', () => {
 
   afterEach(() => {
     restoreEnv();
-    spies?.restore();
     errorSpy?.mockRestore();
     stderrSpy?.mockRestore();
     exitSpy?.mockRestore();
@@ -74,8 +73,7 @@ describe('emails get command', () => {
     );
     await getEmailCommand.parseAsync(['email_abc123'], { from: 'user' });
 
-    expect(mockGet).toHaveBeenCalledTimes(1);
-    expect(mockGet.mock.calls[0][0]).toBe('email_abc123');
+    expect(mockGet).toHaveBeenCalledWith('email_abc123');
   });
 
   test('outputs JSON with full email fields when non-interactive', async () => {
@@ -98,7 +96,7 @@ describe('emails get command', () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { getEmailCommand } = await import(
@@ -115,8 +113,10 @@ describe('emails get command', () => {
   test('errors with fetch_error when SDK returns an error', async () => {
     setNonInteractive();
     mockGet.mockResolvedValueOnce(mockSdkError('Not found', 'not_found'));
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
-    stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
     const { getEmailCommand } = await import(
