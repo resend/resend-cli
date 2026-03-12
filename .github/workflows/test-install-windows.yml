@@ -4,20 +4,26 @@ on:
   pull_request:
     paths:
       - install.ps1
+      - .github/workflows/test-install-windows.yml
   workflow_dispatch:
 
 jobs:
-  test:
+  test-install:
     runs-on: windows-latest
+    strategy:
+      matrix:
+        shell: [pwsh, powershell]
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
     steps:
       - uses: actions/checkout@v6
 
-      - name: Run install.ps1 from repo
-        shell: pwsh
-        run: .\install.ps1
+      - name: Run installer via Invoke-Expression (simulates irm | iex)
+        run: |
+          Invoke-Expression (Get-Content -Raw .\install.ps1)
 
       - name: Verify binary exists
-        shell: pwsh
         run: |
           $exe = "$env:USERPROFILE\.resend\bin\resend.exe"
           if (-not (Test-Path $exe)) {
@@ -27,7 +33,6 @@ jobs:
           Write-Host "Found binary at $exe"
 
       - name: Verify binary runs
-        shell: pwsh
         run: |
           $exe = "$env:USERPROFILE\.resend\bin\resend.exe"
           & $exe --version
@@ -37,7 +42,6 @@ jobs:
           }
 
       - name: Verify PATH was updated
-        shell: pwsh
         run: |
           $binDir = "$env:USERPROFILE\.resend\bin"
           $path = [Environment]::GetEnvironmentVariable("PATH", "User")
@@ -46,3 +50,29 @@ jobs:
             exit 1
           }
           Write-Host "PATH correctly updated"
+
+  test-error-path:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        shell: [pwsh, powershell]
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Run installer with bogus version (expect failure)
+        id: bogus
+        continue-on-error: true
+        run: |
+          $env:RESEND_VERSION = 'v99.99.99'
+          Invoke-Expression (Get-Content -Raw .\install.ps1)
+
+      - name: Assert installer failed
+        run: |
+          if ('${{ steps.bogus.outcome }}' -ne 'failure') {
+            Write-Error "Expected installer to fail on bogus version"
+            exit 1
+          }
+          Write-Host "Installer correctly signaled failure"
