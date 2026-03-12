@@ -3,6 +3,7 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
 concurrency:
   group: release
   cancel-in-progress: false
@@ -46,10 +47,93 @@ jobs:
           ${{ matrix.binary }} --version
           ${{ matrix.binary }} --help
 
-  release:
-    needs: [test-binary]
-    permissions:
-      contents: write
+  test-binary-linux-arm64:
+    runs-on: blacksmith-2vcpu-ubuntu-2204
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Node bundle
+        run: pnpm build
+
+      - name: Build binary (no-bytecode workaround)
+        run: pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-linux-arm64 --output dist/resend --no-bytecode --public-packages "*" --public
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Verify binary runs under arm64 emulation
+        run: |
+          docker run --rm --platform linux/arm64 \
+            -v "$PWD/dist/resend:/usr/local/bin/resend" \
+            debian:bookworm-slim \
+            sh -c "resend --version && resend --help"
+
+  build-macos:
+    needs: [test-binary, test-binary-linux-arm64]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Node bundle
+        run: pnpm build
+
+      - name: Build macOS binaries
+        run: |
+          pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-macos-arm64 --output dist/resend-darwin-arm64
+          pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-macos-x64   --output dist/resend-darwin-x64
+
+      - name: Ad-hoc sign macOS binaries
+        run: |
+          codesign -s - dist/resend-darwin-arm64
+          codesign -s - dist/resend-darwin-x64
+
+      - name: Verify signatures
+        run: |
+          codesign -v dist/resend-darwin-arm64
+          codesign -v dist/resend-darwin-x64
+
+      - name: Package archives
+        run: |
+          cd dist
+          for bin in resend-darwin-arm64 resend-darwin-x64; do
+            cp "$bin" resend
+            chmod +x resend
+            tar -czf "${bin}.tar.gz" resend
+            rm resend
+          done
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-archives
+          path: |
+            dist/resend-darwin-arm64.tar.gz
+            dist/resend-darwin-x64.tar.gz
+
+  build-linux-windows:
+    needs: [test-binary, test-binary-linux-arm64]
     runs-on: blacksmith-2vcpu-ubuntu-2204
     steps:
       - uses: actions/checkout@v6
@@ -69,23 +153,20 @@ jobs:
 
       - name: Build binaries
         run: |
-          pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-macos-arm64 --output dist/resend-darwin-arm64
-          pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-macos-x64   --output dist/resend-darwin-x64
           pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-linux-x64   --output dist/resend-linux-x64
+          pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-linux-arm64 --output dist/resend-linux-arm64 --no-bytecode --public-packages "*" --public
           pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-win-x64     --output dist/resend-windows-x64.exe
 
       - name: Verify binaries
         run: |
-          for f in dist/resend-darwin-arm64 dist/resend-darwin-x64 \
-                    dist/resend-linux-x64 \
-                    dist/resend-windows-x64.exe; do
+          for f in dist/resend-linux-x64 dist/resend-linux-arm64 dist/resend-windows-x64.exe; do
             [ -s "$f" ] || { echo "Missing or empty: $f"; exit 1; }
           done
 
       - name: Package archives
         run: |
           cd dist
-          for bin in resend-darwin-arm64 resend-darwin-x64 resend-linux-x64; do
+          for bin in resend-linux-x64 resend-linux-arm64; do
             cp "$bin" resend
             chmod +x resend
             tar -czf "${bin}.tar.gz" resend
@@ -94,6 +175,36 @@ jobs:
           cp resend-windows-x64.exe resend.exe
           zip resend-windows-x64.zip resend.exe
           rm resend.exe
+
+      - name: Upload Linux/Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-windows-archives
+          path: |
+            dist/resend-linux-x64.tar.gz
+            dist/resend-linux-arm64.tar.gz
+            dist/resend-windows-x64.zip
+
+  release:
+    if: github.event_name != 'workflow_dispatch'
+    needs: [build-macos, build-linux-windows]
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Verify all archives exist
+        run: |
+          for f in dist/resend-darwin-arm64.tar.gz dist/resend-darwin-x64.tar.gz \
+                    dist/resend-linux-x64.tar.gz dist/resend-linux-arm64.tar.gz \
+                    dist/resend-windows-x64.zip; do
+            [ -s "$f" ] || { echo "Missing or empty: $f"; exit 1; }
+          done
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -120,9 +231,11 @@ jobs:
             dist/resend-darwin-arm64.tar.gz
             dist/resend-darwin-x64.tar.gz
             dist/resend-linux-x64.tar.gz
+            dist/resend-linux-arm64.tar.gz
             dist/resend-windows-x64.zip
 
   notify-tap:
+    if: github.event_name != 'workflow_dispatch'
     name: Trigger Homebrew Tap Update
     needs: release
     runs-on: ubuntu-latest
