@@ -53,7 +53,7 @@ if ($Version) {
 
 # ─── Install directory ────────────────────────────────────────────────────────
 
-$installDir = $(if ($env:RESEND_INSTALL) { $env:RESEND_INSTALL } else { Join-Path $HOME '.resend' })
+if ($env:RESEND_INSTALL) { $installDir = $env:RESEND_INSTALL } else { $installDir = Join-Path $HOME '.resend' }
 $binDir     = Join-Path $installDir 'bin'
 $exe        = Join-Path $binDir 'resend.exe'
 
@@ -80,7 +80,8 @@ try {
     $ProgressPreference = 'SilentlyContinue'  # Invoke-WebRequest is ~10x faster without progress bar
     Invoke-WebRequest -Uri $url -OutFile $tmpZip -UseBasicParsing
   } catch {
-    Write-Fail "Download failed.`n`n  Possible causes:`n    - No internet connection`n    - The version does not exist: $(if ($Version) { $Version } else { 'latest' })`n    - GitHub is unreachable`n`n  URL: $url"
+    if ($Version) { $ver = $Version } else { $ver = 'latest' }
+    Write-Fail "Download failed.`n`n  Possible causes:`n    - No internet connection`n    - The version does not exist: $ver`n    - GitHub is unreachable`n`n  URL: $url"
     return
   }
 
@@ -90,8 +91,7 @@ try {
     Write-Fail "Failed to extract archive: $_"
     return
   }
-}
-finally {
+} finally {
   Remove-Item -Recurse -Force $tmpDir -ErrorAction SilentlyContinue
 }
 
