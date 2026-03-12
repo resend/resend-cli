@@ -6,74 +6,79 @@ import { errorMessage, outputError, outputResult } from '../../lib/output';
 import { cancelAndExit } from '../../lib/prompts';
 import { isInteractive } from '../../lib/tty';
 
-export const switchCommand = new Command('switch')
-  .description('Switch the active profile')
-  .argument('[name]', 'Profile name to switch to')
-  .action(async (name, _opts, cmd) => {
-    const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+export async function switchAction(
+  name: string | undefined,
+  globalOpts: GlobalOpts,
+) {
+  let profileName = name;
 
-    let profileName = name;
-
-    if (!profileName) {
-      if (!isInteractive()) {
-        outputError(
-          {
-            message:
-              'Missing profile name. Provide a profile name in non-interactive mode.',
-            code: 'missing_name',
-          },
-          { json: globalOpts.json },
-        );
-        return;
-      }
-
-      const profiles = listProfiles();
-      if (profiles.length === 0) {
-        outputError(
-          {
-            message: 'No profiles configured. Run `resend login` first.',
-            code: 'no_profiles',
-          },
-          { json: globalOpts.json },
-        );
-        return;
-      }
-
-      const choice = await p.select({
-        message: 'Switch to which profile?',
-        options: profiles.map((t) => ({
-          value: t.name,
-          label: t.name,
-          hint: t.active ? 'active' : undefined,
-        })),
-      });
-
-      if (p.isCancel(choice)) {
-        cancelAndExit('Switch cancelled.');
-      }
-
-      profileName = choice;
-    }
-
-    try {
-      setActiveProfile(profileName);
-    } catch (err) {
+  if (!profileName) {
+    if (!isInteractive()) {
       outputError(
         {
-          message: errorMessage(err, 'Failed to switch profile'),
-          code: 'switch_failed',
+          message:
+            'Missing profile name. Provide a profile name in non-interactive mode.',
+          code: 'missing_name',
         },
         { json: globalOpts.json },
       );
       return;
     }
 
-    if (globalOpts.json) {
-      outputResult(
-        { success: true, active_profile: profileName },
-        { json: true },
+    const profiles = listProfiles();
+    if (profiles.length === 0) {
+      outputError(
+        {
+          message: 'No profiles configured. Run `resend login` first.',
+          code: 'no_profiles',
+        },
+        { json: globalOpts.json },
       );
-    } else if (isInteractive()) {
-      console.log(`Switched to profile '${profileName}'.`);
+      return;
     }
+
+    const choice = await p.select({
+      message: 'Switch to which profile?',
+      options: profiles.map((t) => ({
+        value: t.name,
+        label: t.name,
+        hint: t.active ? 'active' : undefined,
+      })),
+    });
+
+    if (p.isCancel(choice)) {
+      cancelAndExit('Switch cancelled.');
+    }
+
+    profileName = choice;
+  }
+
+  try {
+    setActiveProfile(profileName);
+  } catch (err) {
+    outputError(
+      {
+        message: errorMessage(err, 'Failed to switch profile'),
+        code: 'switch_failed',
+      },
+      { json: globalOpts.json },
+    );
+    return;
+  }
+
+  if (globalOpts.json) {
+    outputResult(
+      { success: true, active_profile: profileName },
+      { json: true },
+    );
+  } else if (isInteractive()) {
+    console.log(`Switched to profile '${profileName}'.`);
+  }
+}
+
+export const switchCommand = new Command('switch')
+  .description('Switch the active profile')
+  .argument('[name]', 'Profile name to switch to')
+  .action(async (name, _opts, cmd) => {
+    await switchAction(name, cmd.optsWithGlobals() as GlobalOpts);
   });

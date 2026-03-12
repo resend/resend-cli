@@ -14,10 +14,7 @@ export type GlobalOpts = {
 
 process.env.RESEND_USER_AGENT = `resend-cli:${VERSION}`;
 
-export function createClient(
-  flagValue?: string,
-  profileName?: string,
-): Resend {
+export function createClient(flagValue?: string, profileName?: string): Resend {
   const resolved = resolveApiKey(flagValue, profileName);
   if (!resolved) {
     throw new Error(

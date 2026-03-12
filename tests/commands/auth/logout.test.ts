@@ -51,10 +51,7 @@ describe('logout command', () => {
     const creds = {
       active_profile: Object.keys(profiles)[0],
       profiles: Object.fromEntries(
-        Object.entries(profiles).map(([name, key]) => [
-          name,
-          { api_key: key },
-        ]),
+        Object.entries(profiles).map(([name, key]) => [name, { api_key: key }]),
       ),
     };
     writeFileSync(
