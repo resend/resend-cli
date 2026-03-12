@@ -20,7 +20,9 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
       output: `  {"object":"template","id":"<uuid>","deleted":true}`,
       errorCodes: ['auth_error', 'confirmation_required', 'delete_error'],
       examples: [
+        'resend templates delete 78261eea-8f8b-4381-83c6-79fa7120f1cf',
         'resend templates delete 78261eea-8f8b-4381-83c6-79fa7120f1cf --yes',
+        'resend templates rm my-template-alias --yes',
         'resend templates delete 78261eea-8f8b-4381-83c6-79fa7120f1cf --yes --json',
       ],
     }),

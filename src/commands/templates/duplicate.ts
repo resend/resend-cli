@@ -9,7 +9,9 @@ export const duplicateTemplateCommand = new Command('duplicate')
   .addHelpText(
     'after',
     buildHelpText({
-      context: `Creates a copy of an existing template and returns the new template ID.`,
+      context: `Creates a copy of an existing template and returns the new template ID.
+The duplicate is created as a draft with " (Copy)" appended to the original name.
+All fields (HTML, subject, variables, etc.) are copied to the new template.`,
       output: `  {"object":"template","id":"<new-template-id>"}`,
       errorCodes: ['auth_error', 'create_error'],
       examples: [

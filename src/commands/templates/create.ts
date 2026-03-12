@@ -7,6 +7,7 @@ import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
 import { cancelAndExit } from '../../lib/prompts';
 import { isInteractive } from '../../lib/tty';
+import { parseVariables } from './utils';
 
 export const createTemplateCommand = new Command('create')
   .description('Create a new template')
@@ -18,10 +19,24 @@ export const createTemplateCommand = new Command('create')
   .option('--from <address>', 'Sender address')
   .option('--reply-to <address>', 'Reply-to address')
   .option('--alias <alias>', 'Template alias for lookup by name')
+  .option(
+    '--var <var...>',
+    'Template variable: KEY:type or KEY:type:fallback (repeatable)',
+  )
   .addHelpText(
     'after',
     buildHelpText({
-      context: `Non-interactive: --name is required. Body: provide --html or --html-file.`,
+      context: `Creates a new draft template. Use "resend templates publish" to make it available for sending.
+
+--name is required. Body: provide --html or --html-file (mutually exclusive).
+
+--var declares a template variable using the format KEY:type or KEY:type:fallback.
+  Valid types: string, number.
+  Variables must match {{{KEY}}} placeholders in the HTML body:
+    --html "<p>Hi {{{NAME}}}, your total is {{{PRICE}}}</p>"
+    --var NAME:string --var PRICE:number:0
+
+Non-interactive: --name and a body (--html or --html-file) are required.`,
       output: `  {"object":"template","id":"<template-id>"}`,
       errorCodes: [
         'auth_error',
@@ -34,6 +49,7 @@ export const createTemplateCommand = new Command('create')
         'resend templates create --name "Welcome" --html "<h1>Hello</h1>" --subject "Welcome!"',
         'resend templates create --name "Newsletter" --html-file ./template.html --from hello@domain.com',
         'resend templates create --name "Onboarding" --html "<p>Hi</p>" --alias onboarding --json',
+        'resend templates create --name "Order" --html "<p>{{{PRODUCT}}}: {{{PRICE}}}</p>" --var PRODUCT:string:item --var PRICE:number:25',
       ],
     }),
   )
@@ -104,6 +120,7 @@ export const createTemplateCommand = new Command('create')
               ...(opts.from && { from: opts.from }),
               ...(opts.replyTo && { replyTo: opts.replyTo }),
               ...(opts.alias && { alias: opts.alias }),
+              ...(opts.var && { variables: parseVariables(opts.var) }),
             }),
           ),
         onInteractive: (d) => {

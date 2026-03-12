@@ -9,7 +9,9 @@ export const publishTemplateCommand = new Command('publish')
   .addHelpText(
     'after',
     buildHelpText({
-      context: `Promotes a draft template to published status, making it available for use in emails.`,
+      context: `Promotes a draft template to published status, making it available for use in emails.
+After updating a published template, re-publish to make the changes live.
+Publishing an already-published template re-publishes it with the latest draft changes.`,
       output: `  {"object":"template","id":"<template-id>"}`,
       errorCodes: ['auth_error', 'publish_error'],
       examples: [

@@ -9,6 +9,7 @@ export const getTemplateCommand = new Command('get')
   .addHelpText(
     'after',
     buildHelpText({
+      context: `Returns the full template including HTML body, variables, and publication status.`,
       output: `  {"object":"template","id":"...","name":"...","subject":"...","status":"draft|published","html":"...","alias":"...","from":"...","reply_to":["..."],"variables":[...],"created_at":"...","updated_at":"..."}`,
       errorCodes: ['auth_error', 'fetch_error'],
       examples: [

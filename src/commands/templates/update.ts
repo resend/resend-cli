@@ -19,7 +19,11 @@ export const updateTemplateCommand = new Command('update')
   .addHelpText(
     'after',
     buildHelpText({
-      context: `Provide at least one option to update. All options are optional but at least one must be given.`,
+      context: `At least one option is required. Only the provided fields are changed; others are left as-is.
+
+If you update the HTML body to include new {{{VAR}}} placeholders, you must also
+re-create the template with the updated --var declarations (the update endpoint
+does not currently accept variable changes).`,
       output: `  {"object":"template","id":"<template-id>"}`,
       errorCodes: [
         'auth_error',
