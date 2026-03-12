@@ -49,7 +49,7 @@ export function outputError(
       ),
     );
   } else {
-    console.error(`${pc.red('error:')} ${error.message}`);
+    console.error(`${pc.red('Error:')} ${error.message}`);
   }
 
   process.exit(exitCode);
