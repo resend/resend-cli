@@ -277,9 +277,23 @@ For example, if using ngrok: ngrok http 4318`,
       },
     );
 
-    await new Promise<void>((resolve) => {
-      server.listen(port, resolve);
-    });
+    try {
+      await new Promise<void>((resolve, reject) => {
+        server.on('error', reject);
+        server.listen(port, resolve);
+      });
+    } catch (err) {
+      outputError(
+        {
+          message:
+            err instanceof Error
+              ? `Failed to start local server on port ${port}: ${err.message}`
+              : `Failed to start local server on port ${port}`,
+          code: 'server_listen_error',
+        },
+        { json: globalOpts.json },
+      );
+    }
 
     // Register webhook
     const spinner = createSpinner(
