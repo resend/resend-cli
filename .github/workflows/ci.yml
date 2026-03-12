@@ -44,17 +44,16 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 24
-      - uses: oven-sh/setup-bun@v2
       - run: npm ci
       - name: Build Node bundle
         run: npm run build
-      - name: Build Bun binary
-        run: npm run build:bin
+      - name: Build pkg binary
+        run: npx pkg dist/cli.cjs --compress Brotli --target node24-linux-x64 --output dist/resend
       - name: Smoke test Node bundle
         run: |
           node dist/cli.cjs --version
           node dist/cli.cjs doctor --json
-      - name: Smoke test Bun binary
+      - name: Smoke test pkg binary
         run: |
           ./dist/resend --version
           ./dist/resend doctor --json

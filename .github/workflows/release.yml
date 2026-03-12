@@ -13,17 +13,14 @@ jobs:
       matrix:
         include:
           - os: macos-latest
-            target: bun-darwin-arm64
+            target: node24-macos-arm64
             binary: dist/resend
-            flags: "--bytecode"
           - os: ubuntu-latest
-            target: bun-linux-x64
+            target: node24-linux-x64
             binary: dist/resend
-            flags: "--bytecode"
           - os: windows-latest
-            target: bun-windows-x64
+            target: node24-win-x64
             binary: dist/resend.exe
-            flags: ""
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
@@ -32,13 +29,14 @@ jobs:
         with:
           node-version: 24
 
-      - uses: oven-sh/setup-bun@v2
-
       - name: Install dependencies
         run: npm ci
 
+      - name: Build Node bundle
+        run: npm run build
+
       - name: Build binary
-        run: bun build --compile --minify --sourcemap ${{ matrix.flags }} src/cli.ts --target=${{ matrix.target }} --outfile ${{ matrix.binary }}
+        run: npx pkg dist/cli.cjs --compress Brotli --target ${{ matrix.target }} --output ${{ matrix.binary }}
 
       - name: Verify binary runs
         run: ${{ matrix.binary }} --version
@@ -55,18 +53,19 @@ jobs:
         with:
           node-version: 24
 
-      - uses: oven-sh/setup-bun@v2
-
       - name: Install dependencies
         run: npm ci
 
+      - name: Build Node bundle
+        run: npm run build
+
       - name: Build binaries
         run: |
-          bun build --compile --minify --sourcemap --bytecode src/cli.ts --target=bun-darwin-arm64  --outfile dist/resend-darwin-arm64
-          bun build --compile --minify --sourcemap --bytecode src/cli.ts --target=bun-darwin-x64    --outfile dist/resend-darwin-x64
-          bun build --compile --minify --sourcemap --bytecode src/cli.ts --target=bun-linux-x64     --outfile dist/resend-linux-x64
-          bun build --compile --minify --sourcemap --bytecode src/cli.ts --target=bun-linux-arm64   --outfile dist/resend-linux-arm64
-          bun build --compile --minify --sourcemap src/cli.ts --target=bun-windows-x64   --outfile dist/resend-windows-x64.exe
+          npx pkg dist/cli.cjs --compress Brotli --target node24-macos-arm64 --output dist/resend-darwin-arm64
+          npx pkg dist/cli.cjs --compress Brotli --target node24-macos-x64   --output dist/resend-darwin-x64
+          npx pkg dist/cli.cjs --compress Brotli --target node24-linux-x64   --output dist/resend-linux-x64
+          npx pkg dist/cli.cjs --compress Brotli --target node24-linux-arm64 --output dist/resend-linux-arm64
+          npx pkg dist/cli.cjs --compress Brotli --target node24-win-x64     --output dist/resend-windows-x64.exe
 
       - name: Verify binaries
         run: |

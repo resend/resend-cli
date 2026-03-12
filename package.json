@@ -14,6 +14,12 @@
     "email",
     "api"
   ],
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "dist/cli.cjs"
+  ],
   "type": "module",
   "bin": {
     "resend": "./dist/cli.cjs"
@@ -22,7 +28,7 @@
     "dev": "tsx src/cli.ts",
     "dev:watch": "tsx --watch src/cli.ts",
     "build": "esbuild src/cli.ts --bundle --platform=node --format=cjs --outfile=dist/cli.cjs",
-    "build:bin": "bun build --compile --minify --sourcemap --bytecode src/cli.ts --outfile dist/resend",
+    "build:bin": "npm run build && pkg dist/cli.cjs --compress Brotli --target node24 --output dist/resend",
     "lint": "biome check",
     "format": "biome format --write",
     "typecheck": "tsc --noEmit",
@@ -40,6 +46,7 @@
     "esbuild": "0.25.3",
     "tsx": "4.19.4",
     "typescript": "5.9.3",
-    "vitest": "3.1.4"
+    "vitest": "3.1.4",
+    "@yao-pkg/pkg": "6.14.1"
   }
 }
