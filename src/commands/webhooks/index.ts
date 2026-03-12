@@ -3,8 +3,8 @@ import { buildHelpText } from '../../lib/help-text';
 import { createWebhookCommand } from './create';
 import { deleteWebhookCommand } from './delete';
 import { getWebhookCommand } from './get';
-import { listenWebhookCommand } from './listen';
 import { listWebhooksCommand } from './list';
+import { listenWebhookCommand } from './listen';
 import { updateWebhookCommand } from './update';
 
 export const webhooksCommand = new Command('webhooks')
