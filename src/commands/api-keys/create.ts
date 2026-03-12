@@ -100,8 +100,7 @@ Permissions:
             ...(opts.domainId && { domain_id: opts.domainId }),
           }),
         onInteractive: (d) => {
-          console.log('\nAPI key created!\n');
-          console.log(`  Name:    ${name}`);
+          console.log(`\n  Name:    ${name}`);
           console.log(`  ID:      ${d.id}`);
           console.log(`  Token:   ${d.token}`);
           console.log(
