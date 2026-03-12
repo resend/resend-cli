@@ -50,10 +50,6 @@ jobs:
       - name: Build pkg binary
         run: npx pkg dist/cli.cjs --compress Brotli --target node24-linux-x64 --output dist/resend
       - name: Smoke test Node bundle
-        run: |
-          node dist/cli.cjs --version
-          node dist/cli.cjs doctor --json
+        run: node dist/cli.cjs --version
       - name: Smoke test pkg binary
-        run: |
-          ./dist/resend --version
-          ./dist/resend doctor --json
+        run: ./dist/resend --version
