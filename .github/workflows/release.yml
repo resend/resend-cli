@@ -104,11 +104,6 @@ jobs:
           pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-macos-arm64 --output dist/resend-darwin-arm64
           pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-macos-x64   --output dist/resend-darwin-x64
 
-      - name: Ad-hoc sign macOS binaries
-        run: |
-          codesign -s - dist/resend-darwin-arm64
-          codesign -s - dist/resend-darwin-x64
-
       - name: Verify signatures
         run: |
           codesign -v dist/resend-darwin-arm64
