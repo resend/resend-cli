@@ -1,6 +1,7 @@
 import { Command } from '@commander-js/extra-typings';
 import { buildHelpText } from '../../lib/help-text';
 import { batchCommand } from './batch';
+import { listEmailsCommand } from './list';
 import { receivingCommand } from './receiving/index';
 import { sendCommand } from './send';
 
@@ -10,6 +11,7 @@ export const emailsCommand = new Command('emails')
     'after',
     buildHelpText({
       examples: [
+        'resend emails list',
         'resend emails send --from you@domain.com --to user@example.com --subject "Hello" --text "Hi"',
         'resend emails batch --file ./emails.json',
         'resend emails receiving list',
@@ -19,6 +21,7 @@ export const emailsCommand = new Command('emails')
       ],
     }),
   )
+  .addCommand(listEmailsCommand, { isDefault: true })
   .addCommand(sendCommand)
   .addCommand(batchCommand)
   .addCommand(receivingCommand);

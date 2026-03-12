@@ -99,7 +99,7 @@ function detectInstallMethod(): string {
 
   // npm / npx global install
   if (/node_modules/.test(execPath) || process.env.npm_execpath) {
-    return 'pnpm add -g resend-cli';
+    return 'npm install -g resend-cli';
   }
 
   // Install script (default install location)
