@@ -1,6 +1,6 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../lib/client';
-import { maskKey, resolveApiKey, resolveTeamName } from '../lib/config';
+import { maskKey, resolveApiKey, resolveProfileName } from '../lib/config';
 import { buildHelpText } from '../lib/help-text';
 import { outputError, outputResult } from '../lib/output';
 import { isInteractive } from '../lib/tty';
@@ -12,20 +12,20 @@ export const whoamiCommand = new Command('whoami')
     buildHelpText({
       setup: true,
       context: `Local only — no network calls.
-Shows which team is active and where the API key comes from.`,
-      output: `  {"authenticated":true,"team":"production","api_key":"re_...abcd","source":"config"}
+Shows which profile is active and where the API key comes from.`,
+      output: `  {"authenticated":true,"profile":"production","api_key":"re_...abcd","source":"config"}
   {"authenticated":false}`,
       examples: [
         'resend whoami',
         'resend whoami --json',
-        'resend whoami --team production',
+        'resend whoami --profile production',
       ],
     }),
   )
   .action((_opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const teamName = globalOpts.team;
-    const resolved = resolveApiKey(globalOpts.apiKey, teamName);
+    const profileFlag = globalOpts.profile ?? globalOpts.team;
+    const resolved = resolveApiKey(globalOpts.apiKey, profileFlag);
 
     if (!resolved) {
       if (globalOpts.json || !isInteractive()) {
@@ -46,13 +46,13 @@ Shows which team is active and where the API key comes from.`,
       return;
     }
 
-    const team = resolved.team ?? resolveTeamName(teamName);
+    const profile = resolved.profile ?? resolveProfileName(profileFlag);
 
     if (globalOpts.json || !isInteractive()) {
       outputResult(
         {
           authenticated: true,
-          team,
+          profile,
           api_key: maskKey(resolved.key),
           source: resolved.source,
         },
@@ -62,7 +62,7 @@ Shows which team is active and where the API key comes from.`,
     }
 
     console.log('');
-    console.log(`  Team:    ${team}`);
+    console.log(`  Profile: ${profile}`);
     console.log(`  API Key: ${maskKey(resolved.key)}`);
     console.log(
       `  Source:  ${resolved.source === 'config' ? 'config file' : resolved.source === 'env' ? 'environment variable' : 'flag'}`,

@@ -1,25 +1,25 @@
 import * as p from '@clack/prompts';
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
-import { listTeams, removeApiKey } from '../../lib/config';
+import { listProfiles, removeApiKey } from '../../lib/config';
 import { errorMessage, outputError, outputResult } from '../../lib/output';
 import { cancelAndExit } from '../../lib/prompts';
 import { isInteractive } from '../../lib/tty';
 
 export const removeCommand = new Command('remove')
-  .description('Remove a team profile')
-  .argument('[name]', 'Team name to remove')
+  .description('Remove a profile')
+  .argument('[name]', 'Profile name to remove')
   .action(async (name, _opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
-    let teamName = name;
+    let profileName = name;
 
-    if (!teamName) {
+    if (!profileName) {
       if (!isInteractive()) {
         outputError(
           {
             message:
-              'Missing team name. Provide a team name in non-interactive mode.',
+              'Missing profile name. Provide a profile name in non-interactive mode.',
             code: 'missing_name',
           },
           { json: globalOpts.json },
@@ -27,12 +27,12 @@ export const removeCommand = new Command('remove')
         return;
       }
 
-      const teams = listTeams();
-      if (teams.length === 0) {
+      const profiles = listProfiles();
+      if (profiles.length === 0) {
         outputError(
           {
-            message: 'No teams configured. Run `resend login` first.',
-            code: 'no_teams',
+            message: 'No profiles configured. Run `resend login` first.',
+            code: 'no_profiles',
           },
           { json: globalOpts.json },
         );
@@ -40,8 +40,8 @@ export const removeCommand = new Command('remove')
       }
 
       const choice = await p.select({
-        message: 'Remove which team?',
-        options: teams.map((t) => ({
+        message: 'Remove which profile?',
+        options: profiles.map((t) => ({
           value: t.name,
           label: t.name,
           hint: t.active ? 'active' : undefined,
@@ -52,12 +52,12 @@ export const removeCommand = new Command('remove')
         cancelAndExit('Remove cancelled.');
       }
 
-      teamName = choice;
+      profileName = choice;
     }
 
     if (!globalOpts.json && isInteractive()) {
       const confirmed = await p.confirm({
-        message: `Remove team '${teamName}' and its API key?`,
+        message: `Remove profile '${profileName}' and its API key?`,
       });
 
       if (p.isCancel(confirmed) || !confirmed) {
@@ -66,11 +66,11 @@ export const removeCommand = new Command('remove')
     }
 
     try {
-      removeApiKey(teamName);
+      removeApiKey(profileName);
     } catch (err) {
       outputError(
         {
-          message: errorMessage(err, 'Failed to remove team'),
+          message: errorMessage(err, 'Failed to remove profile'),
           code: 'remove_failed',
         },
         { json: globalOpts.json },
@@ -79,8 +79,11 @@ export const removeCommand = new Command('remove')
     }
 
     if (globalOpts.json) {
-      outputResult({ success: true, removed_team: teamName }, { json: true });
+      outputResult(
+        { success: true, removed_profile: profileName },
+        { json: true },
+      );
     } else if (isInteractive()) {
-      console.log(`Team '${teamName}' removed.`);
+      console.log(`Profile '${profileName}' removed.`);
     }
   });

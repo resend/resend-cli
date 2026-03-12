@@ -31,6 +31,7 @@ describe('whoami command', () => {
     mkdirSync(tmpDir, { recursive: true });
     process.env.XDG_CONFIG_HOME = tmpDir;
     delete process.env.RESEND_API_KEY;
+    delete process.env.RESEND_PROFILE;
     delete process.env.RESEND_TEAM;
   });
 
@@ -64,8 +65,8 @@ describe('whoami command', () => {
     writeFileSync(
       join(configDir, 'credentials.json'),
       JSON.stringify({
-        active_team: 'production',
-        teams: { production: { api_key: 're_test_key_abcd' } },
+        active_profile: 'production',
+        profiles: { production: { api_key: 're_test_key_abcd' } },
       }),
     );
 
@@ -77,7 +78,7 @@ describe('whoami command', () => {
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
     expect(parsed.authenticated).toBe(true);
-    expect(parsed.team).toBe('production');
+    expect(parsed.profile).toBe('production');
     expect(parsed.api_key).toBe('re_...abcd');
     expect(parsed.source).toBe('config');
   });

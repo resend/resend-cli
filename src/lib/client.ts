@@ -7,13 +7,18 @@ export type GlobalOpts = {
   apiKey?: string;
   json?: boolean;
   quiet?: boolean;
+  profile?: string;
+  /** @deprecated Use `profile` instead */
   team?: string;
 };
 
 process.env.RESEND_USER_AGENT = `resend-cli:${VERSION}`;
 
-export function createClient(flagValue?: string, teamName?: string): Resend {
-  const resolved = resolveApiKey(flagValue, teamName);
+export function createClient(
+  flagValue?: string,
+  profileName?: string,
+): Resend {
+  const resolved = resolveApiKey(flagValue, profileName);
   if (!resolved) {
     throw new Error(
       'No API key found. Set RESEND_API_KEY, use --api-key, or run: resend login',
@@ -24,7 +29,7 @@ export function createClient(flagValue?: string, teamName?: string): Resend {
 
 export function requireClient(opts: GlobalOpts): Resend {
   try {
-    return createClient(opts.apiKey, opts.team);
+    return createClient(opts.apiKey, opts.profile ?? opts.team);
   } catch (err) {
     outputError(
       {

@@ -7,7 +7,7 @@ import {
   getConfigDir,
   removeAllApiKeys,
   removeApiKey,
-  resolveTeamName,
+  resolveProfileName,
 } from '../../lib/config';
 import { buildHelpText } from '../../lib/help-text';
 import { errorMessage, outputError, outputResult } from '../../lib/output';
@@ -26,15 +26,15 @@ export const logoutCommand = new Command('logout')
   (Linux: $XDG_CONFIG_HOME/resend/credentials.json)
   (Windows: %APPDATA%\\resend\\credentials.json)
 
-When --team is specified, only that team's entry is removed.
-When no team is specified, all teams are removed.
+When --profile is specified, only that profile's entry is removed.
+When no profile is specified, all profiles are removed.
 
 If no credentials file exists, exits cleanly with no error.`,
       output: `  {"success":true,"config_path":"<path>"}`,
       errorCodes: ['remove_failed'],
       examples: [
         'resend logout',
-        'resend logout --team staging',
+        'resend logout --profile staging',
         'resend logout --json',
       ],
     }),
@@ -56,13 +56,14 @@ If no credentials file exists, exits cleanly with no error.`,
       return;
     }
 
-    const logoutAll = !globalOpts.team;
-    const teamLabel = globalOpts.team || resolveTeamName();
+    const profileFlag = globalOpts.profile ?? globalOpts.team;
+    const logoutAll = !profileFlag;
+    const profileLabel = profileFlag || resolveProfileName();
 
     if (!globalOpts.json && isInteractive()) {
       const message = logoutAll
         ? `Remove all saved API keys at ${configPath}?`
-        : `Remove saved API key for team '${teamLabel}'?`;
+        : `Remove saved API key for profile '${profileLabel}'?`;
 
       const confirmed = await p.confirm({ message });
 
@@ -75,7 +76,7 @@ If no credentials file exists, exits cleanly with no error.`,
       if (logoutAll) {
         removeAllApiKeys();
       } else {
-        removeApiKey(teamLabel);
+        removeApiKey(profileLabel);
       }
     } catch (err) {
       outputError(
@@ -90,14 +91,14 @@ If no credentials file exists, exits cleanly with no error.`,
     if (!globalOpts.json && isInteractive()) {
       const msg = logoutAll
         ? 'Logged out. All API keys removed.'
-        : `Logged out. API key removed for team '${teamLabel}'.`;
+        : `Logged out. API key removed for profile '${profileLabel}'.`;
       p.outro(msg);
     } else {
       outputResult(
         {
           success: true,
           config_path: configPath,
-          team: logoutAll ? 'all' : teamLabel,
+          profile: logoutAll ? 'all' : profileLabel,
         },
         { json: globalOpts.json },
       );

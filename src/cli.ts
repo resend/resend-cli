@@ -2,6 +2,7 @@
 import { Command } from '@commander-js/extra-typings';
 import pc from 'picocolors';
 import { apiKeysCommand } from './commands/api-keys/index';
+import { authCommand } from './commands/auth/index';
 import { loginCommand } from './commands/auth/login';
 import { logoutCommand } from './commands/auth/logout';
 import { broadcastsCommand } from './commands/broadcasts/index';
@@ -12,7 +13,7 @@ import { domainsCommand } from './commands/domains/index';
 import { emailsCommand } from './commands/emails/index';
 import { openCommand } from './commands/open';
 import { segmentsCommand } from './commands/segments/index';
-import { teamsCommand } from './commands/teams/index';
+import { teamsDeprecatedCommand } from './commands/teams-deprecated';
 import { topicsCommand } from './commands/topics/index';
 import { webhooksCommand } from './commands/webhooks/index';
 import { whoamiCommand } from './commands/whoami';
@@ -38,7 +39,8 @@ const program = new Command()
     'Output the current version',
   )
   .option('--api-key <key>', 'Resend API key (overrides env/config)')
-  .option('--team <name>', 'Team profile to use (overrides RESEND_TEAM)')
+  .option('--profile <name>', 'Profile to use (overrides RESEND_PROFILE)')
+  .option('--team <name>', 'Deprecated: use --profile instead')
   .option('--json', 'Force JSON output')
   .option('-q, --quiet', 'Suppress spinners and status output (implies --json)')
   .hook('preAction', (thisCommand, actionCommand) => {
@@ -50,10 +52,10 @@ const program = new Command()
     'after',
     `
 ${pc.gray('Environment:')}
-  RESEND_API_KEY    API key — checked after --api-key, before stored credentials
-                    Priority: --api-key flag > RESEND_API_KEY > ~/.config/resend/credentials.json
-  RESEND_TEAM       Team profile — checked after --team flag, before active_team in config
-                    Priority: --team flag > RESEND_TEAM > active_team in config > "default"
+  RESEND_API_KEY      API key — checked after --api-key, before stored credentials
+                      Priority: --api-key flag > RESEND_API_KEY > ~/.config/resend/credentials.json
+  RESEND_PROFILE      Profile — checked after --profile flag, before active_profile in config
+                      Priority: --profile flag > RESEND_PROFILE > active_profile in config > "default"
 
 ${pc.gray('Output:')}
   Human-readable by default. Pass --json or pipe stdout for machine-readable JSON.
@@ -83,9 +85,16 @@ ${pc.gray('Examples:')}
   .addCommand(topicsCommand)
   .addCommand(webhooksCommand)
   .addCommand(doctorCommand)
-  .addCommand(teamsCommand)
+  .addCommand(authCommand)
   .addCommand(openCommand)
-  .addCommand(whoamiCommand);
+  .addCommand(whoamiCommand)
+  .addCommand(teamsDeprecatedCommand);
+
+// Hide the deprecated --team option from help
+const teamOption = program.options.find((o) => o.long === '--team');
+if (teamOption) {
+  teamOption.hidden = true;
+}
 
 program
   .parseAsync()
