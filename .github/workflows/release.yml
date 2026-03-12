@@ -15,9 +15,6 @@ jobs:
           - os: macos-latest
             target: node24-macos-arm64
             binary: dist/resend
-          - os: macos-13
-            target: node24-macos-x64
-            binary: dist/resend
           - os: ubuntu-latest
             target: node24-linux-x64
             binary: dist/resend
@@ -28,7 +25,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
       - uses: actions/setup-node@v6
         with:
@@ -57,7 +54,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
       - uses: actions/setup-node@v6
         with:
