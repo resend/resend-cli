@@ -72,8 +72,8 @@ platform=$(uname -ms)
 case $platform in
   'Darwin x86_64')   target=darwin-x64 ;;
   'Darwin arm64')    target=darwin-arm64 ;;
-  'Linux x86_64')    target=linux-x64 ;;
   'Linux aarch64')   target=linux-arm64 ;;
+  'Linux x86_64')    target=linux-x64 ;;
   'Linux arm64')     target=linux-arm64 ;;
   *)
     error "Unsupported platform: ${platform}.
@@ -101,7 +101,7 @@ if [[ $target == linux-* ]]; then
     error "Alpine Linux (musl) is not currently supported.
 
   The compiled binary requires glibc. Use one of these alternatives:
-    - pnpm add -g resend-cli
+    - npm install -g resend-cli
     - Run in a glibc-based container (e.g., ubuntu, debian)"
   fi
 fi
