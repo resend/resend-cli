@@ -77,9 +77,9 @@ jobs:
 
       - name: Verify binary runs on arm64
         run: |
-          chmod +x dist/resend
-          dist/resend --version
-          dist/resend --help
+          docker run --rm --platform linux/arm64 \
+            -v "$PWD/dist:/dist" \
+            debian:bookworm-slim sh -c "/dist/resend --version && /dist/resend --help"
 
   release:
     needs: [test-binary, test-binary-linux-arm64]
