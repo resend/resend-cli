@@ -110,7 +110,7 @@ function detectInstallMethod(): string {
     return 'curl -fsSL https://resend.com/install.sh | bash';
   }
 
-  // Default: install script
+  // Default
   if (process.platform === 'win32') {
     return 'irm https://resend.com/install.ps1 | iex';
   }
@@ -126,12 +126,20 @@ function formatNotice(latestVersion: string): string {
   const cyan = '\x1B[36m';
   const reset = '\x1B[0m';
 
-  return [
+  const lines = [
     '',
     `${dim}Update available: ${yellow}v${VERSION}${reset}${dim} → ${cyan}v${latestVersion}${reset}`,
     `${dim}${isUrl ? 'Visit' : 'Run'}: ${cyan}${upgrade}${reset}`,
-    '',
-  ].join('\n');
+  ];
+
+  if (process.platform === 'win32') {
+    lines.push(
+      `${dim}Or download from: ${cyan}https://github.com/resend/resend-cli/releases/latest${reset}`,
+    );
+  }
+
+  lines.push('');
+  return lines.join('\n');
 }
 
 /**

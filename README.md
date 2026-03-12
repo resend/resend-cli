@@ -27,6 +27,14 @@ brew install resend/cli/resend
 curl -fsSL https://resend.com/install.sh | bash
 ```
 
+### PowerShell (Windows)
+
+```powershell
+irm https://resend.com/install.ps1 | iex
+```
+
+Or download the `.exe` directly from the [GitHub releases page](https://github.com/resend/resend-cli/releases/latest).
+
 ### npx
 
 ```bash
