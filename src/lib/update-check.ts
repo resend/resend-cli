@@ -94,7 +94,7 @@ function detectInstallMethod(): string {
 
   // Homebrew
   if (/\/(Cellar|homebrew)\//i.test(execPath)) {
-    return 'brew upgrade resend';
+    return 'brew update && brew upgrade resend';
   }
 
   // npm / npx global install
