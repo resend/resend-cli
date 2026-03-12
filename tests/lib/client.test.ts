@@ -1,8 +1,8 @@
-import { afterEach, describe, expect, test } from 'bun:test';
-import { mkdirSync, rmSync } from 'node:fs';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Resend } from 'resend';
+import { afterEach, describe, expect, test } from 'vitest';
 import { captureTestEnv } from '../helpers';
 
 describe('createClient', () => {
@@ -12,34 +12,34 @@ describe('createClient', () => {
     restoreEnv();
   });
 
-  test('returns Resend instance when flag value provided', () => {
-    const { createClient } = require('../../src/lib/client');
+  test('returns Resend instance when flag value provided', async () => {
+    const { createClient } = await import('../../src/lib/client');
     const client = createClient('re_test_key');
     expect(client).toBeInstanceOf(Resend);
   });
 
-  test('returns Resend instance when env var set', () => {
+  test('returns Resend instance when env var set', async () => {
     process.env.RESEND_API_KEY = 're_env_key';
-    const { createClient } = require('../../src/lib/client');
+    const { createClient } = await import('../../src/lib/client');
     const client = createClient();
     expect(client).toBeInstanceOf(Resend);
   });
 
-  test('throws when no API key available', () => {
+  test('throws when no API key available', async () => {
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend-test';
-    const { createClient } = require('../../src/lib/client');
+    const { createClient } = await import('../../src/lib/client');
     expect(() => createClient()).toThrow('No API key found');
   });
 
-  test('flag value takes priority over env var', () => {
+  test('flag value takes priority over env var', async () => {
     process.env.RESEND_API_KEY = 're_env_key';
-    const { createClient } = require('../../src/lib/client');
+    const { createClient } = await import('../../src/lib/client');
     const client = createClient('re_flag_key');
     expect(client).toBeInstanceOf(Resend);
   });
 
-  test('team name is threaded through to resolveApiKey', () => {
+  test('team name is threaded through to resolveApiKey', async () => {
     delete process.env.RESEND_API_KEY;
     const tmpDir = join(
       tmpdir(),
@@ -50,7 +50,7 @@ describe('createClient', () => {
 
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
-    Bun.write(
+    writeFileSync(
       join(configDir, 'credentials.json'),
       JSON.stringify({
         active_team: 'default',
@@ -61,7 +61,7 @@ describe('createClient', () => {
       }),
     );
 
-    const { createClient } = require('../../src/lib/client');
+    const { createClient } = await import('../../src/lib/client');
     // Should not throw — resolves staging team's key
     const client = createClient(undefined, 'staging');
     expect(client).toBeInstanceOf(Resend);

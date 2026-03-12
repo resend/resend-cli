@@ -1,8 +1,8 @@
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { mkdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Command } from '@commander-js/extra-typings';
+import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { storeApiKey } from '../../../src/lib/config';
 import { captureTestEnv, setupOutputSpies } from '../../helpers';
 
@@ -31,7 +31,6 @@ describe('teams list command', () => {
 
   afterEach(() => {
     restoreEnv();
-    spies?.restore();
     spies = undefined;
     rmSync(tmpDir, { recursive: true, force: true });
   });

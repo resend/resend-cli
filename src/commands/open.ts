@@ -1,3 +1,4 @@
+import { spawn } from 'node:child_process';
 import { Command } from '@commander-js/extra-typings';
 import { buildHelpText } from '../lib/help-text';
 
@@ -20,5 +21,7 @@ export const openCommand = new Command('open')
           ? ['cmd', '/c', 'start', url]
           : ['xdg-open', url];
 
-    Bun.spawn(args, { stdio: ['ignore', 'ignore', 'ignore'] });
+    spawn(args[0], args.slice(1), { stdio: 'ignore', detached: true })
+      .on('error', () => {})
+      .unref();
   });

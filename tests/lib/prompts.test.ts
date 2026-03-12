@@ -1,11 +1,18 @@
-import { afterEach, describe, expect, spyOn, test } from 'bun:test';
+import {
+  afterEach,
+  describe,
+  expect,
+  type MockInstance,
+  test,
+  vi,
+} from 'vitest';
 import { expectExit1, mockExitThrow } from '../helpers';
 
 describe('promptForMissing', () => {
   const originalStdinIsTTY = process.stdin.isTTY;
   const originalStdoutIsTTY = process.stdout.isTTY;
-  let errorSpy: ReturnType<typeof spyOn> | undefined;
-  let exitSpy: ReturnType<typeof spyOn> | undefined;
+  let errorSpy: MockInstance | undefined;
+  let exitSpy: MockInstance | undefined;
 
   afterEach(() => {
     errorSpy?.mockRestore();
@@ -23,7 +30,7 @@ describe('promptForMissing', () => {
   });
 
   test('returns options unchanged when nothing is missing', async () => {
-    const { promptForMissing } = require('../../src/lib/prompts');
+    const { promptForMissing } = await import('../../src/lib/prompts');
     const opts = { from: 'a@b.com', to: 'c@d.com', subject: 'Hi' };
     const result = await promptForMissing(
       opts,
@@ -46,10 +53,10 @@ describe('promptForMissing', () => {
       value: undefined,
       writable: true,
     });
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { promptForMissing } = require('../../src/lib/prompts');
+    const { promptForMissing } = await import('../../src/lib/prompts');
 
     await expectExit1(() =>
       promptForMissing(
@@ -79,10 +86,10 @@ describe('promptForMissing', () => {
       value: undefined,
       writable: true,
     });
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { promptForMissing } = require('../../src/lib/prompts');
+    const { promptForMissing } = await import('../../src/lib/prompts');
 
     await expectExit1(() =>
       promptForMissing(
@@ -97,7 +104,7 @@ describe('promptForMissing', () => {
   });
 
   test('skips fields marked as required=false', async () => {
-    const { promptForMissing } = require('../../src/lib/prompts');
+    const { promptForMissing } = await import('../../src/lib/prompts');
     const opts = { from: 'a@b.com', to: undefined };
     const result = await promptForMissing(
       opts,
@@ -114,8 +121,8 @@ describe('promptForMissing', () => {
 describe('confirmDelete', () => {
   const originalStdinIsTTY = process.stdin.isTTY;
   const originalStdoutIsTTY = process.stdout.isTTY;
-  let errorSpy: ReturnType<typeof spyOn> | undefined;
-  let exitSpy: ReturnType<typeof spyOn> | undefined;
+  let errorSpy: MockInstance | undefined;
+  let exitSpy: MockInstance | undefined;
 
   afterEach(() => {
     errorSpy?.mockRestore();
@@ -141,10 +148,10 @@ describe('confirmDelete', () => {
       value: undefined,
       writable: true,
     });
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { confirmDelete } = require('../../src/lib/prompts');
+    const { confirmDelete } = await import('../../src/lib/prompts');
 
     await expectExit1(() =>
       confirmDelete('res_123', 'Delete resource res_123?', { json: false }),
@@ -163,10 +170,10 @@ describe('confirmDelete', () => {
       value: undefined,
       writable: true,
     });
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { confirmDelete } = require('../../src/lib/prompts');
+    const { confirmDelete } = await import('../../src/lib/prompts');
     await expectExit1(() =>
       confirmDelete('res_123', 'Delete?', { json: true }),
     );

@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 import { Command } from '@commander-js/extra-typings';
 import pc from 'picocolors';
 import { apiKeysCommand } from './commands/api-keys/index';

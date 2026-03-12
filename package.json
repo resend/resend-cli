@@ -14,19 +14,27 @@
     "email",
     "api"
   ],
-  "packageManager": "bun@1.3.10",
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@10.11.0",
+  "files": [
+    "dist/cli.cjs"
+  ],
   "type": "module",
   "bin": {
-    "resend": "./src/cli.ts"
+    "resend": "./dist/cli.cjs"
   },
   "scripts": {
-    "dev": "bun run src/cli.ts",
-    "dev:watch": "bun --watch src/cli.ts",
-    "build": "bun build --compile --minify --sourcemap --bytecode src/cli.ts --outfile dist/resend",
+    "dev": "tsx src/cli.ts",
+    "dev:watch": "tsx --watch src/cli.ts",
+    "build": "esbuild src/cli.ts --bundle --platform=node --format=cjs --minify --outfile=dist/cli.cjs",
+    "build:bin": "pnpm build && pkg dist/cli.cjs --compress Brotli --target node24 --output dist/resend",
     "lint": "biome check",
     "format": "biome format --write",
     "typecheck": "tsc --noEmit",
-    "test": "bun test tests/commands tests/lib"
+    "test": "vitest run",
+    "test:e2e": "vitest run --config vitest.config.e2e.ts"
   },
   "dependencies": {
     "@clack/prompts": "1.1.0",
@@ -35,9 +43,19 @@
     "picocolors": "^1.1.1",
     "resend": "6.9.3"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "@biomejs/biome"
+    ]
+  },
   "devDependencies": {
     "@biomejs/biome": "2.4.6",
-    "@types/bun": "1.3.10",
-    "typescript": "5.9.3"
+    "@types/node": "22.15.3",
+    "esbuild": "0.27.3",
+    "tsx": "4.19.4",
+    "typescript": "5.9.3",
+    "vitest": "3.1.4",
+    "@yao-pkg/pkg": "6.14.1"
   }
 }

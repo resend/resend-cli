@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { captureTestEnv } from '../helpers';
 
 // We need to import the module fresh per test to pick up env changes,
@@ -6,6 +6,10 @@ import { captureTestEnv } from '../helpers';
 
 describe('isInteractive', () => {
   const restoreEnv = captureTestEnv();
+
+  beforeEach(() => {
+    vi.resetModules();
+  });
 
   afterEach(() => {
     restoreEnv();
@@ -22,64 +26,64 @@ describe('isInteractive', () => {
     });
   }
 
-  test('returns true when stdin and stdout are TTY and no CI env', () => {
+  test('returns true when stdin and stdout are TTY and no CI env', async () => {
     setTTY(true, true);
     delete process.env.CI;
     delete process.env.GITHUB_ACTIONS;
     delete process.env.TERM;
 
-    const { isInteractive } = require('../../src/lib/tty');
+    const { isInteractive } = await import('../../src/lib/tty');
     expect(isInteractive()).toBe(true);
   });
 
-  test('returns false when stdin is not TTY', () => {
+  test('returns false when stdin is not TTY', async () => {
     setTTY(false, true);
     delete process.env.CI;
 
-    const { isInteractive } = require('../../src/lib/tty');
+    const { isInteractive } = await import('../../src/lib/tty');
     expect(isInteractive()).toBe(false);
   });
 
-  test('returns false when stdout is not TTY', () => {
+  test('returns false when stdout is not TTY', async () => {
     setTTY(true, false);
     delete process.env.CI;
 
-    const { isInteractive } = require('../../src/lib/tty');
+    const { isInteractive } = await import('../../src/lib/tty');
     expect(isInteractive()).toBe(false);
   });
 
-  test('returns false when CI=true', () => {
+  test('returns false when CI=true', async () => {
     setTTY(true, true);
     process.env.CI = 'true';
 
-    const { isInteractive } = require('../../src/lib/tty');
+    const { isInteractive } = await import('../../src/lib/tty');
     expect(isInteractive()).toBe(false);
   });
 
-  test('returns false when CI=1', () => {
+  test('returns false when CI=1', async () => {
     setTTY(true, true);
     process.env.CI = '1';
 
-    const { isInteractive } = require('../../src/lib/tty');
+    const { isInteractive } = await import('../../src/lib/tty');
     expect(isInteractive()).toBe(false);
   });
 
-  test('returns false when GITHUB_ACTIONS is set', () => {
+  test('returns false when GITHUB_ACTIONS is set', async () => {
     setTTY(true, true);
     delete process.env.CI;
     process.env.GITHUB_ACTIONS = 'true';
 
-    const { isInteractive } = require('../../src/lib/tty');
+    const { isInteractive } = await import('../../src/lib/tty');
     expect(isInteractive()).toBe(false);
   });
 
-  test('returns false when TERM=dumb', () => {
+  test('returns false when TERM=dumb', async () => {
     setTTY(true, true);
     delete process.env.CI;
     delete process.env.GITHUB_ACTIONS;
     process.env.TERM = 'dumb';
 
-    const { isInteractive } = require('../../src/lib/tty');
+    const { isInteractive } = await import('../../src/lib/tty');
     expect(isInteractive()).toBe(false);
   });
 });

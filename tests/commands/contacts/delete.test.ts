@@ -3,10 +3,10 @@ import {
   beforeEach,
   describe,
   expect,
-  mock,
-  spyOn,
+  type MockInstance,
   test,
-} from 'bun:test';
+  vi,
+} from 'vitest';
 import {
   captureTestEnv,
   expectExit1,
@@ -16,7 +16,7 @@ import {
   setupOutputSpies,
 } from '../../helpers';
 
-const mockRemove = mock(async () => ({
+const mockRemove = vi.fn(async () => ({
   data: {
     object: 'contact' as const,
     deleted: true,
@@ -25,7 +25,7 @@ const mockRemove = mock(async () => ({
   error: null,
 }));
 
-mock.module('resend', () => ({
+vi.mock('resend', () => ({
   Resend: class MockResend {
     constructor(public key: string) {}
     contacts = { remove: mockRemove };
@@ -35,9 +35,9 @@ mock.module('resend', () => ({
 describe('contacts delete command', () => {
   const restoreEnv = captureTestEnv();
   let spies: ReturnType<typeof setupOutputSpies> | undefined;
-  let errorSpy: ReturnType<typeof spyOn> | undefined;
-  let stderrSpy: ReturnType<typeof spyOn> | undefined;
-  let exitSpy: ReturnType<typeof spyOn> | undefined;
+  let errorSpy: MockInstance | undefined;
+  let stderrSpy: MockInstance | undefined;
+  let exitSpy: MockInstance | undefined;
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
@@ -46,7 +46,6 @@ describe('contacts delete command', () => {
 
   afterEach(() => {
     restoreEnv();
-    spies?.restore();
     errorSpy?.mockRestore();
     stderrSpy?.mockRestore();
     exitSpy?.mockRestore();
@@ -110,7 +109,7 @@ describe('contacts delete command', () => {
 
   test('errors with confirmation_required when --yes absent in non-interactive mode', async () => {
     setNonInteractive();
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { deleteContactCommand } = await import(
@@ -129,7 +128,7 @@ describe('contacts delete command', () => {
 
   test('does not call SDK when confirmation_required error is raised', async () => {
     setNonInteractive();
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { deleteContactCommand } = await import(
@@ -149,7 +148,7 @@ describe('contacts delete command', () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { deleteContactCommand } = await import(
@@ -173,8 +172,10 @@ describe('contacts delete command', () => {
     mockRemove.mockResolvedValueOnce(
       mockSdkError('Contact not found', 'not_found'),
     );
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
-    stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
     const { deleteContactCommand } = await import(

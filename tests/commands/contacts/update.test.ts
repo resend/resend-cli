@@ -3,10 +3,10 @@ import {
   beforeEach,
   describe,
   expect,
-  mock,
-  spyOn,
+  type MockInstance,
   test,
-} from 'bun:test';
+  vi,
+} from 'vitest';
 import {
   captureTestEnv,
   expectExit1,
@@ -16,7 +16,7 @@ import {
   setupOutputSpies,
 } from '../../helpers';
 
-const mockUpdate = mock(async () => ({
+const mockUpdate = vi.fn(async () => ({
   data: {
     object: 'contact' as const,
     id: 'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
@@ -24,7 +24,7 @@ const mockUpdate = mock(async () => ({
   error: null,
 }));
 
-mock.module('resend', () => ({
+vi.mock('resend', () => ({
   Resend: class MockResend {
     constructor(public key: string) {}
     contacts = { update: mockUpdate };
@@ -34,9 +34,9 @@ mock.module('resend', () => ({
 describe('contacts update command', () => {
   const restoreEnv = captureTestEnv();
   let spies: ReturnType<typeof setupOutputSpies> | undefined;
-  let errorSpy: ReturnType<typeof spyOn> | undefined;
-  let stderrSpy: ReturnType<typeof spyOn> | undefined;
-  let exitSpy: ReturnType<typeof spyOn> | undefined;
+  let errorSpy: MockInstance | undefined;
+  let stderrSpy: MockInstance | undefined;
+  let exitSpy: MockInstance | undefined;
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
@@ -45,7 +45,6 @@ describe('contacts update command', () => {
 
   afterEach(() => {
     restoreEnv();
-    spies?.restore();
     errorSpy?.mockRestore();
     stderrSpy?.mockRestore();
     exitSpy?.mockRestore();
@@ -141,7 +140,7 @@ describe('contacts update command', () => {
 
   test('errors with invalid_properties when --properties is not valid JSON', async () => {
     setNonInteractive();
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { updateContactCommand } = await import(
@@ -162,7 +161,7 @@ describe('contacts update command', () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { updateContactCommand } = await import(
@@ -186,8 +185,10 @@ describe('contacts update command', () => {
     mockUpdate.mockResolvedValueOnce(
       mockSdkError('Contact not found', 'not_found'),
     );
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
-    stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
     const { updateContactCommand } = await import(

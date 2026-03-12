@@ -1,0 +1,51 @@
+name: Post-Release Verification
+
+on:
+  workflow_run:
+    workflows: [Release]
+    types: [completed]
+
+jobs:
+  verify-install-unix:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Install via install.sh
+        run: curl -fsSL https://raw.githubusercontent.com/resend/resend-cli/${{ github.event.workflow_run.head_sha }}/install.sh | bash
+
+      - name: Verify binary
+        run: |
+          "$HOME/.resend/bin/resend" --version
+          "$HOME/.resend/bin/resend" --help
+
+  verify-install-windows:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: windows-latest
+    steps:
+      - name: Install via install.ps1
+        shell: pwsh
+        run: irm https://raw.githubusercontent.com/resend/resend-cli/${{ github.event.workflow_run.head_sha }}/install.ps1 | iex
+
+      - name: Verify binary
+        shell: pwsh
+        run: |
+          $exe = "$env:USERPROFILE\.resend\bin\resend.exe"
+          & $exe --version
+          & $exe --help
+
+  verify-npx:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Verify npx resend-cli
+        run: |
+          npx resend-cli --version
+          npx resend-cli --help

@@ -1,14 +1,14 @@
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
   afterEach,
   beforeEach,
   describe,
   expect,
-  type spyOn,
+  type MockInstance,
   test,
-} from 'bun:test';
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+} from 'vitest';
 import {
   captureTestEnv,
   expectExit1,
@@ -19,8 +19,8 @@ import {
 describe('whoami command', () => {
   const restoreEnv = captureTestEnv();
   let spies: ReturnType<typeof setupOutputSpies> | undefined;
-  let errorSpy: ReturnType<typeof spyOn> | undefined;
-  let exitSpy: ReturnType<typeof spyOn> | undefined;
+  let errorSpy: MockInstance | undefined;
+  let exitSpy: MockInstance | undefined;
   let tmpDir: string;
 
   beforeEach(() => {
@@ -36,7 +36,6 @@ describe('whoami command', () => {
 
   afterEach(() => {
     restoreEnv();
-    spies?.restore();
     spies = undefined;
     errorSpy?.mockRestore();
     errorSpy = undefined;

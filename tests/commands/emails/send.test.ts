@@ -1,14 +1,15 @@
+import { unlinkSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   afterEach,
   beforeEach,
   describe,
   expect,
-  mock,
-  spyOn,
+  type MockInstance,
   test,
-} from 'bun:test';
-import { unlinkSync } from 'node:fs';
-import { join } from 'node:path';
+  vi,
+} from 'vitest';
 import {
   captureTestEnv,
   expectExit1,
@@ -17,17 +18,17 @@ import {
   setupOutputSpies,
 } from '../../helpers';
 
-const mockSend = mock(async () => ({
+const mockSend = vi.fn(async () => ({
   data: { id: 'test-email-id-123' },
   error: null,
 }));
 
-const mockDomainsList = mock(async () => ({
+const mockDomainsList = vi.fn(async () => ({
   data: { data: [] },
   error: null,
 }));
 
-mock.module('resend', () => ({
+vi.mock('resend', () => ({
   Resend: class MockResend {
     constructor(public key: string) {}
     emails = { send: mockSend };
@@ -38,9 +39,9 @@ mock.module('resend', () => ({
 describe('send command', () => {
   const restoreEnv = captureTestEnv();
   let spies: ReturnType<typeof setupOutputSpies> | undefined;
-  let errorSpy: ReturnType<typeof spyOn> | undefined;
-  let stderrSpy: ReturnType<typeof spyOn> | undefined;
-  let exitSpy: ReturnType<typeof spyOn> | undefined;
+  let errorSpy: MockInstance | undefined;
+  let stderrSpy: MockInstance | undefined;
+  let exitSpy: MockInstance | undefined;
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
@@ -50,7 +51,6 @@ describe('send command', () => {
 
   afterEach(() => {
     restoreEnv();
-    spies?.restore();
     errorSpy?.mockRestore();
     stderrSpy?.mockRestore();
     exitSpy?.mockRestore();
@@ -159,7 +159,7 @@ describe('send command', () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -182,7 +182,7 @@ describe('send command', () => {
 
   test('errors listing missing flags in non-interactive mode', async () => {
     setNonInteractive();
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -197,7 +197,7 @@ describe('send command', () => {
 
   test('errors when no body and non-interactive', async () => {
     setNonInteractive();
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -212,8 +212,11 @@ describe('send command', () => {
   test('reads HTML body from --html-file', async () => {
     spies = setupOutputSpies();
 
-    const tmpFile = join(import.meta.dir, '__test_email.html');
-    await Bun.write(tmpFile, '<h1>From file</h1>');
+    const tmpFile = join(
+      dirname(fileURLToPath(import.meta.url)),
+      '__test_email.html',
+    );
+    writeFileSync(tmpFile, '<h1>From file</h1>');
 
     try {
       const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -296,7 +299,7 @@ describe('send command', () => {
     );
     const failingResend = {
       domains: {
-        list: mock(async () => {
+        list: vi.fn(async () => {
           throw new Error('Network error');
         }),
       },
