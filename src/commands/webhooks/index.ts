@@ -3,6 +3,7 @@ import { buildHelpText } from '../../lib/help-text';
 import { createWebhookCommand } from './create';
 import { deleteWebhookCommand } from './delete';
 import { getWebhookCommand } from './get';
+import { listenWebhookCommand } from './listen';
 import { listWebhooksCommand } from './list';
 import { updateWebhookCommand } from './update';
 
@@ -39,6 +40,7 @@ Signature verification (Svix):
   )
   .addCommand(createWebhookCommand)
   .addCommand(getWebhookCommand)
+  .addCommand(listenWebhookCommand)
   .addCommand(listWebhooksCommand, { isDefault: true })
   .addCommand(updateWebhookCommand)
   .addCommand(deleteWebhookCommand);
