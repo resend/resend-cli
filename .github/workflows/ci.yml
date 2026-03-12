@@ -14,6 +14,7 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 24
+          cache: 'npm'
       - run: npm ci
       - run: npm run lint
 
@@ -24,6 +25,7 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 24
+          cache: 'npm'
       - run: npm ci
       - run: npm run typecheck
 
@@ -34,6 +36,7 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 24
+          cache: 'npm'
       - run: npm ci
       - run: npm test
 
@@ -44,12 +47,17 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 24
+          cache: 'npm'
       - run: npm ci
       - name: Build Node bundle
         run: npm run build
       - name: Build pkg binary
         run: npx pkg dist/cli.cjs --compress Brotli --target node24-linux-x64 --output dist/resend
       - name: Smoke test Node bundle
-        run: node dist/cli.cjs --version
+        run: |
+          node dist/cli.cjs --version
+          node dist/cli.cjs --help
       - name: Smoke test pkg binary
-        run: ./dist/resend --version
+        run: |
+          ./dist/resend --version
+          ./dist/resend --help

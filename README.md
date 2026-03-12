@@ -39,8 +39,7 @@ Use this when you want to change the CLI and run your build locally.
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org) 22+ (runtime and development)
-- [Bun](https://bun.sh) (only needed for running tests and building native binaries)
+- [Node.js](https://nodejs.org) 20+
 
 ### Setup
 
@@ -63,7 +62,7 @@ Use this when you want to change the CLI and run your build locally.
    npm run build
    ```
 
-   Output: `./dist/cli.js`
+   Output: `./dist/cli.cjs`
 
 ### Running the CLI locally
 
@@ -76,7 +75,7 @@ npm run dev -- --version
 Or run the built JS bundle:
 
 ```bash
-node dist/cli.js --version
+node dist/cli.cjs --version
 ```
 
 ### Making changes
@@ -89,7 +88,7 @@ npm run build
 
 ### Building native binaries
 
-To build a standalone native binary (requires Bun):
+To build a standalone native binary:
 
 ```bash
 npm run build:bin

@@ -15,6 +15,9 @@ jobs:
           - os: macos-latest
             target: node24-macos-arm64
             binary: dist/resend
+          - os: macos-13
+            target: node24-macos-x64
+            binary: dist/resend
           - os: ubuntu-latest
             target: node24-linux-x64
             binary: dist/resend
@@ -28,6 +31,7 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 24
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
@@ -39,10 +43,42 @@ jobs:
         run: npx pkg dist/cli.cjs --compress Brotli --target ${{ matrix.target }} --output ${{ matrix.binary }}
 
       - name: Verify binary runs
-        run: ${{ matrix.binary }} --version
+        run: |
+          ${{ matrix.binary }} --version
+          ${{ matrix.binary }} --help
+
+  test-binary-linux-arm64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Node bundle
+        run: npm run build
+
+      - name: Build binary
+        run: npx pkg dist/cli.cjs --compress Brotli --target node24-linux-arm64 --output dist/resend
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Verify binary runs on arm64
+        run: |
+          docker run --rm --platform linux/arm64 \
+            -v "$PWD/dist:/dist" \
+            node:24-slim sh -c "/dist/resend --version && /dist/resend --help"
 
   release:
-    needs: test-binary
+    needs: [test-binary, test-binary-linux-arm64]
     permissions:
       contents: write
     runs-on: blacksmith-2vcpu-ubuntu-2204
@@ -52,6 +88,7 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 24
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
