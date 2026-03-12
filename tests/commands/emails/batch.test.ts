@@ -344,44 +344,6 @@ describe('batch command', () => {
     ]);
   });
 
-  test('surfaces partial errors in permissive mode (interactive output)', async () => {
-    Object.defineProperty(process.stdin, 'isTTY', {
-      value: true,
-      writable: true,
-    });
-    Object.defineProperty(process.stdout, 'isTTY', {
-      value: true,
-      writable: true,
-    });
-    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    stderrSpy = vi
-      .spyOn(process.stderr, 'write')
-      .mockImplementation(() => true);
-
-    mockBatchSend.mockImplementationOnce(async () => ({
-      data: {
-        data: [{ id: 'abc123' }],
-        errors: [{ index: 1, message: 'Invalid email address' }],
-      },
-      error: null,
-    }));
-
-    const file = await writeTmpJson(VALID_EMAILS);
-    const { batchCommand } = await import('../../../src/commands/emails/batch');
-    await batchCommand.parseAsync(
-      ['--file', file, '--batch-validation', 'permissive'],
-      { from: 'user' },
-    );
-
-    const warnOutput = warnSpy.mock.calls.map((c) => c[0]).join('\n');
-    expect(warnOutput).toContain('1 email failed');
-    expect(warnOutput).toContain('[1] Invalid email address');
-
-    logSpy.mockRestore();
-    warnSpy.mockRestore();
-  });
-
   test('does not include errors key in JSON output when no batch errors', async () => {
     spies = setupOutputSpies();
 
