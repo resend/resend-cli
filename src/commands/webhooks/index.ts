@@ -15,10 +15,6 @@ export const webhooksCommand = new Command('webhooks')
       context: `Webhooks let you receive real-time event notifications from Resend at an HTTPS endpoint.
 Payloads are signed with Svix headers for verification.
 
-As of January 2026, webhook events fire per-recipient. A batch email to 3 recipients
-generates 3 email.sent events. The "to" field remains an array for backward compatibility
-but contains one entry per event.
-
 Event categories (17 total):
   Email:   email.sent, email.delivered, email.delivery_delayed, email.bounced,
            email.complained, email.opened, email.clicked, email.failed,
