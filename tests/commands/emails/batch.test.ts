@@ -255,6 +255,21 @@ describe('batch command', () => {
     expect(opts?.idempotencyKey).toBe('my-key-123');
   });
 
+  test('passes batchValidation to batch.send options', async () => {
+    spies = setupOutputSpies();
+
+    const file = await writeTmpJson(VALID_EMAILS);
+    const { batchCommand } = await import('../../../src/commands/emails/batch');
+    await batchCommand.parseAsync(
+      ['--file', file, '--batch-validation', 'permissive'],
+      { from: 'user' },
+    );
+
+    expect(mockBatchSend).toHaveBeenCalledTimes(1);
+    const opts = mockBatchSend.mock.calls[0][1] as Record<string, unknown>;
+    expect(opts?.batchValidation).toBe('permissive');
+  });
+
   test('errors with auth_error when no API key in non-interactive mode', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;

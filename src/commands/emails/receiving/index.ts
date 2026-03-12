@@ -2,6 +2,7 @@ import { Command } from '@commander-js/extra-typings';
 import { buildHelpText } from '../../../lib/help-text';
 import { getAttachmentCommand } from './attachment';
 import { listAttachmentsCommand } from './attachments';
+import { forwardCommand } from './forward';
 import { getReceivingCommand } from './get';
 import { listReceivingCommand } from './list';
 
@@ -19,10 +20,12 @@ export const receivingCommand = new Command('receiving')
         'resend emails receiving get <email-id>',
         'resend emails receiving attachments <email-id>',
         'resend emails receiving attachment <email-id> <attachment-id>',
+        'resend emails receiving forward <email-id> --to user@example.com --from you@domain.com',
       ],
     }),
   )
   .addCommand(listReceivingCommand, { isDefault: true })
   .addCommand(getReceivingCommand)
   .addCommand(listAttachmentsCommand)
-  .addCommand(getAttachmentCommand);
+  .addCommand(getAttachmentCommand)
+  .addCommand(forwardCommand);
