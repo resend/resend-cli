@@ -55,14 +55,7 @@ export function setupOutputSpies() {
   const stderrSpy = vi
     .spyOn(process.stderr, 'write')
     .mockImplementation(() => true);
-  return {
-    logSpy,
-    stderrSpy,
-    restore() {
-      logSpy.mockRestore();
-      stderrSpy.mockRestore();
-    },
-  };
+  return { logSpy, stderrSpy };
 }
 
 /**

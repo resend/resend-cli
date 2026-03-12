@@ -27,12 +27,13 @@
   "scripts": {
     "dev": "tsx src/cli.ts",
     "dev:watch": "tsx --watch src/cli.ts",
-    "build": "esbuild src/cli.ts --bundle --platform=node --format=cjs --outfile=dist/cli.cjs",
+    "build": "esbuild src/cli.ts --bundle --platform=node --format=cjs --minify --outfile=dist/cli.cjs",
     "build:bin": "npm run build && pkg dist/cli.cjs --compress Brotli --target node24 --output dist/resend",
     "lint": "biome check",
     "format": "biome format --write",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:e2e": "vitest run --config vitest.config.e2e.ts"
   },
   "dependencies": {
     "commander": "14.0.3",

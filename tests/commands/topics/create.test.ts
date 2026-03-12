@@ -42,7 +42,6 @@ describe('topics create command', () => {
 
   afterEach(() => {
     restoreEnv();
-    spies?.restore();
     errorSpy?.mockRestore();
     stderrSpy?.mockRestore();
     exitSpy?.mockRestore();

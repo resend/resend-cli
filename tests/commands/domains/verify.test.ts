@@ -42,7 +42,6 @@ describe('domains verify command', () => {
 
   afterEach(() => {
     restoreEnv();
-    spies?.restore();
     errorSpy?.mockRestore();
     stderrSpy?.mockRestore();
     exitSpy?.mockRestore();

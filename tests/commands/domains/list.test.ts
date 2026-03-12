@@ -63,7 +63,6 @@ describe('domains list command', () => {
 
   afterEach(() => {
     restoreEnv();
-    spies?.restore();
     errorSpy?.mockRestore();
     stderrSpy?.mockRestore();
     exitSpy?.mockRestore();

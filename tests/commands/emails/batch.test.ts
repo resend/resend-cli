@@ -60,7 +60,6 @@ describe('batch command', () => {
 
   afterEach(async () => {
     restoreEnv();
-    spies?.restore();
     errorSpy?.mockRestore();
     stderrSpy?.mockRestore();
     exitSpy?.mockRestore();

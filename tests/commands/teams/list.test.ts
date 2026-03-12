@@ -31,7 +31,6 @@ describe('teams list command', () => {
 
   afterEach(() => {
     restoreEnv();
-    spies?.restore();
     spies = undefined;
     rmSync(tmpDir, { recursive: true, force: true });
   });

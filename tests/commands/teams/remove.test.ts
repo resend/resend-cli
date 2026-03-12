@@ -46,7 +46,6 @@ describe('teams remove command', () => {
 
   afterEach(() => {
     restoreEnv();
-    spies?.restore();
     spies = undefined;
     errorSpy?.mockRestore();
     errorSpy = undefined;

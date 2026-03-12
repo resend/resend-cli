@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getConfigDir } from './config';
 import { VERSION } from './version';
@@ -25,10 +25,7 @@ function readState(): UpdateState | null {
 }
 
 function writeState(state: UpdateState): void {
-  const dir = getConfigDir();
-  if (!existsSync(dir)) {
-    mkdirSync(dir, { recursive: true, mode: 0o700 });
-  }
+  mkdirSync(getConfigDir(), { recursive: true, mode: 0o700 });
   writeFileSync(getStatePath(), JSON.stringify(state), { mode: 0o600 });
 }
 

@@ -52,7 +52,6 @@ describe('doctor command', () => {
 
   afterEach(() => {
     restoreEnv();
-    spies?.restore();
     spies = undefined;
     exitSpy?.mockRestore();
     exitSpy = undefined;

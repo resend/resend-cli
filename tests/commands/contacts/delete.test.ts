@@ -46,7 +46,6 @@ describe('contacts delete command', () => {
 
   afterEach(() => {
     restoreEnv();
-    spies?.restore();
     errorSpy?.mockRestore();
     stderrSpy?.mockRestore();
     exitSpy?.mockRestore();

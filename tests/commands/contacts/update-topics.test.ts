@@ -44,7 +44,6 @@ describe('contacts update-topics command', () => {
 
   afterEach(() => {
     restoreEnv();
-    spies?.restore();
     errorSpy?.mockRestore();
     stderrSpy?.mockRestore();
     exitSpy?.mockRestore();
