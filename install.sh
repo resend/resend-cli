@@ -72,15 +72,13 @@ platform=$(uname -ms)
 case $platform in
   'Darwin x86_64')   target=darwin-x64 ;;
   'Darwin arm64')    target=darwin-arm64 ;;
-  'Linux aarch64')   target=linux-arm64 ;;
-  'Linux arm64')     target=linux-arm64 ;;
   'Linux x86_64')    target=linux-x64 ;;
   *)
     error "Unsupported platform: ${platform}.
 
   Resend CLI supports:
     - macOS (Apple Silicon / Intel)
-    - Linux (x64 / arm64)
+    - Linux (x64)
 
   For Windows, run this in PowerShell:
     irm https://resend.com/install.ps1 | iex"
