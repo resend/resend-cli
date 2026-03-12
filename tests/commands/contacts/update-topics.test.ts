@@ -3,10 +3,10 @@ import {
   beforeEach,
   describe,
   expect,
-  mock,
-  spyOn,
+  type MockInstance,
   test,
-} from 'bun:test';
+  vi,
+} from 'vitest';
 import {
   captureTestEnv,
   expectExit1,
@@ -16,12 +16,12 @@ import {
   setupOutputSpies,
 } from '../../helpers';
 
-const mockUpdateTopics = mock(async () => ({
+const mockUpdateTopics = vi.fn(async () => ({
   data: { id: 'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6' },
   error: null,
 }));
 
-mock.module('resend', () => ({
+vi.mock('resend', () => ({
   Resend: class MockResend {
     constructor(public key: string) {}
     contacts = {
@@ -33,9 +33,9 @@ mock.module('resend', () => ({
 describe('contacts update-topics command', () => {
   const restoreEnv = captureTestEnv();
   let spies: ReturnType<typeof setupOutputSpies> | undefined;
-  let errorSpy: ReturnType<typeof spyOn> | undefined;
-  let stderrSpy: ReturnType<typeof spyOn> | undefined;
-  let exitSpy: ReturnType<typeof spyOn> | undefined;
+  let errorSpy: MockInstance | undefined;
+  let stderrSpy: MockInstance | undefined;
+  let exitSpy: MockInstance | undefined;
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
@@ -136,7 +136,7 @@ describe('contacts update-topics command', () => {
 
   test('errors with missing_topics when --topics absent in non-interactive mode', async () => {
     setNonInteractive();
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { updateContactTopicsCommand } = await import(
@@ -157,7 +157,7 @@ describe('contacts update-topics command', () => {
 
   test('errors with invalid_topics when --topics is not valid JSON', async () => {
     setNonInteractive();
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { updateContactTopicsCommand } = await import(
@@ -176,7 +176,7 @@ describe('contacts update-topics command', () => {
 
   test('errors with invalid_topics when --topics is not an array', async () => {
     setNonInteractive();
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { updateContactTopicsCommand } = await import(
@@ -197,7 +197,7 @@ describe('contacts update-topics command', () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { updateContactTopicsCommand } = await import(
@@ -223,8 +223,10 @@ describe('contacts update-topics command', () => {
     mockUpdateTopics.mockResolvedValueOnce(
       mockSdkError('Topic not found', 'not_found'),
     );
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
-    stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
     const { updateContactTopicsCommand } = await import(

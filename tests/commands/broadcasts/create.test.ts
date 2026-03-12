@@ -3,10 +3,10 @@ import {
   beforeEach,
   describe,
   expect,
-  mock,
-  spyOn,
+  type MockInstance,
   test,
-} from 'bun:test';
+  vi,
+} from 'vitest';
 import * as files from '../../../src/lib/files';
 import {
   captureTestEnv,
@@ -17,12 +17,12 @@ import {
   setupOutputSpies,
 } from '../../helpers';
 
-const mockCreate = mock(async () => ({
+const mockCreate = vi.fn(async () => ({
   data: { id: 'd1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6' },
   error: null,
 }));
 
-mock.module('resend', () => ({
+vi.mock('resend', () => ({
   Resend: class MockResend {
     constructor(public key: string) {}
     broadcasts = { create: mockCreate };
@@ -32,10 +32,10 @@ mock.module('resend', () => ({
 describe('broadcasts create command', () => {
   const restoreEnv = captureTestEnv();
   let spies: ReturnType<typeof setupOutputSpies> | undefined;
-  let errorSpy: ReturnType<typeof spyOn> | undefined;
-  let stderrSpy: ReturnType<typeof spyOn> | undefined;
-  let exitSpy: ReturnType<typeof spyOn> | undefined;
-  let readFileSpy: ReturnType<typeof spyOn> | undefined;
+  let errorSpy: MockInstance | undefined;
+  let stderrSpy: MockInstance | undefined;
+  let exitSpy: MockInstance | undefined;
+  let readFileSpy: MockInstance | undefined;
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
@@ -198,7 +198,7 @@ describe('broadcasts create command', () => {
 
   test('errors with missing_from when --from absent in non-interactive mode', async () => {
     setNonInteractive();
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createBroadcastCommand } = await import(
@@ -224,7 +224,7 @@ describe('broadcasts create command', () => {
 
   test('errors with missing_subject when --subject absent in non-interactive mode', async () => {
     setNonInteractive();
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createBroadcastCommand } = await import(
@@ -250,7 +250,7 @@ describe('broadcasts create command', () => {
 
   test('errors with missing_segment when --segment-id absent in non-interactive mode', async () => {
     setNonInteractive();
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createBroadcastCommand } = await import(
@@ -276,7 +276,7 @@ describe('broadcasts create command', () => {
 
   test('errors with missing_body when no body flag in non-interactive mode', async () => {
     setNonInteractive();
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createBroadcastCommand } = await import(
@@ -304,7 +304,7 @@ describe('broadcasts create command', () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createBroadcastCommand } = await import(
@@ -335,8 +335,10 @@ describe('broadcasts create command', () => {
     mockCreate.mockResolvedValueOnce(
       mockSdkError('Segment not found', 'not_found'),
     );
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
-    stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
     const { createBroadcastCommand } = await import(
@@ -364,7 +366,7 @@ describe('broadcasts create command', () => {
 
   test('does not call SDK when validation fails', async () => {
     setNonInteractive();
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createBroadcastCommand } = await import(
@@ -379,7 +381,9 @@ describe('broadcasts create command', () => {
 
   test('reads html body from --html-file and passes it to SDK', async () => {
     spies = setupOutputSpies();
-    readFileSpy = spyOn(files, 'readFile').mockReturnValue('<p>From file</p>');
+    readFileSpy = vi
+      .spyOn(files, 'readFile')
+      .mockReturnValue('<p>From file</p>');
 
     const { createBroadcastCommand } = await import(
       '../../../src/commands/broadcasts/create'
@@ -405,22 +409,26 @@ describe('broadcasts create command', () => {
 
   test('errors with file_read_error when --html-file path is unreadable', async () => {
     setNonInteractive();
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
-    stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
     const { outputError } = await import('../../../src/lib/output');
-    readFileSpy = spyOn(files, 'readFile').mockImplementation(
-      (filePath: string, globalOpts: { json?: boolean }) => {
-        outputError(
-          {
-            message: `Failed to read file: ${filePath}`,
-            code: 'file_read_error',
-          },
-          { json: globalOpts.json },
-        );
-      },
-    );
+    readFileSpy = vi
+      .spyOn(files, 'readFile')
+      .mockImplementation(
+        (filePath: string, globalOpts: { json?: boolean }) => {
+          outputError(
+            {
+              message: `Failed to read file: ${filePath}`,
+              code: 'file_read_error',
+            },
+            { json: globalOpts.json },
+          );
+        },
+      );
 
     const { createBroadcastCommand } = await import(
       '../../../src/commands/broadcasts/create'

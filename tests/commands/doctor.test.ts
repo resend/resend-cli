@@ -1,13 +1,13 @@
+import { Command } from '@commander-js/extra-typings';
 import {
   afterEach,
   beforeEach,
   describe,
   expect,
-  mock,
-  spyOn,
+  type MockInstance,
   test,
-} from 'bun:test';
-import { Command } from '@commander-js/extra-typings';
+  vi,
+} from 'vitest';
 import {
   captureTestEnv,
   expectExit1,
@@ -16,11 +16,11 @@ import {
 } from '../helpers';
 
 // Mock resend SDK for doctor
-mock.module('resend', () => ({
+vi.mock('resend', () => ({
   Resend: class MockResend {
     constructor(public key: string) {}
     domains = {
-      list: mock(async () => ({
+      list: vi.fn(async () => ({
         data: { data: [{ name: 'example.com', status: 'verified' }] },
         error: null,
       })),
@@ -44,7 +44,7 @@ async function createDoctorProgram() {
 describe('doctor command', () => {
   const restoreEnv = captureTestEnv();
   let spies: ReturnType<typeof setupOutputSpies> | undefined;
-  let exitSpy: ReturnType<typeof spyOn> | undefined;
+  let exitSpy: MockInstance | undefined;
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key_for_doctor';
@@ -113,9 +113,9 @@ describe('doctor command', () => {
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
 
     spies = setupOutputSpies();
-    exitSpy = spyOn(process, 'exit').mockImplementation(
-      () => undefined as never,
-    );
+    exitSpy = vi
+      .spyOn(process, 'exit')
+      .mockImplementation(() => undefined as never);
 
     const program = await createDoctorProgram();
     await program.parseAsync(['doctor', '--json'], { from: 'user' });

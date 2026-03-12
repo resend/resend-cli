@@ -1,15 +1,15 @@
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
   afterEach,
   beforeEach,
   describe,
   expect,
-  mock,
-  spyOn,
+  type MockInstance,
   test,
-} from 'bun:test';
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+  vi,
+} from 'vitest';
 import {
   captureTestEnv,
   expectExit1,
@@ -18,11 +18,11 @@ import {
 } from '../../helpers';
 
 // Mock the Resend SDK
-mock.module('resend', () => ({
+vi.mock('resend', () => ({
   Resend: class MockResend {
     constructor(public key: string) {}
     domains = {
-      list: mock(async () => ({ data: { data: [] }, error: null })),
+      list: vi.fn(async () => ({ data: { data: [] }, error: null })),
     };
   },
 }));
@@ -30,8 +30,8 @@ mock.module('resend', () => ({
 describe('login command', () => {
   const restoreEnv = captureTestEnv();
   let spies: ReturnType<typeof setupOutputSpies> | undefined;
-  let errorSpy: ReturnType<typeof spyOn> | undefined;
-  let exitSpy: ReturnType<typeof spyOn> | undefined;
+  let errorSpy: MockInstance | undefined;
+  let exitSpy: MockInstance | undefined;
   let tmpDir: string;
 
   beforeEach(() => {
@@ -55,7 +55,7 @@ describe('login command', () => {
   });
 
   test('rejects key not starting with re_', async () => {
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { loginCommand } = await import('../../../src/commands/auth/login');
@@ -79,7 +79,7 @@ describe('login command', () => {
 
   test('requires --key in non-interactive mode', async () => {
     spies = setupOutputSpies();
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { loginCommand } = await import('../../../src/commands/auth/login');

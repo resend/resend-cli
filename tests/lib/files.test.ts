@@ -1,15 +1,23 @@
-import { afterEach, describe, expect, spyOn, test } from 'bun:test';
 import { unlinkSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import {
+  afterEach,
+  describe,
+  expect,
+  type MockInstance,
+  test,
+  vi,
+} from 'vitest';
 import { expectExit1, mockExitThrow } from '../helpers';
 
 const globalOpts = { json: false, apiKey: undefined };
 const jsonOpts = { json: true, apiKey: undefined };
 
 describe('readFile', () => {
-  const tmpFile = join(import.meta.dir, 'tmp-test.txt');
-  let errorSpy: ReturnType<typeof spyOn> | undefined;
-  let exitSpy: ReturnType<typeof spyOn> | undefined;
+  const tmpFile = join(dirname(fileURLToPath(import.meta.url)), 'tmp-test.txt');
+  let errorSpy: MockInstance | undefined;
+  let exitSpy: MockInstance | undefined;
 
   afterEach(() => {
     errorSpy?.mockRestore();
@@ -23,25 +31,25 @@ describe('readFile', () => {
     }
   });
 
-  test('reads file content and returns it as a string', () => {
+  test('reads file content and returns it as a string', async () => {
     writeFileSync(tmpFile, '<h1>Hello</h1>', 'utf-8');
-    const { readFile } = require('../../src/lib/files');
+    const { readFile } = await import('../../src/lib/files');
     const content = readFile(tmpFile, globalOpts);
     expect(content).toBe('<h1>Hello</h1>');
   });
 
-  test('reads JSON file content and returns it as a string', () => {
+  test('reads JSON file content and returns it as a string', async () => {
     writeFileSync(tmpFile, '[{"id":1}]', 'utf-8');
-    const { readFile } = require('../../src/lib/files');
+    const { readFile } = await import('../../src/lib/files');
     const content = readFile(tmpFile, globalOpts);
     expect(content).toBe('[{"id":1}]');
   });
 
   test('exits with file_read_error when file does not exist', async () => {
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { readFile } = require('../../src/lib/files');
+    const { readFile } = await import('../../src/lib/files');
     await expectExit1(async () =>
       readFile('/nonexistent/path/data.txt', globalOpts),
     );
@@ -51,10 +59,10 @@ describe('readFile', () => {
   });
 
   test('outputs JSON error with file_read_error code when json option is true', async () => {
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { readFile } = require('../../src/lib/files');
+    const { readFile } = await import('../../src/lib/files');
     await expectExit1(async () => readFile('/nonexistent/file.txt', jsonOpts));
 
     const raw = errorSpy?.mock.calls.map((c) => c[0]).join(' ');

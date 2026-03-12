@@ -3,10 +3,10 @@ import {
   beforeEach,
   describe,
   expect,
-  mock,
-  spyOn,
+  type MockInstance,
   test,
-} from 'bun:test';
+  vi,
+} from 'vitest';
 import {
   captureTestEnv,
   expectExit1,
@@ -16,12 +16,12 @@ import {
   setupOutputSpies,
 } from '../../helpers';
 
-const mockRemove = mock(async () => ({
+const mockRemove = vi.fn(async () => ({
   data: { object: 'domain', id: 'test-domain-id', deleted: true },
   error: null,
 }));
 
-mock.module('resend', () => ({
+vi.mock('resend', () => ({
   Resend: class MockResend {
     constructor(public key: string) {}
     domains = { remove: mockRemove };
@@ -31,9 +31,9 @@ mock.module('resend', () => ({
 describe('domains delete command', () => {
   const restoreEnv = captureTestEnv();
   let spies: ReturnType<typeof setupOutputSpies> | undefined;
-  let errorSpy: ReturnType<typeof spyOn> | undefined;
-  let stderrSpy: ReturnType<typeof spyOn> | undefined;
-  let exitSpy: ReturnType<typeof spyOn> | undefined;
+  let errorSpy: MockInstance | undefined;
+  let stderrSpy: MockInstance | undefined;
+  let exitSpy: MockInstance | undefined;
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
@@ -83,7 +83,7 @@ describe('domains delete command', () => {
 
   test('errors with confirmation_required when --yes absent in non-interactive mode', async () => {
     setNonInteractive();
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { deleteDomainCommand } = await import(
@@ -99,7 +99,7 @@ describe('domains delete command', () => {
 
   test('does not call SDK when confirmation is required but not given', async () => {
     setNonInteractive();
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { deleteDomainCommand } = await import(
@@ -116,7 +116,7 @@ describe('domains delete command', () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { deleteDomainCommand } = await import(
@@ -137,8 +137,10 @@ describe('domains delete command', () => {
     mockRemove.mockResolvedValueOnce(
       mockSdkError('Domain not found', 'not_found'),
     );
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
-    stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
     const { deleteDomainCommand } = await import(

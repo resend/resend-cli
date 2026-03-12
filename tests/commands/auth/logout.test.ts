@@ -1,7 +1,15 @@
-import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  type MockInstance,
+  test,
+  vi,
+} from 'vitest';
 import {
   captureTestEnv,
   expectExit1,
@@ -12,8 +20,8 @@ import {
 describe('logout command', () => {
   const restoreEnv = captureTestEnv();
   let spies: ReturnType<typeof setupOutputSpies> | undefined;
-  let errorSpy: ReturnType<typeof spyOn> | undefined;
-  let exitSpy: ReturnType<typeof spyOn> | undefined;
+  let errorSpy: MockInstance | undefined;
+  let exitSpy: MockInstance | undefined;
   let tmpDir: string;
 
   beforeEach(() => {
@@ -126,7 +134,7 @@ describe('logout command', () => {
   });
 
   test('exits with error when file removal fails', async () => {
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
     spies = setupOutputSpies();
     writeCredentials();

@@ -1,4 +1,4 @@
-import { expect, spyOn } from 'bun:test';
+import { expect, type MockInstance, vi } from 'vitest';
 
 export class ExitError extends Error {
   constructor(public code: number) {
@@ -17,8 +17,8 @@ export function setNonInteractive(): void {
   });
 }
 
-export function mockExitThrow(): ReturnType<typeof spyOn> {
-  return spyOn(process, 'exit').mockImplementation((code?: number) => {
+export function mockExitThrow(): MockInstance {
+  return vi.spyOn(process, 'exit').mockImplementation((code?: number) => {
     throw new ExitError(code ?? 0);
   });
 }
@@ -51,10 +51,10 @@ export function captureTestEnv(): () => void {
  */
 export function setupOutputSpies() {
   setNonInteractive();
-  const logSpy = spyOn(console, 'log').mockImplementation(() => {});
-  const stderrSpy = spyOn(process.stderr, 'write').mockImplementation(
-    () => true,
-  );
+  const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+  const stderrSpy = vi
+    .spyOn(process.stderr, 'write')
+    .mockImplementation(() => true);
   return {
     logSpy,
     stderrSpy,

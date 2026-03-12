@@ -1,8 +1,16 @@
-import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
 import { existsSync, mkdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Command } from '@commander-js/extra-typings';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  type MockInstance,
+  test,
+  vi,
+} from 'vitest';
 import { storeApiKey } from '../../../src/lib/config';
 import {
   captureTestEnv,
@@ -23,8 +31,8 @@ async function createProgram() {
 describe('teams remove command', () => {
   const restoreEnv = captureTestEnv();
   let spies: ReturnType<typeof setupOutputSpies> | undefined;
-  let errorSpy: ReturnType<typeof spyOn> | undefined;
-  let exitSpy: ReturnType<typeof spyOn> | undefined;
+  let errorSpy: MockInstance | undefined;
+  let exitSpy: MockInstance | undefined;
   let tmpDir: string;
 
   beforeEach(() => {
@@ -73,7 +81,7 @@ describe('teams remove command', () => {
 
   test('errors when name omitted in non-interactive mode', async () => {
     spies = setupOutputSpies();
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
     storeApiKey('re_default');
 
@@ -88,7 +96,7 @@ describe('teams remove command', () => {
 
   test('errors when team does not exist', async () => {
     spies = setupOutputSpies();
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
     storeApiKey('re_default');
 
