@@ -14,7 +14,7 @@ export const updateCommand = new Command('update')
     'after',
     buildHelpText({
       context: 'Required: --scheduled-at',
-      output: '  {"id":"<email-id>","object":"email"}',
+      output: '  {"object":"email","id":"<email-id>"}',
       errorCodes: ['auth_error', 'update_error'],
       examples: [
         'resend emails update <email-id> --scheduled-at 2024-08-05T11:52:01.858Z',
