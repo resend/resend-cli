@@ -1,5 +1,6 @@
 import * as p from '@clack/prompts';
 import { Command, Option } from '@commander-js/extra-typings';
+import pc from 'picocolors';
 import { runCreate } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
@@ -100,11 +101,11 @@ Permissions:
             ...(opts.domainId && { domain_id: opts.domainId }),
           }),
         onInteractive: (d) => {
-          console.log(`\n  Name:    ${name}`);
-          console.log(`  ID:      ${d.id}`);
-          console.log(`  Token:   ${d.token}`);
+          console.log(`\n  ${pc.gray('Name:')}    ${name}`);
+          console.log(`  ${pc.gray('ID:')}      ${d.id}`);
+          console.log(`  ${pc.gray('Token:')}   ${d.token}`);
           console.log(
-            '\n⚠  Store this token now — it cannot be retrieved again.',
+            `\n${pc.yellow('⚠')}  Store this token now — it cannot be retrieved again.`,
           );
         },
       },
