@@ -298,7 +298,7 @@ describe('batch command', () => {
 
     mockBatchSend.mockImplementationOnce(async () => ({
       data: null,
-      error: { message: 'Rate limit exceeded', name: 'rate_limit_exceeded' },
+      error: { message: 'Something went wrong', name: 'application_error' },
     }));
 
     const file = await writeTmpJson(VALID_EMAILS);
