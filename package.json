@@ -17,6 +17,7 @@
   "engines": {
     "node": ">=20"
   },
+  "packageManager": "pnpm@10.11.0",
   "files": [
     "dist/cli.cjs"
   ],
@@ -28,7 +29,7 @@
     "dev": "tsx src/cli.ts",
     "dev:watch": "tsx --watch src/cli.ts",
     "build": "esbuild src/cli.ts --bundle --platform=node --format=cjs --minify --outfile=dist/cli.cjs",
-    "build:bin": "npm run build && pkg dist/cli.cjs --compress Brotli --target node24 --output dist/resend",
+    "build:bin": "pnpm build && pkg dist/cli.cjs --compress Brotli --target node24 --output dist/resend",
     "lint": "biome check",
     "format": "biome format --write",
     "typecheck": "tsc --noEmit",
@@ -41,6 +42,12 @@
     "commander": "14.0.3",
     "picocolors": "^1.1.1",
     "resend": "6.9.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "@biomejs/biome"
+    ]
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.6",
