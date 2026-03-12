@@ -383,7 +383,9 @@ resend [global options] <command> [command options]
 | Flag | Description |
 |------|-------------|
 | `--api-key <key>` | Override API key for this invocation (takes highest priority) |
+| `--profile <name>` | Profile to use (overrides `RESEND_PROFILE` env var) |
 | `--json` | Force JSON output even in interactive terminals |
+| `-q, --quiet` | Suppress spinners and status output (implies `--json`) |
 | `--version` | Print version and exit |
 | `--help` | Show help text |
 
