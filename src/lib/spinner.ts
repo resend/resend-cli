@@ -1,7 +1,7 @@
+import pc from 'picocolors';
 import type { GlobalOpts } from './client';
 import { errorMessage, outputError } from './output';
 import { isInteractive, isUnicodeSupported } from './tty';
-import pc from 'picocolors';
 
 // Status symbols generated via String.fromCodePoint() — never literal Unicode in
 // source — to prevent UTF-8 → Latin-1 corruption when the npm package is bundled.
