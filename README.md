@@ -445,51 +445,6 @@ Agents calling the CLI as a subprocess automatically get JSON output (non-TTY de
 | Credentials | `~/.config/resend/credentials.json` | `0600` permissions (owner read/write) |
 | Install directory | `~/.resend/bin/` | Respects `$RESEND_INSTALL` |
 
-## Releasing
-
-### Stable release
-
-1. Bump the version in `package.json` and commit:
-
-   ```bash
-   # Edit package.json version field
-   git add package.json
-   git commit -m "chore: bump to vX.Y.Z"
-   ```
-
-2. Create and push a tag:
-
-   ```bash
-   git tag vX.Y.Z
-   git push origin main --tags
-   ```
-
-3. The [release workflow](.github/workflows/release.yml) will automatically:
-   - Run tests across macOS, Linux, and Windows
-   - Build and codesign native binaries
-   - Create a GitHub Release with all artifacts
-
-4. After the release succeeds:
-   - Merge the automatic PR at [resend/homebrew-cli](https://github.com/resend/homebrew-cli)
-
-5. Publish to npm
-   - `pnpm publish`
-
-### Release candidates
-
-To test the build pipeline without affecting the latest release, use a pre-release tag:
-
-```bash
-git tag vX.Y.Z-rc.1
-git push origin vX.Y.Z-rc.1
-```
-
-Pre-release tags (any tag containing `-`, e.g. `v1.3.1-rc.1`) will:
-- Create a GitHub Release marked as **prerelease** (not shown as "Latest")
-- **Skip** the Homebrew tap notification
-
-Once validated, delete the RC release and tag the stable version.
-
 ## License
 
 MIT
