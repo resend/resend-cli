@@ -39,7 +39,7 @@ describe('createClient', () => {
     expect(client).toBeInstanceOf(Resend);
   });
 
-  test('team name is threaded through to resolveApiKey', async () => {
+  test('profile name is threaded through to resolveApiKey', async () => {
     delete process.env.RESEND_API_KEY;
     const tmpDir = join(
       tmpdir(),
