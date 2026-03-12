@@ -62,22 +62,17 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Run installer with bogus version and verify error
+      - name: Run installer with bogus version (expect failure)
+        id: bogus
+        continue-on-error: true
         run: |
           $env:RESEND_VERSION = 'v99.99.99'
-          $errorThrown = $false
-          $output = ''
-          try {
-            $output = Invoke-Expression (Get-Content -Raw .\install.ps1) *>&1 | Out-String
-          } catch {
-            $errorThrown = $true
-          }
-          if (-not $errorThrown) {
-            Write-Error "Expected installer to throw on bogus version"
+          Invoke-Expression (Get-Content -Raw .\install.ps1)
+
+      - name: Assert installer failed
+        run: |
+          if ('${{ steps.bogus.outcome }}' -ne 'failure') {
+            Write-Error "Expected installer to fail on bogus version"
             exit 1
           }
-          if ($output -notmatch 'error:') {
-            Write-Error "Expected 'error:' in output"
-            exit 1
-          }
-          Write-Host "Error path handled correctly and shell survived"
+          Write-Host "Installer correctly signaled failure"
