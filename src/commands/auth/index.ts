@@ -24,6 +24,6 @@ export const authCommand = new Command('auth')
   )
   .addCommand(loginCommand)
   .addCommand(logoutCommand)
-  .addCommand(listCommand)
+  .addCommand(listCommand, { isDefault: true })
   .addCommand(switchCommand)
   .addCommand(removeCommand);

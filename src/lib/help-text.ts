@@ -13,7 +13,7 @@ const GLOBAL_OPTS_FULL = `Global options:
   -q, --quiet         Suppress spinners and status output (implies --json)`;
 
 const GLOBAL_OPTS_SETUP = `Global options:
-  --profile <name>  Profile to save the key to
+  --profile <name>  Profile to use
   --json            Force JSON output
   -q, --quiet       Suppress spinners and status output (implies --json)`;
 

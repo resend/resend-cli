@@ -1,6 +1,11 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../lib/client';
-import { maskKey, resolveApiKey, resolveProfileName } from '../lib/config';
+import {
+  listProfiles,
+  maskKey,
+  resolveApiKey,
+  resolveProfileName,
+} from '../lib/config';
 import { buildHelpText } from '../lib/help-text';
 import { outputError, outputResult } from '../lib/output';
 import { isInteractive } from '../lib/tty';
@@ -28,21 +33,34 @@ Shows which profile is active and where the API key comes from.`,
     const resolved = resolveApiKey(globalOpts.apiKey, profileFlag);
 
     if (!resolved) {
+      const requestedProfile = profileFlag
+        ? profileFlag
+        : resolveProfileName(profileFlag);
+      const profiles = listProfiles();
+      const profileExists = profiles.some((p) => p.name === requestedProfile);
+
+      // If a specific profile was requested but doesn't exist, show a targeted error
+      const message =
+        profileFlag && !profileExists
+          ? `Profile "${profileFlag}" not found.\nAvailable profiles: ${profiles.map((p) => p.name).join(', ') || '(none)'}`
+          : 'Not authenticated.\nRun `resend login` to get started.';
+      const code =
+        profileFlag && !profileExists
+          ? 'profile_not_found'
+          : 'not_authenticated';
+
       if (globalOpts.json || !isInteractive()) {
         outputResult(
-          { authenticated: false },
+          {
+            authenticated: false,
+            ...(profileFlag && !profileExists ? { profile: profileFlag } : {}),
+          },
           { json: globalOpts.json, exitCode: 1 },
         );
         // outputResult with exitCode calls process.exit, but TS doesn't know
         return;
       }
-      outputError(
-        {
-          message: 'Not authenticated.\nRun `resend login` to get started.',
-          code: 'not_authenticated',
-        },
-        { json: false },
-      );
+      outputError({ message, code }, { json: false });
       return;
     }
 
