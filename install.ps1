@@ -18,7 +18,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-# ─── Helpers ─────────────────────────────────────────────────────────────────
+# --- Helpers -----------------------------------------------------------------
 
 function Write-Info { param($msg) Write-Host "  $msg" -ForegroundColor DarkGray }
 function Write-Ok   { param($msg) Write-Host "  $msg" -ForegroundColor Green }
@@ -28,14 +28,14 @@ function Write-Fail {
   Write-Host "  error: $msg" -ForegroundColor Red
 }
 
-# ─── Architecture detection ───────────────────────────────────────────────────
+# --- Architecture detection --------------------------------------------------
 
 if ($env:PROCESSOR_ARCHITECTURE -notin @('AMD64', 'EM64T')) {
   Write-Fail "Unsupported architecture: $env:PROCESSOR_ARCHITECTURE`n`n  Resend CLI currently supports Windows x64 only."
   return
 }
 
-# ─── Version + Download URL ───────────────────────────────────────────────────
+# --- Version + Download URL --------------------------------------------------
 
 $repo = 'https://github.com/resend/resend-cli'
 $target = 'windows-x64'
@@ -51,7 +51,7 @@ if ($Version) {
   $url = "$repo/releases/latest/download/resend-$target.zip"
 }
 
-# ─── Install directory ────────────────────────────────────────────────────────
+# --- Install directory -------------------------------------------------------
 
 if ($env:RESEND_INSTALL) { $installDir = $env:RESEND_INSTALL } else { $installDir = Join-Path $HOME '.resend' }
 $binDir     = Join-Path $installDir 'bin'
@@ -61,7 +61,7 @@ if (-not (Test-Path $binDir)) {
   New-Item -ItemType Directory -Path $binDir -Force | Out-Null
 }
 
-# ─── Download + Extract ───────────────────────────────────────────────────────
+# --- Download + Extract ------------------------------------------------------
 
 Write-Host ""
 Write-Host "  Installing Resend CLI..." -ForegroundColor White
@@ -96,11 +96,11 @@ try {
 }
 
 if (-not (Test-Path $exe)) {
-  Write-Fail "Binary not found after extraction. The download may be corrupted — try again."
+  Write-Fail "Binary not found after extraction. The download may be corrupted -- try again."
   return
 }
 
-# ─── Verify installation ──────────────────────────────────────────────────────
+# --- Verify installation -----------------------------------------------------
 
 try {
   $installedVersion = (& $exe --version 2>$null).Trim()
@@ -113,14 +113,14 @@ Write-Ok "Resend CLI $installedVersion installed successfully!"
 Write-Host ""
 Write-Info "Binary:  $exe"
 
-# ─── PATH setup ───────────────────────────────────────────────────────────────
+# --- PATH setup --------------------------------------------------------------
 
 $userPath    = [Environment]::GetEnvironmentVariable('PATH', 'User')
 if (-not $userPath) { $userPath = '' }
 $pathEntries = $userPath -split ';' | Where-Object { $_ -ne '' }
 
 if ($pathEntries -contains $binDir) {
-  # Already on PATH — just print the getting-started line
+  # Already on PATH -- just print the getting-started line
   Write-Host ""
   Write-Host "  Run " -NoNewline
   Write-Host "resend --help" -ForegroundColor Cyan -NoNewline
@@ -129,7 +129,7 @@ if ($pathEntries -contains $binDir) {
   return
 }
 
-# Add to user PATH (persists across sessions — no admin rights needed)
+# Add to user PATH (persists across sessions -- no admin rights needed)
 $newPath = ($pathEntries + $binDir) -join ';'
 [Environment]::SetEnvironmentVariable('PATH', $newPath, 'User')
 $env:PATH = "$env:PATH;$binDir"  # Also update the current session
