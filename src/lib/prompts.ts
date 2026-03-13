@@ -1,4 +1,5 @@
 import * as p from '@clack/prompts';
+import { getCancelExitCode } from './cli-exit';
 import type { GlobalOpts } from './client';
 import { renameProfile, validateProfileName } from './config';
 import { errorMessage, outputError } from './output';
@@ -14,7 +15,7 @@ export interface FieldSpec {
 
 export function cancelAndExit(message: string): never {
   p.cancel(message);
-  process.exit(0);
+  process.exit(getCancelExitCode());
 }
 
 /**
