@@ -12,7 +12,7 @@ import {
 } from '../../lib/config';
 import { buildHelpText } from '../../lib/help-text';
 import { errorMessage, outputError, outputResult } from '../../lib/output';
-import { cancelAndExit } from '../../lib/prompts';
+import { cancelAndExit, promptRenameIfInvalid } from '../../lib/prompts';
 import { createSpinner } from '../../lib/spinner';
 import { isInteractive } from '../../lib/tty';
 
@@ -170,6 +170,7 @@ export const loginCommand = new Command('login')
           ...existingProfiles.map((t) => ({
             value: t.name,
             label: `${t.name} (overwrite)`,
+            hint: validateProfileName(t.name) ? 'invalid name' : undefined,
           })),
           { value: '__new__' as const, label: '+ Create new profile' },
         ];
@@ -192,6 +193,12 @@ export const loginCommand = new Command('login')
             cancelAndExit('Login cancelled.');
           }
           profileName = newName;
+        } else if (validateProfileName(choice)) {
+          const renamed = await promptRenameIfInvalid(choice, globalOpts);
+          if (!renamed) {
+            return;
+          }
+          profileName = renamed;
         } else {
           profileName = choice;
         }

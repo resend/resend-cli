@@ -32,7 +32,7 @@ function writeState(state: UpdateState): void {
 /**
  * Compare two semver strings. Returns true if remote > local.
  */
-function isNewer(local: string, remote: string): boolean {
+export function isNewer(local: string, remote: string): boolean {
   const parse = (v: string) => v.replace(/^v/, '').split('.').map(Number);
   const [lMaj, lMin, lPat] = parse(local);
   const [rMaj, rMin, rPat] = parse(remote);
@@ -45,7 +45,7 @@ function isNewer(local: string, remote: string): boolean {
   return rPat > lPat;
 }
 
-async function fetchLatestVersion(): Promise<string | null> {
+export async function fetchLatestVersion(): Promise<string | null> {
   try {
     const res = await fetch(GITHUB_RELEASES_URL, {
       headers: { Accept: 'application/vnd.github.v3+json' },
@@ -89,17 +89,24 @@ function shouldSkipCheck(): boolean {
   return false;
 }
 
-function detectInstallMethod(): string {
+export function detectInstallMethod(): string {
   const execPath = process.execPath || process.argv[0] || '';
+  const scriptPath = process.argv[1] || '';
 
-  // Homebrew
-  if (/\/(Cellar|homebrew)\//i.test(execPath)) {
-    return 'brew update && brew upgrade resend';
+  // npm / npx global install — check first because npm_execpath and
+  // the script path inside node_modules are the most reliable signals,
+  // even when Node itself was installed via Homebrew.
+  if (
+    process.env.npm_execpath ||
+    /node_modules/.test(scriptPath) ||
+    /node_modules/.test(execPath)
+  ) {
+    return 'npm install -g resend-cli';
   }
 
-  // npm / npx global install
-  if (/node_modules/.test(execPath) || process.env.npm_execpath) {
-    return 'npm install -g resend-cli';
+  // Homebrew (direct tap install, not npm-via-brew)
+  if (/\/(Cellar|homebrew)\//i.test(execPath)) {
+    return 'brew update && brew upgrade resend';
   }
 
   // Install script (default install location)

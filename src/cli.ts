@@ -16,6 +16,7 @@ import { segmentsCommand } from './commands/segments/index';
 import { teamsDeprecatedCommand } from './commands/teams-deprecated';
 import { templatesCommand } from './commands/templates/index';
 import { topicsCommand } from './commands/topics/index';
+import { updateCommand } from './commands/update';
 import { webhooksCommand } from './commands/webhooks/index';
 import { whoamiCommand } from './commands/whoami';
 import { errorMessage, outputError } from './lib/output';
@@ -90,6 +91,7 @@ ${pc.gray('Examples:')}
   .addCommand(authCommand)
   .addCommand(openCommand)
   .addCommand(whoamiCommand)
+  .addCommand(updateCommand)
   .addCommand(teamsDeprecatedCommand);
 
 // Hide the deprecated --team option from help
@@ -100,7 +102,14 @@ if (teamOption) {
 
 program
   .parseAsync()
-  .then(() => checkForUpdates().catch(() => {}))
+  .then(() => {
+    // Skip the background update notice when the user explicitly ran `update`
+    const ran = program.args[0];
+    if (ran === 'update') {
+      return;
+    }
+    return checkForUpdates().catch(() => {});
+  })
   .catch((err) => {
     outputError({
       message: errorMessage(err, 'An unexpected error occurred'),

@@ -4,6 +4,7 @@ import { listCommand } from './list';
 import { loginCommand } from './login';
 import { logoutCommand } from './logout';
 import { removeCommand } from './remove';
+import { renameCommand } from './rename';
 import { switchCommand } from './switch';
 
 export const authCommand = new Command('auth')
@@ -18,6 +19,7 @@ export const authCommand = new Command('auth')
         'resend logout',
         'resend auth list',
         'resend auth switch staging',
+        'resend auth rename staging production',
         'resend auth remove staging',
       ],
     }),
@@ -26,4 +28,5 @@ export const authCommand = new Command('auth')
   .addCommand(logoutCommand)
   .addCommand(listCommand, { isDefault: true })
   .addCommand(switchCommand)
+  .addCommand(renameCommand)
   .addCommand(removeCommand);
