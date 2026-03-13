@@ -1,8 +1,8 @@
-import { readFileSync, writeFileSync } from "fs";
+import { readFileSync, writeFileSync } from 'node:fs';
 
-const version = JSON.parse(readFileSync("package.json", "utf8")).version;
-const path = "skills/resend-cli/SKILL.md";
-const content = readFileSync(path, "utf8");
+const version = JSON.parse(readFileSync('package.json', 'utf8')).version;
+const path = 'skills/resend-cli/SKILL.md';
+const content = readFileSync(path, 'utf8');
 const pattern = /version: ".*?"/;
 
 if (!pattern.test(content)) {
