@@ -90,6 +90,15 @@ async function loadReactFile(
     if (mod.default === undefined) {
       throw new Error('Missing default export');
     }
+    if (typeof mod.default === 'function') {
+      outputError(
+        {
+          message: `Invalid React file: ${filePath}. Default export must be a rendered React value, not a component function.`,
+          code: 'file_read_error',
+        },
+        { json: globalOpts.json },
+      );
+    }
     return mod.default;
   } catch {
     outputError(
@@ -109,7 +118,10 @@ export const sendCommand = new Command('send')
   .option('--subject <subject>', 'Email subject (required)')
   .option('--html <html>', 'HTML body')
   .option('--html-file <path>', 'Path to an HTML file for the body')
-  .option('--react-file <path>', 'Path to a React module for the body')
+  .option(
+    '--react-file <path>',
+    'Path to a React module whose default export is a rendered React value',
+  )
   .option('--text <text>', 'Plain-text body')
   .option('--cc <addresses...>', 'CC recipients')
   .option('--bcc <addresses...>', 'BCC recipients')

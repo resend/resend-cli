@@ -230,7 +230,7 @@ resend emails send \
 | `--text <text>` | One of text/html/html-file/react-file | Plain text body |
 | `--html <html>` | One of text/html/html-file/react-file | HTML body as a string |
 | `--html-file <path>` | One of text/html/html-file/react-file | Path to an HTML file to use as body |
-| `--react-file <path>` | One of text/html/html-file/react-file | Path to a React module (default export) for the body |
+| `--react-file <path>` | One of text/html/html-file/react-file | Path to a React module whose default export is a rendered React value |
 | `--cc <addresses...>` | No | CC recipients (space-separated) |
 | `--bcc <addresses...>` | No | BCC recipients (space-separated) |
 | `--reply-to <address>` | No | Reply-to email address |
@@ -289,6 +289,8 @@ resend emails send \
   --subject "Newsletter" \
   --react-file ./email.react.mjs
 ```
+
+`--react-file` expects the module's default export to be a rendered React value (for example, `export default EmailTemplate({ userName: "Ada" })`), not a component function.
 
 **With CC, BCC, and reply-to:**
 
