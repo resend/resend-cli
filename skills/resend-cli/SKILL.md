@@ -51,15 +51,7 @@ The CLI auto-detects non-TTY environments and outputs JSON — no `--json` flag 
 
 ## Authentication
 
-Priority (highest to lowest):
-
-| Priority | Source | Example |
-|----------|--------|---------|
-| 1 | `--api-key` flag | `resend --api-key re_xxx emails send ...` |
-| 2 | `RESEND_API_KEY` env | `export RESEND_API_KEY=re_xxx` |
-| 3 | Config file | `resend login --key re_xxx` (stores in `~/.config/resend/credentials.json`) |
-
-Multi-profile: use `--profile <name>` or `RESEND_PROFILE` env to select a stored profile.
+Auth resolves: `--api-key` flag > `RESEND_API_KEY` env > config file (`resend login --key`). Use `--profile` or `RESEND_PROFILE` for multi-profile.
 
 ## Global Flags
 
@@ -69,169 +61,26 @@ Multi-profile: use `--profile <name>` or `RESEND_PROFILE` env to select a stored
 | `-p, --profile <name>` | Select stored profile |
 | `--json` | Force JSON output (auto in non-TTY) |
 | `-q, --quiet` | Suppress spinners/status (implies `--json`) |
-| `-v, --version` | Print version |
-| `--help` | Show help |
 
-## Command Map
+## Available Commands
 
-### emails
+| Command Group | What it does |
+|--------------|-------------|
+| `emails` | send, get, list, batch, cancel, update |
+| `emails receiving` | list, get, attachments, forward, listen |
+| `domains` | create, verify, update, delete, list |
+| `api-keys` | create, list, delete |
+| `broadcasts` | create, send, update, delete, list |
+| `contacts` | create, update, delete, segments, topics |
+| `contact-properties` | create, update, delete, list |
+| `segments` | create, list, delete |
+| `templates` | create, publish, duplicate, delete, list |
+| `topics` | create, update, delete, list |
+| `webhooks` | create, update, listen, delete, list |
+| `auth` | login, logout, switch, rename, remove |
+| `whoami` / `doctor` / `update` / `open` | Utility commands |
 
-| Subcommand | Required Flags | Output Shape |
-|------------|---------------|--------------|
-| `send` | `--from`, `--to`, `--subject`, + one of `--text`/`--html`/`--html-file` | `{"id":"<uuid>"}` |
-| `get <id>` | — | `{"object":"email","id":"...","from":"...","to":[...],"subject":"...","last_event":"...","created_at":"..."}` |
-| `list` | — | `{"object":"list","data":[...],"has_more":bool}` |
-| `batch` | `--file <path>` | `[{"id":"..."},...]` or `{"data":[...],"errors":[...]}` |
-| `cancel <id>` | — | `{"object":"email","id":"..."}` |
-| `update <id>` | `--scheduled-at` | `{"object":"email","id":"..."}` |
-
-**send** optional flags: `--cc`, `--bcc`, `--reply-to`, `--scheduled-at`, `--attachment <paths...>`, `--headers <key=value...>`, `--tags <name=value...>`, `--idempotency-key`
-
-**list** optional flags: `--limit` (1-100, default 10), `--after`, `--before`
-
-**batch** optional flags: `--idempotency-key`, `--batch-validation` (`strict`|`permissive`)
-
-### emails receiving
-
-| Subcommand | Required Flags | Output Shape |
-|------------|---------------|--------------|
-| `list` | — | `{"object":"list","data":[...],"has_more":bool}` |
-| `get <id>` | — | Full email with html, text, headers, raw.download_url, attachments |
-| `attachments <emailId>` | — | `{"object":"list","data":[...],"has_more":bool}` |
-| `attachment <emailId> <attachmentId>` | — | Single attachment with download_url |
-| `forward <id>` | `--to`, `--from` | `{"id":"..."}` |
-
-### domains
-
-| Subcommand | Required Flags | Output Shape |
-|------------|---------------|--------------|
-| `list` | — | `{"object":"list","data":[...],"has_more":bool}` |
-| `create` | `--name` | Domain object with `records[]` (DNS records to configure) |
-| `get <id>` | — | Full domain with records, status, capabilities |
-| `verify <id>` | — | `{"object":"domain","id":"..."}` |
-| `update <id>` | At least one of `--tls`, `--open-tracking`/`--no-open-tracking`, `--click-tracking`/`--no-click-tracking` | `{"object":"domain","id":"..."}` |
-| `delete <id>` | `--yes` (non-interactive) | `{"object":"domain","id":"...","deleted":true}` |
-
-**create** optional flags: `--region` (`us-east-1`\|`eu-west-1`\|`sa-east-1`\|`ap-northeast-1`), `--tls` (`opportunistic`\|`enforced`), `--sending`, `--receiving`
-
-### api-keys
-
-| Subcommand | Required Flags | Output Shape |
-|------------|---------------|--------------|
-| `list` | — | `{"object":"list","data":[{"id":"...","name":"...","created_at":"..."}]}` |
-| `create` | `--name` | `{"id":"...","token":"re_..."}` (token shown once only) |
-| `delete <id>` | `--yes` (non-interactive) | `{"object":"api-key","id":"...","deleted":true}` |
-
-**create** optional flags: `--permission` (`full_access`\|`sending_access`), `--domain-id`
-
-### broadcasts
-
-| Subcommand | Required Flags | Output Shape |
-|------------|---------------|--------------|
-| `list` | — | `{"object":"list","data":[...],"has_more":bool}` |
-| `create` | `--from`, `--subject`, `--segment-id`, + one of `--html`/`--html-file`/`--text` | `{"id":"..."}` |
-| `get <id>` | — | Full broadcast object |
-| `send <id>` | — | `{"id":"..."}` |
-| `update <id>` | At least one of `--from`, `--subject`, `--html`, `--html-file`, `--text`, `--name` | `{"id":"..."}` |
-| `delete <id>` | `--yes` (non-interactive) | `{"object":"broadcast","id":"...","deleted":true}` |
-
-**create** optional flags: `--name`, `--reply-to`, `--preview-text`, `--topic-id`, `--send`, `--scheduled-at` (only with `--send`)
-
-### contacts
-
-| Subcommand | Required Flags | Output Shape |
-|------------|---------------|--------------|
-| `list` | — | `{"object":"list","data":[...],"has_more":bool}` |
-| `create` | `--email` | `{"object":"contact","id":"..."}` |
-| `get <id\|email>` | — | Full contact object |
-| `update <id\|email>` | At least one option | `{"object":"contact","id":"..."}` |
-| `delete <id\|email>` | `--yes` (non-interactive) | `{"object":"contact","id":"...","deleted":true}` |
-| `segments <id\|email>` | — | `{"object":"list","data":[...]}` |
-| `add-segment <contactId>` | `--segment-id` | `{"id":"..."}` |
-| `remove-segment <contactId> <segmentId>` | — | `{"id":"...","deleted":true}` |
-| `topics <id\|email>` | — | `{"object":"list","data":[...]}` |
-| `update-topics <id\|email>` | `--topics <json>` | `{"id":"..."}` |
-
-**create** optional flags: `--first-name`, `--last-name`, `--unsubscribed`, `--properties <json>`, `--segment-id <id...>`
-
-**update** optional flags: `--unsubscribed`/`--no-unsubscribed`, `--properties <json>`
-
-### contact-properties
-
-| Subcommand | Required Flags | Output Shape |
-|------------|---------------|--------------|
-| `list` | — | `{"object":"list","data":[...],"has_more":bool}` |
-| `create` | `--key`, `--type` (`string`\|`number`) | `{"object":"contact_property","id":"..."}` |
-| `get <id>` | — | Full property definition |
-| `update <id>` | `--fallback-value` or `--clear-fallback-value` | `{"object":"contact_property","id":"..."}` |
-| `delete <id>` | `--yes` (non-interactive) | `{"object":"contact_property","id":"...","deleted":true}` |
-
-### segments
-
-| Subcommand | Required Flags | Output Shape |
-|------------|---------------|--------------|
-| `list` | — | `{"object":"list","data":[...],"has_more":bool}` |
-| `create` | `--name` | `{"object":"segment","id":"...","name":"..."}` |
-| `get <id>` | — | Full segment object |
-| `delete <id>` | `--yes` (non-interactive) | `{"object":"segment","id":"...","deleted":true}` |
-
-### templates
-
-| Subcommand | Required Flags | Output Shape |
-|------------|---------------|--------------|
-| `list` | — | `{"object":"list","data":[...],"has_more":bool}` |
-| `create` | `--name`, + `--html` or `--html-file` | `{"object":"template","id":"..."}` |
-| `get <id\|alias>` | — | Full template with html, variables, status |
-| `update <id\|alias>` | At least one option | `{"object":"template","id":"..."}` |
-| `publish <id\|alias>` | — | `{"object":"template","id":"..."}` |
-| `duplicate <id\|alias>` | — | `{"object":"template","id":"..."}` (new ID) |
-| `delete <id\|alias>` | `--yes` (non-interactive) | `{"object":"template","id":"...","deleted":true}` |
-
-**create/update** optional flags: `--subject`, `--text`, `--from`, `--reply-to`, `--alias`, `--var <KEY:type[:fallback]...>`
-
-### topics
-
-| Subcommand | Required Flags | Output Shape |
-|------------|---------------|--------------|
-| `list` | — | `{"data":[...]}` |
-| `create` | `--name` | `{"id":"..."}` |
-| `get <id>` | — | Full topic object |
-| `update <id>` | `--name` or `--description` | `{"id":"..."}` |
-| `delete <id>` | `--yes` (non-interactive) | `{"object":"topic","id":"...","deleted":true}` |
-
-**create** optional flags: `--description`, `--default-subscription` (`opt_in`\|`opt_out`)
-
-### webhooks
-
-| Subcommand | Required Flags | Output Shape |
-|------------|---------------|--------------|
-| `list` | — | `{"object":"list","data":[...],"has_more":bool}` |
-| `create` | `--endpoint`, `--events` | `{"object":"webhook","id":"...","signing_secret":"whsec_..."}` |
-| `get <id>` | — | Full webhook config |
-| `update <id>` | At least one of `--endpoint`, `--events`, `--status` | `{"object":"webhook","id":"..."}` |
-| `delete <id>` | `--yes` (non-interactive) | `{"object":"webhook","id":"...","deleted":true}` |
-
-**Available events:** `email.sent`, `email.delivered`, `email.delivery_delayed`, `email.bounced`, `email.complained`, `email.opened`, `email.clicked`, `email.failed`, `email.scheduled`, `email.suppressed`, `email.received`, `contact.created`, `contact.updated`, `contact.deleted`, `domain.created`, `domain.updated`, `domain.deleted` — or use `all`
-
-### auth
-
-| Subcommand | Required Flags | Output Shape |
-|------------|---------------|--------------|
-| `login` | `--key` (non-interactive) | `{"success":true,"config_path":"...","profile":"..."}` |
-| `logout` | — | `{"success":true,"config_path":"...","profile":"..."}` |
-| `list` | — | `{"profiles":[{"name":"...","active":bool}]}` |
-| `switch [name]` | — | `{"success":true,"active_profile":"..."}` |
-| `rename [old] [new]` | — | `{"success":true,"old_name":"...","new_name":"..."}` |
-| `remove [name]` | — | `{"success":true,"removed_profile":"..."}` |
-
-### Utility Commands
-
-| Command | Output Shape |
-|---------|--------------|
-| `whoami` | `{"authenticated":true,"profile":"...","api_key":"re_...abcd","source":"config\|env\|flag"}` |
-| `doctor` | `{"ok":bool,"checks":[{"name":"...","status":"pass\|warn\|fail","message":"..."}]}` |
-| `update` | `{"current":"...","latest":"...","update_available":bool,"upgrade_command":"..."}` |
-| `open` | Opens Resend dashboard in browser |
+Read the matching reference file for detailed flags and output shapes.
 
 ## Common Mistakes
 
@@ -275,22 +124,18 @@ RESEND_API_KEY=re_xxx resend emails send --from ... --to ... --subject ... --tex
 resend doctor -q
 ```
 
-## What Do You Need?
+## When to Load References
 
-| Task | Reference |
-|------|-----------|
-| **emails** (send, get, list, batch, cancel, update, receiving) | [references/emails.md](references/emails.md) |
-| **domains** (create, verify, update, delete) | [references/domains.md](references/domains.md) |
-| **api-keys** (create, list, delete) | [references/api-keys.md](references/api-keys.md) |
-| **broadcasts** (create, send, update, delete) | [references/broadcasts.md](references/broadcasts.md) |
-| **contacts** (create, update, segments, topics) | [references/contacts.md](references/contacts.md) |
-| **contact-properties** (create, update, delete) | [references/contact-properties.md](references/contact-properties.md) |
-| **segments** (create, list, delete) | [references/segments.md](references/segments.md) |
-| **templates** (create, publish, duplicate, delete) | [references/templates.md](references/templates.md) |
-| **topics** (create, update, delete) | [references/topics.md](references/topics.md) |
-| **webhooks** (create, update, listen, delete) | [references/webhooks.md](references/webhooks.md) |
-| **auth & utilities** (login, logout, whoami, doctor) | [references/auth.md](references/auth.md) |
-| **Multi-step workflow recipes** | [references/workflows.md](references/workflows.md) |
-| **Error codes and troubleshooting** | [references/error-codes.md](references/error-codes.md) |
-| **Resend SDK integration** (Node.js, Python, Go, etc.) | Install the [`resend`](https://github.com/resend/resend-skills) skill — covers SDK usage, webhook verification, and template variables |
-| **AI agent email inbox** | Install the [`agent-email-inbox`](https://github.com/resend/resend-skills) skill — covers security levels for untrusted email input |
+- **Sending or reading emails** → [references/emails.md](references/emails.md)
+- **Setting up or verifying a domain** → [references/domains.md](references/domains.md)
+- **Managing API keys** → [references/api-keys.md](references/api-keys.md)
+- **Creating or sending broadcasts** → [references/broadcasts.md](references/broadcasts.md)
+- **Managing contacts, segments, or topics** → [references/contacts.md](references/contacts.md), [references/segments.md](references/segments.md), [references/topics.md](references/topics.md)
+- **Defining contact properties** → [references/contact-properties.md](references/contact-properties.md)
+- **Working with templates** → [references/templates.md](references/templates.md)
+- **Setting up webhooks or listening for events** → [references/webhooks.md](references/webhooks.md)
+- **Auth, profiles, or health checks** → [references/auth.md](references/auth.md)
+- **Multi-step recipes** (setup, CI/CD, broadcast workflow) → [references/workflows.md](references/workflows.md)
+- **Command failed with an error** → [references/error-codes.md](references/error-codes.md)
+- **Resend SDK integration** (Node.js, Python, Go, etc.) → Install the [`resend`](https://github.com/resend/resend-skills) skill
+- **AI agent email inbox** → Install the [`agent-email-inbox`](https://github.com/resend/resend-skills) skill
