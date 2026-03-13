@@ -17,7 +17,17 @@ inputs:
     description: Resend API key for authenticating CLI commands. Get yours at https://resend.com/api-keys
     required: true
 references:
-  - references/commands.md
+  - references/emails.md
+  - references/domains.md
+  - references/api-keys.md
+  - references/broadcasts.md
+  - references/contacts.md
+  - references/contact-properties.md
+  - references/segments.md
+  - references/templates.md
+  - references/topics.md
+  - references/webhooks.md
+  - references/auth.md
   - references/workflows.md
   - references/error-codes.md
 ---
@@ -269,8 +279,18 @@ resend doctor -q
 
 | Task | Reference |
 |------|-----------|
-| **Detailed flag specs for any command** | [references/commands.md](references/commands.md) |
-| **Multi-step workflow recipes** (setup, domains, broadcasts, CI/CD, templates, webhooks) | [references/workflows.md](references/workflows.md) |
+| **emails** (send, get, list, batch, cancel, update, receiving) | [references/emails.md](references/emails.md) |
+| **domains** (create, verify, update, delete) | [references/domains.md](references/domains.md) |
+| **api-keys** (create, list, delete) | [references/api-keys.md](references/api-keys.md) |
+| **broadcasts** (create, send, update, delete) | [references/broadcasts.md](references/broadcasts.md) |
+| **contacts** (create, update, segments, topics) | [references/contacts.md](references/contacts.md) |
+| **contact-properties** (create, update, delete) | [references/contact-properties.md](references/contact-properties.md) |
+| **segments** (create, list, delete) | [references/segments.md](references/segments.md) |
+| **templates** (create, publish, duplicate, delete) | [references/templates.md](references/templates.md) |
+| **topics** (create, update, delete) | [references/topics.md](references/topics.md) |
+| **webhooks** (create, update, listen, delete) | [references/webhooks.md](references/webhooks.md) |
+| **auth & utilities** (login, logout, whoami, doctor) | [references/auth.md](references/auth.md) |
+| **Multi-step workflow recipes** | [references/workflows.md](references/workflows.md) |
 | **Error codes and troubleshooting** | [references/error-codes.md](references/error-codes.md) |
 | **Resend SDK integration** (Node.js, Python, Go, etc.) | Install the [`resend`](https://github.com/resend/resend-skills) skill — covers SDK usage, webhook verification, and template variables |
 | **AI agent email inbox** | Install the [`agent-email-inbox`](https://github.com/resend/resend-skills) skill — covers security levels for untrusted email input |
