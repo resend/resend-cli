@@ -1,0 +1,130 @@
+{
+  "skill_name": "ResendCLI",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Check our email domain status — is everything verified and healthy?",
+      "expected_output": "Should use the Resend CLI to run `resend domains list` and `resend domains get <id>`, then present domain verification status, DNS records, and capabilities clearly. If no API key is available, should explain why and provide remediation steps.",
+      "files": [],
+      "assertions": [
+        {"text": "Used the Resend CLI (`resend domains` command) to fetch live data"},
+        {"text": "Read the API key dynamically from the current project's environment file or CLI profile — did not hardcode it and did not search outside the project directory"},
+        {"text": "If authenticated: output includes the domain name(s), verification status, and sending/receiving capabilities. If not authenticated: clearly explains the auth issue and provides remediation steps (both env-var and CLI profile options)"},
+        {"text": "Used --json flag for structured output"},
+        {"text": "Presented results in a clear, organized format (e.g., Markdown table or structured summary)"}
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Show me the last 5 emails we sent",
+      "expected_output": "Should use the Resend CLI to run `resend emails list --limit 5`, then present the emails in a clear readable format with dates, recipients, subjects, and delivery status.",
+      "files": [],
+      "assertions": [
+        {"text": "Used the Resend CLI (`resend emails list`) to fetch live data"},
+        {"text": "Passed --limit 5 to get exactly 5 emails"},
+        {"text": "Output shows the recipients (to addresses) for each email"},
+        {"text": "Output shows the subject lines for each email"},
+        {"text": "Output shows the delivery status (delivered/bounced/etc.) for each email"}
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "How many API keys do we have set up for Resend and what are they called?",
+      "expected_output": "Should use the Resend CLI to run `resend api-keys list`, then present the API key names and IDs without exposing any actual key values.",
+      "files": [],
+      "assertions": [
+        {"text": "Used the Resend CLI (`resend api-keys list`) to fetch live data"},
+        {"text": "States the correct count of API keys found"},
+        {"text": "Lists the key names discovered from the account"},
+        {"text": "Does not expose any actual API key token values"}
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "What Resend profile am I logged in as?",
+      "expected_output": "Should use the Resend CLI to run `resend whoami` to check the active profile and auth status, then present the profile name and masked key. Should follow a structured discovery order: check env files first, then CLI profiles.",
+      "files": [],
+      "assertions": [
+        {"text": "Used `resend whoami` to check auth status"},
+        {"text": "Checked for API key in env files (.env.local, .env) before falling back to CLI profiles — followed a structured discovery order"},
+        {"text": "Does not display any full/unmasked API key"},
+        {"text": "If authenticated: shows the profile name, masked key, and key source. If not authenticated: suggests both env-var setup and `resend login` as remediation options"}
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Something seems wrong with our email setup. Can you run a health check?",
+      "expected_output": "Should run `resend doctor --json` as the first diagnostic command, then present findings and branch into specific areas based on results.",
+      "files": [],
+      "assertions": [
+        {"text": "Ran `resend doctor` as the first command (not domains list or emails list)"},
+        {"text": "Used --json flag for structured output"},
+        {"text": "Output covers API key validity status"},
+        {"text": "If authenticated: output covers domain verification/health status. If not authenticated: clearly states auth is the blocking issue and provides remediation steps"},
+        {"text": "Provides actionable next steps based on the specific issues found (not generic advice)"}
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Send a test email to test@example.com with the subject 'Hello from Resend'",
+      "expected_output": "Should discover the from address from env files or domains list, confirm the send with the user before executing, then construct the correct `resend emails send` command.",
+      "files": [],
+      "assertions": [
+        {"text": "Attempted to discover the from address from project env files (RESEND_FROM) or by running `resend domains list`"},
+        {"text": "Asked the user to confirm before sending the email — did NOT send without explicit approval"},
+        {"text": "Used `resend emails send` with --from, --to, --subject, and a body option (--text, --html, or --html-file)"},
+        {"text": "Included --to test@example.com and --subject 'Hello from Resend'"},
+        {"text": "Did not hardcode the API key in the command"}
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Show me all our contacts and what segments they belong to",
+      "expected_output": "Should run `resend contacts list` to get contacts, then for each contact run `resend contacts segments <id>` to show segment membership.",
+      "files": [],
+      "assertions": [
+        {"text": "Used `resend contacts list` to fetch all contacts"},
+        {"text": "Used `resend contacts segments` to check segment membership"},
+        {"text": "Output shows contact names or emails"},
+        {"text": "Output shows which segments each contact belongs to"}
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "List our email templates and show me the details of the first one",
+      "expected_output": "Should run `resend templates list` then `resend templates get <id>` for the first template, presenting the template name, subject, variables, and status.",
+      "files": [],
+      "assertions": [
+        {"text": "Used `resend templates list` to fetch templates"},
+        {"text": "Used `resend templates get <id>` to fetch details of the first template"},
+        {"text": "Output shows the template name and subject"},
+        {"text": "Output mentions the template's draft/published status"}
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "What webhooks do we have set up and what events are they listening for?",
+      "expected_output": "Should run `resend webhooks list` and present each webhook's endpoint URL, status, and subscribed events. If no webhooks exist, should list all available event types to help the user set one up.",
+      "files": [],
+      "assertions": [
+        {"text": "Used `resend webhooks list` to fetch webhook data"},
+        {"text": "If webhooks exist: shows endpoint URL, subscribed events, and enabled/disabled status for each. If none exist: clearly states no webhooks are configured"},
+        {"text": "Lists available Resend event types — includes all three categories (email, contact, domain events), not just email events"},
+        {"text": "Provides a concrete example command for creating a webhook if the user wants to set one up"}
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "I want to send a broadcast to our newsletter subscribers. Walk me through it.",
+      "expected_output": "Should discover segments via `resend segments list`, help identify the newsletter segment, then guide through `resend broadcasts create` with required flags, confirming before sending.",
+      "files": [],
+      "assertions": [
+        {"text": "Used `resend segments list` to discover available segments"},
+        {"text": "Identified or asked the user to confirm the correct newsletter segment"},
+        {"text": "Explained the `resend broadcasts create` command with required flags (--from, --subject, --segment-id, --html)"},
+        {"text": "Confirmed with the user before executing the send"},
+        {"text": "Mentioned the --send flag or the separate `resend broadcasts send <id>` step"}
+      ]
+    }
+  ]
+}
