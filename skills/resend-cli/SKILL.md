@@ -272,5 +272,5 @@ resend doctor -q
 | **Detailed flag specs for any command** | [references/commands.md](references/commands.md) |
 | **Multi-step workflow recipes** (setup, domains, broadcasts, CI/CD, templates, webhooks) | [references/workflows.md](references/workflows.md) |
 | **Error codes and troubleshooting** | [references/error-codes.md](references/error-codes.md) |
-| **Resend SDK integration** (Node.js, Python, Go, etc.) | Install the `resend` skill — covers SDK usage, webhook verification, and template variables |
-| **AI agent email inbox** | Install the `agent-email-inbox` skill — covers security levels for untrusted email input |
+| **Resend SDK integration** (Node.js, Python, Go, etc.) | Install the [`resend`](https://github.com/resend/resend-skills) skill — covers SDK usage, webhook verification, and template variables |
+| **AI agent email inbox** | Install the [`agent-email-inbox`](https://github.com/resend/resend-skills) skill — covers security levels for untrusted email input |
