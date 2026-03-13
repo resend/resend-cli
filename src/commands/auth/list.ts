@@ -1,6 +1,6 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
-import { listProfiles } from '../../lib/config';
+import { listProfiles, validateProfileName } from '../../lib/config';
 import { outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 
@@ -21,9 +21,22 @@ export function listAction(globalOpts: GlobalOpts) {
     console.log('\n  Profiles\n');
   }
 
+  let hasInvalid = false;
   for (const profile of profiles) {
     const marker = profile.active ? ' (active)' : '';
-    console.log(`  ${profile.active ? '▸' : ' '} ${profile.name}${marker}`);
+    const isInvalid = validateProfileName(profile.name) !== undefined;
+    if (isInvalid) {
+      hasInvalid = true;
+    }
+    console.log(
+      `  ${profile.active ? '▸' : ' '} ${profile.name}${marker}${isInvalid ? ' (invalid name)' : ''}`,
+    );
+  }
+
+  if (hasInvalid && isInteractive()) {
+    console.log(
+      '\n  Profiles with invalid names can be renamed via `resend auth rename`.',
+    );
   }
 
   if (isInteractive()) {
