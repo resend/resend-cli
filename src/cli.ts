@@ -19,6 +19,7 @@ import { topicsCommand } from './commands/topics/index';
 import { updateCommand } from './commands/update';
 import { webhooksCommand } from './commands/webhooks/index';
 import { whoamiCommand } from './commands/whoami';
+import { printWelcome } from './lib/logo';
 import { errorMessage, outputError } from './lib/output';
 import { checkForUpdates } from './lib/update-check';
 import { PACKAGE_NAME, VERSION } from './lib/version';
@@ -100,19 +101,32 @@ if (teamOption) {
   teamOption.hidden = true;
 }
 
-program
-  .parseAsync()
-  .then(() => {
-    // Skip the background update notice when the user explicitly ran `update`
-    const ran = program.args[0];
-    if (ran === 'update') {
-      return;
-    }
-    return checkForUpdates().catch(() => {});
-  })
-  .catch((err) => {
+const args = process.argv.slice(2);
+if (args.length === 0) {
+  (async () => {
+    printWelcome(VERSION);
+    await checkForUpdates();
+  })().catch((err) => {
     outputError({
-      message: errorMessage(err, 'An unexpected error occurred'),
-      code: 'unexpected_error',
+      message: errorMessage(err, 'Failed to show welcome'),
+      code: 'welcome_error',
     });
   });
+} else {
+  program
+    .parseAsync()
+    .then(() => {
+      // Skip the background update notice when the user explicitly ran `update`
+      const ran = program.args[0];
+      if (ran === 'update') {
+        return;
+      }
+      return checkForUpdates().catch(() => {});
+    })
+    .catch((err) => {
+      outputError({
+        message: errorMessage(err, 'An unexpected error occurred'),
+        code: 'unexpected_error',
+      });
+    });
+}
