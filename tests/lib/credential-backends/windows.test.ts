@@ -1,4 +1,4 @@
-import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 // We mock child_process to verify stdin usage without requiring Windows
 vi.mock('node:child_process', () => {
@@ -21,11 +21,9 @@ vi.mock('node:child_process', () => {
   const mockSpawn = vi.fn(() => ({
     stdin: mockStdin,
     stdout: {
-      on: vi.fn(
-        (event: string, cb: (data: Buffer) => void) => {
-          // no output
-        },
-      ),
+      on: vi.fn((_event: string, _cb: (data: Buffer) => void) => {
+        // no output
+      }),
     },
     stderr: {
       on: vi.fn(),
