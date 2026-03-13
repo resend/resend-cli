@@ -40,7 +40,7 @@ const program = new Command()
     'Output the current version',
   )
   .option('--api-key <key>', 'Resend API key (overrides env/config)')
-  .option('--profile <name>', 'Profile to use (overrides RESEND_PROFILE)')
+  .option('-p, --profile <name>', 'Profile to use (overrides RESEND_PROFILE)')
   .option('--team <name>', 'Deprecated: use --profile instead')
   .option('--json', 'Force JSON output')
   .option('-q, --quiet', 'Suppress spinners and status output (implies --json)')

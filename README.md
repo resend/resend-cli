@@ -190,6 +190,22 @@ resend login --key re_xxx --json
 | `invalid_key_format` | Key does not start with `re_` |
 | `validation_failed` | Resend API rejected the key |
 
+#### Switch between teams and accounts
+
+If you work across multiple Resend teams or accounts, the CLI handles that too.
+
+Switch between profiles without logging in and out:
+
+```bash
+resend auth switch
+```
+
+You can also use the global `--profile` (or `-p`) flag on any command to run it with a specific profile.
+
+```bash
+resend domains list --profile production
+```
+
 ---
 
 ### `resend emails send`
@@ -383,7 +399,7 @@ resend [global options] <command> [command options]
 | Flag | Description |
 |------|-------------|
 | `--api-key <key>` | Override API key for this invocation (takes highest priority) |
-| `--profile <name>` | Profile to use (overrides `RESEND_PROFILE` env var) |
+| `-p, --profile <name>` | Profile to use (overrides `RESEND_PROFILE` env var) |
 | `--json` | Force JSON output even in interactive terminals |
 | `-q, --quiet` | Suppress spinners and status output (implies `--json`) |
 | `--version` | Print version and exit |
