@@ -10,13 +10,13 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import {
   getConfigDir,
-  listTeams,
+  listProfiles,
   removeApiKey,
   resolveApiKey,
-  resolveTeamName,
-  setActiveTeam,
+  resolveProfileName,
+  setActiveProfile,
   storeApiKey,
-  validateTeamName,
+  validateProfileName,
 } from '../../src/lib/config';
 import { captureTestEnv } from '../helpers';
 
@@ -68,7 +68,28 @@ describe('resolveApiKey', () => {
     expect(result).toEqual({ key: 're_env_key', source: 'env' });
   });
 
-  test('config file is third priority', () => {
+  test('config file is third priority (new format)', () => {
+    delete process.env.RESEND_API_KEY;
+    process.env.XDG_CONFIG_HOME = tmpDir;
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'default',
+        profiles: { default: { api_key: 're_config_key' } },
+      }),
+    );
+
+    const result = resolveApiKey();
+    expect(result).toEqual({
+      key: 're_config_key',
+      source: 'config',
+      profile: 'default',
+    });
+  });
+
+  test('config file is third priority (legacy teams format)', () => {
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = tmpDir;
     const configDir = join(tmpDir, 'resend');
@@ -85,7 +106,7 @@ describe('resolveApiKey', () => {
     expect(result).toEqual({
       key: 're_config_key',
       source: 'config',
-      team: 'default',
+      profile: 'default',
     });
   });
 
@@ -103,11 +124,11 @@ describe('resolveApiKey', () => {
     expect(result).toEqual({
       key: 're_legacy_key',
       source: 'config',
-      team: 'default',
+      profile: 'default',
     });
   });
 
-  test('resolves specific team from config', () => {
+  test('resolves specific profile from config', () => {
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = tmpDir;
     const configDir = join(tmpDir, 'resend');
@@ -115,8 +136,8 @@ describe('resolveApiKey', () => {
     writeFileSync(
       join(configDir, 'credentials.json'),
       JSON.stringify({
-        active_team: 'default',
-        teams: {
+        active_profile: 'default',
+        profiles: {
           default: { api_key: 're_default' },
           staging: { api_key: 're_staging' },
         },
@@ -127,7 +148,7 @@ describe('resolveApiKey', () => {
     expect(result).toEqual({
       key: 're_staging',
       source: 'config',
-      team: 'staging',
+      profile: 'staging',
     });
   });
 
@@ -149,7 +170,7 @@ describe('resolveApiKey', () => {
     expect(result).toBeNull();
   });
 
-  test('returns null when team does not exist in config', () => {
+  test('returns null when profile does not exist in config', () => {
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = tmpDir;
     const configDir = join(tmpDir, 'resend');
@@ -157,8 +178,8 @@ describe('resolveApiKey', () => {
     writeFileSync(
       join(configDir, 'credentials.json'),
       JSON.stringify({
-        active_team: 'default',
-        teams: { default: { api_key: 're_default' } },
+        active_profile: 'default',
+        profiles: { default: { api_key: 're_default' } },
       }),
     );
 
@@ -167,7 +188,7 @@ describe('resolveApiKey', () => {
   });
 });
 
-describe('resolveTeamName', () => {
+describe('resolveProfileName', () => {
   const restoreEnv = captureTestEnv();
   let tmpDir: string;
 
@@ -186,33 +207,41 @@ describe('resolveTeamName', () => {
   });
 
   test('flag value takes highest priority', () => {
-    process.env.RESEND_TEAM = 'env_team';
-    expect(resolveTeamName('flag_team')).toBe('flag_team');
+    process.env.RESEND_PROFILE = 'env_profile';
+    expect(resolveProfileName('flag_profile')).toBe('flag_profile');
   });
 
-  test('env var is second priority', () => {
-    process.env.RESEND_TEAM = 'env_team';
-    expect(resolveTeamName()).toBe('env_team');
+  test('RESEND_PROFILE env var is second priority', () => {
+    process.env.RESEND_PROFILE = 'env_profile';
+    expect(resolveProfileName()).toBe('env_profile');
   });
 
-  test('active_team from config is third priority', () => {
+  test('RESEND_TEAM env var is fallback for RESEND_PROFILE', () => {
+    delete process.env.RESEND_PROFILE;
+    process.env.RESEND_TEAM = 'env_team';
+    expect(resolveProfileName()).toBe('env_team');
+  });
+
+  test('active_profile from config is third priority', () => {
+    delete process.env.RESEND_PROFILE;
     delete process.env.RESEND_TEAM;
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     writeFileSync(
       join(configDir, 'credentials.json'),
       JSON.stringify({
-        active_team: 'production',
-        teams: { production: { api_key: 're_xxx' } },
+        active_profile: 'production',
+        profiles: { production: { api_key: 're_xxx' } },
       }),
     );
 
-    expect(resolveTeamName()).toBe('production');
+    expect(resolveProfileName()).toBe('production');
   });
 
   test('defaults to "default" when nothing configured', () => {
+    delete process.env.RESEND_PROFILE;
     delete process.env.RESEND_TEAM;
-    expect(resolveTeamName()).toBe('default');
+    expect(resolveProfileName()).toBe('default');
   });
 });
 
@@ -233,29 +262,29 @@ describe('storeApiKey', () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  test('writes credentials.json with team structure', () => {
+  test('writes credentials.json with profile structure', () => {
     const configPath = storeApiKey('re_test_key_123');
     expect(configPath).toContain('credentials.json');
 
     const data = JSON.parse(readFileSync(configPath, 'utf-8'));
-    expect(data.active_team).toBe('default');
-    expect(data.teams.default.api_key).toBe('re_test_key_123');
+    expect(data.active_profile).toBe('default');
+    expect(data.profiles.default.api_key).toBe('re_test_key_123');
   });
 
-  test('stores key under specific team name', () => {
+  test('stores key under specific profile name', () => {
     const configPath = storeApiKey('re_staging_key', 'staging');
     const data = JSON.parse(readFileSync(configPath, 'utf-8'));
-    expect(data.teams.staging.api_key).toBe('re_staging_key');
+    expect(data.profiles.staging.api_key).toBe('re_staging_key');
   });
 
-  test('preserves existing teams when adding new one', () => {
+  test('preserves existing profiles when adding new one', () => {
     storeApiKey('re_default_key');
     storeApiKey('re_staging_key', 'staging');
 
     const configPath = join(tmpDir, 'resend', 'credentials.json');
     const data = JSON.parse(readFileSync(configPath, 'utf-8'));
-    expect(data.teams.default.api_key).toBe('re_default_key');
-    expect(data.teams.staging.api_key).toBe('re_staging_key');
+    expect(data.profiles.default.api_key).toBe('re_default_key');
+    expect(data.profiles.staging.api_key).toBe('re_staging_key');
   });
 
   test('creates config directory if it does not exist', () => {
@@ -272,25 +301,25 @@ describe('storeApiKey', () => {
     expect(mode).toBe(0o600);
   });
 
-  test('overwrites existing team key', () => {
+  test('overwrites existing profile key', () => {
     storeApiKey('re_first_key');
     storeApiKey('re_second_key');
 
     const configPath = join(tmpDir, 'resend', 'credentials.json');
     const data = JSON.parse(readFileSync(configPath, 'utf-8'));
-    expect(data.teams.default.api_key).toBe('re_second_key');
+    expect(data.profiles.default.api_key).toBe('re_second_key');
   });
 
-  test('sets first team as active', () => {
-    storeApiKey('re_first_key', 'myteam');
+  test('sets first profile as active', () => {
+    storeApiKey('re_first_key', 'myprofile');
 
     const configPath = join(tmpDir, 'resend', 'credentials.json');
     const data = JSON.parse(readFileSync(configPath, 'utf-8'));
-    expect(data.active_team).toBe('myteam');
+    expect(data.active_profile).toBe('myprofile');
   });
 });
 
-describe('listTeams', () => {
+describe('listProfiles', () => {
   const restoreEnv = captureTestEnv();
   let tmpDir: string;
 
@@ -308,22 +337,22 @@ describe('listTeams', () => {
   });
 
   test('returns empty array when no config', () => {
-    expect(listTeams()).toEqual([]);
+    expect(listProfiles()).toEqual([]);
   });
 
-  test('returns teams with active flag', () => {
+  test('returns profiles with active flag', () => {
     storeApiKey('re_default', 'default');
     storeApiKey('re_staging', 'staging');
 
-    const teams = listTeams();
-    expect(teams).toEqual([
+    const profiles = listProfiles();
+    expect(profiles).toEqual([
       { name: 'default', active: true },
       { name: 'staging', active: false },
     ]);
   });
 });
 
-describe('setActiveTeam', () => {
+describe('setActiveProfile', () => {
   const restoreEnv = captureTestEnv();
   let tmpDir: string;
 
@@ -340,24 +369,24 @@ describe('setActiveTeam', () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  test('switches active team', () => {
+  test('switches active profile', () => {
     storeApiKey('re_default', 'default');
     storeApiKey('re_staging', 'staging');
 
-    setActiveTeam('staging');
+    setActiveProfile('staging');
 
     const configPath = join(tmpDir, 'resend', 'credentials.json');
     const data = JSON.parse(readFileSync(configPath, 'utf-8'));
-    expect(data.active_team).toBe('staging');
+    expect(data.active_profile).toBe('staging');
   });
 
-  test('throws when team does not exist', () => {
+  test('throws when profile does not exist', () => {
     storeApiKey('re_default');
-    expect(() => setActiveTeam('nonexistent')).toThrow('not found');
+    expect(() => setActiveProfile('nonexistent')).toThrow('not found');
   });
 
   test('throws when no credentials file', () => {
-    expect(() => setActiveTeam('any')).toThrow('No credentials file');
+    expect(() => setActiveProfile('any')).toThrow('No credentials file');
   });
 });
 
@@ -378,29 +407,29 @@ describe('removeApiKey', () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  test('removes a team entry', () => {
+  test('removes a profile entry', () => {
     storeApiKey('re_default', 'default');
     storeApiKey('re_staging', 'staging');
 
     removeApiKey('staging');
 
-    const teams = listTeams();
-    expect(teams).toEqual([{ name: 'default', active: true }]);
+    const profiles = listProfiles();
+    expect(profiles).toEqual([{ name: 'default', active: true }]);
   });
 
-  test('adjusts active_team when active is removed', () => {
+  test('adjusts active_profile when active is removed', () => {
     storeApiKey('re_default', 'default');
     storeApiKey('re_staging', 'staging');
-    setActiveTeam('staging');
+    setActiveProfile('staging');
 
     removeApiKey('staging');
 
     const configPath = join(tmpDir, 'resend', 'credentials.json');
     const data = JSON.parse(readFileSync(configPath, 'utf-8'));
-    expect(data.active_team).toBe('default');
+    expect(data.active_profile).toBe('default');
   });
 
-  test('deletes file when last team removed', () => {
+  test('deletes file when last profile removed', () => {
     storeApiKey('re_only', 'only');
 
     removeApiKey('only');
@@ -410,7 +439,7 @@ describe('removeApiKey', () => {
     expect(existsSync(configPath)).toBe(false);
   });
 
-  test('throws when team does not exist', () => {
+  test('throws when profile does not exist', () => {
     storeApiKey('re_default');
     expect(() => removeApiKey('nonexistent')).toThrow('not found');
   });
@@ -420,32 +449,32 @@ describe('removeApiKey', () => {
   });
 });
 
-describe('validateTeamName', () => {
+describe('validateProfileName', () => {
   test('accepts valid names', () => {
-    expect(validateTeamName('default')).toBeUndefined();
-    expect(validateTeamName('my-team')).toBeUndefined();
-    expect(validateTeamName('team_1')).toBeUndefined();
-    expect(validateTeamName('prod-2024')).toBeUndefined();
-    expect(validateTeamName('Production')).toBeUndefined();
-    expect(validateTeamName('MyTeam')).toBeUndefined();
+    expect(validateProfileName('default')).toBeUndefined();
+    expect(validateProfileName('my-profile')).toBeUndefined();
+    expect(validateProfileName('profile_1')).toBeUndefined();
+    expect(validateProfileName('prod-2024')).toBeUndefined();
+    expect(validateProfileName('Production')).toBeUndefined();
+    expect(validateProfileName('MyProfile')).toBeUndefined();
   });
 
   test('rejects spaces and special characters', () => {
-    expect(validateTeamName('my team')).toContain('letters');
-    expect(validateTeamName('team@org')).toContain('letters');
+    expect(validateProfileName('my profile')).toContain('letters');
+    expect(validateProfileName('profile@org')).toContain('letters');
   });
 
   test('rejects empty name', () => {
-    expect(validateTeamName('')).toContain('empty');
+    expect(validateProfileName('')).toContain('empty');
   });
 
   test('rejects names longer than 64 characters', () => {
     const longName = 'a'.repeat(65);
-    expect(validateTeamName(longName)).toContain('64');
+    expect(validateProfileName(longName)).toContain('64');
   });
 
   test('accepts name exactly 64 characters', () => {
     const maxName = 'a'.repeat(64);
-    expect(validateTeamName(maxName)).toBeUndefined();
+    expect(validateProfileName(maxName)).toBeUndefined();
   });
 });

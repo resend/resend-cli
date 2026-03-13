@@ -7,15 +7,15 @@ import { storeApiKey } from '../../../src/lib/config';
 import { captureTestEnv, setupOutputSpies } from '../../helpers';
 
 async function createProgram() {
-  const { listCommand } = await import('../../../src/commands/teams/list');
+  const { listCommand } = await import('../../../src/commands/auth/list');
   return new Command()
     .name('resend')
     .option('--json', 'Force JSON output')
-    .option('--team <name>', 'Team profile')
+    .option('--profile <name>', 'Profile')
     .addCommand(listCommand);
 }
 
-describe('teams list command', () => {
+describe('auth list command', () => {
   const restoreEnv = captureTestEnv();
   let spies: ReturnType<typeof setupOutputSpies> | undefined;
   let tmpDir: string;
@@ -35,7 +35,7 @@ describe('teams list command', () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  test('lists teams in JSON mode', async () => {
+  test('lists profiles in JSON mode', async () => {
     spies = setupOutputSpies();
     storeApiKey('re_default', 'default');
     storeApiKey('re_staging', 'staging');
@@ -44,19 +44,19 @@ describe('teams list command', () => {
     await program.parseAsync(['list', '--json'], { from: 'user' });
 
     const output = JSON.parse(spies.logSpy.mock.calls[0][0] as string);
-    expect(output.teams).toEqual([
+    expect(output.profiles).toEqual([
       { name: 'default', active: true },
       { name: 'staging', active: false },
     ]);
   });
 
-  test('shows message when no teams configured', async () => {
+  test('shows message when no profiles configured', async () => {
     spies = setupOutputSpies();
 
     const program = await createProgram();
     await program.parseAsync(['list'], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
-    expect(output).toContain('No teams configured');
+    expect(output).toContain('No profiles configured');
   });
 });

@@ -15,31 +15,31 @@ Built for humans, AI agents, and CI/CD pipelines.
 
 ## Install
 
-### Homebrew (macOS)
+### cURL
 
-```bash
-brew install resend/cli/resend
+```sh
+curl -fsSL https://resend.com/install.sh | bash
 ```
 
-### Shell script (macOS and Linux)
+### Node.js
 
-```bash
-curl -fsSL https://resend.com/install.sh | bash
+```sh
+npm install -g resend-cli
+```
+
+### Homebrew (macOS / Linux)
+
+```sh
+brew install resend/cli/resend
 ```
 
 ### PowerShell (Windows)
 
-```powershell
+```sh
 irm https://resend.com/install.ps1 | iex
 ```
 
 Or download the `.exe` directly from the [GitHub releases page](https://github.com/resend/resend-cli/releases/latest).
-
-### npx
-
-```bash
-npx resend-cli
-```
 
 ## Local development
 
@@ -383,7 +383,9 @@ resend [global options] <command> [command options]
 | Flag | Description |
 |------|-------------|
 | `--api-key <key>` | Override API key for this invocation (takes highest priority) |
+| `--profile <name>` | Profile to use (overrides `RESEND_PROFILE` env var) |
 | `--json` | Force JSON output even in interactive terminals |
+| `-q, --quiet` | Suppress spinners and status output (implies `--json`) |
 | `--version` | Print version and exit |
 | `--help` | Show help text |
 
