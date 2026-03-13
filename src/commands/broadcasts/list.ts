@@ -52,7 +52,7 @@ To retrieve full details (html, from, subject), use: resend broadcasts get <id>`
         sdkCall: (resend) => resend.broadcasts.list(paginationOpts),
         onInteractive: (list) => {
           console.log(renderBroadcastsTable(list.data));
-          printPaginationHint(list);
+          printPaginationHint(list, 'broadcasts list');
         },
       },
       globalOpts,
