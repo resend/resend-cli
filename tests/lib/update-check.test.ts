@@ -202,8 +202,7 @@ describe('detectInstallMethod', () => {
     Object.defineProperty(process, 'execPath', {
       value: '/opt/homebrew/bin/node',
     });
-    process.argv[1] =
-      '/opt/homebrew/lib/node_modules/resend-cli/dist/cli.js';
+    process.argv[1] = '/opt/homebrew/lib/node_modules/resend-cli/dist/cli.js';
 
     expect(detectInstallMethod()).toBe('npm install -g resend-cli');
   });
@@ -213,7 +212,8 @@ describe('detectInstallMethod', () => {
       value: '/opt/homebrew/bin/node',
     });
     process.argv[1] = '/opt/homebrew/bin/resend';
-    process.env.npm_execpath = '/opt/homebrew/lib/node_modules/npm/bin/npm-cli.js';
+    process.env.npm_execpath =
+      '/opt/homebrew/lib/node_modules/npm/bin/npm-cli.js';
 
     expect(detectInstallMethod()).toBe('npm install -g resend-cli');
   });
