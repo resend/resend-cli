@@ -18,33 +18,19 @@ import {
   setupOutputSpies,
 } from '../../helpers';
 
-const mockGet = vi.fn(async () => ({
-  data: {
-    object: 'email' as const,
-    id: 'email_abc123',
-    from: 'you@domain.com',
-    to: ['user@example.com'],
-    subject: 'Hello',
-    html: '<p>Hi</p>',
-    text: 'Hi',
-    created_at: '2026-02-18T12:00:00.000Z',
-    scheduled_at: null,
-    last_event: 'delivered' as const,
-    bcc: null,
-    cc: null,
-    reply_to: null,
-  },
+const mockCancel = vi.fn(async () => ({
+  data: { object: 'email', id: 'test-email-id' },
   error: null,
 }));
 
 vi.mock('resend', () => ({
   Resend: class MockResend {
     constructor(public key: string) {}
-    emails = { get: mockGet };
+    emails = { cancel: mockCancel };
   },
 }));
 
-describe('emails get command', () => {
+describe('emails cancel command', () => {
   const restoreEnv = captureTestEnv();
   let spies: ReturnType<typeof setupOutputSpies> | undefined;
   let errorSpy: MockInstance | undefined;
@@ -53,7 +39,7 @@ describe('emails get command', () => {
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
-    mockGet.mockClear();
+    mockCancel.mockClear();
   });
 
   afterEach(() => {
@@ -67,31 +53,29 @@ describe('emails get command', () => {
     exitSpy = undefined;
   });
 
-  test('calls SDK get with the provided id', async () => {
+  test('calls SDK cancel with correct id', async () => {
     spies = setupOutputSpies();
 
-    const { getEmailCommand } = await import(
-      '../../../src/commands/emails/get'
+    const { cancelCommand } = await import(
+      '../../../src/commands/emails/cancel'
     );
-    await getEmailCommand.parseAsync(['email_abc123'], { from: 'user' });
+    await cancelCommand.parseAsync(['test-email-id'], { from: 'user' });
 
-    expect(mockGet).toHaveBeenCalledWith('email_abc123');
+    expect(mockCancel).toHaveBeenCalledWith('test-email-id');
   });
 
-  test('outputs JSON with full email fields when non-interactive', async () => {
+  test('outputs JSON object in non-interactive mode', async () => {
     spies = setupOutputSpies();
 
-    const { getEmailCommand } = await import(
-      '../../../src/commands/emails/get'
+    const { cancelCommand } = await import(
+      '../../../src/commands/emails/cancel'
     );
-    await getEmailCommand.parseAsync(['email_abc123'], { from: 'user' });
+    await cancelCommand.parseAsync(['test-email-id'], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
-    expect(parsed.id).toBe('email_abc123');
-    expect(parsed.from).toBe('you@domain.com');
-    expect(parsed.subject).toBe('Hello');
-    expect(parsed.last_event).toBe('delivered');
+    expect(parsed.id).toBe('test-email-id');
+    expect(parsed.object).toBe('email');
   });
 
   test('errors with auth_error when no API key', async () => {
@@ -104,34 +88,36 @@ describe('emails get command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { getEmailCommand } = await import(
-      '../../../src/commands/emails/get'
+    const { cancelCommand } = await import(
+      '../../../src/commands/emails/cancel'
     );
     await expectExit1(() =>
-      getEmailCommand.parseAsync(['email_abc123'], { from: 'user' }),
+      cancelCommand.parseAsync(['test-email-id'], { from: 'user' }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
   });
 
-  test('errors with fetch_error when SDK returns an error', async () => {
+  test('errors with cancel_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockGet.mockResolvedValueOnce(mockSdkError('Not found', 'not_found'));
+    mockCancel.mockResolvedValueOnce(
+      mockSdkError('Email not found', 'not_found'),
+    );
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { getEmailCommand } = await import(
-      '../../../src/commands/emails/get'
+    const { cancelCommand } = await import(
+      '../../../src/commands/emails/cancel'
     );
     await expectExit1(() =>
-      getEmailCommand.parseAsync(['email_nonexistent'], { from: 'user' }),
+      cancelCommand.parseAsync(['test-email-id'], { from: 'user' }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
-    expect(output).toContain('fetch_error');
+    expect(output).toContain('cancel_error');
   });
 });

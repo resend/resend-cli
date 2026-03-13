@@ -1,3 +1,4 @@
+import pc from 'picocolors';
 import type { GlobalOpts } from './client';
 import { errorMessage, outputError } from './output';
 import { isInteractive, isUnicodeSupported } from './tty';
@@ -124,15 +125,15 @@ export function createSpinner(message: string, quiet?: boolean) {
     },
     stop(msg: string) {
       clearInterval(timer);
-      process.stderr.write(`\r\x1B[2K  ${TICK} ${msg}\n`);
+      process.stderr.write(`\r\x1B[2K  ${pc.green(TICK)} ${msg}\n`);
     },
     warn(msg: string) {
       clearInterval(timer);
-      process.stderr.write(`\r\x1B[2K  ${WARN} ${msg}\n`);
+      process.stderr.write(`\r\x1B[2K  ${pc.yellow(WARN)} ${msg}\n`);
     },
     fail(msg: string) {
       clearInterval(timer);
-      process.stderr.write(`\r\x1B[2K  ${CROSS} ${msg}\n`);
+      process.stderr.write(`\r\x1B[2K  ${pc.red(CROSS)} ${msg}\n`);
     },
   };
 }

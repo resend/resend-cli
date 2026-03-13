@@ -1,4 +1,4 @@
-import { Command } from '@commander-js/extra-typings';
+import { Command, Option } from '@commander-js/extra-typings';
 import type { CreateBatchOptions } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
@@ -19,6 +19,12 @@ export const batchCommand = new Command('batch')
     '--idempotency-key <key>',
     'Deduplicate this batch request using this key',
   )
+  .addOption(
+    new Option(
+      '--batch-validation <mode>',
+      'Validation mode: strict (default, fail all on error) or permissive (partial success)',
+    ).choices(['strict', 'permissive'] as const),
+  )
   .addHelpText(
     'after',
     buildHelpText({
@@ -37,6 +43,7 @@ export const batchCommand = new Command('batch')
         'resend emails batch --file ./emails.json',
         'resend emails batch --file ./emails.json --json',
         'resend emails batch --file ./emails.json --idempotency-key my-batch-2026-02-18',
+        'resend emails batch --file ./emails.json --batch-validation permissive',
         'RESEND_API_KEY=re_123 resend emails batch --file ./emails.json --json',
       ],
     }),
@@ -115,18 +122,27 @@ export const batchCommand = new Command('batch')
         success: 'Batch sent',
         fail: 'Failed to send batch',
       },
-      () =>
-        resend.batch.send(
+      () => {
+        const options = {
+          ...(opts.idempotencyKey && { idempotencyKey: opts.idempotencyKey }),
+          ...(opts.batchValidation && {
+            batchValidation: opts.batchValidation as 'strict' | 'permissive',
+          }),
+        };
+        return resend.batch.send(
           emails as CreateBatchOptions,
-          opts.idempotencyKey
-            ? { idempotencyKey: opts.idempotencyKey }
-            : undefined,
-        ),
+          Object.keys(options).length > 0 ? options : undefined,
+        );
+      },
       'batch_error',
       globalOpts,
     );
 
     const emailIds = batchData.data;
+    const batchErrors = (
+      batchData as { errors?: { index: number; message: string }[] }
+    ).errors;
+
     if (!globalOpts.json && isInteractive()) {
       console.log(
         `Sent ${emailIds.length} email${emailIds.length === 1 ? '' : 's'}`,
@@ -134,7 +150,20 @@ export const batchCommand = new Command('batch')
       for (const email of emailIds) {
         console.log(`  ${email.id}`);
       }
+      if (batchErrors && batchErrors.length > 0) {
+        console.warn(
+          `\n${batchErrors.length} email${batchErrors.length === 1 ? '' : 's'} failed:`,
+        );
+        for (const err of batchErrors) {
+          console.warn(`  [${err.index}] ${err.message}`);
+        }
+      }
     } else {
-      outputResult(emailIds, { json: globalOpts.json });
+      outputResult(
+        batchErrors && batchErrors.length > 0
+          ? { data: emailIds, errors: batchErrors }
+          : emailIds,
+        { json: globalOpts.json },
+      );
     }
   });

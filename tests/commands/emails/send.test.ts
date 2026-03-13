@@ -1,4 +1,5 @@
 import { unlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -158,7 +159,10 @@ describe('send command', () => {
   test('errors when no API key and non-interactive', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
-    process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
+    process.env.XDG_CONFIG_HOME = join(
+      tmpdir(),
+      `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
@@ -291,6 +295,235 @@ describe('send command', () => {
 
     expect(mockDomainsList).not.toHaveBeenCalled();
     expect(mockSend).toHaveBeenCalledTimes(1);
+  });
+
+  test('passes scheduledAt to SDK when --scheduled-at provided', async () => {
+    spies = setupOutputSpies();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await sendCommand.parseAsync(
+      [
+        '--from',
+        'a@test.com',
+        '--to',
+        'b@test.com',
+        '--subject',
+        'Test',
+        '--text',
+        'Hi',
+        '--scheduled-at',
+        '2024-08-05T11:52:01.858Z',
+      ],
+      { from: 'user' },
+    );
+
+    const callArgs = mockSend.mock.calls[0][0] as Record<string, unknown>;
+    expect(callArgs.scheduledAt).toBe('2024-08-05T11:52:01.858Z');
+  });
+
+  test('reads attachment file and passes filename and content to SDK', async () => {
+    spies = setupOutputSpies();
+
+    const tmpFile = join(
+      dirname(fileURLToPath(import.meta.url)),
+      '__test_attachment.txt',
+    );
+    writeFileSync(tmpFile, 'attachment content');
+
+    try {
+      const { sendCommand } = await import('../../../src/commands/emails/send');
+      await sendCommand.parseAsync(
+        [
+          '--from',
+          'a@test.com',
+          '--to',
+          'b@test.com',
+          '--subject',
+          'Test',
+          '--text',
+          'Hi',
+          '--attachment',
+          tmpFile,
+        ],
+        { from: 'user' },
+      );
+
+      const callArgs = mockSend.mock.calls[0][0] as Record<string, unknown>;
+      const attachments = callArgs.attachments as Array<{
+        filename: string;
+        content: Buffer;
+      }>;
+      expect(attachments).toHaveLength(1);
+      expect(attachments[0].filename).toBe('__test_attachment.txt');
+      expect(Buffer.isBuffer(attachments[0].content)).toBe(true);
+    } finally {
+      unlinkSync(tmpFile);
+    }
+  });
+
+  test('errors with file_read_error for missing attachment', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await expectExit1(() =>
+      sendCommand.parseAsync(
+        [
+          '--from',
+          'a@test.com',
+          '--to',
+          'b@test.com',
+          '--subject',
+          'Test',
+          '--text',
+          'Hi',
+          '--attachment',
+          '/tmp/nonexistent-resend-attachment.txt',
+        ],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('file_read_error');
+  });
+
+  test('parses key=value headers correctly', async () => {
+    spies = setupOutputSpies();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await sendCommand.parseAsync(
+      [
+        '--from',
+        'a@test.com',
+        '--to',
+        'b@test.com',
+        '--subject',
+        'Test',
+        '--text',
+        'Hi',
+        '--headers',
+        'X-Entity-Ref-ID=123',
+        'X-Custom=value=with=equals',
+      ],
+      { from: 'user' },
+    );
+
+    const callArgs = mockSend.mock.calls[0][0] as Record<string, unknown>;
+    expect(callArgs.headers).toEqual({
+      'X-Entity-Ref-ID': '123',
+      'X-Custom': 'value=with=equals',
+    });
+  });
+
+  test('errors with invalid_header for malformed header', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await expectExit1(() =>
+      sendCommand.parseAsync(
+        [
+          '--from',
+          'a@test.com',
+          '--to',
+          'b@test.com',
+          '--subject',
+          'Test',
+          '--text',
+          'Hi',
+          '--headers',
+          'no-equals-sign',
+        ],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_header');
+  });
+
+  test('parses name=value tags correctly', async () => {
+    spies = setupOutputSpies();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await sendCommand.parseAsync(
+      [
+        '--from',
+        'a@test.com',
+        '--to',
+        'b@test.com',
+        '--subject',
+        'Test',
+        '--text',
+        'Hi',
+        '--tags',
+        'category=marketing',
+        'source=campaign',
+      ],
+      { from: 'user' },
+    );
+
+    const callArgs = mockSend.mock.calls[0][0] as Record<string, unknown>;
+    expect(callArgs.tags).toEqual([
+      { name: 'category', value: 'marketing' },
+      { name: 'source', value: 'campaign' },
+    ]);
+  });
+
+  test('errors with invalid_tag for malformed tag', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await expectExit1(() =>
+      sendCommand.parseAsync(
+        [
+          '--from',
+          'a@test.com',
+          '--to',
+          'b@test.com',
+          '--subject',
+          'Test',
+          '--text',
+          'Hi',
+          '--tags',
+          'no-equals-sign',
+        ],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_tag');
+  });
+
+  test('passes idempotencyKey as second arg to emails.send', async () => {
+    spies = setupOutputSpies();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await sendCommand.parseAsync(
+      [
+        '--from',
+        'a@test.com',
+        '--to',
+        'b@test.com',
+        '--subject',
+        'Test',
+        '--text',
+        'Hi',
+        '--idempotency-key',
+        'my-key-123',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    const opts = mockSend.mock.calls[0][1] as Record<string, unknown>;
+    expect(opts?.idempotencyKey).toBe('my-key-123');
   });
 
   test('degrades gracefully when domain fetch fails', async () => {

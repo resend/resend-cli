@@ -30,8 +30,8 @@
     "dev:watch": "tsx --watch src/cli.ts",
     "build": "esbuild src/cli.ts --bundle --platform=node --format=cjs --minify --outfile=dist/cli.cjs",
     "build:bin": "pnpm build && pkg dist/cli.cjs --compress Brotli --target node24 --output dist/resend",
-    "lint": "biome check",
-    "format": "biome format --write",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "vitest run --config vitest.config.e2e.ts"
