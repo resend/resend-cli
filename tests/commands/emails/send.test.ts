@@ -245,6 +245,76 @@ describe('send command', () => {
     }
   });
 
+  test('reads React body from --react-file', async () => {
+    spies = setupOutputSpies();
+
+    const tmpFile = join(
+      dirname(fileURLToPath(import.meta.url)),
+      '__test_email.react.mjs',
+    );
+    writeFileSync(tmpFile, 'export default { type: "email-template" };');
+
+    try {
+      const { sendCommand } = await import('../../../src/commands/emails/send');
+      await sendCommand.parseAsync(
+        [
+          '--from',
+          'a@test.com',
+          '--to',
+          'b@test.com',
+          '--subject',
+          'Test',
+          '--react-file',
+          tmpFile,
+        ],
+        { from: 'user' },
+      );
+
+      const callArgs = mockSend.mock.calls[0][0] as Record<string, unknown>;
+      expect(callArgs.react).toEqual({ type: 'email-template' });
+      expect(callArgs.html).toBeUndefined();
+      expect(callArgs.text).toBeUndefined();
+    } finally {
+      unlinkSync(tmpFile);
+    }
+  });
+
+  test('errors with file_read_error when --react-file has no default export', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const tmpFile = join(
+      dirname(fileURLToPath(import.meta.url)),
+      '__test_email.no_default.mjs',
+    );
+    writeFileSync(tmpFile, 'export const template = "missing-default";');
+
+    try {
+      const { sendCommand } = await import('../../../src/commands/emails/send');
+      await expectExit1(() =>
+        sendCommand.parseAsync(
+          [
+            '--from',
+            'a@test.com',
+            '--to',
+            'b@test.com',
+            '--subject',
+            'Test',
+            '--react-file',
+            tmpFile,
+          ],
+          { from: 'user' },
+        ),
+      );
+    } finally {
+      unlinkSync(tmpFile);
+    }
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('file_read_error');
+  });
+
   test('passes cc, bcc, reply-to when provided', async () => {
     spies = setupOutputSpies();
 
