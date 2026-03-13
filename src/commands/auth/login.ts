@@ -5,7 +5,7 @@ import { Resend } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
 import {
   listProfiles,
-  resolveApiKey,
+  resolveApiKeyAsync,
   setActiveProfile,
   storeApiKeyAsync,
   validateProfileName,
@@ -35,7 +35,7 @@ function openInBrowser(url: string): Promise<boolean> {
 }
 
 export const loginCommand = new Command('login')
-  .description('Save a Resend API key to the local credentials file')
+  .description('Save a Resend API key to the credential store')
   .option('--key <key>', 'API key to store (required in non-interactive mode)')
   .addHelpText(
     'after',
@@ -70,7 +70,7 @@ export const loginCommand = new Command('login')
 
       p.intro('Resend Authentication');
 
-      const existing = resolveApiKey();
+      const existing = await resolveApiKeyAsync();
       if (existing) {
         p.log.info(
           `Existing API key found (source: ${existing.source}). Enter a new key to replace it.`,

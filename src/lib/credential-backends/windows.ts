@@ -1,4 +1,4 @@
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import type { CredentialBackend } from '../credential-store';
 
 function runPowershell(
@@ -14,6 +14,35 @@ function runPowershell(
         resolve({ stdout: stdout ?? '', stderr: stderr ?? '', code });
       },
     );
+  });
+}
+
+function runPowershellWithStdin(
+  script: string,
+  stdin: string,
+): Promise<{ stdout: string; stderr: string; code: number | null }> {
+  return new Promise((resolve) => {
+    const child = spawn(
+      'powershell.exe',
+      ['-NoProfile', '-NonInteractive', '-Command', script],
+      { stdio: ['pipe', 'pipe', 'pipe'], timeout: 10000 },
+    );
+    let stdout = '';
+    let stderr = '';
+    child.stdout?.on('data', (data: Buffer) => {
+      stdout += data.toString();
+    });
+    child.stderr?.on('data', (data: Buffer) => {
+      stderr += data.toString();
+    });
+    child.on('close', (code) => {
+      resolve({ stdout, stderr, code });
+    });
+    child.on('error', () => {
+      resolve({ stdout: '', stderr: 'Failed to spawn process', code: 1 });
+    });
+    child.stdin?.write(stdin);
+    child.stdin?.end();
   });
 }
 
@@ -55,12 +84,14 @@ export class WindowsBackend implements CredentialBackend {
     `;
     await runPowershell(removeScript);
 
+    // Read secret from stdin to avoid exposing it in process args
     const addScript = `
+      $secret = [Console]::In.ReadLine()
       $v = New-Object Windows.Security.Credentials.PasswordVault
-      $c = New-Object Windows.Security.Credentials.PasswordCredential('${psEscape(service)}', '${psEscape(account)}', '${psEscape(secret)}')
+      $c = New-Object Windows.Security.Credentials.PasswordCredential('${psEscape(service)}', '${psEscape(account)}', $secret)
       $v.Add($c)
     `;
-    const { code, stderr } = await runPowershell(addScript);
+    const { code, stderr } = await runPowershellWithStdin(addScript, secret);
     if (code !== 0) {
       throw new Error(
         `Failed to store credential in Windows Credential Manager: ${stderr.trim()}`,

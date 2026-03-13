@@ -4,7 +4,7 @@ import {
   getStorageType,
   listProfiles,
   maskKey,
-  resolveApiKey,
+  resolveApiKeyAsync,
   resolveProfileName,
 } from '../lib/config';
 import { buildHelpText } from '../lib/help-text';
@@ -28,10 +28,10 @@ Shows which profile is active and where the API key comes from.`,
       ],
     }),
   )
-  .action((_opts, cmd) => {
+  .action(async (_opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const profileFlag = globalOpts.profile ?? globalOpts.team;
-    const resolved = resolveApiKey(globalOpts.apiKey, profileFlag);
+    const resolved = await resolveApiKeyAsync(globalOpts.apiKey, profileFlag);
 
     if (!resolved) {
       const requestedProfile = profileFlag

@@ -34,6 +34,13 @@ export class MacOSBackend implements CredentialBackend {
   }
 
   async set(service: string, account: string, secret: string): Promise<void> {
+    // Note: The macOS `security` command does not support reading passwords from
+    // stdin — `-w` without a value triggers an interactive TTY prompt, and `-X`
+    // (hex) is still a CLI arg visible in `ps`. There is no safe way to pass the
+    // secret without it appearing briefly in the process list during the execFile
+    // call (~5s timeout). This is the same approach used by tools like `gh`
+    // (GitHub CLI) and `1password-cli` when interacting with the macOS keychain
+    // via the `security` command.
     // -U updates if exists, creates if not
     const { code, stderr } = await run('/usr/bin/security', [
       'add-generic-password',
