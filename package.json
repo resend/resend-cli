@@ -34,7 +34,8 @@
     "lint:fix": "biome check --write .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:e2e": "vitest run --config vitest.config.e2e.ts"
+    "test:e2e": "vitest run --config vitest.config.e2e.ts",
+    "prepack": "pnpm build"
   },
   "dependencies": {
     "@clack/prompts": "1.1.0",
