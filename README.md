@@ -227,9 +227,10 @@ resend emails send \
 | `--from <address>` | Yes | Sender email address (must be from a verified domain) |
 | `--to <addresses...>` | Yes | One or more recipient email addresses (space-separated) |
 | `--subject <subject>` | Yes | Email subject line |
-| `--text <text>` | One of text/html/html-file | Plain text body |
-| `--html <html>` | One of text/html/html-file | HTML body as a string |
-| `--html-file <path>` | One of text/html/html-file | Path to an HTML file to use as body |
+| `--text <text>` | One of text/html/html-file/react-file | Plain text body |
+| `--html <html>` | One of text/html/html-file/react-file | HTML body as a string |
+| `--html-file <path>` | One of text/html/html-file/react-file | Path to an HTML file to use as body |
+| `--react-file <path>` | One of text/html/html-file/react-file | Path to a React module whose default export is a rendered React value |
 | `--cc <addresses...>` | No | CC recipients (space-separated) |
 | `--bcc <addresses...>` | No | BCC recipients (space-separated) |
 | `--reply-to <address>` | No | Reply-to email address |
@@ -255,7 +256,7 @@ echo "" | resend emails send --from "you@yourdomain.com"
 # Error: Missing required flags: --to, --subject
 ```
 
-A body (`--text`, `--html`, or `--html-file`) is also required — omitting all three exits with code `missing_body`.
+A body (`--text`, `--html`, `--html-file`, or `--react-file`) is also required — omitting all four exits with code `missing_body`.
 
 #### Examples
 
@@ -278,6 +279,18 @@ resend emails send \
   --subject "Newsletter" \
   --html-file ./newsletter.html
 ```
+
+**React template from a file:**
+
+```bash
+resend emails send \
+  --from "you@yourdomain.com" \
+  --to recipient@example.com \
+  --subject "Newsletter" \
+  --react-file ./email.react.mjs
+```
+
+`--react-file` expects the module's default export to be a rendered React value (for example, `export default EmailTemplate({ userName: "Ada" })`), not a component function.
 
 **With CC, BCC, and reply-to:**
 
@@ -315,8 +328,8 @@ Returns the email ID on success:
 | Code | Cause |
 |------|-------|
 | `auth_error` | No API key found or client creation failed |
-| `missing_body` | No `--text`, `--html`, or `--html-file` provided |
-| `file_read_error` | Could not read the file passed to `--html-file` |
+| `missing_body` | No `--text`, `--html`, `--html-file`, or `--react-file` provided |
+| `file_read_error` | Could not read `--html-file` or load `--react-file` |
 | `send_error` | Resend API returned an error |
 
 ---

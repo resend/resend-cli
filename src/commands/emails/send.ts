@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
-import { basename } from 'node:path';
+import { basename, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import * as p from '@clack/prompts';
 import { Command } from '@commander-js/extra-typings';
 import type { Resend } from 'resend';
@@ -80,6 +81,36 @@ async function promptForFromAddress(domains: string[]): Promise<string> {
   return result;
 }
 
+async function loadReactFile(
+  filePath: string,
+  globalOpts: GlobalOpts,
+): Promise<unknown> {
+  try {
+    const mod = await import(pathToFileURL(resolve(filePath)).href);
+    if (mod.default === undefined) {
+      throw new Error('Missing default export');
+    }
+    if (typeof mod.default === 'function') {
+      outputError(
+        {
+          message: `Invalid React file: ${filePath}. Default export must be a rendered React value, not a component function.`,
+          code: 'file_read_error',
+        },
+        { json: globalOpts.json },
+      );
+    }
+    return mod.default;
+  } catch {
+    outputError(
+      {
+        message: `Failed to load React file: ${filePath}`,
+        code: 'file_read_error',
+      },
+      { json: globalOpts.json },
+    );
+  }
+}
+
 export const sendCommand = new Command('send')
   .description('Send an email')
   .option('--from <address>', 'Sender address (required)')
@@ -87,6 +118,10 @@ export const sendCommand = new Command('send')
   .option('--subject <subject>', 'Email subject (required)')
   .option('--html <html>', 'HTML body')
   .option('--html-file <path>', 'Path to an HTML file for the body')
+  .option(
+    '--react-file <path>',
+    'Path to a React module whose default export is a rendered React value',
+  )
   .option('--text <text>', 'Plain-text body')
   .option('--cc <addresses...>', 'CC recipients')
   .option('--bcc <addresses...>', 'BCC recipients')
@@ -112,7 +147,7 @@ export const sendCommand = new Command('send')
     'after',
     buildHelpText({
       context:
-        'Required: --from, --to, --subject, and one of --text | --html | --html-file',
+        'Required: --from, --to, --subject, and one of --text | --html | --html-file | --react-file',
       output: '  {"id":"<email-id>"}',
       errorCodes: [
         'auth_error',
@@ -126,6 +161,7 @@ export const sendCommand = new Command('send')
         'resend emails send --from you@domain.com --to user@example.com --subject "Hello" --text "Hi"',
         'resend emails send --from you@domain.com --to a@example.com --to b@example.com --subject "Hi" --html "<b>Hi</b>" --json',
         'resend emails send --from you@domain.com --to user@example.com --subject "Hi" --html-file ./email.html --json',
+        'resend emails send --from you@domain.com --to user@example.com --subject "Hi" --react-file ./email.react.mjs --json',
         'resend emails send --from you@domain.com --to user@example.com --subject "Hi" --text "Hi" --scheduled-at 2024-08-05T11:52:01.858Z',
         'resend emails send --from you@domain.com --to user@example.com --subject "Hi" --text "Hi" --attachment ./report.pdf',
         'resend emails send --from you@domain.com --to user@example.com --subject "Hi" --text "Hi" --headers X-Entity-Ref-ID=123 --tags category=marketing',
@@ -166,15 +202,20 @@ export const sendCommand = new Command('send')
       globalOpts,
     );
 
+    let react: unknown;
+    if (opts.reactFile) {
+      react = await loadReactFile(opts.reactFile, globalOpts);
+    }
+
     let html = opts.html;
     const text = opts.text;
 
-    if (opts.htmlFile) {
+    if (!react && opts.htmlFile) {
       html = readFile(opts.htmlFile, globalOpts);
     }
 
     let body: string | undefined = text;
-    if (!html && !text) {
+    if (!react && !html && !text) {
       body = await requireText(
         undefined,
         {
@@ -182,7 +223,8 @@ export const sendCommand = new Command('send')
           placeholder: 'Type your message...',
         },
         {
-          message: 'Missing email body. Provide --html, --html-file, or --text',
+          message:
+            'Missing email body. Provide --html, --html-file, --react-file, or --text',
           code: 'missing_body',
         },
         globalOpts,
@@ -241,6 +283,12 @@ export const sendCommand = new Command('send')
       return { name: t.slice(0, eq), value: t.slice(eq + 1) };
     });
 
+    const bodyPayload = react
+      ? { react }
+      : html
+        ? { html }
+        : { text: body as string };
+
     const data = await withSpinner(
       {
         loading: 'Sending email...',
@@ -253,7 +301,7 @@ export const sendCommand = new Command('send')
             from: filled.from,
             to: toAddresses,
             subject: filled.subject,
-            ...(html ? { html } : { text: body as string }),
+            ...bodyPayload,
             ...(opts.cc && { cc: opts.cc }),
             ...(opts.bcc && { bcc: opts.bcc }),
             ...(opts.replyTo && { replyTo: opts.replyTo }),
