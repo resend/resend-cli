@@ -137,7 +137,17 @@ export const loginCommand = new Command('login')
 
     try {
       const resend = new Resend(apiKey);
-      await resend.domains.list();
+      const { error } = await resend.domains.list();
+      if (error) {
+        spinner.fail('API key validation failed');
+        outputError(
+          {
+            message: error.message || 'Failed to validate API key',
+            code: 'validation_failed',
+          },
+          { json: globalOpts.json },
+        );
+      }
       spinner.stop('API key is valid');
     } catch (err) {
       spinner.fail('API key validation failed');

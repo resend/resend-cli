@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -17,12 +17,17 @@ import {
   setupOutputSpies,
 } from '../../helpers';
 
-// Mock the Resend SDK
+// Mock the Resend SDK – default: valid key; override via mockDomainListResult
+let mockDomainListResult: { data: unknown; error: unknown } = {
+  data: { data: [] },
+  error: null,
+};
+
 vi.mock('resend', () => ({
   Resend: class MockResend {
     constructor(public key: string) {}
     domains = {
-      list: vi.fn(async () => ({ data: { data: [] }, error: null })),
+      list: vi.fn(async () => mockDomainListResult),
     };
   },
 }));
@@ -34,6 +39,7 @@ describe('login command', () => {
   let tmpDir: string;
 
   beforeEach(() => {
+    mockDomainListResult = { data: { data: [] }, error: null };
     tmpDir = join(
       tmpdir(),
       `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -49,6 +55,34 @@ describe('login command', () => {
     exitSpy?.mockRestore();
     exitSpy = undefined;
     rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  test('rejects key that fails API validation', async () => {
+    mockDomainListResult = {
+      data: null,
+      error: {
+        statusCode: 400,
+        message: 'API key is invalid',
+        name: 'validation_error',
+      },
+    };
+
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { loginCommand } = await import('../../../src/commands/auth/login');
+    await expectExit1(() =>
+      loginCommand.parseAsync(['--key', 're_fake_invalid_key'], {
+        from: 'user',
+      }),
+    );
+
+    const output = errorSpy?.mock.calls[0][0] as string;
+    expect(output).toContain('validation_failed');
+
+    // Credentials file must not be created for an invalid key
+    const configPath = join(tmpDir, 'resend', 'credentials.json');
+    expect(existsSync(configPath)).toBe(false);
   });
 
   test('rejects key not starting with re_', async () => {
