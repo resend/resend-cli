@@ -245,5 +245,15 @@ export const loginCommand = new Command('login')
       } else {
         console.log(msg);
       }
+
+      if (!backend.isSecure && process.platform === 'linux') {
+        const hint =
+          'Tip: Install libsecret-tools and a Secret Service provider (e.g. gnome-keyring) to store keys in your system keychain instead of a plaintext file.';
+        if (isInteractive()) {
+          p.log.info(hint);
+        } else {
+          console.log(hint);
+        }
+      }
     }
   });
