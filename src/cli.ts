@@ -19,9 +19,12 @@ import { topicsCommand } from './commands/topics/index';
 import { updateCommand } from './commands/update';
 import { webhooksCommand } from './commands/webhooks/index';
 import { whoamiCommand } from './commands/whoami';
+import { setupCliExitHandler } from './lib/cli-exit';
 import { errorMessage, outputError } from './lib/output';
 import { checkForUpdates } from './lib/update-check';
 import { PACKAGE_NAME, VERSION } from './lib/version';
+
+setupCliExitHandler();
 
 const program = new Command()
   .name('resend')
