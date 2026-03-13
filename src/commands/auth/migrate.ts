@@ -90,7 +90,6 @@ the new storage backend after all profiles are migrated.`,
           profiles.map(async (profile) => {
             const key = await backend.get(SERVICE_NAME, profile.name);
             if (key) {
-              await backend.delete(SERVICE_NAME, profile.name);
               return { name: profile.name, key };
             }
             return null;
@@ -117,6 +116,15 @@ the new storage backend after all profiles are migrated.`,
 
       delete creds.storage;
       writeCredentials(creds);
+
+      // Delete from keychain after file write succeeds to prevent data loss
+      try {
+        await Promise.all(
+          migrated.map((name) => backend.delete(SERVICE_NAME, name)),
+        );
+      } catch {
+        // Deletion failure is non-fatal — keys exist in both places (safe)
+      }
 
       if (globalOpts.json) {
         outputResult(
