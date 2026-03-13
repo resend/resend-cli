@@ -5,7 +5,6 @@ import { Resend } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
 import {
   listProfiles,
-  renameProfile,
   resolveApiKey,
   setActiveProfile,
   storeApiKey,
@@ -13,7 +12,7 @@ import {
 } from '../../lib/config';
 import { buildHelpText } from '../../lib/help-text';
 import { errorMessage, outputError, outputResult } from '../../lib/output';
-import { cancelAndExit } from '../../lib/prompts';
+import { cancelAndExit, promptRenameIfInvalid } from '../../lib/prompts';
 import { createSpinner } from '../../lib/spinner';
 import { isInteractive } from '../../lib/tty';
 
@@ -195,20 +194,11 @@ export const loginCommand = new Command('login')
           }
           profileName = newName;
         } else if (validateProfileName(choice)) {
-          p.log.warn(
-            `Profile "${choice}" has an invalid name: ${validateProfileName(choice)}`,
-          );
-          const newName = await p.text({
-            message: 'Enter a new name for this profile:',
-            placeholder: choice.replace(/[^a-zA-Z0-9_-]/g, '-'),
-            validate: (v) => validateProfileName(v as string),
-          });
-          if (p.isCancel(newName)) {
-            cancelAndExit('Login cancelled.');
+          const renamed = await promptRenameIfInvalid(choice, globalOpts);
+          if (!renamed) {
+            return;
           }
-          renameProfile(choice, newName);
-          p.log.success(`Profile renamed to '${newName}'.`);
-          profileName = newName;
+          profileName = renamed;
         } else {
           profileName = choice;
         }

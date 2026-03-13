@@ -24,18 +24,18 @@ export function listAction(globalOpts: GlobalOpts) {
   let hasInvalid = false;
   for (const profile of profiles) {
     const marker = profile.active ? ' (active)' : '';
-    const invalid = validateProfileName(profile.name) ? ' (invalid name)' : '';
-    if (invalid) {
+    const isInvalid = validateProfileName(profile.name) !== undefined;
+    if (isInvalid) {
       hasInvalid = true;
     }
     console.log(
-      `  ${profile.active ? '▸' : ' '} ${profile.name}${marker}${invalid}`,
+      `  ${profile.active ? '▸' : ' '} ${profile.name}${marker}${isInvalid ? ' (invalid name)' : ''}`,
     );
   }
 
   if (hasInvalid) {
     console.log(
-      '\n  Profiles with invalid names can be renamed via `resend auth switch`.',
+      '\n  Profiles with invalid names can be renamed via `resend auth rename`.',
     );
   }
 

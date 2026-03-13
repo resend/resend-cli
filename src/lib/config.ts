@@ -244,6 +244,9 @@ export function validateProfileName(name: string): string | undefined {
 export const validateTeamName = validateProfileName;
 
 export function renameProfile(oldName: string, newName: string): void {
+  if (oldName === newName) {
+    return;
+  }
   const validationError = validateProfileName(newName);
   if (validationError) {
     throw new Error(validationError);
