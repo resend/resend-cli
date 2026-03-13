@@ -19,7 +19,7 @@ describe('buildHelpText', () => {
         '\n\n' +
         'Global options:\n' +
         '  --api-key <key>     API key (or set RESEND_API_KEY env var)\n' +
-        '  --profile <name>    Profile to use (overrides RESEND_PROFILE)\n' +
+        '  -p, --profile <name>  Profile to use (overrides RESEND_PROFILE)\n' +
         '  --json              Force JSON output (also auto-enabled when stdout is piped)\n' +
         '  -q, --quiet         Suppress spinners and status output (implies --json)' +
         '\n\n' +
