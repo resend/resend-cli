@@ -44,7 +44,7 @@ Topics not included in the array are left unchanged.`,
   )
   .action(async (id, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const resend = requireClient(globalOpts);
+    const resend = await requireClient(globalOpts);
 
     let topicsJson = opts.topics;
 

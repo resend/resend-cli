@@ -52,6 +52,8 @@ describe('login command', () => {
     );
     mkdirSync(tmpDir, { recursive: true });
     process.env.XDG_CONFIG_HOME = tmpDir;
+    // Force file backend so tests don't interact with real OS keychain
+    process.env.RESEND_CREDENTIAL_STORE = 'file';
   });
 
   afterEach(() => {

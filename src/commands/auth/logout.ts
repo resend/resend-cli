@@ -5,8 +5,8 @@ import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import {
   getConfigDir,
-  removeAllApiKeys,
-  removeApiKey,
+  removeAllApiKeysAsync,
+  removeApiKeyAsync,
   resolveProfileName,
 } from '../../lib/config';
 import { buildHelpText } from '../../lib/help-text';
@@ -74,9 +74,9 @@ If no credentials file exists, exits cleanly with no error.`,
 
     try {
       if (logoutAll) {
-        removeAllApiKeys();
+        await removeAllApiKeysAsync();
       } else {
-        removeApiKey(profileLabel);
+        await removeApiKeyAsync(profileLabel);
       }
     } catch (err) {
       outputError(

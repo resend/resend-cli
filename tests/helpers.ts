@@ -1,4 +1,5 @@
 import { expect, type MockInstance, vi } from 'vitest';
+import { resetCredentialBackend } from '../src/lib/credential-store';
 
 export class ExitError extends Error {
   constructor(public code: number) {
@@ -42,6 +43,7 @@ export function captureTestEnv(): () => void {
       value: originalStdoutIsTTY,
       writable: true,
     });
+    resetCredentialBackend();
   };
 }
 

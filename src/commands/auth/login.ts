@@ -7,7 +7,7 @@ import {
   listProfiles,
   resolveApiKey,
   setActiveProfile,
-  storeApiKey,
+  storeApiKeyAsync,
   validateProfileName,
 } from '../../lib/config';
 import { buildHelpText } from '../../lib/help-text';
@@ -218,7 +218,7 @@ export const loginCommand = new Command('login')
       }
     }
 
-    const configPath = storeApiKey(apiKey, profileName);
+    const { configPath, backend } = await storeApiKeyAsync(apiKey, profileName);
     const profileLabel = profileName || 'default';
 
     // Auto-switch to the newly added profile
@@ -238,11 +238,19 @@ export const loginCommand = new Command('login')
 
     if (globalOpts.json) {
       outputResult(
-        { success: true, config_path: configPath, profile: profileLabel },
+        {
+          success: true,
+          config_path: configPath,
+          profile: profileLabel,
+          storage: backend.name,
+        },
         { json: true },
       );
     } else {
-      const msg = `API key stored for profile '${profileLabel}' at ${configPath}`;
+      const storageInfo = !backend.isSecure
+        ? `at ${configPath}`
+        : `in ${backend.name}`;
+      const msg = `API key stored for profile '${profileLabel}' ${storageInfo}`;
       if (isInteractive()) {
         p.outro(msg);
       } else {

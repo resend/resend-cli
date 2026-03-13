@@ -1,7 +1,8 @@
 import { Command } from '@commander-js/extra-typings';
 import { Resend } from 'resend';
 import type { GlobalOpts } from '../lib/client';
-import { maskKey, resolveApiKey } from '../lib/config';
+import { getStorageType, maskKey, resolveApiKeyAsync } from '../lib/config';
+import { getCredentialBackend } from '../lib/credential-store';
 import { buildHelpText } from '../lib/help-text';
 import { errorMessage, outputResult } from '../lib/output';
 import { createSpinner } from '../lib/spinner';
@@ -66,8 +67,8 @@ async function checkCliVersion(): Promise<CheckResult> {
   }
 }
 
-function checkApiKeyPresence(flagValue?: string): CheckResult {
-  const resolved = resolveApiKey(flagValue);
+async function checkApiKeyPresence(flagValue?: string): Promise<CheckResult> {
+  const resolved = await resolveApiKeyAsync(flagValue);
   if (!resolved) {
     return {
       name: 'API Key',
@@ -87,7 +88,7 @@ function checkApiKeyPresence(flagValue?: string): CheckResult {
 async function checkApiValidationAndDomains(
   flagValue?: string,
 ): Promise<CheckResult> {
-  const resolved = resolveApiKey(flagValue);
+  const resolved = await resolveApiKeyAsync(flagValue);
   if (!resolved) {
     return {
       name: 'API Validation',
@@ -152,9 +153,10 @@ export const doctorCommand = new Command('doctor')
     buildHelpText({
       setup: true,
       context: `Checks performed:
-  CLI Version    Is the installed version up to date?
-  API Key        Is a key present (--api-key, RESEND_API_KEY, or credentials file)?
-  API Validation Is the key valid and accepted by the Resend API?`,
+  CLI Version          Is the installed version up to date?
+  API Key              Is a key present (--api-key, RESEND_API_KEY, or credentials file)?
+  Credential Storage   Which backend is storing credentials (keychain vs plaintext file)?
+  API Validation       Is the key valid and accepted by the Resend API?`,
       output: `  {\n    "ok": true,\n    "checks": [\n      {"name":"CLI Version","status":"pass","message":"v0.1.0 (latest)"},\n      {"name":"API Key","status":"pass","message":"re_...abcd (source: env)"},\n      {"name":"Domains","status":"pass","message":"1 verified, 0 pending"}\n    ]\n  }\n  status values: "pass" | "warn" | "fail"\n  Exit code 1 if any check has status "fail"`,
       examples: ['resend doctor', 'resend doctor --json'],
     }),
@@ -180,7 +182,7 @@ export const doctorCommand = new Command('doctor')
 
     // Check 2: API Key
     spinner = interactive ? createSpinner('Checking API key...') : null;
-    const keyCheck = checkApiKeyPresence(globalOpts.apiKey);
+    const keyCheck = await checkApiKeyPresence(globalOpts.apiKey);
     checks.push(keyCheck);
     if (keyCheck.status === 'fail') {
       spinner?.fail(keyCheck.message);
@@ -188,7 +190,28 @@ export const doctorCommand = new Command('doctor')
       spinner?.stop(keyCheck.message);
     }
 
-    // Check 3: API Validation + Domains
+    // Check 3: Credential Storage
+    spinner = interactive
+      ? createSpinner('Checking credential storage...')
+      : null;
+    const backend = await getCredentialBackend();
+    const storageType = getStorageType();
+    const storageCheck: CheckResult = {
+      name: 'Credential Storage',
+      status: !backend.isSecure ? 'warn' : 'pass',
+      message: backend.name,
+      ...(!backend.isSecure && storageType !== 'keychain'
+        ? { detail: 'Run `resend auth migrate` to use OS keychain' }
+        : {}),
+    };
+    checks.push(storageCheck);
+    if (storageCheck.status === 'warn') {
+      spinner?.warn(storageCheck.message);
+    } else {
+      spinner?.stop(storageCheck.message);
+    }
+
+    // Check 4: API Validation + Domains
     spinner = interactive
       ? createSpinner('Validating API key & domains...')
       : null;

@@ -45,19 +45,27 @@ const program = new Command()
   .option('--team <name>', 'Deprecated: use --profile instead')
   .option('--json', 'Force JSON output')
   .option('-q, --quiet', 'Suppress spinners and status output (implies --json)')
+  .option(
+    '--insecure-storage',
+    'Store credentials in plaintext file instead of OS keychain',
+  )
   .hook('preAction', (thisCommand, actionCommand) => {
     if (actionCommand.optsWithGlobals().quiet) {
       thisCommand.setOptionValue('json', true);
+    }
+    if (actionCommand.optsWithGlobals().insecureStorage) {
+      process.env.RESEND_CREDENTIAL_STORE = 'file';
     }
   })
   .addHelpText(
     'after',
     `
 ${pc.gray('Environment:')}
-  RESEND_API_KEY      API key — checked after --api-key, before stored credentials
-                      Priority: --api-key flag > RESEND_API_KEY > ~/.config/resend/credentials.json
-  RESEND_PROFILE      Profile — checked after --profile flag, before active_profile in config
-                      Priority: --profile flag > RESEND_PROFILE > active_profile in config > "default"
+  RESEND_API_KEY            API key — checked after --api-key, before stored credentials
+                            Priority: --api-key flag > RESEND_API_KEY > keychain/credentials file
+  RESEND_PROFILE            Profile — checked after --profile flag, before active_profile in config
+                            Priority: --profile flag > RESEND_PROFILE > active_profile in config > "default"
+  RESEND_CREDENTIAL_STORE   Force credential backend: "keychain" or "file"
 
 ${pc.gray('Output:')}
   Human-readable by default. Pass --json or pipe stdout for machine-readable JSON.
