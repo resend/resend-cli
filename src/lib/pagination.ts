@@ -29,11 +29,13 @@ export function printPaginationHint(
     data: Array<{ id: string }>;
   },
   command: string,
+  limit?: number,
 ): void {
   if (list.has_more && list.data.length > 0) {
     const last = list.data[list.data.length - 1];
+    const limitFlag = limit ? ` --limit ${limit}` : '';
     console.log(
-      `\nFetch the next page:\n$ resend ${command} --after ${last.id}`,
+      `\nFetch the next page:\n$ resend ${command} --after ${last.id}${limitFlag}`,
     );
   }
 }

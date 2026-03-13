@@ -60,7 +60,7 @@ export const listContactPropertiesCommand = new Command('list')
         sdkCall: (resend) => resend.contactProperties.list(paginationOpts),
         onInteractive: (list) => {
           console.log(renderContactPropertiesTable(list.data));
-          printPaginationHint(list, 'contact-properties list');
+          printPaginationHint(list, 'contact-properties list', limit);
         },
       },
       globalOpts,

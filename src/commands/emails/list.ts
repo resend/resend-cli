@@ -76,7 +76,7 @@ export const listEmailsCommand = new Command('list')
         sdkCall: (resend) => resend.emails.list(paginationOpts),
         onInteractive: (list) => {
           console.log(renderSentEmailsTable(list.data));
-          printPaginationHint(list, 'emails list');
+          printPaginationHint(list, 'emails list', limit);
         },
       },
       globalOpts,
