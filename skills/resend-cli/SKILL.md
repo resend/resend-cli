@@ -1,20 +1,28 @@
 ---
 name: resend-cli
 description: >
-  Send emails, manage domains, contacts, broadcasts, templates, webhooks, and
-  API keys on the Resend platform via the `resend` CLI. Use when the user wants
-  to interact with Resend from the terminal, scripts, or CI/CD pipelines.
+  Operate the Resend platform from the terminal — send emails, manage domains,
+  contacts, broadcasts, templates, webhooks, and API keys via the `resend` CLI.
+  Use when the user wants to run Resend commands in the shell, scripts, or CI/CD
+  pipelines. Always load this skill before running `resend` commands — it contains
+  the non-interactive flag contract and gotchas that prevent silent failures.
 license: MIT
 metadata:
-  openclaw:
-    requires:
-      bins: [resend]
-  sources:
-    - type: readme
-      path: ../../README.md
+  author: resend
+  version: "1.4.1"
+  homepage: https://resend.com
+  source: https://github.com/resend/resend-cli
+inputs:
+  - name: RESEND_API_KEY
+    description: Resend API key for authenticating CLI commands. Get yours at https://resend.com/api-keys
+    required: true
+references:
+  - references/commands.md
+  - references/workflows.md
+  - references/error-codes.md
 ---
 
-# Resend CLI — Agent Skill
+# Resend CLI
 
 ## Agent Protocol
 
@@ -24,11 +32,12 @@ The CLI auto-detects non-TTY environments and outputs JSON — no `--json` flag 
 - Supply ALL required flags. The CLI will NOT prompt when stdin is not a TTY.
 - Pass `--quiet` (or `-q`) to suppress spinners and status messages.
 - Exit `0` = success, `1` = error.
-- Errors are always JSON to stderr:
+- Success JSON goes to stdout, error JSON goes to stderr:
   ```json
   {"error":{"message":"...","code":"..."}}
   ```
 - Use `--api-key` or `RESEND_API_KEY` env var. Never rely on interactive login.
+- All `delete`/`rm` commands require `--yes` in non-interactive mode.
 
 ## Authentication
 
@@ -214,6 +223,18 @@ Multi-profile: use `--profile <name>` or `RESEND_PROFILE` env to select a stored
 | `update` | `{"current":"...","latest":"...","update_available":bool,"upgrade_command":"..."}` |
 | `open` | Opens Resend dashboard in browser |
 
+## Common Mistakes
+
+| # | Mistake | Fix |
+|---|---------|-----|
+| 1 | **Forgetting `--yes` on delete commands** | All `delete`/`rm` subcommands require `--yes` in non-interactive mode — otherwise the CLI exits with an error |
+| 2 | **Not saving webhook `signing_secret`** | `webhooks create` shows the secret once only — it cannot be retrieved later. Capture it from command output immediately |
+| 3 | **Omitting `--quiet` in CI** | Without `-q`, spinners and status text leak into stdout. Use `-q` to get clean JSON only |
+| 4 | **Using `--scheduled-at` with batch** | Batch sending does not support `scheduled_at` — use single `emails send` instead |
+| 5 | **Expecting `domains list` to include DNS records** | List returns summaries only — use `domains get <id>` for the full `records[]` array |
+| 6 | **Sending a dashboard-created broadcast via CLI** | Only API-created broadcasts can be sent with `broadcasts send` — dashboard broadcasts must be sent from the dashboard |
+| 7 | **Passing `--events` to `webhooks update` expecting additive behavior** | `--events` replaces the entire subscription list — always pass the complete set |
+
 ## Common Patterns
 
 **Send an email:**
@@ -244,8 +265,12 @@ RESEND_API_KEY=re_xxx resend emails send --from ... --to ... --subject ... --tex
 resend doctor -q
 ```
 
-## References
+## What Do You Need?
 
-For detailed flag descriptions, see `references/commands.md`.
-For multi-step workflow recipes, see `references/workflows.md`.
-For error codes and troubleshooting, see `references/error-codes.md`.
+| Task | Reference |
+|------|-----------|
+| **Detailed flag specs for any command** | [references/commands.md](references/commands.md) |
+| **Multi-step workflow recipes** (setup, domains, broadcasts, CI/CD, templates, webhooks) | [references/workflows.md](references/workflows.md) |
+| **Error codes and troubleshooting** | [references/error-codes.md](references/error-codes.md) |
+| **Resend SDK integration** (Node.js, Python, Go, etc.) | Install the `resend` skill — covers SDK usage, webhook verification, and template variables |
+| **AI agent email inbox** | Install the `agent-email-inbox` skill — covers security levels for untrusted email input |
