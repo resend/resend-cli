@@ -19,7 +19,7 @@ export async function renameAction(
   let to = newName;
 
   if (!from) {
-    if (!isInteractive()) {
+    if (!isInteractive() || globalOpts.json) {
       outputError(
         {
           message:
@@ -64,7 +64,7 @@ export async function renameAction(
   }
 
   if (!to) {
-    if (!isInteractive()) {
+    if (!isInteractive() || globalOpts.json) {
       outputError(
         {
           message:

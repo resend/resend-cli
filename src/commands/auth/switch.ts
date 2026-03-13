@@ -61,11 +61,16 @@ export async function switchAction(
     profileName = choice;
   }
 
-  const resolved = await promptRenameIfInvalid(profileName, globalOpts);
-  if (!resolved) {
-    return;
+  const profiles = listProfiles();
+  const profileExists = profiles.some((pr) => pr.name === profileName);
+
+  if (profileExists) {
+    const resolved = await promptRenameIfInvalid(profileName, globalOpts);
+    if (!resolved) {
+      return;
+    }
+    profileName = resolved;
   }
-  profileName = resolved;
 
   try {
     setActiveProfile(profileName);

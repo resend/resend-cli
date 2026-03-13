@@ -33,7 +33,7 @@ export function listAction(globalOpts: GlobalOpts) {
     );
   }
 
-  if (hasInvalid) {
+  if (hasInvalid && isInteractive()) {
     console.log(
       '\n  Profiles with invalid names can be renamed via `resend auth rename`.',
     );

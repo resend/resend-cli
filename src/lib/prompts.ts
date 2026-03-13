@@ -56,7 +56,7 @@ export async function promptRenameIfInvalid(
     return profileName;
   }
 
-  if (!isInteractive()) {
+  if (!isInteractive() || globalOpts.json) {
     outputError(
       {
         message: `Profile "${profileName}" has an invalid name: ${validationError}`,
