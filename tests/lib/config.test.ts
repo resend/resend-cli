@@ -12,11 +12,13 @@ import {
   getConfigDir,
   listProfiles,
   removeApiKey,
+  renameProfile,
   resolveApiKey,
   resolveProfileName,
   setActiveProfile,
   storeApiKey,
   validateProfileName,
+  writeCredentials,
 } from '../../src/lib/config';
 import { captureTestEnv } from '../helpers';
 
@@ -446,6 +448,93 @@ describe('removeApiKey', () => {
 
   test('throws when no credentials file', () => {
     expect(() => removeApiKey('any')).toThrow('No credentials file');
+  });
+});
+
+describe('renameProfile', () => {
+  const restoreEnv = captureTestEnv();
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = join(
+      tmpdir(),
+      `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
+    process.env.XDG_CONFIG_HOME = tmpDir;
+  });
+
+  afterEach(() => {
+    restoreEnv();
+    rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  test('renames a profile and preserves its API key', () => {
+    storeApiKey('re_key', 'old-name');
+
+    renameProfile('old-name', 'new-name');
+
+    const profiles = listProfiles();
+    expect(profiles).toEqual([{ name: 'new-name', active: true }]);
+    const resolved = resolveApiKey(undefined, 'new-name');
+    expect(resolved?.key).toBe('re_key');
+  });
+
+  test('updates active_profile when renaming the active profile', () => {
+    storeApiKey('re_a', 'alpha');
+    storeApiKey('re_b', 'beta');
+    setActiveProfile('beta');
+
+    renameProfile('beta', 'gamma');
+
+    const configPath = join(tmpDir, 'resend', 'credentials.json');
+    const data = JSON.parse(readFileSync(configPath, 'utf-8'));
+    expect(data.active_profile).toBe('gamma');
+  });
+
+  test('does not change active_profile when renaming a non-active profile', () => {
+    storeApiKey('re_a', 'alpha');
+    storeApiKey('re_b', 'beta');
+
+    renameProfile('beta', 'gamma');
+
+    const configPath = join(tmpDir, 'resend', 'credentials.json');
+    const data = JSON.parse(readFileSync(configPath, 'utf-8'));
+    expect(data.active_profile).toBe('alpha');
+  });
+
+  test('renames a legacy profile with spaces', () => {
+    // Simulate a legacy profile created before validation was added
+    writeCredentials({
+      active_profile: 'my team',
+      profiles: { 'my team': { api_key: 're_legacy' } },
+    });
+
+    renameProfile('my team', 'my-team');
+
+    const profiles = listProfiles();
+    expect(profiles).toEqual([{ name: 'my-team', active: true }]);
+    const resolved = resolveApiKey(undefined, 'my-team');
+    expect(resolved?.key).toBe('re_legacy');
+  });
+
+  test('throws when new name is invalid', () => {
+    storeApiKey('re_key', 'valid');
+    expect(() => renameProfile('valid', 'has spaces')).toThrow('letters');
+  });
+
+  test('throws when old profile does not exist', () => {
+    storeApiKey('re_key', 'exists');
+    expect(() => renameProfile('nope', 'new-name')).toThrow('not found');
+  });
+
+  test('throws when new name already exists', () => {
+    storeApiKey('re_a', 'alpha');
+    storeApiKey('re_b', 'beta');
+    expect(() => renameProfile('alpha', 'beta')).toThrow('already exists');
+  });
+
+  test('throws when no credentials file', () => {
+    expect(() => renameProfile('any', 'new')).toThrow('No credentials file');
   });
 });
 

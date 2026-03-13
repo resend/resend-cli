@@ -1,9 +1,13 @@
 import * as p from '@clack/prompts';
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
-import { listProfiles, setActiveProfile } from '../../lib/config';
+import {
+  listProfiles,
+  setActiveProfile,
+  validateProfileName,
+} from '../../lib/config';
 import { errorMessage, outputError, outputResult } from '../../lib/output';
-import { cancelAndExit } from '../../lib/prompts';
+import { cancelAndExit, promptRenameIfInvalid } from '../../lib/prompts';
 import { isInteractive } from '../../lib/tty';
 
 export async function switchAction(
@@ -42,7 +46,11 @@ export async function switchAction(
       options: profiles.map((t) => ({
         value: t.name,
         label: t.name,
-        hint: t.active ? 'active' : undefined,
+        hint: t.active
+          ? 'active'
+          : validateProfileName(t.name)
+            ? 'invalid name'
+            : undefined,
       })),
     });
 
@@ -51,6 +59,17 @@ export async function switchAction(
     }
 
     profileName = choice;
+  }
+
+  const profiles = listProfiles();
+  const profileExists = profiles.some((pr) => pr.name === profileName);
+
+  if (profileExists) {
+    const resolved = await promptRenameIfInvalid(profileName, globalOpts);
+    if (!resolved) {
+      return;
+    }
+    profileName = resolved;
   }
 
   try {

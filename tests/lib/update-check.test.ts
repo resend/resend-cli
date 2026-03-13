@@ -16,7 +16,10 @@ import {
   test,
   vi,
 } from 'vitest';
-import { checkForUpdates } from '../../src/lib/update-check';
+import {
+  checkForUpdates,
+  detectInstallMethod,
+} from '../../src/lib/update-check';
 import { VERSION } from '../../src/lib/version';
 import { captureTestEnv } from '../helpers';
 
@@ -175,5 +178,62 @@ describe('checkForUpdates', () => {
     mockFetch('canary-20260311');
     await checkForUpdates();
     expect(stderrOutput).toBe('');
+  });
+});
+
+describe('detectInstallMethod', () => {
+  const restoreEnv = captureTestEnv();
+  let origExecPath: string;
+  let origArgv1: string | undefined;
+
+  beforeEach(() => {
+    origExecPath = process.execPath;
+    origArgv1 = process.argv[1];
+    delete process.env.npm_execpath;
+  });
+
+  afterEach(() => {
+    Object.defineProperty(process, 'execPath', { value: origExecPath });
+    process.argv[1] = origArgv1 as string;
+    restoreEnv();
+  });
+
+  test('detects npm when script path contains node_modules', () => {
+    Object.defineProperty(process, 'execPath', {
+      value: '/opt/homebrew/bin/node',
+    });
+    process.argv[1] = '/opt/homebrew/lib/node_modules/resend-cli/dist/cli.js';
+
+    expect(detectInstallMethod()).toBe('npm install -g resend-cli');
+  });
+
+  test('detects npm when npm_execpath is set even with homebrew node', () => {
+    Object.defineProperty(process, 'execPath', {
+      value: '/opt/homebrew/bin/node',
+    });
+    process.argv[1] = '/opt/homebrew/bin/resend';
+    process.env.npm_execpath =
+      '/opt/homebrew/lib/node_modules/npm/bin/npm-cli.js';
+
+    expect(detectInstallMethod()).toBe('npm install -g resend-cli');
+  });
+
+  test('detects homebrew when no npm signals present', () => {
+    Object.defineProperty(process, 'execPath', {
+      value: '/opt/homebrew/Cellar/resend/1.4.0/bin/resend',
+    });
+    process.argv[1] = '/opt/homebrew/Cellar/resend/1.4.0/libexec/cli.js';
+
+    expect(detectInstallMethod()).toBe('brew update && brew upgrade resend');
+  });
+
+  test('detects install script', () => {
+    Object.defineProperty(process, 'execPath', {
+      value: '/Users/test/.resend/bin/resend',
+    });
+    process.argv[1] = '/Users/test/.resend/bin/resend';
+
+    const expected = process.platform === 'win32' ? 'irm' : 'curl';
+    expect(detectInstallMethod()).toContain(expected);
   });
 });
