@@ -1,6 +1,7 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../lib/client';
 import {
+  getStorageType,
   listProfiles,
   maskKey,
   resolveApiKey,
@@ -70,6 +71,8 @@ Shows which profile is active and where the API key comes from.`,
 
     const profile = resolved.profile ?? resolveProfileName(profileFlag);
 
+    const storage = getStorageType();
+
     if (globalOpts.json || !isInteractive()) {
       outputResult(
         {
@@ -77,6 +80,7 @@ Shows which profile is active and where the API key comes from.`,
           profile,
           api_key: maskKey(resolved.key),
           source: resolved.source,
+          ...(resolved.source === 'config' && storage ? { storage } : {}),
         },
         { json: globalOpts.json },
       );
@@ -89,5 +93,10 @@ Shows which profile is active and where the API key comes from.`,
     console.log(
       `  Source:  ${resolved.source === 'config' ? 'config file' : resolved.source === 'env' ? 'environment variable' : 'flag'}`,
     );
+    if (resolved.source === 'config' && storage) {
+      console.log(
+        `  Storage: ${storage === 'keychain' ? 'OS keychain' : 'plaintext file'}`,
+      );
+    }
     console.log('');
   });

@@ -3,6 +3,7 @@ import { buildHelpText } from '../../lib/help-text';
 import { listCommand } from './list';
 import { loginCommand } from './login';
 import { logoutCommand } from './logout';
+import { migrateCommand } from './migrate';
 import { removeCommand } from './remove';
 import { renameCommand } from './rename';
 import { switchCommand } from './switch';
@@ -21,6 +22,8 @@ export const authCommand = new Command('auth')
         'resend auth switch staging',
         'resend auth rename staging production',
         'resend auth remove staging',
+        'resend auth migrate',
+        'resend auth migrate --file',
       ],
     }),
   )
@@ -29,4 +32,5 @@ export const authCommand = new Command('auth')
   .addCommand(listCommand, { isDefault: true })
   .addCommand(switchCommand)
   .addCommand(renameCommand)
-  .addCommand(removeCommand);
+  .addCommand(removeCommand)
+  .addCommand(migrateCommand);
