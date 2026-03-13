@@ -87,6 +87,33 @@ describe('login command', () => {
     expect(output).toContain('missing_key');
   });
 
+  test('errors with missing_key when --json is set but --key is omitted even in TTY', async () => {
+    Object.defineProperty(process.stdin, 'isTTY', { value: true, writable: true });
+    Object.defineProperty(process.stdout, 'isTTY', { value: true, writable: true });
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { Command } = await import('@commander-js/extra-typings');
+    const { loginCommand } = await import('../../../src/commands/auth/login');
+    const program = new Command()
+      .option('--profile <name>')
+      .option('--team <name>')
+      .option('--json')
+      .option('--api-key <key>')
+      .option('-q, --quiet')
+      .addCommand(loginCommand);
+
+    await expectExit1(() =>
+      program.parseAsync(['login', '--json'], { from: 'user' }),
+    );
+
+    const raw = errorSpy?.mock.calls.map((c) => c[0]).join(' ');
+    expect(raw).toContain('missing_key');
+
+    // @ts-expect-error — reset parent to avoid polluting the shared singleton
+    loginCommand.parent = null;
+  });
+
   test('non-interactive login stores as default when profiles exist', async () => {
     // Pre-populate credentials with an existing profile
     const configDir = join(tmpDir, 'resend');
