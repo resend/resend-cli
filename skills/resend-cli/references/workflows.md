@@ -157,6 +157,19 @@ resend webhooks update <webhook-id> --status enabled
 
 # Change subscribed events (replaces entire list)
 resend webhooks update <webhook-id> --events email.delivered email.bounced
+
+# Local development listener (requires a tunnel like ngrok)
+resend webhooks listen --url https://example.ngrok-free.app
+
+# Forward events to your local app
+resend webhooks listen \
+  --url https://example.ngrok-free.app \
+  --forward-to localhost:3000/webhook
+
+# Listen for specific events only
+resend webhooks listen \
+  --url https://example.ngrok-free.app \
+  --events email.delivered email.bounced
 ```
 
 ---
@@ -304,4 +317,13 @@ resend emails receiving attachment <email-id> <attachment-id>
 resend emails receiving forward <email-id> \
   --from "forwarded@yourdomain.com" \
   --to colleague@example.com
+
+# Watch for new inbound emails in real time
+resend emails receiving listen
+
+# Poll every 10 seconds
+resend emails receiving listen --interval 10
+
+# Stream as NDJSON (for scripting)
+resend emails receiving listen --json | head -3
 ```
