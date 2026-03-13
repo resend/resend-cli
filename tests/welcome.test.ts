@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process';
+import { type ExecFileSyncOptions, execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { describe, expect, test } from 'vitest';
 
@@ -14,12 +14,15 @@ describe('no-args welcome', () => {
   test('exits 0 and stdout contains tagline and command hints', () => {
     let stdout: string;
     let exitCode: number;
+    const execOptions: ExecFileSyncOptions = {
+      encoding: 'utf-8',
+      timeout: 10_000,
+      env: noUpdateEnv,
+      ...(process.platform === 'win32' ? { shell: true } : {}),
+    };
     try {
-      stdout = execFileSync('npx', ['tsx', CLI], {
-        encoding: 'utf-8',
-        timeout: 10_000,
-        env: noUpdateEnv,
-      });
+      const result = execFileSync('npx', ['tsx', CLI], execOptions);
+      stdout = Buffer.isBuffer(result) ? result.toString('utf8') : result;
       exitCode = 0;
     } catch (err) {
       const e = err as { stdout?: string; stderr?: string; status?: number };

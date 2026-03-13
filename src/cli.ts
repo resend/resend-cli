@@ -106,7 +106,6 @@ if (args.length === 0) {
   (async () => {
     printWelcome(VERSION);
     await checkForUpdates();
-    process.exit(0);
   })().catch((err) => {
     outputError({
       message: errorMessage(err, 'Failed to show welcome'),
