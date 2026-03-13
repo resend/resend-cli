@@ -27,7 +27,11 @@ export function parseVariables(
       );
     }
 
-    const fallback = rest.length ? rest.join(':') : undefined;
+    const raw = rest.length ? rest.join(':') : undefined;
+    if (raw != null && raw === '') {
+      throw new Error(`Invalid --var "${v}": fallback value cannot be empty.`);
+    }
+    const fallback = raw;
 
     if (type === 'number') {
       if (fallback != null && Number.isNaN(Number(fallback))) {

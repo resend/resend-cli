@@ -57,7 +57,7 @@ export async function runDelete(
   if (!skipConfirm) {
     await confirmDelete(id, config.confirmMessage, globalOpts);
   }
-  await withSpinner(
+  const result = await withSpinner(
     config.spinner,
     () => config.sdkCall(resend),
     'delete_error',
@@ -66,10 +66,7 @@ export async function runDelete(
   if (!globalOpts.json && isInteractive()) {
     console.log(config.successMsg);
   } else {
-    outputResult(
-      { object: config.object, id, deleted: true },
-      { json: globalOpts.json },
-    );
+    outputResult(result, { json: globalOpts.json });
   }
 }
 

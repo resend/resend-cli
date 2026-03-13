@@ -76,6 +76,16 @@ Non-interactive: --name and a body (--html or --html-file) are required.`,
       name = result;
     }
 
+    if (opts.html && opts.htmlFile) {
+      outputError(
+        {
+          message: '--html and --html-file are mutually exclusive.',
+          code: 'invalid_options',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
     let html = opts.html;
 
     if (opts.htmlFile) {
