@@ -1,10 +1,54 @@
 import * as p from '@clack/prompts';
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
-import { listProfiles, setActiveProfile } from '../../lib/config';
+import {
+  listProfiles,
+  renameProfile,
+  setActiveProfile,
+  validateProfileName,
+} from '../../lib/config';
 import { errorMessage, outputError, outputResult } from '../../lib/output';
 import { cancelAndExit } from '../../lib/prompts';
 import { isInteractive } from '../../lib/tty';
+
+async function promptRenameIfInvalid(
+  profileName: string,
+  globalOpts: GlobalOpts,
+): Promise<string | null> {
+  const validationError = validateProfileName(profileName);
+  if (!validationError) {
+    return profileName;
+  }
+
+  if (!isInteractive()) {
+    outputError(
+      {
+        message: `Profile "${profileName}" has an invalid name: ${validationError}`,
+        code: 'invalid_profile_name',
+      },
+      { json: globalOpts.json },
+    );
+    return null;
+  }
+
+  p.log.warn(
+    `Profile "${profileName}" has an invalid name: ${validationError}`,
+  );
+
+  const newName = await p.text({
+    message: 'Enter a new name for this profile:',
+    placeholder: profileName.replace(/[^a-zA-Z0-9_-]/g, '-'),
+    validate: (v) => validateProfileName(v as string),
+  });
+
+  if (p.isCancel(newName)) {
+    cancelAndExit('Rename cancelled.');
+  }
+
+  renameProfile(profileName, newName);
+  p.log.success(`Profile renamed to '${newName}'.`);
+  return newName;
+}
 
 export async function switchAction(
   name: string | undefined,
@@ -42,7 +86,11 @@ export async function switchAction(
       options: profiles.map((t) => ({
         value: t.name,
         label: t.name,
-        hint: t.active ? 'active' : undefined,
+        hint: t.active
+          ? 'active'
+          : validateProfileName(t.name)
+            ? 'invalid name'
+            : undefined,
       })),
     });
 
@@ -52,6 +100,12 @@ export async function switchAction(
 
     profileName = choice;
   }
+
+  const resolved = await promptRenameIfInvalid(profileName, globalOpts);
+  if (!resolved) {
+    return;
+  }
+  profileName = resolved;
 
   try {
     setActiveProfile(profileName);

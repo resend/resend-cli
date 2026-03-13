@@ -5,6 +5,7 @@ import { Resend } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
 import {
   listProfiles,
+  renameProfile,
   resolveApiKey,
   setActiveProfile,
   storeApiKey,
@@ -170,6 +171,7 @@ export const loginCommand = new Command('login')
           ...existingProfiles.map((t) => ({
             value: t.name,
             label: `${t.name} (overwrite)`,
+            hint: validateProfileName(t.name) ? 'invalid name' : undefined,
           })),
           { value: '__new__' as const, label: '+ Create new profile' },
         ];
@@ -191,6 +193,21 @@ export const loginCommand = new Command('login')
           if (p.isCancel(newName)) {
             cancelAndExit('Login cancelled.');
           }
+          profileName = newName;
+        } else if (validateProfileName(choice)) {
+          p.log.warn(
+            `Profile "${choice}" has an invalid name: ${validateProfileName(choice)}`,
+          );
+          const newName = await p.text({
+            message: 'Enter a new name for this profile:',
+            placeholder: choice.replace(/[^a-zA-Z0-9_-]/g, '-'),
+            validate: (v) => validateProfileName(v as string),
+          });
+          if (p.isCancel(newName)) {
+            cancelAndExit('Login cancelled.');
+          }
+          renameProfile(choice, newName);
+          p.log.success(`Profile renamed to '${newName}'.`);
           profileName = newName;
         } else {
           profileName = choice;

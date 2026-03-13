@@ -243,6 +243,31 @@ export function validateProfileName(name: string): string | undefined {
 /** @deprecated Use `validateProfileName` instead */
 export const validateTeamName = validateProfileName;
 
+export function renameProfile(oldName: string, newName: string): void {
+  const validationError = validateProfileName(newName);
+  if (validationError) {
+    throw new Error(validationError);
+  }
+  const creds = readCredentials();
+  if (!creds) {
+    throw new Error('No credentials file found. Run: resend login');
+  }
+  if (!creds.profiles[oldName]) {
+    throw new Error(
+      `Profile "${oldName}" not found. Available profiles: ${Object.keys(creds.profiles).join(', ')}`,
+    );
+  }
+  if (oldName !== newName && creds.profiles[newName]) {
+    throw new Error(`Profile "${newName}" already exists.`);
+  }
+  creds.profiles[newName] = creds.profiles[oldName];
+  delete creds.profiles[oldName];
+  if (creds.active_profile === oldName) {
+    creds.active_profile = newName;
+  }
+  writeCredentials(creds);
+}
+
 export function maskKey(key: string): string {
   if (key.length <= 7) {
     return `${key.slice(0, 3)}...`;
