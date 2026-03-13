@@ -15,31 +15,31 @@ Built for humans, AI agents, and CI/CD pipelines.
 
 ## Install
 
-### Homebrew (macOS)
+### cURL
 
-```bash
-brew install resend/cli/resend
+```sh
+curl -fsSL https://resend.com/install.sh | bash
 ```
 
-### Shell script (macOS and Linux)
+### Node.js
 
-```bash
-curl -fsSL https://resend.com/install.sh | bash
+```sh
+npm install -g resend-cli
+```
+
+### Homebrew (macOS / Linux)
+
+```sh
+brew install resend/cli/resend
 ```
 
 ### PowerShell (Windows)
 
-```powershell
+```sh
 irm https://resend.com/install.ps1 | iex
 ```
 
 Or download the `.exe` directly from the [GitHub releases page](https://github.com/resend/resend-cli/releases/latest).
-
-### npx
-
-```bash
-npx resend-cli
-```
 
 ## Local development
 
