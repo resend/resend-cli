@@ -22,8 +22,8 @@ const SPINNER_FRAMES = [
 ];
 const SPINNER_INTERVAL = 80;
 
-const MAX_RETRIES = 3;
 const DEFAULT_RETRY_DELAYS = [1, 2, 4];
+const MAX_RETRIES = DEFAULT_RETRY_DELAYS.length;
 
 type SdkResponse<T> = {
   data: T | null;
