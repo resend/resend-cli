@@ -44,14 +44,14 @@ describe('logout command', () => {
   });
 
   function writeCredentials(
-    teams: Record<string, string> = { default: 're_test_key_123' },
+    profiles: Record<string, string> = { default: 're_test_key_123' },
   ) {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     const creds = {
-      active_team: Object.keys(teams)[0],
-      teams: Object.fromEntries(
-        Object.entries(teams).map(([name, key]) => [name, { api_key: key }]),
+      active_profile: Object.keys(profiles)[0],
+      profiles: Object.fromEntries(
+        Object.entries(profiles).map(([name, key]) => [name, { api_key: key }]),
       ),
     };
     writeFileSync(
@@ -86,7 +86,7 @@ describe('logout command', () => {
     expect(output.already_logged_out).toBe(true);
   });
 
-  test('logout without --team removes all teams', async () => {
+  test('logout without --profile removes all profiles', async () => {
     spies = setupOutputSpies();
     writeCredentials({ staging: 're_staging_key', production: 're_prod_key' });
 
@@ -98,23 +98,24 @@ describe('logout command', () => {
 
     const output = JSON.parse(spies.logSpy.mock.calls[0][0] as string);
     expect(output.success).toBe(true);
-    expect(output.team).toBe('all');
+    expect(output.profile).toBe('all');
   });
 
-  test('logout with --team removes only that team', async () => {
+  test('logout with --profile removes only that profile', async () => {
     spies = setupOutputSpies();
     writeCredentials({ staging: 're_staging_key', production: 're_prod_key' });
 
-    // Use the full CLI program so --team global option is recognized
+    // Use the full CLI program so --profile global option is recognized
     const { Command } = await import('@commander-js/extra-typings');
     const { logoutCommand } = await import('../../../src/commands/auth/logout');
     const program = new Command()
+      .option('--profile <name>')
       .option('--team <name>')
       .option('--json')
       .option('--api-key <key>')
       .addCommand(logoutCommand);
 
-    await program.parseAsync(['logout', '--team', 'staging'], {
+    await program.parseAsync(['logout', '--profile', 'staging'], {
       from: 'user',
     });
 
@@ -124,12 +125,12 @@ describe('logout command', () => {
     const remaining = JSON.parse(
       require('node:fs').readFileSync(configPath, 'utf-8'),
     );
-    expect(remaining.teams.staging).toBeUndefined();
-    expect(remaining.teams.production).toBeDefined();
+    expect(remaining.profiles.staging).toBeUndefined();
+    expect(remaining.profiles.production).toBeDefined();
 
     const output = JSON.parse(spies.logSpy.mock.calls[0][0] as string);
     expect(output.success).toBe(true);
-    expect(output.team).toBe('staging');
+    expect(output.profile).toBe('staging');
   });
 
   test('exits with error when file removal fails', async () => {

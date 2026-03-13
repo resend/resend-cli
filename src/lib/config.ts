@@ -10,13 +10,20 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 
 export type ApiKeySource = 'flag' | 'env' | 'config';
-export type ResolvedKey = { key: string; source: ApiKeySource; team?: string };
-
-export type TeamProfile = { api_key: string };
-export type CredentialsFile = {
-  active_team: string;
-  teams: Record<string, TeamProfile>;
+export type ResolvedKey = {
+  key: string;
+  source: ApiKeySource;
+  profile?: string;
 };
+
+export type Profile = { api_key: string };
+export type CredentialsFile = {
+  active_profile: string;
+  profiles: Record<string, Profile>;
+};
+
+/** @deprecated Use `Profile` instead */
+export type TeamProfile = Profile;
 
 export function getConfigDir(): string {
   if (process.env.XDG_CONFIG_HOME) {
@@ -36,14 +43,25 @@ export function readCredentials(): CredentialsFile | null {
   try {
     const data = JSON.parse(readFileSync(getCredentialsPath(), 'utf-8'));
     // Support legacy format: { api_key: "re_xxx" }
-    if (data.api_key && !data.teams) {
+    if (data.api_key && !data.profiles && !data.teams) {
       return {
-        active_team: 'default',
-        teams: { default: { api_key: data.api_key } },
+        active_profile: 'default',
+        profiles: { default: { api_key: data.api_key } },
       };
     }
+    // New format: { profiles, active_profile }
+    if (data.profiles) {
+      return {
+        active_profile: data.active_profile ?? 'default',
+        profiles: data.profiles,
+      };
+    }
+    // Old format: { teams, active_team }
     if (data.teams) {
-      return data as CredentialsFile;
+      return {
+        active_profile: data.active_team ?? 'default',
+        profiles: data.teams,
+      };
     }
     return null;
   } catch {
@@ -64,27 +82,31 @@ export function writeCredentials(creds: CredentialsFile): string {
   return configPath;
 }
 
-export function resolveTeamName(flagValue?: string): string {
+export function resolveProfileName(flagValue?: string): string {
   if (flagValue) {
     return flagValue;
   }
 
-  const envTeam = process.env.RESEND_TEAM;
-  if (envTeam) {
-    return envTeam;
+  // Check RESEND_PROFILE first, fall back to deprecated RESEND_TEAM
+  const envProfile = process.env.RESEND_PROFILE || process.env.RESEND_TEAM;
+  if (envProfile) {
+    return envProfile;
   }
 
   const creds = readCredentials();
-  if (creds?.active_team) {
-    return creds.active_team;
+  if (creds?.active_profile) {
+    return creds.active_profile;
   }
 
   return 'default';
 }
 
+/** @deprecated Use `resolveProfileName` instead */
+export const resolveTeamName = resolveProfileName;
+
 export function resolveApiKey(
   flagValue?: string,
-  teamName?: string,
+  profileName?: string,
 ): ResolvedKey | null {
   if (flagValue) {
     return { key: flagValue, source: 'flag' };
@@ -97,29 +119,32 @@ export function resolveApiKey(
 
   const creds = readCredentials();
   if (creds) {
-    const team = resolveTeamName(teamName);
-    const profile = creds.teams[team];
-    if (profile?.api_key) {
-      return { key: profile.api_key, source: 'config', team };
+    const profile = resolveProfileName(profileName);
+    const entry = creds.profiles[profile];
+    if (entry?.api_key) {
+      return { key: entry.api_key, source: 'config', profile };
     }
   }
 
   return null;
 }
 
-export function storeApiKey(apiKey: string, teamName?: string): string {
-  const team = teamName || 'default';
-  const validationError = validateTeamName(team);
+export function storeApiKey(apiKey: string, profileName?: string): string {
+  const profile = profileName || 'default';
+  const validationError = validateProfileName(profile);
   if (validationError) {
     throw new Error(validationError);
   }
-  const creds = readCredentials() || { active_team: 'default', teams: {} };
+  const creds = readCredentials() || {
+    active_profile: 'default',
+    profiles: {},
+  };
 
-  creds.teams[team] = { api_key: apiKey };
+  creds.profiles[profile] = { api_key: apiKey };
 
-  // If this is the first team, set it as active
-  if (Object.keys(creds.teams).length === 1) {
-    creds.active_team = team;
+  // If this is the first profile, set it as active
+  if (Object.keys(creds.profiles).length === 1) {
+    creds.active_profile = profile;
   }
 
   return writeCredentials(creds);
@@ -131,7 +156,7 @@ export function removeAllApiKeys(): string {
   return configPath;
 }
 
-export function removeApiKey(teamName?: string): string {
+export function removeApiKey(profileName?: string): string {
   const creds = readCredentials();
   if (!creds) {
     const configPath = getCredentialsPath();
@@ -143,22 +168,22 @@ export function removeApiKey(teamName?: string): string {
     return configPath;
   }
 
-  const team = teamName || resolveTeamName();
-  if (!creds.teams[team]) {
+  const profile = profileName || resolveProfileName();
+  if (!creds.profiles[profile]) {
     throw new Error(
-      `Team "${team}" not found. Available teams: ${Object.keys(creds.teams).join(', ')}`,
+      `Profile "${profile}" not found. Available profiles: ${Object.keys(creds.profiles).join(', ')}`,
     );
   }
-  delete creds.teams[team];
+  delete creds.profiles[profile];
 
-  // If we removed the active team, switch to first available or "default"
-  if (creds.active_team === team) {
-    const remaining = Object.keys(creds.teams);
-    creds.active_team = remaining[0] || 'default';
+  // If we removed the active profile, switch to first available or "default"
+  if (creds.active_profile === profile) {
+    const remaining = Object.keys(creds.profiles);
+    creds.active_profile = remaining[0] || 'default';
   }
 
-  // If no teams left, delete the file
-  if (Object.keys(creds.teams).length === 0) {
+  // If no profiles left, delete the file
+  if (Object.keys(creds.profiles).length === 0) {
     const configPath = getCredentialsPath();
     unlinkSync(configPath);
     return configPath;
@@ -167,8 +192,8 @@ export function removeApiKey(teamName?: string): string {
   return writeCredentials(creds);
 }
 
-export function setActiveTeam(teamName: string): void {
-  const validationError = validateTeamName(teamName);
+export function setActiveProfile(profileName: string): void {
+  const validationError = validateProfileName(profileName);
   if (validationError) {
     throw new Error(validationError);
   }
@@ -176,38 +201,47 @@ export function setActiveTeam(teamName: string): void {
   if (!creds) {
     throw new Error('No credentials file found. Run: resend login');
   }
-  if (!creds.teams[teamName]) {
+  if (!creds.profiles[profileName]) {
     throw new Error(
-      `Team "${teamName}" not found. Available teams: ${Object.keys(creds.teams).join(', ')}`,
+      `Profile "${profileName}" not found. Available profiles: ${Object.keys(creds.profiles).join(', ')}`,
     );
   }
-  creds.active_team = teamName;
+  creds.active_profile = profileName;
   writeCredentials(creds);
 }
 
-export function listTeams(): Array<{ name: string; active: boolean }> {
+/** @deprecated Use `setActiveProfile` instead */
+export const setActiveTeam = setActiveProfile;
+
+export function listProfiles(): Array<{ name: string; active: boolean }> {
   const creds = readCredentials();
   if (!creds) {
     return [];
   }
-  return Object.keys(creds.teams).map((name) => ({
+  return Object.keys(creds.profiles).map((name) => ({
     name,
-    active: name === creds.active_team,
+    active: name === creds.active_profile,
   }));
 }
 
-export function validateTeamName(name: string): string | undefined {
+/** @deprecated Use `listProfiles` instead */
+export const listTeams = listProfiles;
+
+export function validateProfileName(name: string): string | undefined {
   if (!name || name.length === 0) {
-    return 'Team name must not be empty';
+    return 'Profile name must not be empty';
   }
   if (name.length > 64) {
-    return 'Team name must be 64 characters or fewer';
+    return 'Profile name must be 64 characters or fewer';
   }
   if (!/^[a-zA-Z0-9_-]+$/.test(name)) {
-    return 'Team name must contain only letters, numbers, dashes, and underscores';
+    return 'Profile name must contain only letters, numbers, dashes, and underscores';
   }
   return undefined;
 }
+
+/** @deprecated Use `validateProfileName` instead */
+export const validateTeamName = validateProfileName;
 
 export function maskKey(key: string): string {
   if (key.length <= 7) {

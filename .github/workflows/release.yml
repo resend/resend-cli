@@ -223,19 +223,24 @@ jobs:
           body: |
             ## Install
 
-            **macOS / Linux**
+            **cURL**
             ```sh
             curl -fsSL https://resend.com/install.sh | bash
             ```
 
-            **Windows (PowerShell)**
-            ```pwsh
-            irm https://resend.com/install.ps1 | iex
+            **Node.js**
+            ```sh
+            npm install -g resend-cli
             ```
 
-            **npx**
+            **Homebrew (macOS / Linux)**
             ```sh
-            npx resend-cli
+            brew install resend/cli/resend
+            ```
+
+            **PowerShell (Windows)**
+            ```sh
+            irm https://resend.com/install.ps1 | iex
             ```
           files: |
             dist/resend-darwin-arm64.tar.gz

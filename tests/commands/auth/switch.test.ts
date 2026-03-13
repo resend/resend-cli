@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, rmSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Command } from '@commander-js/extra-typings';
@@ -20,15 +20,15 @@ import {
 } from '../../helpers';
 
 async function createProgram() {
-  const { removeCommand } = await import('../../../src/commands/teams/remove');
+  const { switchCommand } = await import('../../../src/commands/auth/switch');
   return new Command()
     .name('resend')
     .option('--json', 'Force JSON output')
-    .option('--team <name>', 'Team profile')
-    .addCommand(removeCommand);
+    .option('--profile <name>', 'Profile')
+    .addCommand(switchCommand);
 }
 
-describe('teams remove command', () => {
+describe('auth switch command', () => {
   const restoreEnv = captureTestEnv();
   let spies: ReturnType<typeof setupOutputSpies> | undefined;
   let errorSpy: MockInstance | undefined;
@@ -54,28 +54,23 @@ describe('teams remove command', () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  test('removes team in JSON mode', async () => {
+  test('switches active profile in JSON mode', async () => {
     spies = setupOutputSpies();
     storeApiKey('re_default', 'default');
     storeApiKey('re_staging', 'staging');
 
     const program = await createProgram();
-    await program.parseAsync(['remove', 'staging', '--json'], { from: 'user' });
+    await program.parseAsync(['switch', 'staging', '--json'], {
+      from: 'user',
+    });
 
     const output = JSON.parse(spies.logSpy.mock.calls[0][0] as string);
     expect(output.success).toBe(true);
-    expect(output.removed_team).toBe('staging');
-  });
-
-  test('deletes credentials file when last team removed', async () => {
-    spies = setupOutputSpies();
-    storeApiKey('re_only', 'only');
-
-    const program = await createProgram();
-    await program.parseAsync(['remove', 'only', '--json'], { from: 'user' });
+    expect(output.active_profile).toBe('staging');
 
     const configPath = join(tmpDir, 'resend', 'credentials.json');
-    expect(existsSync(configPath)).toBe(false);
+    const data = JSON.parse(readFileSync(configPath, 'utf-8'));
+    expect(data.active_profile).toBe('staging');
   });
 
   test('errors when name omitted in non-interactive mode', async () => {
@@ -86,14 +81,14 @@ describe('teams remove command', () => {
 
     const program = await createProgram();
     await expectExit1(() =>
-      program.parseAsync(['remove', '--json'], { from: 'user' }),
+      program.parseAsync(['switch', '--json'], { from: 'user' }),
     );
 
     const output = JSON.parse(errorSpy?.mock.calls[0][0] as string);
     expect(output.error.code).toBe('missing_name');
   });
 
-  test('errors when team does not exist', async () => {
+  test('errors when profile does not exist', async () => {
     spies = setupOutputSpies();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -101,10 +96,10 @@ describe('teams remove command', () => {
 
     const program = await createProgram();
     await expectExit1(() =>
-      program.parseAsync(['remove', 'nonexistent'], { from: 'user' }),
+      program.parseAsync(['switch', 'nonexistent'], { from: 'user' }),
     );
 
     const output = JSON.parse(errorSpy?.mock.calls[0][0] as string);
-    expect(output.error.code).toBe('remove_failed');
+    expect(output.error.code).toBe('switch_failed');
   });
 });

@@ -7,15 +7,15 @@ export interface HelpTextOptions {
 }
 
 const GLOBAL_OPTS_FULL = `Global options:
-  --api-key <key>   API key (or set RESEND_API_KEY env var)
-  --team <name>     Team profile to use (overrides RESEND_TEAM)
-  --json            Force JSON output (also auto-enabled when stdout is piped)
-  -q, --quiet       Suppress spinners and status output (implies --json)`;
+  --api-key <key>     API key (or set RESEND_API_KEY env var)
+  --profile <name>    Profile to use (overrides RESEND_PROFILE)
+  --json              Force JSON output (also auto-enabled when stdout is piped)
+  -q, --quiet         Suppress spinners and status output (implies --json)`;
 
 const GLOBAL_OPTS_SETUP = `Global options:
-  --team <name>  Team profile to save the key to
-  --json         Force JSON output
-  -q, --quiet    Suppress spinners and status output (implies --json)`;
+  --profile <name>  Profile to use
+  --json            Force JSON output
+  -q, --quiet       Suppress spinners and status output (implies --json)`;
 
 const ERROR_ENVELOPE = `  {"error":{"message":"<message>","code":"<code>"}}`;
 
