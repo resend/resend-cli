@@ -137,7 +137,12 @@ export const loginCommand = new Command('login')
 
     try {
       const resend = new Resend(apiKey);
-      await resend.domains.list();
+      const { error } = await resend.domains.list();
+
+      if (error) {
+        throw error;
+      }
+
       spinner.stop('API key is valid');
     } catch (err) {
       spinner.fail('API key validation failed');
@@ -159,7 +164,6 @@ export const loginCommand = new Command('login')
           { message: teamError, code: 'invalid_team_name' },
           { json: globalOpts.json },
         );
-        return;
       }
     }
 
