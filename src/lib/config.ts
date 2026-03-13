@@ -8,6 +8,11 @@ import {
 } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import {
+  type CredentialBackend,
+  getCredentialBackend,
+  SERVICE_NAME,
+} from './credential-store';
 
 export type ApiKeySource = 'flag' | 'env' | 'config';
 export type ResolvedKey = {
@@ -17,8 +22,10 @@ export type ResolvedKey = {
 };
 
 export type Profile = { api_key: string };
+export type CredentialStorage = 'keychain' | 'file';
 export type CredentialsFile = {
   active_profile: string;
+  storage?: CredentialStorage;
   profiles: Record<string, Profile>;
 };
 
@@ -53,6 +60,7 @@ export function readCredentials(): CredentialsFile | null {
     if (data.profiles) {
       return {
         active_profile: data.active_profile ?? 'default',
+        ...(data.storage ? { storage: data.storage } : {}),
         profiles: data.profiles,
       };
     }
@@ -276,4 +284,143 @@ export function maskKey(key: string): string {
     return `${key.slice(0, 3)}...`;
   }
   return `${key.slice(0, 3)}...${key.slice(-4)}`;
+}
+
+// --- Async variants that route through the credential backend ---
+
+export async function resolveApiKeyAsync(
+  flagValue?: string,
+  profileName?: string,
+): Promise<ResolvedKey | null> {
+  if (flagValue) {
+    return { key: flagValue, source: 'flag' };
+  }
+
+  const envKey = process.env.RESEND_API_KEY;
+  if (envKey) {
+    return { key: envKey, source: 'env' };
+  }
+
+  const creds = readCredentials();
+  const profile =
+    profileName ||
+    process.env.RESEND_PROFILE ||
+    process.env.RESEND_TEAM ||
+    creds?.active_profile ||
+    'default';
+
+  // If storage is 'keychain', retrieve from credential backend
+  if (creds?.storage === 'keychain') {
+    const backend = await getCredentialBackend();
+    const key = await backend.get(SERVICE_NAME, profile);
+    if (key) {
+      return { key, source: 'config', profile };
+    }
+    return null;
+  }
+
+  // File-based storage (existing behavior)
+  if (creds) {
+    const entry = creds.profiles[profile];
+    if (entry?.api_key) {
+      return { key: entry.api_key, source: 'config', profile };
+    }
+  }
+
+  return null;
+}
+
+export async function storeApiKeyAsync(
+  apiKey: string,
+  profileName?: string,
+): Promise<{ configPath: string; backend: CredentialBackend }> {
+  const profile = profileName || 'default';
+  const validationError = validateProfileName(profile);
+  if (validationError) {
+    throw new Error(validationError);
+  }
+
+  const backend = await getCredentialBackend();
+  const isFileBackend = !backend.isSecure;
+
+  if (isFileBackend) {
+    const configPath = storeApiKey(apiKey, profile);
+    return { configPath, backend };
+  }
+
+  // Store in keychain
+  await backend.set(SERVICE_NAME, profile, apiKey);
+
+  // Update credentials file: mark storage as keychain, keep profile entry (without api_key)
+  const creds = readCredentials() || {
+    active_profile: 'default',
+    profiles: {},
+  };
+  creds.storage = 'keychain';
+  creds.profiles[profile] = { api_key: '' };
+
+  if (Object.keys(creds.profiles).length === 1) {
+    creds.active_profile = profile;
+  }
+
+  const configPath = writeCredentials(creds);
+  return { configPath, backend };
+}
+
+export async function removeApiKeyAsync(profileName?: string): Promise<string> {
+  const creds = readCredentials();
+  const profile =
+    profileName ||
+    process.env.RESEND_PROFILE ||
+    process.env.RESEND_TEAM ||
+    creds?.active_profile ||
+    'default';
+
+  // If keychain storage, delete from keychain too
+  if (creds?.storage === 'keychain') {
+    const backend = await getCredentialBackend();
+    await backend.delete(SERVICE_NAME, profile);
+  }
+
+  // Remove from credentials file
+  return removeApiKey(profile);
+}
+
+export async function removeAllApiKeysAsync(): Promise<string> {
+  const creds = readCredentials();
+
+  // If keychain storage, delete all profiles from keychain
+  if (creds?.storage === 'keychain') {
+    const backend = await getCredentialBackend();
+    await Promise.all(
+      Object.keys(creds.profiles).map((profile) =>
+        backend.delete(SERVICE_NAME, profile),
+      ),
+    );
+  }
+
+  return removeAllApiKeys();
+}
+
+export async function renameProfileAsync(
+  oldName: string,
+  newName: string,
+): Promise<void> {
+  const creds = readCredentials();
+
+  if (creds?.storage === 'keychain') {
+    const backend = await getCredentialBackend();
+    const key = await backend.get(SERVICE_NAME, oldName);
+    if (key) {
+      await backend.set(SERVICE_NAME, newName, key);
+      await backend.delete(SERVICE_NAME, oldName);
+    }
+  }
+
+  renameProfile(oldName, newName);
+}
+
+export function getStorageType(): CredentialStorage | undefined {
+  const creds = readCredentials();
+  return creds?.storage;
 }

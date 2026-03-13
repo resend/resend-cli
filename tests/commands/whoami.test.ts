@@ -8,6 +8,7 @@ import {
   expect,
   type MockInstance,
   test,
+  vi,
 } from 'vitest';
 import {
   captureTestEnv,
@@ -95,5 +96,46 @@ describe('whoami command', () => {
     const parsed = JSON.parse(output);
     expect(parsed.authenticated).toBe(true);
     expect(parsed.source).toBe('env');
+  });
+
+  test('shows authenticated for keychain user (async resolve)', async () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'default',
+        storage: 'keychain',
+        profiles: { default: { api_key: '' } },
+      }),
+    );
+
+    const mockBackend = {
+      get: vi.fn().mockResolvedValue('re_keychain_test_key1'),
+      set: vi.fn(),
+      delete: vi.fn(),
+      isAvailable: vi.fn().mockResolvedValue(true),
+      name: 'mock-backend',
+      isSecure: true,
+    };
+
+    vi.resetModules();
+    vi.doMock('../../src/lib/credential-store', () => ({
+      getCredentialBackend: vi.fn().mockResolvedValue(mockBackend),
+      SERVICE_NAME: 'resend-cli',
+      resetCredentialBackend: vi.fn(),
+    }));
+
+    spies = setupOutputSpies();
+
+    const { whoamiCommand } = await import('../../src/commands/whoami');
+    await whoamiCommand.parseAsync([], { from: 'user' });
+
+    const output = spies.logSpy.mock.calls[0][0] as string;
+    const parsed = JSON.parse(output);
+    expect(parsed.authenticated).toBe(true);
+    expect(parsed.api_key).toBe('re_...key1');
+    expect(parsed.source).toBe('config');
+    expect(parsed.storage).toBe('keychain');
   });
 });

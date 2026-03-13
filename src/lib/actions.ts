@@ -23,7 +23,7 @@ export async function runGet<T>(
   },
   globalOpts: GlobalOpts,
 ): Promise<void> {
-  const resend = requireClient(globalOpts);
+  const resend = await requireClient(globalOpts);
   const data = await withSpinner(
     config.spinner,
     () => config.sdkCall(resend),
@@ -53,7 +53,7 @@ export async function runDelete(
   },
   globalOpts: GlobalOpts,
 ): Promise<void> {
-  const resend = requireClient(globalOpts);
+  const resend = await requireClient(globalOpts);
   if (!skipConfirm) {
     await confirmDelete(id, config.confirmMessage, globalOpts);
   }
@@ -85,7 +85,7 @@ export async function runCreate<T>(
   },
   globalOpts: GlobalOpts,
 ): Promise<void> {
-  const resend = requireClient(globalOpts);
+  const resend = await requireClient(globalOpts);
   const data = await withSpinner(
     config.spinner,
     () => config.sdkCall(resend),
@@ -113,7 +113,7 @@ export async function runWrite<T>(
   },
   globalOpts: GlobalOpts,
 ): Promise<void> {
-  const resend = requireClient(globalOpts);
+  const resend = await requireClient(globalOpts);
   const data = await withSpinner(
     config.spinner,
     () => config.sdkCall(resend),
@@ -142,7 +142,7 @@ export async function runList<T>(
   },
   globalOpts: GlobalOpts,
 ): Promise<void> {
-  const resend = requireClient(globalOpts);
+  const resend = await requireClient(globalOpts);
   const result = await withSpinner(
     config.spinner,
     () => config.sdkCall(resend),
