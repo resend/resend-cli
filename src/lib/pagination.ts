@@ -29,13 +29,20 @@ export function printPaginationHint(
     data: Array<{ id: string }>;
   },
   command: string,
-  limit?: number,
+  opts: { limit?: number; before?: string },
 ): void {
-  if (list.has_more && list.data.length > 0) {
-    const last = list.data[list.data.length - 1];
-    const limitFlag = limit ? ` --limit ${limit}` : '';
-    console.log(
-      `\nFetch the next page:\n$ resend ${command} --after ${last.id}${limitFlag}`,
-    );
+  if (!list.has_more || list.data.length === 0) {
+    return;
   }
+
+  const backward = Boolean(opts.before);
+  const cursor = backward
+    ? list.data[0].id
+    : list.data[list.data.length - 1].id;
+  const flag = backward ? '--before' : '--after';
+  const limitFlag = opts.limit ? ` --limit ${opts.limit}` : '';
+
+  console.log(
+    `\nFetch the next page:\n$ resend ${command} ${flag} ${cursor}${limitFlag}`,
+  );
 }

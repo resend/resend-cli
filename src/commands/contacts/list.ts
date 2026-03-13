@@ -49,7 +49,10 @@ Pagination: use --after or --before with a contact ID as the cursor.
         sdkCall: (resend) => resend.contacts.list(paginationOpts),
         onInteractive: (list) => {
           console.log(renderContactsTable(list.data));
-          printPaginationHint(list, 'contacts list', limit);
+          printPaginationHint(list, 'contacts list', {
+            limit,
+            before: opts.before,
+          });
         },
       },
       globalOpts,

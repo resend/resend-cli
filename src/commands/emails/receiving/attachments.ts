@@ -60,11 +60,10 @@ export const listAttachmentsCommand = new Command('attachments')
           }),
         onInteractive: (list) => {
           console.log(renderAttachmentsTable(list.data));
-          printPaginationHint(
-            list,
-            `emails receiving attachments ${emailId}`,
+          printPaginationHint(list, `emails receiving attachments ${emailId}`, {
             limit,
-          );
+            before: opts.before,
+          });
         },
       },
       globalOpts,
