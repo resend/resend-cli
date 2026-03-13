@@ -5,6 +5,7 @@ import { listAttachmentsCommand } from './attachments';
 import { forwardCommand } from './forward';
 import { getReceivingCommand } from './get';
 import { listReceivingCommand } from './list';
+import { listenReceivingCommand } from './listen';
 
 export const receivingCommand = new Command('receiving')
   .description(
@@ -17,6 +18,7 @@ export const receivingCommand = new Command('receiving')
         'Receiving must be enabled on the domain first:\n  resend domains update <id> --receiving enabled',
       examples: [
         'resend emails receiving list',
+        'resend emails receiving listen',
         'resend emails receiving get <email-id>',
         'resend emails receiving attachments <email-id>',
         'resend emails receiving attachment <email-id> <attachment-id>',
@@ -26,6 +28,7 @@ export const receivingCommand = new Command('receiving')
   )
   .addCommand(listReceivingCommand, { isDefault: true })
   .addCommand(getReceivingCommand)
+  .addCommand(listenReceivingCommand)
   .addCommand(listAttachmentsCommand)
   .addCommand(getAttachmentCommand)
   .addCommand(forwardCommand);
