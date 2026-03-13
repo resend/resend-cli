@@ -140,7 +140,9 @@ export const loginCommand = new Command('login')
       const { error } = await resend.domains.list();
 
       if (error) {
-        throw error;
+        if (error.statusCode === 400 && error.name === 'validation_error') {
+          throw error;
+        }
       }
 
       spinner.stop('API key is valid');
