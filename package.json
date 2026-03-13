@@ -12,14 +12,16 @@
     "cli",
     "resend",
     "email",
-    "api"
+    "api",
+    "tanstack-intent"
   ],
   "engines": {
     "node": ">=20"
   },
   "packageManager": "pnpm@10.32.1",
   "files": [
-    "dist/cli.cjs"
+    "dist/cli.cjs",
+    "skills/"
   ],
   "type": "module",
   "bin": {
@@ -35,7 +37,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "vitest run --config vitest.config.e2e.ts",
-    "prepack": "pnpm build"
+    "sync-skill-version": "node scripts/sync-skill-version.mjs",
+    "prepack": "pnpm run sync-skill-version && pnpm build"
   },
   "dependencies": {
     "@clack/prompts": "1.1.0",
