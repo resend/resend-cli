@@ -151,4 +151,31 @@ describe('login command', () => {
     expect(data.active_profile).toBe('staging');
     expect(data.profiles.staging.api_key).toBe('re_staging_key_123');
   });
+
+  test('deprecated --team alias works like --profile', async () => {
+    setupOutputSpies();
+
+    const { Command } = await import('@commander-js/extra-typings');
+    const { loginCommand } = await import('../../../src/commands/auth/login');
+    const program = new Command()
+      .option('--profile <name>')
+      .option('--team <name>')
+      .option('--json')
+      .option('--api-key <key>')
+      .option('-q, --quiet')
+      .addCommand(loginCommand);
+
+    await program.parseAsync(
+      ['login', '--key', 're_team_alias_key_123', '--team', 'legacy'],
+      { from: 'user' },
+    );
+
+    // @ts-expect-error — reset parent to avoid polluting the shared singleton
+    loginCommand.parent = null;
+
+    const configPath = join(tmpDir, 'resend', 'credentials.json');
+    const data = JSON.parse(readFileSync(configPath, 'utf-8'));
+    expect(data.active_profile).toBe('legacy');
+    expect(data.profiles.legacy.api_key).toBe('re_team_alias_key_123');
+  });
 });

@@ -71,7 +71,7 @@ export async function switchAction(
       { success: true, active_profile: profileName },
       { json: true },
     );
-  } else if (isInteractive()) {
+  } else {
     console.log(`Switched to profile '${profileName}'.`);
   }
 }

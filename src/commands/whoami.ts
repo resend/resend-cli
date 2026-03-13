@@ -38,14 +38,16 @@ Shows which profile is active and where the API key comes from.`,
         : resolveProfileName(profileFlag);
       const profiles = listProfiles();
       const profileExists = profiles.some((p) => p.name === requestedProfile);
+      const explicitProfile =
+        profileFlag || process.env.RESEND_PROFILE || process.env.RESEND_TEAM;
 
       // If a specific profile was requested but doesn't exist, show a targeted error
       const message =
-        profileFlag && !profileExists
-          ? `Profile "${profileFlag}" not found.\nAvailable profiles: ${profiles.map((p) => p.name).join(', ') || '(none)'}`
+        explicitProfile && !profileExists
+          ? `Profile "${requestedProfile}" not found.\nAvailable profiles: ${profiles.map((p) => p.name).join(', ') || '(none)'}`
           : 'Not authenticated.\nRun `resend login` to get started.';
       const code =
-        profileFlag && !profileExists
+        explicitProfile && !profileExists
           ? 'profile_not_found'
           : 'not_authenticated';
 
@@ -53,7 +55,9 @@ Shows which profile is active and where the API key comes from.`,
         outputResult(
           {
             authenticated: false,
-            ...(profileFlag && !profileExists ? { profile: profileFlag } : {}),
+            ...(explicitProfile && !profileExists
+              ? { profile: requestedProfile }
+              : {}),
           },
           { json: globalOpts.json, exitCode: 1 },
         );

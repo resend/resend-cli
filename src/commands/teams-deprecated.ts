@@ -4,7 +4,10 @@ import { listAction } from './auth/list';
 import { removeAction } from './auth/remove';
 import { switchAction } from './auth/switch';
 
-function warnDeprecated() {
+function warnDeprecated(globalOpts: GlobalOpts) {
+  if (globalOpts.json || globalOpts.quiet) {
+    return;
+  }
   process.stderr.write(
     'Warning: "resend teams" is deprecated. Use "resend auth" instead.\n',
   );
@@ -13,24 +16,27 @@ function warnDeprecated() {
 const deprecatedListCommand = new Command('list')
   .description('List all profiles')
   .action((_opts, cmd) => {
-    warnDeprecated();
-    listAction(cmd.optsWithGlobals() as GlobalOpts);
+    const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    warnDeprecated(globalOpts);
+    listAction(globalOpts);
   });
 
 const deprecatedSwitchCommand = new Command('switch')
   .description('Switch the active profile')
   .argument('[name]', 'Profile name to switch to')
   .action(async (name, _opts, cmd) => {
-    warnDeprecated();
-    await switchAction(name, cmd.optsWithGlobals() as GlobalOpts);
+    const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    warnDeprecated(globalOpts);
+    await switchAction(name, globalOpts);
   });
 
 const deprecatedRemoveCommand = new Command('remove')
   .description('Remove a profile')
   .argument('[name]', 'Profile name to remove')
   .action(async (name, _opts, cmd) => {
-    warnDeprecated();
-    await removeAction(name, cmd.optsWithGlobals() as GlobalOpts);
+    const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    warnDeprecated(globalOpts);
+    await removeAction(name, globalOpts);
   });
 
 export const teamsDeprecatedCommand = new Command('teams')
