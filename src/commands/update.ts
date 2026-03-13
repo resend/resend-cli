@@ -1,7 +1,7 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../lib/client';
 import { buildHelpText } from '../lib/help-text';
-import { outputResult } from '../lib/output';
+import { outputError, outputResult } from '../lib/output';
 import { createSpinner } from '../lib/spinner';
 import { isInteractive } from '../lib/tty';
 import {
@@ -35,18 +35,10 @@ Shows the current version, latest version, and how to upgrade.`,
 
     if (!latest) {
       spinner?.fail('Could not check for updates');
-      if (globalOpts.json || !isInteractive()) {
-        outputResult(
-          {
-            current: VERSION,
-            latest: null,
-            update_available: false,
-            error: 'Could not reach GitHub releases',
-          },
-          { json: globalOpts.json, exitCode: 1 },
-        );
-      }
-      process.exit(1);
+      outputError(
+        { message: 'Could not reach GitHub releases', code: 'fetch_failed' },
+        { json: globalOpts.json },
+      );
       return;
     }
 

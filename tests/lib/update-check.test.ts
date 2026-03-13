@@ -233,6 +233,7 @@ describe('detectInstallMethod', () => {
     });
     process.argv[1] = '/Users/test/.resend/bin/resend';
 
-    expect(detectInstallMethod()).toContain('curl');
+    const expected = process.platform === 'win32' ? 'irm' : 'curl';
+    expect(detectInstallMethod()).toContain(expected);
   });
 });
