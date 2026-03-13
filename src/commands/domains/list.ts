@@ -45,7 +45,10 @@ export const listDomainsCommand = new Command('list')
         sdkCall: (resend) => resend.domains.list(paginationOpts),
         onInteractive: (list) => {
           console.log(renderDomainsTable(list.data));
-          printPaginationHint(list);
+          printPaginationHint(list, 'domains list', {
+            limit,
+            before: opts.before,
+          });
         },
       },
       globalOpts,

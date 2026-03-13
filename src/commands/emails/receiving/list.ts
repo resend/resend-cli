@@ -51,7 +51,10 @@ export const listReceivingCommand = new Command('list')
         sdkCall: (resend) => resend.emails.receiving.list(paginationOpts),
         onInteractive: (list) => {
           console.log(renderReceivingEmailsTable(list.data));
-          printPaginationHint(list);
+          printPaginationHint(list, 'emails receiving list', {
+            limit,
+            before: opts.before,
+          });
         },
       },
       globalOpts,

@@ -23,14 +23,26 @@ export function buildPaginationOpts(
   return after ? { limit, after } : before ? { limit, before } : { limit };
 }
 
-export function printPaginationHint(list: {
-  has_more: boolean;
-  data: Array<{ id: string }>;
-}): void {
-  if (list.has_more && list.data.length > 0) {
-    const last = list.data[list.data.length - 1];
-    console.log(
-      `\nMore results available. Use --after ${last.id} to fetch the next page.`,
-    );
+export function printPaginationHint(
+  list: {
+    has_more: boolean;
+    data: Array<{ id: string }>;
+  },
+  command: string,
+  opts: { limit?: number; before?: string },
+): void {
+  if (!list.has_more || list.data.length === 0) {
+    return;
   }
+
+  const backward = Boolean(opts.before);
+  const cursor = backward
+    ? list.data[0].id
+    : list.data[list.data.length - 1].id;
+  const flag = backward ? '--before' : '--after';
+  const limitFlag = opts.limit ? ` --limit ${opts.limit}` : '';
+
+  console.log(
+    `\nFetch the next page:\n$ resend ${command} ${flag} ${cursor}${limitFlag}`,
+  );
 }

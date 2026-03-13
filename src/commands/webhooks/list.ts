@@ -47,7 +47,10 @@ The response includes has_more: true when additional pages exist.`,
         sdkCall: (resend) => resend.webhooks.list(paginationOpts),
         onInteractive: (list) => {
           console.log(renderWebhooksTable(list.data));
-          printPaginationHint(list);
+          printPaginationHint(list, 'webhooks list', {
+            limit,
+            before: opts.before,
+          });
         },
       },
       globalOpts,
