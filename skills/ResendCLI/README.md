@@ -26,14 +26,14 @@ git clone https://github.com/DomumDigital/ResendCLI.git ~/.claude/skills/ResendC
 
 ### From the resend-cli repo (if bundled)
 
-If this skill is included in the `resend-cli` repo under `skills/`:
+If this skill is included in the `resend-cli` repo under `skills/ResendCLI/`:
 
 ```bash
 # Clone the resend-cli repo
 git clone https://github.com/resend/resend-cli.git
 
 # Copy the skill into your Claude Code skills directory
-cp -r resend-cli/skills ~/.claude/skills/ResendCLI
+cp -r resend-cli/skills/ResendCLI ~/.claude/skills/
 ```
 
 ## Prerequisites
