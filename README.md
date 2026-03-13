@@ -200,6 +200,12 @@ Switch between profiles without logging in and out:
 resend auth switch
 ```
 
+You can also use the global `--profile` (or `-p`) flag on any command to run it with a specific profile.
+
+```bash
+resend domains list --profile production
+```
+
 ---
 
 ### `resend emails send`
