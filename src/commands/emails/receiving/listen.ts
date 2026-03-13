@@ -68,7 +68,7 @@ Ctrl+C exits cleanly.`,
       );
     }
 
-    const resend = requireClient(globalOpts);
+    const resend = await requireClient(globalOpts);
     const jsonMode = globalOpts.json || !isInteractive();
 
     // Initial poll — just grab the latest email to establish our starting point
