@@ -1,23 +1,12 @@
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  type MockInstance,
-  test,
-  vi,
-} from 'vitest';
-import {
-  captureTestEnv,
-  setupOutputSpies,
-} from '../../helpers';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { captureTestEnv, setupOutputSpies } from '../../helpers';
 
 describe('migrate command', () => {
   const restoreEnv = captureTestEnv();
-  let spies: ReturnType<typeof setupOutputSpies> | undefined;
+  let _spies: ReturnType<typeof setupOutputSpies> | undefined;
   let tmpDir: string;
 
   beforeEach(() => {
@@ -35,25 +24,19 @@ describe('migrate command', () => {
 
   afterEach(() => {
     restoreEnv();
-    spies = undefined;
+    _spies = undefined;
     rmSync(tmpDir, { recursive: true, force: true });
     vi.restoreAllMocks();
   });
 
-  function writeCreds(
-    profiles: Record<string, string>,
-    storage?: 'keychain',
-  ) {
+  function writeCreds(profiles: Record<string, string>, storage?: 'keychain') {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     const creds = {
       active_profile: Object.keys(profiles)[0],
       ...(storage ? { storage } : {}),
       profiles: Object.fromEntries(
-        Object.entries(profiles).map(([name, key]) => [
-          name,
-          { api_key: key },
-        ]),
+        Object.entries(profiles).map(([name, key]) => [name, { api_key: key }]),
       ),
     };
     writeFileSync(
@@ -78,10 +61,12 @@ describe('migrate command', () => {
         return `re_key_${account}`;
       }),
       set: vi.fn(),
-      delete: vi.fn().mockImplementation(async (_s: string, account: string) => {
-        callOrder.push(`delete:${account}`);
-        return true;
-      }),
+      delete: vi
+        .fn()
+        .mockImplementation(async (_s: string, account: string) => {
+          callOrder.push(`delete:${account}`);
+          return true;
+        }),
       isAvailable: vi.fn().mockResolvedValue(true),
       name: 'mock-backend',
       isSecure: true,
@@ -94,7 +79,7 @@ describe('migrate command', () => {
       resetCredentialBackend: vi.fn(),
     }));
 
-    spies = setupOutputSpies();
+    _spies = setupOutputSpies();
 
     const { migrateCommand } = await import(
       '../../../src/commands/auth/migrate'
@@ -109,9 +94,9 @@ describe('migrate command', () => {
 
     // Verify order: all gets happen before any deletes
     const firstDelete = callOrder.findIndex((c) => c.startsWith('delete:'));
-    const lastGet = callOrder.lastIndexOf(
-      callOrder.filter((c) => c.startsWith('get:')).pop()!,
-    );
+    const gets = callOrder.filter((c) => c.startsWith('get:'));
+    const lastGetEntry = gets[gets.length - 1] ?? '';
+    const lastGet = callOrder.lastIndexOf(lastGetEntry);
     expect(firstDelete).toBeGreaterThan(lastGet);
   });
 
@@ -121,9 +106,13 @@ describe('migrate command', () => {
     const storedKeys: Record<string, string> = {};
     const mockBackend = {
       get: vi.fn(),
-      set: vi.fn().mockImplementation(async (_s: string, account: string, secret: string) => {
-        storedKeys[account] = secret;
-      }),
+      set: vi
+        .fn()
+        .mockImplementation(
+          async (_s: string, account: string, secret: string) => {
+            storedKeys[account] = secret;
+          },
+        ),
       delete: vi.fn(),
       isAvailable: vi.fn().mockResolvedValue(true),
       name: 'mock-backend',
@@ -137,7 +126,7 @@ describe('migrate command', () => {
       resetCredentialBackend: vi.fn(),
     }));
 
-    spies = setupOutputSpies();
+    _spies = setupOutputSpies();
 
     const { migrateCommand } = await import(
       '../../../src/commands/auth/migrate'
@@ -156,7 +145,7 @@ describe('migrate command', () => {
   test('already-migrated to file: no-op with success message', async () => {
     writeCreds({ default: 're_key' });
 
-    spies = setupOutputSpies();
+    _spies = setupOutputSpies();
 
     const { migrateCommand } = await import(
       '../../../src/commands/auth/migrate'
@@ -188,7 +177,7 @@ describe('migrate command', () => {
       resetCredentialBackend: vi.fn(),
     }));
 
-    spies = setupOutputSpies();
+    _spies = setupOutputSpies();
 
     const { migrateCommand } = await import(
       '../../../src/commands/auth/migrate'
