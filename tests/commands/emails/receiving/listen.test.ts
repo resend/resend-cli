@@ -57,6 +57,9 @@ describe('emails receiving listen command', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
+    process.removeAllListeners('SIGINT');
+    process.removeAllListeners('SIGTERM');
     restoreEnv();
     errorSpy?.mockRestore();
     stderrSpy?.mockRestore();
@@ -123,17 +126,16 @@ describe('emails receiving listen command', () => {
   });
 
   test('initial fetch calls SDK with correct limit', async () => {
+    vi.useFakeTimers();
     setupOutputSpies();
 
     const { listenReceivingCommand } = await import(
       '../../../../src/commands/emails/receiving/listen'
     );
-    // The command runs forever (poll loop + await new Promise),
-    // so race against a short timer to avoid hanging.
-    await Promise.race([
-      listenReceivingCommand.parseAsync([], { from: 'user' }).catch(() => {}),
-      new Promise((resolve) => setTimeout(resolve, 200)),
-    ]);
+
+    listenReceivingCommand.parseAsync([], { from: 'user' }).catch(() => {});
+    // Flush microtasks so the initial SDK call resolves
+    await vi.advanceTimersByTimeAsync(0);
 
     expect(mockList).toHaveBeenCalledTimes(1);
     const args = mockList.mock.calls[0][0] as Record<string, unknown>;
