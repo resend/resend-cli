@@ -15,31 +15,31 @@ Built for humans, AI agents, and CI/CD pipelines.
 
 ## Install
 
-### Homebrew (macOS)
+### cURL
 
-```bash
-brew install resend/cli/resend
+```sh
+curl -fsSL https://resend.com/install.sh | bash
 ```
 
-### Shell script (macOS and Linux)
+### Node.js
 
-```bash
-curl -fsSL https://resend.com/install.sh | bash
+```sh
+npm install -g resend-cli
+```
+
+### Homebrew (macOS / Linux)
+
+```sh
+brew install resend/cli/resend
 ```
 
 ### PowerShell (Windows)
 
-```powershell
+```sh
 irm https://resend.com/install.ps1 | iex
 ```
 
 Or download the `.exe` directly from the [GitHub releases page](https://github.com/resend/resend-cli/releases/latest).
-
-### npx
-
-```bash
-npx resend-cli
-```
 
 ## Local development
 
@@ -77,7 +77,7 @@ Use this when you want to change the CLI and run your build locally.
 Use the dev script:
 
 ```bash
-pnpm dev -- --version
+pnpm dev --version
 ```
 
 Or run the built JS bundle:
@@ -189,6 +189,22 @@ resend login --key re_xxx --json
 | `missing_key` | No `--key` provided in non-interactive mode |
 | `invalid_key_format` | Key does not start with `re_` |
 | `validation_failed` | Resend API rejected the key |
+
+#### Switch between teams and accounts
+
+If you work across multiple Resend teams or accounts, the CLI handles that too.
+
+Switch between profiles without logging in and out:
+
+```bash
+resend auth switch
+```
+
+You can also use the global `--profile` (or `-p`) flag on any command to run it with a specific profile.
+
+```bash
+resend domains list --profile production
+```
 
 ---
 
@@ -383,7 +399,9 @@ resend [global options] <command> [command options]
 | Flag | Description |
 |------|-------------|
 | `--api-key <key>` | Override API key for this invocation (takes highest priority) |
+| `-p, --profile <name>` | Profile to use (overrides `RESEND_PROFILE` env var) |
 | `--json` | Force JSON output even in interactive terminals |
+| `-q, --quiet` | Suppress spinners and status output (implies `--json`) |
 | `--version` | Print version and exit |
 | `--help` | Show help text |
 

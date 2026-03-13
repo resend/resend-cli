@@ -1,6 +1,7 @@
 import * as p from '@clack/prompts';
 import type { GlobalOpts } from './client';
-import { outputError } from './output';
+import { renameProfile, validateProfileName } from './config';
+import { errorMessage, outputError } from './output';
 import { isInteractive } from './tty';
 
 export interface FieldSpec {
@@ -39,6 +40,62 @@ export async function confirmDelete(
   if (p.isCancel(confirmed) || !confirmed) {
     cancelAndExit('Deletion cancelled.');
   }
+}
+
+/**
+ * If a profile name is invalid (e.g. legacy names with spaces), prompt the
+ * user to rename it. Returns the (possibly new) name, or null if the rename
+ * could not proceed (non-interactive mode).
+ */
+export async function promptRenameIfInvalid(
+  profileName: string,
+  globalOpts: GlobalOpts,
+): Promise<string | null> {
+  const validationError = validateProfileName(profileName);
+  if (!validationError) {
+    return profileName;
+  }
+
+  if (!isInteractive() || globalOpts.json) {
+    outputError(
+      {
+        message: `Profile "${profileName}" has an invalid name: ${validationError}`,
+        code: 'invalid_profile_name',
+      },
+      { json: globalOpts.json },
+    );
+    return null;
+  }
+
+  p.log.warn(
+    `Profile "${profileName}" has an invalid name: ${validationError}`,
+  );
+
+  const newName = await p.text({
+    message: 'Enter a new name for this profile:',
+    placeholder: profileName.replace(/[^a-zA-Z0-9_-]/g, '-'),
+    validate: (v) => validateProfileName(v as string),
+  });
+
+  if (p.isCancel(newName)) {
+    cancelAndExit('Rename cancelled.');
+  }
+
+  try {
+    renameProfile(profileName, newName);
+  } catch (err) {
+    outputError(
+      {
+        message: errorMessage(err, 'Failed to rename profile'),
+        code: 'rename_failed',
+      },
+      { json: globalOpts.json },
+    );
+    return null;
+  }
+
+  p.log.success(`Profile renamed to '${newName}'.`);
+  return newName;
 }
 
 export async function requireText(

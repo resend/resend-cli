@@ -71,7 +71,7 @@ describe('login command', () => {
 
     const configPath = join(tmpDir, 'resend', 'credentials.json');
     const data = JSON.parse(readFileSync(configPath, 'utf-8'));
-    expect(data.teams.default.api_key).toBe('re_valid_test_key_123');
+    expect(data.profiles.default.api_key).toBe('re_valid_test_key_123');
   });
 
   test('requires --key in non-interactive mode', async () => {
@@ -87,15 +87,15 @@ describe('login command', () => {
     expect(output).toContain('missing_key');
   });
 
-  test('non-interactive login stores as default when teams exist', async () => {
-    // Pre-populate credentials with an existing team
+  test('non-interactive login stores as default when profiles exist', async () => {
+    // Pre-populate credentials with an existing profile
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     writeFileSync(
       join(configDir, 'credentials.json'),
       JSON.stringify({
-        active_team: 'production',
-        teams: { production: { api_key: 're_old_key_1234' } },
+        active_profile: 'production',
+        profiles: { production: { api_key: 're_old_key_1234' } },
       }),
     );
 
@@ -108,18 +108,19 @@ describe('login command', () => {
 
     const configPath = join(tmpDir, 'resend', 'credentials.json');
     const data = JSON.parse(readFileSync(configPath, 'utf-8'));
-    // Non-interactive without --team flag stores as 'default' (no picker)
-    expect(data.teams.default.api_key).toBe('re_new_key_5678');
-    // Original team should still exist
-    expect(data.teams.production.api_key).toBe('re_old_key_1234');
+    // Non-interactive without --profile flag stores as 'default' (no picker)
+    expect(data.profiles.default.api_key).toBe('re_new_key_5678');
+    // Original profile should still exist
+    expect(data.profiles.production.api_key).toBe('re_old_key_1234');
   });
 
-  test('auto-switches to team specified via --team flag', async () => {
+  test('auto-switches to profile specified via --profile flag', async () => {
     setupOutputSpies();
 
     const { Command } = await import('@commander-js/extra-typings');
     const { loginCommand } = await import('../../../src/commands/auth/login');
     const program = new Command()
+      .option('--profile <name>')
       .option('--team <name>')
       .option('--json')
       .option('--api-key <key>')
@@ -132,13 +133,13 @@ describe('login command', () => {
     writeFileSync(
       join(configDir, 'credentials.json'),
       JSON.stringify({
-        active_team: 'default',
-        teams: { default: { api_key: 're_old_key_1234' } },
+        active_profile: 'default',
+        profiles: { default: { api_key: 're_old_key_1234' } },
       }),
     );
 
     await program.parseAsync(
-      ['login', '--key', 're_staging_key_123', '--team', 'staging'],
+      ['login', '--key', 're_staging_key_123', '--profile', 'staging'],
       { from: 'user' },
     );
 
@@ -147,7 +148,34 @@ describe('login command', () => {
 
     const configPath = join(tmpDir, 'resend', 'credentials.json');
     const data = JSON.parse(readFileSync(configPath, 'utf-8'));
-    expect(data.active_team).toBe('staging');
-    expect(data.teams.staging.api_key).toBe('re_staging_key_123');
+    expect(data.active_profile).toBe('staging');
+    expect(data.profiles.staging.api_key).toBe('re_staging_key_123');
+  });
+
+  test('deprecated --team alias works like --profile', async () => {
+    setupOutputSpies();
+
+    const { Command } = await import('@commander-js/extra-typings');
+    const { loginCommand } = await import('../../../src/commands/auth/login');
+    const program = new Command()
+      .option('--profile <name>')
+      .option('--team <name>')
+      .option('--json')
+      .option('--api-key <key>')
+      .option('-q, --quiet')
+      .addCommand(loginCommand);
+
+    await program.parseAsync(
+      ['login', '--key', 're_team_alias_key_123', '--team', 'legacy'],
+      { from: 'user' },
+    );
+
+    // @ts-expect-error — reset parent to avoid polluting the shared singleton
+    loginCommand.parent = null;
+
+    const configPath = join(tmpDir, 'resend', 'credentials.json');
+    const data = JSON.parse(readFileSync(configPath, 'utf-8'));
+    expect(data.active_profile).toBe('legacy');
+    expect(data.profiles.legacy.api_key).toBe('re_team_alias_key_123');
   });
 });
