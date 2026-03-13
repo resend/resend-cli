@@ -137,7 +137,14 @@ export const loginCommand = new Command('login')
 
     try {
       const resend = new Resend(apiKey);
-      await resend.domains.list();
+      const { error } = await resend.domains.list();
+
+      if (error) {
+        if (error.statusCode === 400 && error.name === 'validation_error') {
+          throw error;
+        }
+      }
+
       spinner.stop('API key is valid');
     } catch (err) {
       spinner.fail('API key validation failed');
@@ -159,7 +166,6 @@ export const loginCommand = new Command('login')
           { message: profileError, code: 'invalid_profile_name' },
           { json: globalOpts.json },
         );
-        return;
       }
     }
 
