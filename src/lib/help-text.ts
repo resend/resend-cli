@@ -8,12 +8,12 @@ export interface HelpTextOptions {
 
 const GLOBAL_OPTS_FULL = `Global options:
   --api-key <key>     API key (or set RESEND_API_KEY env var)
-  --profile <name>    Profile to use (overrides RESEND_PROFILE)
+  -p, --profile <name>  Profile to use (overrides RESEND_PROFILE)
   --json              Force JSON output (also auto-enabled when stdout is piped)
   -q, --quiet         Suppress spinners and status output (implies --json)`;
 
 const GLOBAL_OPTS_SETUP = `Global options:
-  --profile <name>  Profile to use
+  -p, --profile <name>  Profile to use
   --json            Force JSON output
   -q, --quiet       Suppress spinners and status output (implies --json)`;
 
