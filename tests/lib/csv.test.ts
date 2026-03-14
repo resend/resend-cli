@@ -177,4 +177,25 @@ describe('parseCsv', () => {
     expect(rows[0].bio).toBe('Line 1\nLine 2');
     expect(rows[1].bio).toBe('Simple');
   });
+
+  test('errors on unterminated quoted field', async () => {
+    setup();
+    try {
+      const { parseCsv } = await import('../../src/lib/csv');
+      let threw = false;
+      try {
+        parseCsv('name,bio\nAlice,"unterminated\nBob,Simple', globalOpts);
+      } catch (err) {
+        threw = true;
+        expect(err).toBeInstanceOf(ExitError);
+        expect((err as ExitError).code).toBe(1);
+      }
+      expect(threw).toBe(true);
+      const output = errorSpy?.mock.calls.map((c) => c[0]).join(' ');
+      expect(output).toContain('invalid_csv');
+      expect(output).toContain('unterminated');
+    } finally {
+      teardown();
+    }
+  });
 });

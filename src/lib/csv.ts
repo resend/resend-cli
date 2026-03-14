@@ -13,7 +13,18 @@ export function parseCsv(
   raw: string,
   globalOpts: GlobalOpts,
 ): Array<Record<string, string>> {
-  const lines = splitCsvLines(raw);
+  const { lines, unterminatedQuote } = splitCsvLines(raw);
+
+  if (unterminatedQuote) {
+    outputError(
+      {
+        message:
+          'CSV contains an unterminated quoted field. Check for a missing closing double-quote.',
+        code: 'invalid_csv',
+      },
+      { json: globalOpts.json },
+    );
+  }
 
   if (lines.length < 2) {
     outputError(
@@ -81,9 +92,13 @@ export function parseCsv(
 
 /**
  * Split CSV content into logical lines, respecting quoted fields that
- * may span multiple physical lines.
+ * may span multiple physical lines. Reports whether an unterminated
+ * quoted field was detected.
  */
-function splitCsvLines(raw: string): string[] {
+function splitCsvLines(raw: string): {
+  lines: string[];
+  unterminatedQuote: boolean;
+} {
   const lines: string[] = [];
   let current = '';
   let inQuotes = false;
@@ -107,7 +122,7 @@ function splitCsvLines(raw: string): string[] {
   if (current.length > 0) {
     lines.push(current);
   }
-  return lines;
+  return { lines, unterminatedQuote: inQuotes };
 }
 
 /**

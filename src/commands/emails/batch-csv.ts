@@ -321,13 +321,15 @@ Limit: 100 emails per API request (auto-chunked for larger files).`,
           // In strict mode, stop sending after a batch error
           if (isStrict) {
             // Mark remaining chunks as not sent
+            let skippedOffset = totalSent + chunk.length;
             for (let r = c + 1; r < chunks.length; r++) {
               for (let i = 0; i < chunks[r].length; i++) {
                 allErrors.push({
-                  index: totalSent + chunk.length + i,
+                  index: skippedOffset + i,
                   message: 'Skipped: previous batch failed in strict mode',
                 });
               }
+              skippedOffset += chunks[r].length;
             }
             totalSent += chunk.length;
             break;
@@ -355,13 +357,15 @@ Limit: 100 emails per API request (auto-chunked for larger files).`,
         }
         // In strict mode, stop sending after an exception
         if (isStrict) {
+          let skippedOffset = totalSent + chunk.length;
           for (let r = c + 1; r < chunks.length; r++) {
             for (let i = 0; i < chunks[r].length; i++) {
               allErrors.push({
-                index: totalSent + chunk.length + i,
+                index: skippedOffset + i,
                 message: 'Skipped: previous batch failed in strict mode',
               });
             }
+            skippedOffset += chunks[r].length;
           }
           totalSent += chunk.length;
           break;

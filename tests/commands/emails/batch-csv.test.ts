@@ -18,7 +18,16 @@ import {
   setupOutputSpies,
 } from '../../helpers';
 
-const mockBatchSend = vi.fn(async () => ({
+type BatchSendResult = {
+  data: { data: { id: string }[] };
+  error: null;
+};
+const mockBatchSend = vi.fn<
+  (
+    payload: unknown[],
+    options?: Record<string, unknown>,
+  ) => Promise<BatchSendResult>
+>(async () => ({
   data: { data: [{ id: 'abc123' }, { id: 'def456' }] },
   error: null,
 }));
