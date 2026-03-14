@@ -1,7 +1,7 @@
 import type { ContactSegmentsBaseOptions, ContactTopic } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
-import { outputError } from '../../lib/output';
-import { renderTable } from '../../lib/table';
+import { renderTable } from '../../lib/formatters';
+import { parseJson } from '../../lib/validators';
 
 // ─── Table renderers ─────────────────────────────────────────────────────────
 
@@ -71,34 +71,35 @@ export function segmentContactIdentifier(
 
 // ─── JSON flag helpers ────────────────────────────────────────────────────────
 
+const TOPICS_MESSAGE =
+  'Invalid --topics JSON. Expected an array of {id, subscription} objects.';
+
+type TopicEntry = { id: string; subscription: 'opt_in' | 'opt_out' };
+
+function isTopicEntry(x: unknown): x is TopicEntry {
+  return (
+    typeof x === 'object' &&
+    x !== null &&
+    typeof (x as Record<string, unknown>).id === 'string' &&
+    ((x as Record<string, unknown>).subscription === 'opt_in' ||
+      (x as Record<string, unknown>).subscription === 'opt_out')
+  );
+}
+
+function isTopicsArray(x: unknown): x is TopicEntry[] {
+  return Array.isArray(x) && x.every(isTopicEntry);
+}
+
 export function parseTopicsJson(
   raw: string,
   globalOpts: GlobalOpts,
-): Array<{ id: string; subscription: 'opt_in' | 'opt_out' }> {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    outputError(
-      {
-        message:
-          'Invalid --topics JSON. Expected an array of {id, subscription} objects.',
-        code: 'invalid_topics',
-      },
-      { json: globalOpts.json },
-    );
-  }
-  if (!Array.isArray(parsed)) {
-    outputError(
-      {
-        message:
-          'Invalid --topics JSON. Expected an array of {id, subscription} objects.',
-        code: 'invalid_topics',
-      },
-      { json: globalOpts.json },
-    );
-  }
-  return parsed as Array<{ id: string; subscription: 'opt_in' | 'opt_out' }>;
+): TopicEntry[] {
+  return parseJson(
+    raw,
+    isTopicsArray,
+    { message: TOPICS_MESSAGE, code: 'invalid_topics' },
+    globalOpts,
+  );
 }
 
 export function parsePropertiesJson(
@@ -108,12 +109,11 @@ export function parsePropertiesJson(
   if (!raw) {
     return undefined;
   }
-  try {
-    return JSON.parse(raw) as Record<string, string | number | null>;
-  } catch {
-    outputError(
-      { message: 'Invalid --properties JSON.', code: 'invalid_properties' },
-      { json: globalOpts.json },
-    );
-  }
+  return parseJson(
+    raw,
+    (x): x is Record<string, string | number | null> =>
+      typeof x === 'object' && x !== null && !Array.isArray(x),
+    { message: 'Invalid --properties JSON.', code: 'invalid_properties' },
+    globalOpts,
+  );
 }

@@ -1,7 +1,7 @@
 import { Command } from '@commander-js/extra-typings';
 import { runCreate } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
-import { buildHelpText } from '../../lib/help-text';
+import { buildHelpText } from '../../lib/formatters';
 
 export const duplicateTemplateCommand = new Command('duplicate')
   .description('Duplicate a template')

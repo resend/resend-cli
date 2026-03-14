@@ -1,5 +1,5 @@
 import { Command } from '@commander-js/extra-typings';
-import { buildHelpText } from '../../lib/help-text';
+import { buildHelpText } from '../../lib/formatters';
 import { createWebhookCommand } from './create';
 import { deleteWebhookCommand } from './delete';
 import { getWebhookCommand } from './get';

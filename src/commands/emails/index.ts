@@ -1,5 +1,5 @@
 import { Command } from '@commander-js/extra-typings';
-import { buildHelpText } from '../../lib/help-text';
+import { buildHelpText } from '../../lib/formatters';
 import { batchCommand } from './batch';
 import { cancelCommand } from './cancel';
 import { getEmailCommand } from './get';

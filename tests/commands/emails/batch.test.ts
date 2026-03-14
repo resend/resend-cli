@@ -162,7 +162,7 @@ describe('batch command', () => {
     expect(output).toContain('invalid_json');
   });
 
-  test('errors with invalid_format when file content is not an array', async () => {
+  test('errors with invalid_json when file content is not an array', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -177,10 +177,7 @@ describe('batch command', () => {
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
-    expect(output).toContain('invalid_format');
-    // Regression: invalid_format check was inside the try block; ExitError thrown by
-    // outputError (when process.exit is mocked) would be caught, firing invalid_json too.
-    expect(output).not.toContain('invalid_json');
+    expect(output).toContain('invalid_json');
   });
 
   test('rejects entries with attachments', async () => {

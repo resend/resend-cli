@@ -1,8 +1,9 @@
 import * as p from '@clack/prompts';
 import type { GlobalOpts } from './client';
-import { renameProfile, validateProfileName } from './config';
-import { errorMessage, outputError } from './output';
+import { renameProfile } from './config';
+import { errorMessage, outputError } from './formatters';
 import { isInteractive } from './tty';
+import { validateProfileName } from './validators';
 
 export interface FieldSpec {
   flag: string;

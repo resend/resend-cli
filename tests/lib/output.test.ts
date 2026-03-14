@@ -6,7 +6,7 @@ import {
   test,
   vi,
 } from 'vitest';
-import { outputError, outputResult } from '../../src/lib/output';
+import { outputError, outputResult } from '../../src/lib/formatters';
 
 describe('outputResult', () => {
   let logSpy: MockInstance;

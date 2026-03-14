@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import { Command } from '@commander-js/extra-typings';
-import { buildHelpText } from '../lib/help-text';
+import { buildHelpText } from '../lib/formatters';
 
 export const openCommand = new Command('open')
   .description('Open the Resend dashboard in your browser')

@@ -2,8 +2,7 @@ import { Command, Option } from '@commander-js/extra-typings';
 import type { CreateContactPropertyOptions } from 'resend';
 import { runCreate } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
-import { buildHelpText } from '../../lib/help-text';
-import { outputError } from '../../lib/output';
+import { buildHelpText, outputError } from '../../lib/formatters';
 import { requireSelect, requireText } from '../../lib/prompts';
 
 export const createContactPropertyCommand = new Command('create')

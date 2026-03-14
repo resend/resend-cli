@@ -1,6 +1,6 @@
 import { Resend } from 'resend';
 import { listProfiles, resolveApiKey } from './config';
-import { errorMessage, outputError } from './output';
+import { errorMessage, outputError } from './formatters';
 import { VERSION } from './version';
 
 export type GlobalOpts = {

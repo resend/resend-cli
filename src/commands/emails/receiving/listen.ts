@@ -3,8 +3,11 @@ import pc from 'picocolors';
 import type { ListReceivingEmail } from 'resend';
 import type { GlobalOpts } from '../../../lib/client';
 import { requireClient } from '../../../lib/client';
-import { buildHelpText } from '../../../lib/help-text';
-import { errorMessage, outputError } from '../../../lib/output';
+import {
+  buildHelpText,
+  errorMessage,
+  outputError,
+} from '../../../lib/formatters';
 import { createSpinner } from '../../../lib/spinner';
 import { isInteractive } from '../../../lib/tty';
 

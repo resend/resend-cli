@@ -1,7 +1,7 @@
 import { Command } from '@commander-js/extra-typings';
 import { runList } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
-import { buildHelpText } from '../../lib/help-text';
+import { buildHelpText } from '../../lib/formatters';
 import { renderApiKeysTable } from './utils';
 
 export const listApiKeysCommand = new Command('list')

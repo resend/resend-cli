@@ -1,7 +1,7 @@
 import { Command } from '@commander-js/extra-typings';
 import { runGet } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
-import { buildHelpText } from '../../lib/help-text';
+import { buildHelpText } from '../../lib/formatters';
 
 export const getContactCommand = new Command('get')
   .description('Retrieve a contact by ID or email address')

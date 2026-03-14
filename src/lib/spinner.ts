@@ -1,6 +1,6 @@
 import pc from 'picocolors';
 import type { GlobalOpts } from './client';
-import { errorMessage, outputError } from './output';
+import { errorMessage, outputError } from './formatters';
 import { isInteractive, isUnicodeSupported } from './tty';
 
 // Status symbols generated via String.fromCodePoint() — never literal Unicode in

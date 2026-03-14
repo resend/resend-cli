@@ -1,8 +1,7 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../../lib/client';
 import { requireClient } from '../../../lib/client';
-import { buildHelpText } from '../../../lib/help-text';
-import { outputResult } from '../../../lib/output';
+import { buildHelpText, outputResult } from '../../../lib/formatters';
 import { withSpinner } from '../../../lib/spinner';
 import { isInteractive } from '../../../lib/tty';
 

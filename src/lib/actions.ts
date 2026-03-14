@@ -1,7 +1,7 @@
 import type { Resend } from 'resend';
 import type { GlobalOpts } from './client';
 import { requireClient } from './client';
-import { outputResult } from './output';
+import { outputResult } from './formatters';
 import { confirmDelete } from './prompts';
 import { withSpinner } from './spinner';
 import { isInteractive } from './tty';

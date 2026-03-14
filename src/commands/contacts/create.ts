@@ -2,7 +2,7 @@ import * as p from '@clack/prompts';
 import { Command } from '@commander-js/extra-typings';
 import { runCreate } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
-import { buildHelpText } from '../../lib/help-text';
+import { buildHelpText } from '../../lib/formatters';
 import { cancelAndExit, requireText } from '../../lib/prompts';
 import { isInteractive } from '../../lib/tty';
 import { parsePropertiesJson } from './utils';

@@ -8,13 +8,17 @@ import {
   resolveApiKey,
   setActiveProfile,
   storeApiKey,
-  validateProfileName,
 } from '../../lib/config';
-import { buildHelpText } from '../../lib/help-text';
-import { errorMessage, outputError, outputResult } from '../../lib/output';
+import {
+  buildHelpText,
+  errorMessage,
+  outputError,
+  outputResult,
+} from '../../lib/formatters';
 import { cancelAndExit, promptRenameIfInvalid } from '../../lib/prompts';
 import { createSpinner } from '../../lib/spinner';
 import { isInteractive } from '../../lib/tty';
+import { validateProfileName } from '../../lib/validators';
 
 const RESEND_API_KEYS_URL = 'https://resend.com/api-keys?new=true';
 

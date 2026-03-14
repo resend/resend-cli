@@ -4,8 +4,7 @@ import type { CreateBroadcastOptions } from 'resend';
 import { runCreate } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { readFile } from '../../lib/files';
-import { buildHelpText } from '../../lib/help-text';
-import { outputError } from '../../lib/output';
+import { buildHelpText, outputError } from '../../lib/formatters';
 import { cancelAndExit } from '../../lib/prompts';
 import { isInteractive } from '../../lib/tty';
 

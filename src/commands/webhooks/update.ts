@@ -2,8 +2,7 @@ import { Command, Option } from '@commander-js/extra-typings';
 import type { WebhookEvent } from 'resend';
 import { runWrite } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
-import { buildHelpText } from '../../lib/help-text';
-import { outputError } from '../../lib/output';
+import { buildHelpText, outputError } from '../../lib/formatters';
 import { ALL_WEBHOOK_EVENTS } from './utils';
 
 export const updateWebhookCommand = new Command('update')

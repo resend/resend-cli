@@ -1,5 +1,5 @@
 import { Command } from '@commander-js/extra-typings';
-import { buildHelpText } from '../../lib/help-text';
+import { buildHelpText } from '../../lib/formatters';
 import { createBroadcastCommand } from './create';
 import { deleteBroadcastCommand } from './delete';
 import { getBroadcastCommand } from './get';

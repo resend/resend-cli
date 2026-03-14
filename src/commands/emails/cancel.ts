@@ -1,7 +1,7 @@
 import { Command } from '@commander-js/extra-typings';
 import { runWrite } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
-import { buildHelpText } from '../../lib/help-text';
+import { buildHelpText } from '../../lib/formatters';
 
 export const cancelCommand = new Command('cancel')
   .description('Cancel a scheduled email')

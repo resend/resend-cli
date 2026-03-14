@@ -6,8 +6,7 @@ import {
   resolveApiKey,
   resolveProfileName,
 } from '../lib/config';
-import { buildHelpText } from '../lib/help-text';
-import { outputError, outputResult } from '../lib/output';
+import { buildHelpText, outputError, outputResult } from '../lib/formatters';
 import { isInteractive } from '../lib/tty';
 
 export const whoamiCommand = new Command('whoami')

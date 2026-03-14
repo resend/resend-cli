@@ -2,8 +2,7 @@ import { Command, Option } from '@commander-js/extra-typings';
 import type { UpdateDomainsOptions } from 'resend';
 import { runWrite } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
-import { buildHelpText } from '../../lib/help-text';
-import { outputError } from '../../lib/output';
+import { buildHelpText, outputError } from '../../lib/formatters';
 
 export const updateDomainCommand = new Command('update')
   .description(

@@ -1,5 +1,5 @@
 import { Command } from '@commander-js/extra-typings';
-import { buildHelpText } from '../../lib/help-text';
+import { buildHelpText } from '../../lib/formatters';
 import { createContactPropertyCommand } from './create';
 import { deleteContactPropertyCommand } from './delete';
 import { getContactPropertyCommand } from './get';

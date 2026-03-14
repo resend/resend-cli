@@ -9,8 +9,12 @@ import {
   removeApiKey,
   resolveProfileName,
 } from '../../lib/config';
-import { buildHelpText } from '../../lib/help-text';
-import { errorMessage, outputError, outputResult } from '../../lib/output';
+import {
+  buildHelpText,
+  errorMessage,
+  outputError,
+  outputResult,
+} from '../../lib/formatters';
 import { cancelAndExit } from '../../lib/prompts';
 import { isInteractive } from '../../lib/tty';
 

@@ -1,7 +1,7 @@
 import { Command, Option } from '@commander-js/extra-typings';
 import { runCreate } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
-import { buildHelpText } from '../../lib/help-text';
+import { buildHelpText } from '../../lib/formatters';
 import { requireText } from '../../lib/prompts';
 
 export const createTopicCommand = new Command('create')

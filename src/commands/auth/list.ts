@@ -1,8 +1,9 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
-import { listProfiles, validateProfileName } from '../../lib/config';
-import { outputResult } from '../../lib/output';
+import { listProfiles } from '../../lib/config';
+import { outputResult } from '../../lib/formatters';
 import { isInteractive } from '../../lib/tty';
+import { validateProfileName } from '../../lib/validators';
 
 export function listAction(globalOpts: GlobalOpts) {
   const profiles = listProfiles();
