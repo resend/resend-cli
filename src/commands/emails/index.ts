@@ -1,6 +1,7 @@
 import { Command } from '@commander-js/extra-typings';
 import { buildHelpText } from '../../lib/help-text';
 import { batchCommand } from './batch';
+import { batchCsvCommand } from './batch-csv';
 import { cancelCommand } from './cancel';
 import { getEmailCommand } from './get';
 import { listEmailsCommand } from './list';
@@ -18,6 +19,8 @@ export const emailsCommand = new Command('emails')
         'resend emails send --from you@domain.com --to user@example.com --subject "Hello" --text "Hi"',
         'resend emails get <email-id>',
         'resend emails batch --file ./emails.json',
+        'resend emails batch-csv --file ./recipients.csv --template-id tmpl_abc --from you@domain.com',
+        'resend emails batch-csv --file ./recipients.csv --from you@domain.com --subject "Hello {{name}}" --text "Hi {{name}}"',
         'resend emails cancel <email-id>',
         'resend emails update <email-id> --scheduled-at 2024-08-05T11:52:01.858Z',
         'resend emails receiving list',
@@ -32,6 +35,7 @@ export const emailsCommand = new Command('emails')
   .addCommand(sendCommand)
   .addCommand(getEmailCommand)
   .addCommand(batchCommand)
+  .addCommand(batchCsvCommand)
   .addCommand(cancelCommand)
   .addCommand(updateCommand)
   .addCommand(receivingCommand);
