@@ -5,6 +5,7 @@ import { createContactCommand } from './create';
 import { deleteContactCommand } from './delete';
 import { getContactCommand } from './get';
 import { listContactsCommand } from './list';
+import { migrateContactsCommand } from './migrate';
 import { removeContactSegmentCommand } from './remove-segment';
 import { listContactSegmentsCommand } from './segments';
 import { listContactTopicsCommand } from './topics';
@@ -43,6 +44,8 @@ Segments:
         'resend contacts remove-segment user@example.com 7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
         'resend contacts topics user@example.com',
         `resend contacts update-topics user@example.com --topics '[{"id":"topic-uuid","subscription":"opt_in"}]'`,
+        'resend contacts migrate --file ./contacts.csv --to-segment abc-123',
+        'resend contacts migrate --file ./contacts.csv --to-segment abc-123 --from-segment def-456',
       ],
     }),
   )
@@ -55,4 +58,5 @@ Segments:
   .addCommand(addContactSegmentCommand)
   .addCommand(removeContactSegmentCommand)
   .addCommand(listContactTopicsCommand)
-  .addCommand(updateContactTopicsCommand);
+  .addCommand(updateContactTopicsCommand)
+  .addCommand(migrateContactsCommand);
