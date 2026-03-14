@@ -83,7 +83,7 @@ export const loginCommand = new Command('login')
 
       p.intro('Resend Authentication');
 
-      const existing = resolveApiKey();
+      const existing = resolveApiKey(globalOpts.apiKey);
       if (existing) {
         const sourceLabel = SOURCE_LABEL[existing.source] ?? existing.source;
         p.log.info(
