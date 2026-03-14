@@ -1,6 +1,5 @@
 import { Command } from '@commander-js/extra-typings';
-import pc from 'picocolors';
-import { DASHBOARD_URLS, openInBrowser } from '../../lib/browser';
+import { openInBrowserOrLog, RESEND_URLS } from '../../lib/browser';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 
@@ -21,11 +20,8 @@ export const openBroadcastCommand = new Command('open')
       ],
     }),
   )
-  .action((id: string | undefined, _opts, cmd) => {
-    const url = id ? DASHBOARD_URLS.broadcast(id) : DASHBOARD_URLS.broadcasts;
-    openInBrowser(url);
+  .action(async (id: string | undefined, _opts, cmd) => {
+    const url = id ? RESEND_URLS.broadcast(id) : RESEND_URLS.broadcasts;
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    if (!globalOpts.json && !globalOpts.quiet) {
-      console.log(pc.dim('Opening:'), pc.blue(url));
-    }
+    await openInBrowserOrLog(url, globalOpts);
   });

@@ -1,25 +1,55 @@
-import { spawn } from 'node:child_process';
+import { execFile } from 'node:child_process';
+import pc from 'picocolors';
 
 const RESEND_BASE = 'https://resend.com';
 
 /**
- * Open a URL in the user's default browser. Fires and forgets; does not block.
+ * Try to open a URL in the user's default browser. Returns true if the open
+ * succeeded, false on error or when the terminal has no browser (e.g. SSH).
  */
-export function openInBrowser(url: string): void {
-  const { platform } = process;
-  const args =
-    platform === 'darwin'
-      ? ['open', url]
-      : platform === 'win32'
-        ? ['cmd', '/c', 'start', url]
-        : ['xdg-open', url];
-
-  spawn(args[0], args.slice(1), { stdio: 'ignore', detached: true })
-    .on('error', () => {})
-    .unref();
+export function openInBrowser(url: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    const cmd =
+      process.platform === 'win32'
+        ? 'cmd.exe'
+        : process.platform === 'darwin'
+          ? 'open'
+          : 'xdg-open';
+    const args =
+      process.platform === 'win32' ? ['/c', 'start', '""', url] : [url];
+    execFile(cmd, args, { timeout: 5000 }, (err) => resolve(!err));
+  });
 }
 
-export const DASHBOARD_URLS = {
+export type OpenInBrowserOrLogOpts = {
+  json?: boolean;
+  quiet?: boolean;
+};
+
+/**
+ * Opens the URL in the browser and logs the outcome: success with link, or
+ * warning with link to copy when the browser could not be opened. No output
+ * when opts.json or opts.quiet.
+ */
+export async function openInBrowserOrLog(
+  url: string,
+  opts?: OpenInBrowserOrLogOpts,
+): Promise<void> {
+  const opened = await openInBrowser(url);
+  if (opts?.json || opts?.quiet) {
+    return;
+  }
+  if (opened) {
+    console.log(pc.dim('Opened'), pc.blue(url));
+  } else {
+    console.warn(
+      pc.yellow('Could not open browser. Visit this link:'),
+      pc.blue(url),
+    );
+  }
+}
+
+export const RESEND_URLS = {
   emails: `${RESEND_BASE}/emails`,
   templates: `${RESEND_BASE}/templates`,
   template: (id: string) => `${RESEND_BASE}/templates/${id}`,

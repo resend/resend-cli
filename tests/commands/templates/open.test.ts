@@ -3,7 +3,7 @@ import * as browser from '../../../src/lib/browser';
 
 describe('templates open command', () => {
   beforeEach(() => {
-    vi.spyOn(browser, 'openInBrowser').mockImplementation(vi.fn());
+    vi.spyOn(browser, 'openInBrowser').mockResolvedValue(true);
   });
 
   afterEach(() => {
@@ -18,7 +18,7 @@ describe('templates open command', () => {
 
     expect(browser.openInBrowser).toHaveBeenCalledTimes(1);
     expect(browser.openInBrowser).toHaveBeenCalledWith(
-      browser.DASHBOARD_URLS.templates,
+      browser.RESEND_URLS.templates,
     );
   });
 
@@ -33,7 +33,7 @@ describe('templates open command', () => {
 
     expect(browser.openInBrowser).toHaveBeenCalledTimes(1);
     expect(browser.openInBrowser).toHaveBeenCalledWith(
-      browser.DASHBOARD_URLS.template('78261eea-8f8b-4381-83c6-79fa7120f1cf'),
+      browser.RESEND_URLS.template('78261eea-8f8b-4381-83c6-79fa7120f1cf'),
     );
   });
 
@@ -47,7 +47,7 @@ describe('templates open command', () => {
 
     expect(browser.openInBrowser).toHaveBeenCalledTimes(1);
     expect(browser.openInBrowser).toHaveBeenCalledWith(
-      browser.DASHBOARD_URLS.template('my-template-alias'),
+      browser.RESEND_URLS.template('my-template-alias'),
     );
   });
 });

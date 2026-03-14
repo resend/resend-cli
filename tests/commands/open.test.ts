@@ -3,7 +3,7 @@ import * as browser from '../../src/lib/browser';
 
 describe('resend open command', () => {
   beforeEach(() => {
-    vi.spyOn(browser, 'openInBrowser').mockImplementation(vi.fn());
+    vi.spyOn(browser, 'openInBrowser').mockResolvedValue(true);
   });
 
   afterEach(() => {
@@ -16,7 +16,7 @@ describe('resend open command', () => {
 
     expect(browser.openInBrowser).toHaveBeenCalledTimes(1);
     expect(browser.openInBrowser).toHaveBeenCalledWith(
-      browser.DASHBOARD_URLS.emails,
+      browser.RESEND_URLS.emails,
     );
   });
 });
