@@ -1,5 +1,5 @@
 import type { Topic } from 'resend';
-import { renderTable } from '../../lib/table';
+import { renderTable } from '../../lib/formatters';
 
 export function renderTopicsTable(topics: Topic[]): string {
   const rows = topics.map((t) => [

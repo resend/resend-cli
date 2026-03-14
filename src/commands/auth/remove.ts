@@ -2,7 +2,7 @@ import * as p from '@clack/prompts';
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import { listProfiles, removeApiKey } from '../../lib/config';
-import { errorMessage, outputError, outputResult } from '../../lib/output';
+import { errorMessage, outputError, outputResult } from '../../lib/formatters';
 import { cancelAndExit } from '../../lib/prompts';
 import { isInteractive } from '../../lib/tty';
 

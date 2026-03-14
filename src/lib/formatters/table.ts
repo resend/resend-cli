@@ -1,4 +1,4 @@
-import { isUnicodeSupported } from './tty';
+import { isUnicodeSupported } from '../tty';
 
 // All box-drawing characters generated via String.fromCodePoint() — never literal
 // Unicode in source — to prevent UTF-8 → Latin-1 corruption in npm bundles.

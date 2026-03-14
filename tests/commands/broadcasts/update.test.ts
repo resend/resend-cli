@@ -253,7 +253,7 @@ describe('broadcasts update command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { outputError } = await import('../../../src/lib/output');
+    const { outputError } = await import('../../../src/lib/formatters');
     readFileSpy = vi
       .spyOn(files, 'readFile')
       .mockImplementation(

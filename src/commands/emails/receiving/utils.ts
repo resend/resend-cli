@@ -2,7 +2,7 @@ import type {
   ListAttachmentsResponseSuccess,
   ListReceivingEmail,
 } from 'resend';
-import { renderTable } from '../../../lib/table';
+import { renderTable } from '../../../lib/formatters';
 
 export function renderReceivingEmailsTable(
   emails: ListReceivingEmail[],

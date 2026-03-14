@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import type { GlobalOpts } from './client';
-import { outputError } from './output';
+import { outputError } from './formatters';
 
 /** Read a text file, exiting with file_read_error if unreadable. */
 export function readFile(filePath: string, globalOpts: GlobalOpts): string {

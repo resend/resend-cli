@@ -2,9 +2,8 @@ import { Command } from '@commander-js/extra-typings';
 import { runWrite } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { readFile } from '../../lib/files';
-import { buildHelpText } from '../../lib/help-text';
-import { outputError } from '../../lib/output';
-import { parseVariables } from './utils';
+import { buildHelpText, errorMessage, outputError } from '../../lib/formatters';
+import { parseVariables } from '../../lib/validators';
 
 export const updateTemplateCommand = new Command('update')
   .description('Update an existing template')
@@ -35,6 +34,7 @@ export const updateTemplateCommand = new Command('update')
         'no_changes',
         'file_read_error',
         'update_error',
+        'invalid_var',
       ],
       examples: [
         'resend templates update 78261eea-8f8b-4381-83c6-79fa7120f1cf --name "Updated Name"',
@@ -84,6 +84,21 @@ export const updateTemplateCommand = new Command('update')
       html = readFile(opts.htmlFile, globalOpts);
     }
 
+    let variables: ReturnType<typeof parseVariables> | undefined;
+    if (opts.var) {
+      try {
+        variables = parseVariables(opts.var);
+      } catch (e) {
+        outputError(
+          {
+            message: errorMessage(e, 'Invalid --var'),
+            code: 'invalid_var',
+          },
+          { json: globalOpts.json },
+        );
+      }
+    }
+
     await runWrite(
       {
         spinner: {
@@ -100,7 +115,7 @@ export const updateTemplateCommand = new Command('update')
             ...(opts.from != null && { from: opts.from }),
             ...(opts.replyTo != null && { replyTo: opts.replyTo }),
             ...(opts.alias != null && { alias: opts.alias }),
-            ...(opts.var && { variables: parseVariables(opts.var) }),
+            ...(variables && { variables }),
           }),
         errorCode: 'update_error',
         successMsg: `\nTemplate updated: ${id}`,

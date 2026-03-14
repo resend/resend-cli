@@ -1,5 +1,5 @@
 import type { ContactProperty } from 'resend';
-import { renderTable } from '../../lib/table';
+import { renderTable } from '../../lib/formatters';
 
 export function renderContactPropertiesTable(props: ContactProperty[]): string {
   const rows = props.map((prop) => [

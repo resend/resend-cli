@@ -1,4 +1,4 @@
-import { renderTable } from '../../lib/table';
+import { renderTable } from '../../lib/formatters';
 
 export function renderApiKeysTable(
   keys: Array<{ id: string; name: string; created_at: string }>,

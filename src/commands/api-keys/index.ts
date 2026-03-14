@@ -1,5 +1,5 @@
 import { Command } from '@commander-js/extra-typings';
-import { buildHelpText } from '../../lib/help-text';
+import { buildHelpText } from '../../lib/formatters';
 import { createApiKeyCommand } from './create';
 import { deleteApiKeyCommand } from './delete';
 import { listApiKeysCommand } from './list';

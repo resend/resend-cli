@@ -3,11 +3,10 @@ import { Command } from '@commander-js/extra-typings';
 import { runCreate } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { readFile } from '../../lib/files';
-import { buildHelpText } from '../../lib/help-text';
-import { outputError } from '../../lib/output';
+import { buildHelpText, errorMessage, outputError } from '../../lib/formatters';
 import { cancelAndExit } from '../../lib/prompts';
 import { isInteractive } from '../../lib/tty';
-import { parseVariables } from './utils';
+import { parseVariables } from '../../lib/validators';
 
 export const createTemplateCommand = new Command('create')
   .description('Create a new template')
@@ -44,6 +43,7 @@ Non-interactive: --name and a body (--html or --html-file) are required.`,
         'missing_body',
         'file_read_error',
         'create_error',
+        'invalid_var',
       ],
       examples: [
         'resend templates create --name "Welcome" --html "<h1>Hello</h1>" --subject "Welcome!"',
@@ -113,6 +113,21 @@ Non-interactive: --name and a body (--html or --html-file) are required.`,
       html = result;
     }
 
+    let variables: ReturnType<typeof parseVariables> | undefined;
+    if (opts.var) {
+      try {
+        variables = parseVariables(opts.var);
+      } catch (e) {
+        outputError(
+          {
+            message: errorMessage(e, 'Invalid --var'),
+            code: 'invalid_var',
+          },
+          { json: globalOpts.json },
+        );
+      }
+    }
+
     await runCreate(
       {
         spinner: {
@@ -130,7 +145,7 @@ Non-interactive: --name and a body (--html or --html-file) are required.`,
               ...(opts.from && { from: opts.from }),
               ...(opts.replyTo && { replyTo: opts.replyTo }),
               ...(opts.alias && { alias: opts.alias }),
-              ...(opts.var && { variables: parseVariables(opts.var) }),
+              ...(variables && { variables }),
             }),
           ),
         onInteractive: (d) => {

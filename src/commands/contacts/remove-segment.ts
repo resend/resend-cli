@@ -2,7 +2,7 @@ import { Command } from '@commander-js/extra-typings';
 import type { RemoveContactSegmentOptions } from 'resend';
 import { runWrite } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
-import { buildHelpText } from '../../lib/help-text';
+import { buildHelpText } from '../../lib/formatters';
 import { segmentContactIdentifier } from './utils';
 
 export const removeContactSegmentCommand = new Command('remove-segment')

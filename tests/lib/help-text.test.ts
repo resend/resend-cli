@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildHelpText } from '../../src/lib/help-text';
+import { buildHelpText } from '../../src/lib/formatters';
 
 describe('buildHelpText', () => {
   it('full leaf command — all options, setup: false', () => {

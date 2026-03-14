@@ -1,4 +1,4 @@
-import { renderTable } from '../../lib/table';
+import { renderTable } from '../../lib/formatters';
 
 export function broadcastStatusIndicator(status: string): string {
   switch (status) {

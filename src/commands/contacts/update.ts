@@ -2,7 +2,7 @@ import { Command } from '@commander-js/extra-typings';
 import type { UpdateContactOptions } from 'resend';
 import { runWrite } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
-import { buildHelpText } from '../../lib/help-text';
+import { buildHelpText } from '../../lib/formatters';
 import { contactIdentifier, parsePropertiesJson } from './utils';
 
 export const updateContactCommand = new Command('update')

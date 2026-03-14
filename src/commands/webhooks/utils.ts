@@ -1,5 +1,5 @@
 import type { Webhook, WebhookEvent } from 'resend';
-import { renderTable } from '../../lib/table';
+import { renderTable } from '../../lib/formatters';
 
 export const ALL_WEBHOOK_EVENTS: WebhookEvent[] = [
   'email.sent',

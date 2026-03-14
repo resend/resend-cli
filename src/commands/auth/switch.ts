@@ -1,14 +1,11 @@
 import * as p from '@clack/prompts';
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
-import {
-  listProfiles,
-  setActiveProfile,
-  validateProfileName,
-} from '../../lib/config';
-import { errorMessage, outputError, outputResult } from '../../lib/output';
+import { listProfiles, setActiveProfile } from '../../lib/config';
+import { errorMessage, outputError, outputResult } from '../../lib/formatters';
 import { cancelAndExit, promptRenameIfInvalid } from '../../lib/prompts';
 import { isInteractive } from '../../lib/tty';
+import { validateProfileName } from '../../lib/validators';
 
 export async function switchAction(
   name: string | undefined,

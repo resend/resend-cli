@@ -6,8 +6,7 @@ import type { Resend } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
 import { readFile } from '../../lib/files';
-import { buildHelpText } from '../../lib/help-text';
-import { outputError, outputResult } from '../../lib/output';
+import { buildHelpText, outputError, outputResult } from '../../lib/formatters';
 import {
   cancelAndExit,
   promptForMissing,
@@ -15,6 +14,7 @@ import {
 } from '../../lib/prompts';
 import { withSpinner } from '../../lib/spinner';
 import { isInteractive } from '../../lib/tty';
+import { parseKeyValuePairs } from '../../lib/validators';
 
 export async function fetchVerifiedDomains(resend: Resend): Promise<string[]> {
   try {
@@ -207,39 +207,23 @@ export const sendCommand = new Command('send')
       }
     });
 
-    // Parse key=value headers
     const headers = opts.headers
       ? Object.fromEntries(
-          opts.headers.map((h) => {
-            const eq = h.indexOf('=');
-            if (eq < 1) {
-              outputError(
-                {
-                  message: `Invalid header format: "${h}". Expected key=value.`,
-                  code: 'invalid_header',
-                },
-                { json: globalOpts.json },
-              );
-            }
-            return [h.slice(0, eq), h.slice(eq + 1)];
-          }),
+          parseKeyValuePairs(
+            opts.headers,
+            { optionName: 'header', code: 'invalid_header' },
+            globalOpts,
+          ),
         )
       : undefined;
 
-    // Parse name=value tags
-    const tags = opts.tags?.map((t) => {
-      const eq = t.indexOf('=');
-      if (eq < 1) {
-        outputError(
-          {
-            message: `Invalid tag format: "${t}". Expected name=value.`,
-            code: 'invalid_tag',
-          },
-          { json: globalOpts.json },
-        );
-      }
-      return { name: t.slice(0, eq), value: t.slice(eq + 1) };
-    });
+    const tags = opts.tags
+      ? parseKeyValuePairs(
+          opts.tags,
+          { optionName: 'tag', code: 'invalid_tag' },
+          globalOpts,
+        ).map(([name, value]) => ({ name, value }))
+      : undefined;
 
     const data = await withSpinner(
       {

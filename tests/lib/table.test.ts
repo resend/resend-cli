@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { renderTable } from '../../src/lib/table';
+import { renderTable } from '../../src/lib/formatters';
 
 describe('renderTable', () => {
   test('renders a table with correct border characters', () => {

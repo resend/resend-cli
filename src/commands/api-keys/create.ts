@@ -3,8 +3,7 @@ import { Command, Option } from '@commander-js/extra-typings';
 import pc from 'picocolors';
 import { runCreate } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
-import { buildHelpText } from '../../lib/help-text';
-import { outputError } from '../../lib/output';
+import { buildHelpText, outputError } from '../../lib/formatters';
 import { cancelAndExit } from '../../lib/prompts';
 import { isInteractive } from '../../lib/tty';
 

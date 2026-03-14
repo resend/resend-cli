@@ -1,5 +1,5 @@
 import type { DomainRecords } from 'resend';
-import { renderTable } from '../../lib/table';
+import { renderTable } from '../../lib/formatters';
 
 export function renderDnsRecordsTable(
   records: DomainRecords[],

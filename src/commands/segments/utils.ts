@@ -1,5 +1,5 @@
 import type { Segment } from 'resend';
-import { renderTable } from '../../lib/table';
+import { renderTable } from '../../lib/formatters';
 
 export function renderSegmentsTable(segments: Segment[]): string {
   const rows = segments.map((s) => [s.name, s.id, s.created_at]);

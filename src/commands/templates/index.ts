@@ -1,5 +1,5 @@
 import { Command } from '@commander-js/extra-typings';
-import { buildHelpText } from '../../lib/help-text';
+import { buildHelpText } from '../../lib/formatters';
 import { createTemplateCommand } from './create';
 import { deleteTemplateCommand } from './delete';
 import { duplicateTemplateCommand } from './duplicate';

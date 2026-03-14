@@ -1,7 +1,7 @@
 import { Command } from '@commander-js/extra-typings';
 import { runGet } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
-import { buildHelpText } from '../../lib/help-text';
+import { buildHelpText } from '../../lib/formatters';
 import { broadcastStatusIndicator } from './utils';
 
 export const getBroadcastCommand = new Command('get')

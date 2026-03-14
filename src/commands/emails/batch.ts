@@ -3,11 +3,11 @@ import type { CreateBatchOptions } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
 import { readFile } from '../../lib/files';
-import { buildHelpText } from '../../lib/help-text';
-import { outputError, outputResult } from '../../lib/output';
+import { buildHelpText, outputError, outputResult } from '../../lib/formatters';
 import { requireText } from '../../lib/prompts';
 import { withSpinner } from '../../lib/spinner';
 import { isInteractive } from '../../lib/tty';
+import { parseJson } from '../../lib/validators';
 
 export const batchCommand = new Command('batch')
   .description('Send up to 100 emails in a single API request from a JSON file')
@@ -66,27 +66,15 @@ export const batchCommand = new Command('batch')
 
     const raw = readFile(filePath, globalOpts);
 
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      outputError(
-        { message: 'File content is not valid JSON.', code: 'invalid_json' },
-        { json: globalOpts.json },
-      );
-    }
-
-    if (!Array.isArray(parsed)) {
-      outputError(
-        {
-          message: 'File content must be a JSON array of email objects.',
-          code: 'invalid_format',
-        },
-        { json: globalOpts.json },
-      );
-    }
-
-    const emails = parsed as unknown[];
+    const emails = parseJson(
+      raw,
+      (x): x is unknown[] => Array.isArray(x),
+      {
+        message: 'File content must be a valid JSON array of email objects.',
+        code: 'invalid_json',
+      },
+      globalOpts,
+    );
 
     if (emails.length > 100) {
       console.warn(

@@ -17,9 +17,9 @@ import {
   resolveProfileName,
   setActiveProfile,
   storeApiKey,
-  validateProfileName,
   writeCredentials,
 } from '../../src/lib/config';
+import { validateProfileName } from '../../src/lib/validators';
 import { captureTestEnv } from '../helpers';
 
 describe('getConfigDir', () => {
