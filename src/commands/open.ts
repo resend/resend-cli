@@ -1,5 +1,6 @@
-import { spawn } from 'node:child_process';
 import { Command } from '@commander-js/extra-typings';
+import { openInBrowserOrLog, RESEND_URLS } from '../lib/browser';
+import type { GlobalOpts } from '../lib/client';
 import { buildHelpText } from '../lib/help-text';
 
 export const openCommand = new Command('open')
@@ -11,17 +12,7 @@ export const openCommand = new Command('open')
       examples: ['resend open'],
     }),
   )
-  .action(async () => {
-    const url = 'https://resend.com/emails';
-    const { platform } = process;
-    const args =
-      platform === 'darwin'
-        ? ['open', url]
-        : platform === 'win32'
-          ? ['cmd', '/c', 'start', url]
-          : ['xdg-open', url];
-
-    spawn(args[0], args.slice(1), { stdio: 'ignore', detached: true })
-      .on('error', () => {})
-      .unref();
+  .action(async (_opts, cmd) => {
+    const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    await openInBrowserOrLog(RESEND_URLS.emails, globalOpts);
   });

@@ -4,6 +4,7 @@ import { createBroadcastCommand } from './create';
 import { deleteBroadcastCommand } from './delete';
 import { getBroadcastCommand } from './get';
 import { listBroadcastsCommand } from './list';
+import { openBroadcastCommand } from './open';
 import { sendBroadcastCommand } from './send';
 import { updateBroadcastCommand } from './update';
 
@@ -32,10 +33,13 @@ Scheduling:
         'resend broadcasts get d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
         'resend broadcasts update d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6 --subject "Updated Subject"',
         'resend broadcasts delete d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6 --yes',
+        'resend broadcasts open',
+        'resend broadcasts open d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
       ],
     }),
   )
   .addCommand(createBroadcastCommand)
+  .addCommand(openBroadcastCommand)
   .addCommand(sendBroadcastCommand)
   .addCommand(getBroadcastCommand)
   .addCommand(listBroadcastsCommand, { isDefault: true })
