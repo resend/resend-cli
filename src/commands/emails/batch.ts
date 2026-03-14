@@ -36,7 +36,6 @@ export const batchCommand = new Command('batch')
         'missing_file',
         'file_read_error',
         'invalid_json',
-        'invalid_format',
         'batch_error',
       ],
       examples: [

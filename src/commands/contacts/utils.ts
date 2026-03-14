@@ -74,14 +74,29 @@ export function segmentContactIdentifier(
 const TOPICS_MESSAGE =
   'Invalid --topics JSON. Expected an array of {id, subscription} objects.';
 
+type TopicEntry = { id: string; subscription: 'opt_in' | 'opt_out' };
+
+function isTopicEntry(x: unknown): x is TopicEntry {
+  return (
+    typeof x === 'object' &&
+    x !== null &&
+    typeof (x as Record<string, unknown>).id === 'string' &&
+    ((x as Record<string, unknown>).subscription === 'opt_in' ||
+      (x as Record<string, unknown>).subscription === 'opt_out')
+  );
+}
+
+function isTopicsArray(x: unknown): x is TopicEntry[] {
+  return Array.isArray(x) && x.every(isTopicEntry);
+}
+
 export function parseTopicsJson(
   raw: string,
   globalOpts: GlobalOpts,
-): Array<{ id: string; subscription: 'opt_in' | 'opt_out' }> {
+): TopicEntry[] {
   return parseJson(
     raw,
-    (x): x is Array<{ id: string; subscription: 'opt_in' | 'opt_out' }> =>
-      Array.isArray(x),
+    isTopicsArray,
     { message: TOPICS_MESSAGE, code: 'invalid_topics' },
     globalOpts,
   );
