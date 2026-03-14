@@ -35,7 +35,7 @@ export function getConfigDir(): string {
   return join(homedir(), '.config', 'resend');
 }
 
-function getCredentialsPath(): string {
+export function getCredentialsPath(): string {
   return join(getConfigDir(), 'credentials.json');
 }
 
