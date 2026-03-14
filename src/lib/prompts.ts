@@ -26,7 +26,7 @@ export async function confirmDelete(
   confirmMessage: string,
   globalOpts: GlobalOpts,
 ): Promise<void> {
-  if (!isInteractive()) {
+  if (!isInteractive() || globalOpts.json) {
     outputError(
       {
         message: 'Use --yes to confirm deletion in non-interactive mode.',
@@ -112,7 +112,7 @@ export async function requireText(
     return value;
   }
 
-  if (!isInteractive()) {
+  if (!isInteractive() || globalOpts.json) {
     outputError(error, { json: globalOpts.json });
   }
 
@@ -143,7 +143,7 @@ export async function requireSelect<V extends string>(
     return value;
   }
 
-  if (!isInteractive()) {
+  if (!isInteractive() || globalOpts.json) {
     outputError(error, { json: globalOpts.json });
   }
 
@@ -172,7 +172,7 @@ export async function promptForMissing<
     return current as { [K in keyof T]: string };
   }
 
-  if (!isInteractive()) {
+  if (!isInteractive() || globalOpts.json) {
     const flags = missing.map((f) => `--${f.flag}`).join(', ');
     outputError(
       { message: `Missing required flags: ${flags}`, code: 'missing_flags' },
