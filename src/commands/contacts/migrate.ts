@@ -105,6 +105,18 @@ Failures are collected and reported at the end — they do not stop the batch.`,
     );
 
     const fromSegment = opts.fromSegment;
+
+    if (fromSegment && fromSegment === toSegment) {
+      outputError(
+        {
+          message:
+            '--from-segment and --to-segment must be different. Using the same segment would remove contacts from their destination.',
+          code: 'invalid_segments',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
     const column = opts.column ?? 'email';
     const concurrency = Math.max(
       1,

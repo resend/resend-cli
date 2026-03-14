@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
-import { mockExitThrow, setNonInteractive } from '../helpers';
+import { ExitError, mockExitThrow, setNonInteractive } from '../helpers';
 
 describe('parseCsv', () => {
   let exitSpy: ReturnType<typeof mockExitThrow> | undefined;
@@ -66,7 +66,7 @@ describe('parseCsv', () => {
     expect(rows).toHaveLength(2);
   });
 
-  test('trims whitespace from headers and values', async () => {
+  test('trims whitespace from unquoted headers and values', async () => {
     const { parseCsv } = await import('../../src/lib/csv');
     const rows = parseCsv(
       ' name , email \n Alice , alice@example.com ',
@@ -75,44 +75,94 @@ describe('parseCsv', () => {
     expect(rows[0]).toEqual({ name: 'Alice', email: 'alice@example.com' });
   });
 
-  test('handles missing trailing columns', async () => {
+  test('preserves whitespace in quoted values', async () => {
+    const { parseCsv } = await import('../../src/lib/csv');
+    const rows = parseCsv('name,value\nAlice," spaced "', globalOpts);
+    expect(rows[0].value).toBe(' spaced ');
+  });
+
+  test('handles missing trailing columns (fewer fields than headers)', async () => {
     const { parseCsv } = await import('../../src/lib/csv');
     const rows = parseCsv('a,b,c\n1,2\n4,5,6', globalOpts);
     expect(rows[0]).toEqual({ a: '1', b: '2', c: '' });
     expect(rows[1]).toEqual({ a: '4', b: '5', c: '6' });
   });
 
-  test('errors on header-only CSV', async () => {
+  test('errors on rows with more fields than headers', async () => {
     setup();
     try {
       const { parseCsv } = await import('../../src/lib/csv');
-      await expect(async () => {
+      let threw = false;
+      try {
+        parseCsv('a,b\n1,2,3', globalOpts);
+      } catch (err) {
+        threw = true;
+        expect(err).toBeInstanceOf(ExitError);
+        expect((err as ExitError).code).toBe(1);
+      }
+      expect(threw).toBe(true);
+      const output = errorSpy?.mock.calls.map((c) => c[0]).join(' ');
+      expect(output).toContain('invalid_csv');
+    } finally {
+      teardown();
+    }
+  });
+
+  test('errors on header-only CSV with invalid_csv code', async () => {
+    setup();
+    try {
+      const { parseCsv } = await import('../../src/lib/csv');
+      let threw = false;
+      try {
         parseCsv('name,email', globalOpts);
-      }).rejects.toThrow();
+      } catch (err) {
+        threw = true;
+        expect(err).toBeInstanceOf(ExitError);
+        expect((err as ExitError).code).toBe(1);
+      }
+      expect(threw).toBe(true);
+      const output = errorSpy?.mock.calls.map((c) => c[0]).join(' ');
+      expect(output).toContain('invalid_csv');
     } finally {
       teardown();
     }
   });
 
-  test('errors on empty CSV', async () => {
+  test('errors on empty CSV with invalid_csv code', async () => {
     setup();
     try {
       const { parseCsv } = await import('../../src/lib/csv');
-      await expect(async () => {
+      let threw = false;
+      try {
         parseCsv('', globalOpts);
-      }).rejects.toThrow();
+      } catch (err) {
+        threw = true;
+        expect(err).toBeInstanceOf(ExitError);
+        expect((err as ExitError).code).toBe(1);
+      }
+      expect(threw).toBe(true);
+      const output = errorSpy?.mock.calls.map((c) => c[0]).join(' ');
+      expect(output).toContain('invalid_csv');
     } finally {
       teardown();
     }
   });
 
-  test('errors on duplicate headers', async () => {
+  test('errors on duplicate headers with invalid_csv code', async () => {
     setup();
     try {
       const { parseCsv } = await import('../../src/lib/csv');
-      await expect(async () => {
+      let threw = false;
+      try {
         parseCsv('name,name\nAlice,Bob', globalOpts);
-      }).rejects.toThrow();
+      } catch (err) {
+        threw = true;
+        expect(err).toBeInstanceOf(ExitError);
+        expect((err as ExitError).code).toBe(1);
+      }
+      expect(threw).toBe(true);
+      const output = errorSpy?.mock.calls.map((c) => c[0]).join(' ');
+      expect(output).toContain('invalid_csv');
     } finally {
       teardown();
     }

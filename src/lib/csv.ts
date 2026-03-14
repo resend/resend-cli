@@ -5,7 +5,8 @@ import { outputError } from './output';
  * Minimal RFC 4180-compliant CSV parser.
  *
  * Handles quoted fields (including escaped quotes ""), CRLF/LF line endings,
- * and trims whitespace around unquoted fields. Returns an array of objects
+ * and multi-line quoted values. Unquoted field values are trimmed; quoted
+ * values are preserved verbatim (per RFC 4180). Returns an array of objects
  * keyed by the header row. No external dependencies.
  */
 export function parseCsv(
@@ -52,9 +53,18 @@ export function parseCsv(
       continue; // skip blank lines
     }
     const values = parseCsvLine(line);
+    if (values.length > headers.length) {
+      outputError(
+        {
+          message: `CSV row ${i + 1} has ${values.length} fields but the header has ${headers.length}. Fix the row or adjust the header.`,
+          code: 'invalid_csv',
+        },
+        { json: globalOpts.json },
+      );
+    }
     const row: Record<string, string> = {};
     for (let j = 0; j < headers.length; j++) {
-      row[headers[j]] = (values[j] ?? '').trim();
+      row[headers[j]] = values[j] ?? '';
     }
     rows.push(row);
   }
@@ -107,12 +117,10 @@ function splitCsvLines(raw: string): string[] {
 function parseCsvLine(line: string): string[] {
   const fields: string[] = [];
   let i = 0;
+  let expectField = true;
 
-  while (i <= line.length) {
-    if (i === line.length) {
-      fields.push('');
-      break;
-    }
+  while (i < line.length) {
+    expectField = false;
 
     if (line[i] === '"') {
       // Quoted field
@@ -134,19 +142,26 @@ function parseCsvLine(line: string): string[] {
       }
       fields.push(value);
       // Skip comma after quoted field
-      if (line[i] === ',') {
+      if (i < line.length && line[i] === ',') {
         i++;
+        expectField = true;
       }
     } else {
-      // Unquoted field
+      // Unquoted field — trim whitespace per common convention
       const commaIdx = line.indexOf(',', i);
       if (commaIdx === -1) {
-        fields.push(line.slice(i));
+        fields.push(line.slice(i).trim());
         break;
       }
-      fields.push(line.slice(i, commaIdx));
+      fields.push(line.slice(i, commaIdx).trim());
       i = commaIdx + 1;
+      expectField = true;
     }
+  }
+
+  // Trailing comma means there's an empty final field
+  if (expectField) {
+    fields.push('');
   }
 
   return fields;

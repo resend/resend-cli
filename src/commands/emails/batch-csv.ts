@@ -218,23 +218,28 @@ Limit: 100 emails per API request (auto-chunked for larger files).`,
         );
       }
 
-      // Collect all non-to columns as variables
-      const variables: Record<string, string> = {};
+      const allVariables: Record<string, string> = {};
+      const templateVariables: Record<string, string> = {};
       for (const [key, value] of Object.entries(row)) {
-        if (key !== toColumn && value !== '') {
-          variables[key] = value;
+        if (value !== '') {
+          allVariables[key] = value;
+          if (key !== toColumn) {
+            templateVariables[key] = value;
+          }
         }
       }
 
       if (templateId) {
-        // Template mode: pass CSV columns as template variables
+        // Template mode: pass non-to columns as template variables
         return {
           to,
           ...(fromAddress && { from: fromAddress }),
-          ...(subject && { subject: interpolate(subject, variables) }),
+          ...(subject && { subject: interpolate(subject, allVariables) }),
           template: {
             id: templateId,
-            ...(Object.keys(variables).length > 0 && { variables }),
+            ...(Object.keys(templateVariables).length > 0 && {
+              variables: templateVariables,
+            }),
           },
           ...(opts.replyTo && { replyTo: opts.replyTo }),
           ...(tags && { tags }),
@@ -242,11 +247,16 @@ Limit: 100 emails per API request (auto-chunked for larger files).`,
       }
 
       // Inline mode: interpolate placeholders in subject/html/text
+      // All columns (including to-column) are available as {{placeholder}}
       const interpolatedSubject = subject
-        ? interpolate(subject, variables)
+        ? interpolate(subject, allVariables)
         : undefined;
-      const interpolatedHtml = html ? interpolate(html, variables) : undefined;
-      const interpolatedText = text ? interpolate(text, variables) : undefined;
+      const interpolatedHtml = html
+        ? interpolate(html, allVariables)
+        : undefined;
+      const interpolatedText = text
+        ? interpolate(text, allVariables)
+        : undefined;
 
       return {
         from: fromAddress as string,
@@ -271,20 +281,28 @@ Limit: 100 emails per API request (auto-chunked for larger files).`,
       globalOpts.quiet,
     );
 
-    const batchOptions = {
-      ...(opts.idempotencyKey && { idempotencyKey: opts.idempotencyKey }),
-      ...(opts.batchValidation && {
-        batchValidation: opts.batchValidation as 'strict' | 'permissive',
-      }),
-    };
-    const sendOptions =
-      Object.keys(batchOptions).length > 0 ? batchOptions : undefined;
+    const isStrict = opts.batchValidation !== 'permissive';
 
     for (let c = 0; c < chunks.length; c++) {
       const chunk = chunks[c];
       spinner.update(
         `Sending batch ${c + 1}/${chunks.length} (${chunk.length} emails)...`,
       );
+
+      // Build per-chunk options: append chunk index to idempotency key
+      // so each chunk gets a unique key (Resend requires unique keys per request)
+      const chunkOptions: Record<string, string> = {};
+      if (opts.idempotencyKey) {
+        chunkOptions.idempotencyKey =
+          chunks.length > 1
+            ? `${opts.idempotencyKey}-chunk-${c}`
+            : opts.idempotencyKey;
+      }
+      if (opts.batchValidation) {
+        chunkOptions.batchValidation = opts.batchValidation;
+      }
+      const sendOptions =
+        Object.keys(chunkOptions).length > 0 ? chunkOptions : undefined;
 
       try {
         const result = await resend.batch.send(
@@ -294,12 +312,25 @@ Limit: 100 emails per API request (auto-chunked for larger files).`,
 
         if (result.error) {
           spinner.fail(`Batch ${c + 1} failed: ${result.error.message}`);
-          // In strict mode with multiple chunks, record the error but continue
           for (let i = 0; i < chunk.length; i++) {
             allErrors.push({
               index: totalSent + i,
               message: result.error.message,
             });
+          }
+          // In strict mode, stop sending after a batch error
+          if (isStrict) {
+            // Mark remaining chunks as not sent
+            for (let r = c + 1; r < chunks.length; r++) {
+              for (let i = 0; i < chunks[r].length; i++) {
+                allErrors.push({
+                  index: totalSent + chunk.length + i,
+                  message: 'Skipped: previous batch failed in strict mode',
+                });
+              }
+            }
+            totalSent += chunk.length;
+            break;
           }
         } else if (result.data) {
           for (const email of result.data.data) {
@@ -321,6 +352,19 @@ Limit: 100 emails per API request (auto-chunked for larger files).`,
         const msg = err instanceof Error ? err.message : 'Unknown error';
         for (let i = 0; i < chunk.length; i++) {
           allErrors.push({ index: totalSent + i, message: msg });
+        }
+        // In strict mode, stop sending after an exception
+        if (isStrict) {
+          for (let r = c + 1; r < chunks.length; r++) {
+            for (let i = 0; i < chunks[r].length; i++) {
+              allErrors.push({
+                index: totalSent + chunk.length + i,
+                message: 'Skipped: previous batch failed in strict mode',
+              });
+            }
+          }
+          totalSent += chunk.length;
+          break;
         }
       }
       totalSent += chunk.length;
