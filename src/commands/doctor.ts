@@ -202,7 +202,10 @@ export const doctorCommand = new Command('doctor')
       status: usingSecure ? 'pass' : 'warn',
       message: usingSecure ? backend.name : 'plaintext file',
       ...(!usingSecure && backend.isSecure
-        ? { detail: 'Run `resend auth migrate` to use secure storage' }
+        ? {
+            detail:
+              'Keys will be moved to secure storage automatically on next use',
+          }
         : {}),
     };
     checks.push(storageCheck);

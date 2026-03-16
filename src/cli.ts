@@ -53,10 +53,7 @@ const program = new Command()
     if (actionCommand.optsWithGlobals().quiet) {
       thisCommand.setOptionValue('json', true);
     }
-    if (
-      actionCommand.optsWithGlobals().insecureStorage &&
-      actionCommand.name() !== 'migrate'
-    ) {
+    if (actionCommand.optsWithGlobals().insecureStorage) {
       process.env.RESEND_CREDENTIAL_STORE = 'file';
     }
   })

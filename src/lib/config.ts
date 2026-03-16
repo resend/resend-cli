@@ -323,6 +323,18 @@ export async function resolveApiKeyAsync(
   if (creds) {
     const entry = creds.profiles[profile];
     if (entry?.api_key) {
+      // Auto-migrate: move plaintext key to secure storage if available
+      const backend = await getCredentialBackend();
+      if (backend.isSecure) {
+        try {
+          await backend.set(SERVICE_NAME, profile, entry.api_key);
+          creds.profiles[profile] = {};
+          creds.storage = 'keychain';
+          writeCredentials(creds);
+        } catch {
+          // Non-fatal — plaintext key still works
+        }
+      }
       return { key: entry.api_key, source: 'config', profile };
     }
   }
