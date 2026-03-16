@@ -52,12 +52,21 @@ function psEscape(s: string): string {
   return s.replace(/'/g, "''");
 }
 
+// Snippet that ensures the WinRT PasswordVault type is loaded.
+// On some environments (e.g. GitHub Actions) the type isn't available by
+// default and must be explicitly loaded via its assembly-qualified name.
+const LOAD_VAULT = `
+  try { $null = [Windows.Security.Credentials.PasswordVault] } catch {
+    [void][Windows.Security.Credentials.PasswordVault,Windows.Security.Credentials,ContentType=WindowsRuntime]
+  }
+`;
+
 export class WindowsBackend implements CredentialBackend {
   name = 'Windows Credential Manager';
   readonly isSecure = true;
 
   async get(service: string, account: string): Promise<string | null> {
-    const script = `
+    const script = `${LOAD_VAULT}
       $v = New-Object Windows.Security.Credentials.PasswordVault
       try {
         $c = $v.Retrieve('${psEscape(service)}', '${psEscape(account)}')
@@ -76,7 +85,7 @@ export class WindowsBackend implements CredentialBackend {
 
   async set(service: string, account: string, secret: string): Promise<void> {
     // Remove existing credential first (PasswordVault throws on duplicate)
-    const removeScript = `
+    const removeScript = `${LOAD_VAULT}
       $v = New-Object Windows.Security.Credentials.PasswordVault
       try {
         $c = $v.Retrieve('${psEscape(service)}', '${psEscape(account)}')
@@ -86,7 +95,7 @@ export class WindowsBackend implements CredentialBackend {
     await runPowershell(removeScript);
 
     // Read secret from stdin to avoid exposing it in process args
-    const addScript = `
+    const addScript = `${LOAD_VAULT}
       $secret = [Console]::In.ReadLine()
       $v = New-Object Windows.Security.Credentials.PasswordVault
       $c = New-Object Windows.Security.Credentials.PasswordCredential('${psEscape(service)}', '${psEscape(account)}', $secret)
@@ -101,7 +110,7 @@ export class WindowsBackend implements CredentialBackend {
   }
 
   async delete(service: string, account: string): Promise<boolean> {
-    const script = `
+    const script = `${LOAD_VAULT}
       $v = New-Object Windows.Security.Credentials.PasswordVault
       try {
         $c = $v.Retrieve('${psEscape(service)}', '${psEscape(account)}')
@@ -120,7 +129,7 @@ export class WindowsBackend implements CredentialBackend {
     }
     // Test that PowerShell and PasswordVault are accessible
     const { code } = await runPowershell(
-      '$null = New-Object Windows.Security.Credentials.PasswordVault',
+      `${LOAD_VAULT} $null = New-Object Windows.Security.Credentials.PasswordVault`,
     );
     return code === 0;
   }
