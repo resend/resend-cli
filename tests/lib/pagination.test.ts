@@ -1,15 +1,26 @@
-import { describe, expect, type MockInstance, test, vi } from 'vitest';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  type MockInstance,
+  test,
+  vi,
+} from 'vitest';
 import { printPaginationHint } from '../../src/lib/pagination';
 
 describe('printPaginationHint', () => {
   let logSpy: MockInstance;
 
-  function setup() {
+  beforeEach(() => {
     logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-  }
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
 
   test('does not print when has_more is false', () => {
-    setup();
     printPaginationHint(
       { has_more: false, data: [{ id: 'item_1' }] },
       'emails list',
@@ -19,13 +30,11 @@ describe('printPaginationHint', () => {
   });
 
   test('does not print when data is empty', () => {
-    setup();
     printPaginationHint({ has_more: true, data: [] }, 'emails list', {});
     expect(logSpy).not.toHaveBeenCalled();
   });
 
   test('prints forward pagination hint with --after flag', () => {
-    setup();
     printPaginationHint(
       {
         has_more: true,
@@ -40,7 +49,6 @@ describe('printPaginationHint', () => {
   });
 
   test('prints backward pagination hint with --before flag when before is set', () => {
-    setup();
     printPaginationHint(
       {
         has_more: true,
@@ -55,7 +63,6 @@ describe('printPaginationHint', () => {
   });
 
   test('includes --limit flag when limit is set', () => {
-    setup();
     printPaginationHint(
       { has_more: true, data: [{ id: 'item_1' }] },
       'emails list',
@@ -66,20 +73,18 @@ describe('printPaginationHint', () => {
     );
   });
 
-  test('includes --api-key flag when apiKey is set', () => {
-    setup();
+  test('masks the API key in the hint', () => {
     printPaginationHint(
       { has_more: true, data: [{ id: 'item_1' }] },
       'emails list',
-      { apiKey: 're_123' },
+      { apiKey: 're_1234567890abcdef' },
     );
-    expect(logSpy).toHaveBeenCalledWith(
-      '\nFetch the next page:\n$ resend emails list --after item_1 --api-key re_123',
-    );
+    const output = logSpy.mock.calls[0][0] as string;
+    expect(output).not.toContain('re_1234567890abcdef');
+    expect(output).toContain('--api-key re_...cdef');
   });
 
   test('includes --profile flag when profile is set', () => {
-    setup();
     printPaginationHint(
       { has_more: true, data: [{ id: 'item_1' }] },
       'emails list',
@@ -91,17 +96,21 @@ describe('printPaginationHint', () => {
   });
 
   test('includes all flags together', () => {
-    setup();
     printPaginationHint(
       {
         has_more: true,
         data: [{ id: 'item_1' }, { id: 'item_2' }],
       },
       'contacts list',
-      { limit: 10, apiKey: 're_abc', profile: 'prod', before: 'item_5' },
+      {
+        limit: 10,
+        apiKey: 're_abcdefghijkl',
+        profile: 'prod',
+        before: 'item_5',
+      },
     );
     expect(logSpy).toHaveBeenCalledWith(
-      '\nFetch the next page:\n$ resend contacts list --before item_1 --limit 10 --api-key re_abc --profile prod',
+      '\nFetch the next page:\n$ resend contacts list --before item_1 --limit 10 --api-key re_...ijkl --profile prod',
     );
   });
 });

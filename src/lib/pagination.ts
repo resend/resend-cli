@@ -1,4 +1,5 @@
 import type { GlobalOpts } from './client';
+import { maskKey } from './config';
 import { outputError } from './output';
 
 export function parseLimitOpt(raw: string, globalOpts: GlobalOpts): number {
@@ -35,13 +36,15 @@ export function printPaginationHint(
     return;
   }
 
+  // API returns items newest-first; for backward pagination the next cursor
+  // is the first item, for forward pagination it's the last item.
   const backward = Boolean(opts.before);
   const cursor = backward
     ? list.data[0].id
     : list.data[list.data.length - 1].id;
   const flag = backward ? '--before' : '--after';
   const limitFlag = opts.limit ? ` --limit ${opts.limit}` : '';
-  const apiKeyFlag = opts.apiKey ? ` --api-key ${opts.apiKey}` : '';
+  const apiKeyFlag = opts.apiKey ? ` --api-key ${maskKey(opts.apiKey)}` : '';
   const profileFlag = opts.profile ? ` --profile ${opts.profile}` : '';
 
   console.log(
