@@ -395,13 +395,17 @@ export async function removeApiKeyAsync(profileName?: string): Promise<string> {
     creds?.active_profile ||
     'default';
 
-  // If keychain storage, delete from keychain too
+  // If keychain storage, delete from keychain (only if backend is actually secure;
+  // when the keychain is unavailable getCredentialBackend returns FileBackend and
+  // calling its delete would double-remove the profile from the credentials file).
   if (creds?.storage === 'keychain') {
     const backend = await getCredentialBackend();
-    await backend.delete(SERVICE_NAME, profile);
+    if (backend.isSecure) {
+      await backend.delete(SERVICE_NAME, profile);
+    }
   }
 
-  // Remove from credentials file (may already be gone if only keychain)
+  // Remove from credentials file
   return removeApiKey(profile);
 }
 
@@ -412,11 +416,13 @@ export async function removeAllApiKeysAsync(): Promise<string> {
   // If keychain storage, delete all profiles from keychain
   if (creds?.storage === 'keychain') {
     const backend = await getCredentialBackend();
-    await Promise.all(
-      Object.keys(creds.profiles).map((profile) =>
-        backend.delete(SERVICE_NAME, profile),
-      ),
-    );
+    if (backend.isSecure) {
+      await Promise.all(
+        Object.keys(creds.profiles).map((profile) =>
+          backend.delete(SERVICE_NAME, profile),
+        ),
+      );
+    }
   }
 
   // Remove credentials file (may already be gone if only keychain)
@@ -434,10 +440,12 @@ export async function renameProfileAsync(
 
   if (creds?.storage === 'keychain') {
     const backend = await getCredentialBackend();
-    const key = await backend.get(SERVICE_NAME, oldName);
-    if (key) {
-      await backend.set(SERVICE_NAME, newName, key);
-      await backend.delete(SERVICE_NAME, oldName);
+    if (backend.isSecure) {
+      const key = await backend.get(SERVICE_NAME, oldName);
+      if (key) {
+        await backend.set(SERVICE_NAME, newName, key);
+        await backend.delete(SERVICE_NAME, oldName);
+      }
     }
   }
 
