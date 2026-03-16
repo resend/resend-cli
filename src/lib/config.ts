@@ -331,6 +331,9 @@ export async function resolveApiKeyAsync(
           creds.profiles[profile] = {};
           creds.storage = 'keychain';
           writeCredentials(creds);
+          process.stderr.write(
+            `Notice: API key for profile "${profile}" has been moved to ${backend.name}\n`,
+          );
         } catch {
           // Non-fatal — plaintext key still works
         }
