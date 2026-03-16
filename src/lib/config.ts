@@ -21,7 +21,7 @@ export type ResolvedKey = {
   profile?: string;
 };
 
-export type Profile = { api_key: string };
+export type Profile = { api_key?: string };
 export type CredentialStorage = 'keychain' | 'file';
 export type CredentialsFile = {
   active_profile: string;
@@ -309,17 +309,17 @@ export async function resolveApiKeyAsync(
     creds?.active_profile ||
     'default';
 
-  // If storage is 'keychain', retrieve from credential backend
+  // If storage is 'keychain', try credential backend first
   if (creds?.storage === 'keychain') {
     const backend = await getCredentialBackend();
     const key = await backend.get(SERVICE_NAME, profile);
     if (key) {
       return { key, source: 'config', profile };
     }
-    return null;
+    // Fall through: profile may not be migrated yet (api_key still in file)
   }
 
-  // File-based storage (existing behavior)
+  // File-based storage (or unmigrated profile in mixed state)
   if (creds) {
     const entry = creds.profiles[profile];
     if (entry?.api_key) {
@@ -357,7 +357,7 @@ export async function storeApiKeyAsync(
     profiles: {},
   };
   creds.storage = 'keychain';
-  creds.profiles[profile] = { api_key: '' };
+  creds.profiles[profile] = {};
 
   if (Object.keys(creds.profiles).length === 1) {
     creds.active_profile = profile;

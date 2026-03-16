@@ -68,7 +68,7 @@ describe('resolveApiKeyAsync', () => {
       JSON.stringify({
         active_profile: 'default',
         storage: 'keychain',
-        profiles: { default: { api_key: '' } },
+        profiles: { default: {} },
       }),
     );
 
@@ -98,6 +98,43 @@ describe('resolveApiKeyAsync', () => {
     expect(mockBackend.get).toHaveBeenCalledWith('resend-cli', 'default');
   });
 
+  test('falls back to file api_key when keychain has no entry but file does (mixed state)', async () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'default',
+        storage: 'keychain',
+        profiles: { default: { api_key: 're_unmigrated_key' } },
+      }),
+    );
+
+    const mockBackend = {
+      get: vi.fn().mockResolvedValue(null),
+      set: vi.fn(),
+      delete: vi.fn(),
+      isAvailable: vi.fn().mockResolvedValue(true),
+      name: 'mock-backend',
+      isSecure: true,
+    };
+
+    vi.resetModules();
+    vi.doMock('../../src/lib/credential-store', () => ({
+      getCredentialBackend: vi.fn().mockResolvedValue(mockBackend),
+      SERVICE_NAME: 'resend-cli',
+      resetCredentialBackend: vi.fn(),
+    }));
+
+    const { resolveApiKeyAsync } = await import('../../src/lib/config');
+    const result = await resolveApiKeyAsync();
+    expect(result).toEqual({
+      key: 're_unmigrated_key',
+      source: 'config',
+      profile: 'default',
+    });
+  });
+
   test('returns null when keychain has no entry', async () => {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
@@ -106,7 +143,7 @@ describe('resolveApiKeyAsync', () => {
       JSON.stringify({
         active_profile: 'default',
         storage: 'keychain',
-        profiles: { default: { api_key: '' } },
+        profiles: { default: {} },
       }),
     );
 

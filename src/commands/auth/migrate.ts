@@ -14,14 +14,14 @@ import { isInteractive } from '../../lib/tty';
 export const migrateCommand = new Command('migrate')
   .description('Migrate credentials between storage backends')
   .option(
-    '--file',
+    '--insecure',
     'Migrate from keychain to plaintext file (reverse migration)',
   )
   .addHelpText(
     'after',
     buildHelpText({
       context: `By default, migrates all profile API keys from the plaintext file to the OS keychain.
-Use --file to migrate from keychain back to plaintext file.
+Use --insecure to migrate from keychain back to plaintext file.
 
 Profiles are migrated one at a time. The credentials file is updated to reflect
 the new storage backend after all profiles are migrated.`,
@@ -29,14 +29,14 @@ the new storage backend after all profiles are migrated.`,
       errorCodes: ['no_profiles', 'migration_failed', 'keychain_unavailable'],
       examples: [
         'resend auth migrate',
-        'resend auth migrate --file',
+        'resend auth migrate --insecure',
         'resend auth migrate --json',
       ],
     }),
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const toFile = opts.file ?? false;
+    const toFile = opts.insecure ?? false;
 
     const profiles = listProfiles();
     if (profiles.length === 0) {
@@ -138,24 +138,6 @@ the new storage backend after all profiles are migrated.`,
       }
     } else {
       // Migrate from file to keychain
-      if (creds.storage === 'keychain') {
-        if (globalOpts.json) {
-          outputResult(
-            {
-              success: true,
-              migrated: [],
-              message: 'Credentials are already stored in keychain.',
-            },
-            { json: true },
-          );
-        } else if (isInteractive()) {
-          console.log(
-            'Credentials are already stored in keychain. Nothing to migrate.',
-          );
-        }
-        return;
-      }
-
       const keychainBackend = await getCredentialBackend();
       if (!keychainBackend.isSecure) {
         outputError(
@@ -169,19 +151,41 @@ the new storage backend after all profiles are migrated.`,
         return;
       }
 
+      // Migrate profiles that still have plaintext api_key values (handles
+      // mixed state where some profiles are already in keychain)
       const profilesToMigrate = profiles.filter(
         (p_) => creds.profiles[p_.name]?.api_key,
       );
 
+      if (profilesToMigrate.length === 0) {
+        if (globalOpts.json) {
+          outputResult(
+            {
+              success: true,
+              migrated: [],
+              message: 'All profiles are already stored in keychain.',
+            },
+            { json: true },
+          );
+        } else if (isInteractive()) {
+          console.log(
+            'All profiles are already stored in keychain. Nothing to migrate.',
+          );
+        }
+        return;
+      }
+
       try {
         await Promise.all(
-          profilesToMigrate.map((profile) =>
-            keychainBackend.set(
-              SERVICE_NAME,
-              profile.name,
-              creds.profiles[profile.name].api_key,
+          profilesToMigrate
+            .filter((profile) => creds.profiles[profile.name].api_key)
+            .map((profile) =>
+              keychainBackend.set(
+                SERVICE_NAME,
+                profile.name,
+                creds.profiles[profile.name].api_key as string,
+              ),
             ),
-          ),
         );
       } catch (err) {
         outputError(
@@ -196,7 +200,7 @@ the new storage backend after all profiles are migrated.`,
 
       const migrated: string[] = [];
       for (const profile of profilesToMigrate) {
-        creds.profiles[profile.name] = { api_key: '' };
+        creds.profiles[profile.name] = {};
         migrated.push(profile.name);
       }
 

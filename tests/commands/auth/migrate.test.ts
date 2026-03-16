@@ -36,7 +36,10 @@ describe('migrate command', () => {
       active_profile: Object.keys(profiles)[0],
       ...(storage ? { storage } : {}),
       profiles: Object.fromEntries(
-        Object.entries(profiles).map(([name, key]) => [name, { api_key: key }]),
+        Object.entries(profiles).map(([name, key]) => [
+          name,
+          key ? { api_key: key } : {},
+        ]),
       ),
     };
     writeFileSync(
@@ -84,7 +87,7 @@ describe('migrate command', () => {
     const { migrateCommand } = await import(
       '../../../src/commands/auth/migrate'
     );
-    await migrateCommand.parseAsync(['--file'], { from: 'user' });
+    await migrateCommand.parseAsync(['--insecure'], { from: 'user' });
 
     // Verify file was written (contains actual keys)
     const creds = readCreds();
@@ -138,8 +141,8 @@ describe('migrate command', () => {
 
     const creds = readCreds();
     expect(creds.storage).toBe('keychain');
-    expect(creds.profiles.default.api_key).toBe('');
-    expect(creds.profiles.staging.api_key).toBe('');
+    expect(creds.profiles.default.api_key).toBeUndefined();
+    expect(creds.profiles.staging.api_key).toBeUndefined();
   });
 
   test('already-migrated to file: no-op with success message', async () => {
@@ -150,12 +153,56 @@ describe('migrate command', () => {
     const { migrateCommand } = await import(
       '../../../src/commands/auth/migrate'
     );
-    await migrateCommand.parseAsync(['--file'], { from: 'user' });
+    await migrateCommand.parseAsync(['--insecure'], { from: 'user' });
 
     // No error, and credentials unchanged
     const creds = readCreds();
     expect(creds.profiles.default.api_key).toBe('re_key');
     expect(creds.storage).toBeUndefined();
+  });
+
+  test('file→keychain: migrates only unmigrated profiles in mixed state', async () => {
+    // Simulate: storage is 'keychain' but some profiles still have plaintext keys
+    writeCreds({ default: 're_plaintext_key', migrated: '' }, 'keychain');
+
+    const storedKeys: Record<string, string> = {};
+    const mockBackend = {
+      get: vi.fn(),
+      set: vi
+        .fn()
+        .mockImplementation(
+          async (_s: string, account: string, secret: string) => {
+            storedKeys[account] = secret;
+          },
+        ),
+      delete: vi.fn(),
+      isAvailable: vi.fn().mockResolvedValue(true),
+      name: 'mock-backend',
+      isSecure: true,
+    };
+
+    vi.resetModules();
+    vi.doMock('../../../src/lib/credential-store', () => ({
+      getCredentialBackend: vi.fn().mockResolvedValue(mockBackend),
+      SERVICE_NAME: 'resend-cli',
+      resetCredentialBackend: vi.fn(),
+    }));
+
+    _spies = setupOutputSpies();
+
+    const { migrateCommand } = await import(
+      '../../../src/commands/auth/migrate'
+    );
+    await migrateCommand.parseAsync([], { from: 'user' });
+
+    // Only the unmigrated profile should be stored
+    expect(storedKeys.default).toBe('re_plaintext_key');
+    expect(storedKeys.migrated).toBeUndefined();
+
+    const creds = readCreds();
+    expect(creds.storage).toBe('keychain');
+    expect(creds.profiles.default.api_key).toBeUndefined();
+    expect(creds.profiles.migrated.api_key).toBeUndefined();
   });
 
   test('already-migrated to keychain: no-op with success message', async () => {
