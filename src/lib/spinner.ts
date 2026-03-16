@@ -22,11 +22,39 @@ const SPINNER_FRAMES = [
 ];
 const SPINNER_INTERVAL = 80;
 
-type SdkResponse<T> = { data: T | null; error: { message: string } | null };
+const DEFAULT_RETRY_DELAYS = [1, 2, 4];
+const MAX_RETRIES = DEFAULT_RETRY_DELAYS.length;
+
+type SdkResponse<T> = {
+  data: T | null;
+  error: { message: string; name?: string } | null;
+  headers?: Record<string, string> | null;
+};
+
+function parseRetryDelay(
+  headers?: Record<string, string> | null,
+): number | undefined {
+  const value = headers?.['retry-after'];
+  if (!value) {
+    return undefined;
+  }
+  const seconds = Number(value);
+  if (Number.isFinite(seconds) && seconds >= 0) {
+    return seconds;
+  }
+  return undefined;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 /**
  * Wraps an SDK call with a spinner, unified error handling, and automatic stop/fail.
  * Eliminates the repeated try/catch + spinner boilerplate across all command files.
+ *
+ * Automatically retries on rate_limit_exceeded errors (HTTP 429) up to 3 times,
+ * using the retry-after header when available or exponential backoff (1s, 2s, 4s).
  */
 export async function withSpinner<T>(
   messages: { loading: string; success: string; fail: string },
@@ -36,23 +64,33 @@ export async function withSpinner<T>(
 ): Promise<T> {
   const spinner = createSpinner(messages.loading, globalOpts.quiet);
   try {
-    const { data, error } = await call();
-    if (error) {
-      spinner.fail(messages.fail);
-      outputError(
-        { message: error.message, code: errorCode },
-        { json: globalOpts.json },
-      );
+    for (let attempt = 0; ; attempt++) {
+      const { data, error, headers } = await call();
+      if (error) {
+        if (attempt < MAX_RETRIES && error.name === 'rate_limit_exceeded') {
+          const delay =
+            parseRetryDelay(headers) ?? DEFAULT_RETRY_DELAYS[attempt];
+          spinner.update(`Rate limited, retrying in ${delay}s...`);
+          await sleep(delay * 1000);
+          spinner.update(messages.loading);
+          continue;
+        }
+        spinner.fail(messages.fail);
+        outputError(
+          { message: error.message, code: errorCode },
+          { json: globalOpts.json },
+        );
+      }
+      if (data === null) {
+        spinner.fail(messages.fail);
+        outputError(
+          { message: 'Unexpected empty response', code: errorCode },
+          { json: globalOpts.json },
+        );
+      }
+      spinner.stop(messages.success);
+      return data;
     }
-    if (data === null) {
-      spinner.fail(messages.fail);
-      outputError(
-        { message: 'Unexpected empty response', code: errorCode },
-        { json: globalOpts.json },
-      );
-    }
-    spinner.stop(messages.success);
-    return data;
   } catch (err) {
     spinner.fail(messages.fail);
     return outputError(

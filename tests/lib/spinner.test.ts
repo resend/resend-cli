@@ -7,6 +7,187 @@ import {
   test,
   vi,
 } from 'vitest';
+import { withSpinner } from '../../src/lib/spinner';
+import {
+  captureTestEnv,
+  ExitError,
+  mockExitThrow,
+  setNonInteractive,
+} from '../helpers';
+
+describe('withSpinner retry on rate_limit_exceeded', () => {
+  const restoreEnv = captureTestEnv();
+  let exitSpy: MockInstance;
+  let errorSpy: MockInstance;
+  let stderrSpy: MockInstance;
+
+  const msgs = {
+    loading: 'Loading...',
+    success: 'Done',
+    fail: 'Failed',
+  };
+  const globalOpts = { json: true };
+
+  beforeEach(() => {
+    setNonInteractive();
+    exitSpy = mockExitThrow();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
+  });
+
+  afterEach(() => {
+    restoreEnv();
+    exitSpy.mockRestore();
+    errorSpy.mockRestore();
+    stderrSpy.mockRestore();
+  });
+
+  test('retries on rate_limit_exceeded and succeeds', async () => {
+    let calls = 0;
+    const call = async () => {
+      calls++;
+      if (calls === 1) {
+        return {
+          data: null,
+          error: {
+            message: 'Rate limit exceeded',
+            name: 'rate_limit_exceeded',
+          },
+          headers: { 'retry-after': '0' },
+        };
+      }
+      return { data: { id: 'abc' }, error: null, headers: null };
+    };
+
+    const result = await withSpinner(msgs, call, 'test_error', globalOpts);
+    expect(result).toEqual({ id: 'abc' });
+    expect(calls).toBe(2);
+  });
+
+  test('exhausts retries and errors after max attempts', async () => {
+    let calls = 0;
+    const call = async () => {
+      calls++;
+      return {
+        data: null,
+        error: {
+          message: 'Rate limit exceeded',
+          name: 'rate_limit_exceeded',
+        },
+        headers: { 'retry-after': '0' },
+      };
+    };
+
+    let threw = false;
+    try {
+      await withSpinner(msgs, call, 'test_error', globalOpts);
+    } catch (err) {
+      threw = true;
+      expect(err).toBeInstanceOf(ExitError);
+      expect((err as ExitError).code).toBe(1);
+    }
+    expect(threw).toBe(true);
+    // 1 initial + 3 retries = 4 total calls
+    expect(calls).toBe(4);
+  });
+
+  test('does not retry non-retryable errors', async () => {
+    let calls = 0;
+    const call = async () => {
+      calls++;
+      return {
+        data: null,
+        error: { message: 'Not found', name: 'not_found' },
+        headers: null,
+      };
+    };
+
+    let threw = false;
+    try {
+      await withSpinner(msgs, call, 'test_error', globalOpts);
+    } catch (err) {
+      threw = true;
+      expect(err).toBeInstanceOf(ExitError);
+    }
+    expect(threw).toBe(true);
+    expect(calls).toBe(1);
+  });
+
+  test('does not retry daily_quota_exceeded', async () => {
+    let calls = 0;
+    const call = async () => {
+      calls++;
+      return {
+        data: null,
+        error: {
+          message: 'Daily quota exceeded',
+          name: 'daily_quota_exceeded',
+        },
+        headers: null,
+      };
+    };
+
+    let threw = false;
+    try {
+      await withSpinner(msgs, call, 'test_error', globalOpts);
+    } catch (err) {
+      threw = true;
+      expect(err).toBeInstanceOf(ExitError);
+    }
+    expect(threw).toBe(true);
+    expect(calls).toBe(1);
+  });
+
+  test('uses retry-after header for delay', async () => {
+    let calls = 0;
+    const start = Date.now();
+    const call = async () => {
+      calls++;
+      if (calls === 1) {
+        return {
+          data: null,
+          error: {
+            message: 'Rate limit exceeded',
+            name: 'rate_limit_exceeded',
+          },
+          headers: { 'retry-after': '0' },
+        };
+      }
+      return { data: { ok: true }, error: null, headers: null };
+    };
+
+    const result = await withSpinner(msgs, call, 'test_error', globalOpts);
+    expect(result).toEqual({ ok: true });
+    // retry-after: 0 means near-instant retry
+    expect(Date.now() - start).toBeLessThan(500);
+  });
+
+  test('falls back to default delay without retry-after', async () => {
+    let calls = 0;
+    const call = async () => {
+      calls++;
+      if (calls === 1) {
+        return {
+          data: null,
+          error: {
+            message: 'Rate limit exceeded',
+            name: 'rate_limit_exceeded',
+          },
+          headers: null,
+        };
+      }
+      return { data: { ok: true }, error: null, headers: null };
+    };
+
+    const start = Date.now();
+    const result = await withSpinner(msgs, call, 'test_error', globalOpts);
+    expect(result).toEqual({ ok: true });
+    // Default first retry delay is 1s
+    expect(Date.now() - start).toBeGreaterThanOrEqual(900);
+  });
+});
 
 describe('createSpinner', () => {
   const originalStdinIsTTY = process.stdin.isTTY;

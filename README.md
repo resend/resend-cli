@@ -77,7 +77,7 @@ Use this when you want to change the CLI and run your build locally.
 Use the dev script:
 
 ```bash
-pnpm dev -- --version
+pnpm dev --version
 ```
 
 Or run the built JS bundle:
