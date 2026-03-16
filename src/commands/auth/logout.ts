@@ -1,10 +1,10 @@
-import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import * as p from '@clack/prompts';
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import {
   getConfigDir,
+  readCredentials,
   removeAllApiKeysAsync,
   removeApiKeyAsync,
   resolveProfileName,
@@ -39,8 +39,9 @@ If no credentials file exists, exits cleanly with no error.`,
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
     const configPath = join(getConfigDir(), 'credentials.json');
+    const creds = readCredentials();
 
-    if (!existsSync(configPath)) {
+    if (!creds) {
       if (!globalOpts.json && isInteractive()) {
         console.log('No saved credentials found. Nothing to remove.');
       } else {
@@ -58,7 +59,7 @@ If no credentials file exists, exits cleanly with no error.`,
 
     if (!globalOpts.json && isInteractive()) {
       const message = logoutAll
-        ? `Remove all saved API keys at ${configPath}?`
+        ? 'Remove all saved API keys?'
         : `Remove saved API key for profile '${profileLabel}'?`;
 
       const confirmed = await p.confirm({ message });

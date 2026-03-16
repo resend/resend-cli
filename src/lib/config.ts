@@ -359,13 +359,10 @@ export async function storeApiKeyAsync(
   const isFileBackend = !backend.isSecure;
 
   if (isFileBackend) {
-    // Clear stale keychain marker: if a previous session used keychain but it's
-    // now unavailable, remove the marker so resolveApiKeyAsync reads from file.
-    const existing = readCredentials();
-    if (existing?.storage === 'keychain') {
-      delete existing.storage;
-      writeCredentials(existing);
-    }
+    // Do NOT clear a pre-existing `storage: 'keychain'` marker here.
+    // Other profiles may still have their keys stored only in the keychain.
+    // resolveApiKeyAsync already falls through from keychain to file-based
+    // lookup, so keeping the marker is safe and avoids orphaning those profiles.
     const configPath = storeApiKey(apiKey, profile);
     return { configPath, backend };
   }
@@ -404,12 +401,13 @@ export async function removeApiKeyAsync(profileName?: string): Promise<string> {
     await backend.delete(SERVICE_NAME, profile);
   }
 
-  // Remove from credentials file
+  // Remove from credentials file (may already be gone if only keychain)
   return removeApiKey(profile);
 }
 
 export async function removeAllApiKeysAsync(): Promise<string> {
   const creds = readCredentials();
+  const configPath = getCredentialsPath();
 
   // If keychain storage, delete all profiles from keychain
   if (creds?.storage === 'keychain') {
@@ -421,7 +419,11 @@ export async function removeAllApiKeysAsync(): Promise<string> {
     );
   }
 
-  return removeAllApiKeys();
+  // Remove credentials file (may already be gone if only keychain)
+  if (existsSync(configPath)) {
+    unlinkSync(configPath);
+  }
+  return configPath;
 }
 
 export async function renameProfileAsync(

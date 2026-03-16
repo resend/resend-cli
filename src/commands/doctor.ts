@@ -196,15 +196,15 @@ export const doctorCommand = new Command('doctor')
       : null;
     const backend = await getCredentialBackend();
     const storageType = getStorageType();
-    const usingSecure = storageType === 'keychain';
+    const usingSecure = backend.isSecure;
     const storageCheck: CheckResult = {
       name: 'Credential Storage',
       status: usingSecure ? 'pass' : 'warn',
       message: usingSecure ? backend.name : 'plaintext file',
-      ...(!usingSecure && backend.isSecure
+      ...(!usingSecure && storageType === 'keychain'
         ? {
             detail:
-              'Keys will be moved to secure storage automatically on next use',
+              'Secure backend unavailable despite keychain preference — falling back to plaintext',
           }
         : {}),
     };
