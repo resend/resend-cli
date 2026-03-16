@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import * as p from '@clack/prompts';
 import { Command } from '@commander-js/extra-typings';
@@ -41,7 +42,7 @@ If no credentials file exists, exits cleanly with no error.`,
     const configPath = join(getConfigDir(), 'credentials.json');
     const creds = readCredentials();
 
-    if (!creds) {
+    if (!creds && !existsSync(configPath)) {
       if (!globalOpts.json && isInteractive()) {
         console.log('No saved credentials found. Nothing to remove.');
       } else {
