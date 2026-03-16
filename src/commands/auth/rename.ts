@@ -3,7 +3,7 @@ import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import {
   listProfiles,
-  renameProfile,
+  renameProfileAsync,
   validateProfileName,
 } from '../../lib/config';
 import { errorMessage, outputError, outputResult } from '../../lib/output';
@@ -90,7 +90,7 @@ export async function renameAction(
   }
 
   try {
-    renameProfile(from, to);
+    await renameProfileAsync(from, to);
   } catch (err) {
     outputError(
       {

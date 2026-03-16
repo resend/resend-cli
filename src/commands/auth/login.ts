@@ -5,9 +5,9 @@ import { Resend } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
 import {
   listProfiles,
-  resolveApiKey,
+  resolveApiKeyAsync,
   setActiveProfile,
-  storeApiKey,
+  storeApiKeyAsync,
   validateProfileName,
 } from '../../lib/config';
 import { buildHelpText } from '../../lib/help-text';
@@ -35,7 +35,7 @@ function openInBrowser(url: string): Promise<boolean> {
 }
 
 export const loginCommand = new Command('login')
-  .description('Save a Resend API key to the local credentials file')
+  .description('Save a Resend API key')
   .option('--key <key>', 'API key to store (required in non-interactive mode)')
   .addHelpText(
     'after',
@@ -70,7 +70,7 @@ export const loginCommand = new Command('login')
 
       p.intro('Resend Authentication');
 
-      const existing = resolveApiKey();
+      const existing = await resolveApiKeyAsync();
       if (existing) {
         p.log.info(
           `Existing API key found (source: ${existing.source}). Enter a new key to replace it.`,
@@ -218,7 +218,7 @@ export const loginCommand = new Command('login')
       }
     }
 
-    const configPath = storeApiKey(apiKey, profileName);
+    const { configPath, backend } = await storeApiKeyAsync(apiKey, profileName);
     const profileLabel = profileName || 'default';
 
     // Auto-switch to the newly added profile
@@ -238,15 +238,33 @@ export const loginCommand = new Command('login')
 
     if (globalOpts.json) {
       outputResult(
-        { success: true, config_path: configPath, profile: profileLabel },
+        {
+          success: true,
+          config_path: configPath,
+          profile: profileLabel,
+          storage: backend.name,
+        },
         { json: true },
       );
     } else {
-      const msg = `API key stored for profile '${profileLabel}' at ${configPath}`;
+      const storageInfo = !backend.isSecure
+        ? `at ${configPath}`
+        : `in ${backend.name}`;
+      const msg = `API key stored for profile '${profileLabel}' ${storageInfo}`;
       if (isInteractive()) {
         p.outro(msg);
       } else {
         console.log(msg);
+      }
+
+      if (!backend.isSecure && process.platform === 'linux') {
+        const hint =
+          'Tip: Install libsecret-tools and a Secret Service provider (e.g. gnome-keyring) to store keys in secure storage instead of a plaintext file.';
+        if (isInteractive()) {
+          p.log.info(hint);
+        } else {
+          console.log(hint);
+        }
       }
     }
   });

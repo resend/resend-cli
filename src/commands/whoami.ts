@@ -1,9 +1,10 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../lib/client';
 import {
+  getStorageType,
   listProfiles,
   maskKey,
-  resolveApiKey,
+  resolveApiKeyAsync,
   resolveProfileName,
 } from '../lib/config';
 import { buildHelpText } from '../lib/help-text';
@@ -27,10 +28,10 @@ Shows which profile is active and where the API key comes from.`,
       ],
     }),
   )
-  .action((_opts, cmd) => {
+  .action(async (_opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const profileFlag = globalOpts.profile ?? globalOpts.team;
-    const resolved = resolveApiKey(globalOpts.apiKey, profileFlag);
+    const resolved = await resolveApiKeyAsync(globalOpts.apiKey, profileFlag);
 
     if (!resolved) {
       const requestedProfile = profileFlag
@@ -70,6 +71,8 @@ Shows which profile is active and where the API key comes from.`,
 
     const profile = resolved.profile ?? resolveProfileName(profileFlag);
 
+    const storage = getStorageType();
+
     if (globalOpts.json || !isInteractive()) {
       outputResult(
         {
@@ -77,6 +80,9 @@ Shows which profile is active and where the API key comes from.`,
           profile,
           api_key: maskKey(resolved.key),
           source: resolved.source,
+          ...(resolved.source === 'config'
+            ? { storage: storage ?? 'file' }
+            : {}),
         },
         { json: globalOpts.json },
       );
@@ -89,5 +95,11 @@ Shows which profile is active and where the API key comes from.`,
     console.log(
       `  Source:  ${resolved.source === 'config' ? 'config file' : resolved.source === 'env' ? 'environment variable' : 'flag'}`,
     );
+    if (resolved.source === 'config') {
+      const effectiveStorage = storage ?? 'file';
+      console.log(
+        `  Storage: ${effectiveStorage === 'keychain' ? 'secure storage' : 'plaintext file'}`,
+      );
+    }
     console.log('');
   });
