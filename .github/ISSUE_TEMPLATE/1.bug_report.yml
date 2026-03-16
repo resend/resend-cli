@@ -5,7 +5,7 @@ body:
   - type: input
     attributes:
       label: What version are you using?
-      value: "resend@x.y.z"
+      placeholder: "resend@x.y.z"
   - type: textarea
     attributes:
       label: Describe the Bug
@@ -15,7 +15,7 @@ body:
   - type: textarea
     attributes:
       label: To Reproduce
-      value: Steps to reproduce the behavior, please provide a clear description of how to reproduce the issue. Screenshots can be provided in the issue body below. If using code blocks, make sure that [syntax highlighting is correct](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/creating-and-highlighting-code-blocks#syntax-highlighting) and double check that the rendered preview is not broken.
+      placeholder: Steps to reproduce the behavior, please provide a clear description of how to reproduce the issue. Screenshots can be provided in the issue body below. If using code blocks, make sure that [syntax highlighting is correct](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/creating-and-highlighting-code-blocks#syntax-highlighting) and double check that the rendered preview is not broken.
     validations:
       required: true
   - type: textarea
