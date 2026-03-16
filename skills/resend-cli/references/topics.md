@@ -35,6 +35,8 @@ Lists all topics. No pagination flags.
 | `--name <name>` | string | New name |
 | `--description <desc>` | string | New description |
 
+At least one of `--name` or `--description` is required — otherwise the CLI errors with `no_changes`.
+
 `default_subscription` cannot be changed after creation.
 
 ---

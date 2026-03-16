@@ -1,6 +1,6 @@
 # Error Codes
 
-All errors exit with code `1` and output JSON:
+All errors exit with code `1` and output JSON to **stderr**:
 
 ```json
 {"error":{"message":"Human-readable description","code":"error_code"}}

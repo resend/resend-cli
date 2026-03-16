@@ -32,7 +32,7 @@ Detailed flag specifications for `resend webhooks` commands.
 
 ## webhooks get
 
-**Argument:** `<id>` — Webhook UUID
+**Argument:** `<id>` — Webhook ID
 
 **Note:** `signing_secret` is NOT returned by get (only at creation).
 
@@ -40,7 +40,7 @@ Detailed flag specifications for `resend webhooks` commands.
 
 ## webhooks update
 
-**Argument:** `<id>` — Webhook UUID
+**Argument:** `<id>` — Webhook ID
 
 | Flag | Type | Description |
 |------|------|-------------|
@@ -52,7 +52,7 @@ Detailed flag specifications for `resend webhooks` commands.
 
 ## webhooks delete
 
-**Argument:** `<id>` — Webhook UUID
+**Argument:** `<id>` — Webhook ID
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|

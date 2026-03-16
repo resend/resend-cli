@@ -77,7 +77,7 @@ List segments a contact belongs to.
 
 ## contacts remove-segment
 
-**Arguments:** `<contactId>` `<segmentId>`
+**Arguments:** `<id|email>` `<segmentId>`
 
 ---
 
