@@ -47,7 +47,7 @@ const program = new Command()
   .option('-q, --quiet', 'Suppress spinners and status output (implies --json)')
   .option(
     '--insecure-storage',
-    'Store credentials in plaintext file instead of OS keychain',
+    'Save API key as plaintext instead of secure storage',
   )
   .hook('preAction', (thisCommand, actionCommand) => {
     if (actionCommand.optsWithGlobals().quiet) {
@@ -62,10 +62,10 @@ const program = new Command()
     `
 ${pc.gray('Environment:')}
   RESEND_API_KEY            API key — checked after --api-key, before stored credentials
-                            Priority: --api-key flag > RESEND_API_KEY > keychain/credentials file
+                            Priority: --api-key flag > RESEND_API_KEY > secure storage/credentials file
   RESEND_PROFILE            Profile — checked after --profile flag, before active_profile in config
                             Priority: --profile flag > RESEND_PROFILE > active_profile in config > "default"
-  RESEND_CREDENTIAL_STORE   Force credential backend: "keychain" or "file"
+  RESEND_CREDENTIAL_STORE   Force storage method: "keychain" (secure) or "file" (plaintext)
 
 ${pc.gray('Output:')}
   Human-readable by default. Pass --json or pipe stdout for machine-readable JSON.

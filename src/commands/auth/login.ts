@@ -35,7 +35,7 @@ function openInBrowser(url: string): Promise<boolean> {
 }
 
 export const loginCommand = new Command('login')
-  .description('Save a Resend API key to the credential store')
+  .description('Save a Resend API key')
   .option('--key <key>', 'API key to store (required in non-interactive mode)')
   .addHelpText(
     'after',
@@ -259,7 +259,7 @@ export const loginCommand = new Command('login')
 
       if (!backend.isSecure && process.platform === 'linux') {
         const hint =
-          'Tip: Install libsecret-tools and a Secret Service provider (e.g. gnome-keyring) to store keys in your system keychain instead of a plaintext file.';
+          'Tip: Install libsecret-tools and a Secret Service provider (e.g. gnome-keyring) to store keys in secure storage instead of a plaintext file.';
         if (isInteractive()) {
           p.log.info(hint);
         } else {

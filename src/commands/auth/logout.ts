@@ -15,16 +15,12 @@ import { cancelAndExit } from '../../lib/prompts';
 import { isInteractive } from '../../lib/tty';
 
 export const logoutCommand = new Command('logout')
-  .description(
-    'Remove the saved Resend API key from the local credentials file',
-  )
+  .description('Remove your saved Resend API key')
   .addHelpText(
     'after',
     buildHelpText({
       setup: true,
-      context: `Removes the saved API key from ~/.config/resend/credentials.json.
-  (Linux: $XDG_CONFIG_HOME/resend/credentials.json)
-  (Windows: %APPDATA%\\resend\\credentials.json)
+      context: `Removes the saved API key from secure storage and the credentials file.
 
 When --profile is specified, only that profile's entry is removed.
 When no profile is specified, all profiles are removed.

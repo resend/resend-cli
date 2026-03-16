@@ -12,19 +12,16 @@ import { errorMessage, outputError, outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 
 export const migrateCommand = new Command('migrate')
-  .description('Migrate credentials between storage backends')
-  .option(
-    '--insecure',
-    'Migrate from keychain to plaintext file (reverse migration)',
-  )
+  .description('Move API keys to secure storage')
+  .option('--insecure', 'Move API keys back to plaintext file')
   .addHelpText(
     'after',
     buildHelpText({
-      context: `By default, migrates all profile API keys from the plaintext file to the OS keychain.
-Use --insecure to migrate from keychain back to plaintext file.
+      context: `By default, migrates all profile API keys from the plaintext file to secure storage.
+Use --insecure to migrate from secure storage back to plaintext file.
 
 Profiles are migrated one at a time. The credentials file is updated to reflect
-the new storage backend after all profiles are migrated.`,
+the new storage location after all profiles are migrated.`,
       output: `  {"success":true,"migrated":["default","staging"],"backend":"macOS Keychain"}`,
       errorCodes: ['no_profiles', 'migration_failed', 'keychain_unavailable'],
       examples: [
@@ -143,7 +140,7 @@ the new storage backend after all profiles are migrated.`,
         outputError(
           {
             message:
-              'OS keychain is not available on this system. Cannot migrate.',
+              'Secure storage is not available on this system. Cannot migrate.',
             code: 'keychain_unavailable',
           },
           { json: globalOpts.json },
@@ -163,13 +160,13 @@ the new storage backend after all profiles are migrated.`,
             {
               success: true,
               migrated: [],
-              message: 'All profiles are already stored in keychain.',
+              message: 'All profiles are already in secure storage.',
             },
             { json: true },
           );
         } else if (isInteractive()) {
           console.log(
-            'All profiles are already stored in keychain. Nothing to migrate.',
+            'All profiles are already in secure storage. Nothing to migrate.',
           );
         }
         return;
