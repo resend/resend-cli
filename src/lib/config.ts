@@ -344,6 +344,13 @@ export async function storeApiKeyAsync(
   const isFileBackend = !backend.isSecure;
 
   if (isFileBackend) {
+    // Clear stale keychain marker: if a previous session used keychain but it's
+    // now unavailable, remove the marker so resolveApiKeyAsync reads from file.
+    const existing = readCredentials();
+    if (existing?.storage === 'keychain') {
+      delete existing.storage;
+      writeCredentials(existing);
+    }
     const configPath = storeApiKey(apiKey, profile);
     return { configPath, backend };
   }

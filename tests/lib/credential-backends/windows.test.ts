@@ -14,6 +14,7 @@ vi.mock('node:child_process', () => {
   );
 
   const mockStdin = {
+    on: vi.fn(),
     write: vi.fn(),
     end: vi.fn(),
   };

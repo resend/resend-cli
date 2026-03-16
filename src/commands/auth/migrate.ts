@@ -80,6 +80,17 @@ the new storage location after all profiles are migrated.`,
       }
 
       const backend = await getCredentialBackend();
+      if (!backend.isSecure) {
+        outputError(
+          {
+            message:
+              'Secure storage is not available on this system. Cannot migrate.',
+            code: 'keychain_unavailable',
+          },
+          { json: globalOpts.json },
+        );
+        return;
+      }
 
       let results: Array<{ name: string; key: string } | null>;
       try {
@@ -109,6 +120,22 @@ the new storage location after all profiles are migrated.`,
           creds.profiles[result.name] = { api_key: result.key };
           migrated.push(result.name);
         }
+      }
+
+      if (migrated.length === 0) {
+        if (globalOpts.json) {
+          outputResult(
+            {
+              success: true,
+              migrated: [],
+              message: 'No keys found in secure storage to migrate.',
+            },
+            { json: true },
+          );
+        } else if (isInteractive()) {
+          console.log('No keys found in secure storage to migrate.');
+        }
+        return;
       }
 
       delete creds.storage;

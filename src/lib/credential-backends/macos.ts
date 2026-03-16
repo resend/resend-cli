@@ -18,7 +18,7 @@ export class MacOSBackend implements CredentialBackend {
   readonly isSecure = true;
 
   async get(service: string, account: string): Promise<string | null> {
-    const { stdout, code } = await run('/usr/bin/security', [
+    const { stdout, stderr, code } = await run('/usr/bin/security', [
       'find-generic-password',
       '-s',
       service,
@@ -26,9 +26,13 @@ export class MacOSBackend implements CredentialBackend {
       account,
       '-w',
     ]);
-    // exit code 44 = item not found
-    if (code === 44 || code !== 0) {
+    if (code === 44) {
       return null;
+    }
+    if (code !== 0) {
+      throw new Error(
+        `Failed to read from macOS Keychain (exit code ${code}): ${stderr.trim()}`,
+      );
     }
     return stdout.trim() || null;
   }

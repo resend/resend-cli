@@ -41,6 +41,7 @@ function runPowershellWithStdin(
     child.on('error', () => {
       resolve({ stdout: '', stderr: 'Failed to spawn process', code: 1 });
     });
+    child.stdin?.on('error', () => {}); // Prevent EPIPE crash
     child.stdin?.write(stdin);
     child.stdin?.end();
   });

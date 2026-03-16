@@ -80,7 +80,9 @@ Shows which profile is active and where the API key comes from.`,
           profile,
           api_key: maskKey(resolved.key),
           source: resolved.source,
-          ...(resolved.source === 'config' && storage ? { storage } : {}),
+          ...(resolved.source === 'config'
+            ? { storage: storage ?? 'file' }
+            : {}),
         },
         { json: globalOpts.json },
       );
@@ -93,9 +95,10 @@ Shows which profile is active and where the API key comes from.`,
     console.log(
       `  Source:  ${resolved.source === 'config' ? 'config file' : resolved.source === 'env' ? 'environment variable' : 'flag'}`,
     );
-    if (resolved.source === 'config' && storage) {
+    if (resolved.source === 'config') {
+      const effectiveStorage = storage ?? 'file';
       console.log(
-        `  Storage: ${storage === 'keychain' ? 'OS keychain' : 'plaintext file'}`,
+        `  Storage: ${effectiveStorage === 'keychain' ? 'secure storage' : 'plaintext file'}`,
       );
     }
     console.log('');

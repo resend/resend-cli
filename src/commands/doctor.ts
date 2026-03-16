@@ -196,12 +196,13 @@ export const doctorCommand = new Command('doctor')
       : null;
     const backend = await getCredentialBackend();
     const storageType = getStorageType();
+    const usingSecure = storageType === 'keychain';
     const storageCheck: CheckResult = {
       name: 'Credential Storage',
-      status: !backend.isSecure ? 'warn' : 'pass',
-      message: backend.name,
-      ...(!backend.isSecure && storageType !== 'keychain'
-        ? { detail: 'Run `resend auth migrate` to use OS keychain' }
+      status: usingSecure ? 'pass' : 'warn',
+      message: usingSecure ? backend.name : 'plaintext file',
+      ...(!usingSecure && backend.isSecure
+        ? { detail: 'Run `resend auth migrate` to use secure storage' }
         : {}),
     };
     checks.push(storageCheck);

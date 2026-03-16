@@ -39,6 +39,7 @@ function runWithStdin(
     child.on('error', () => {
       resolve({ code: 1, stderr: 'Failed to spawn process' });
     });
+    child.stdin?.on('error', () => {}); // Prevent EPIPE crash
     child.stdin?.write(stdin);
     child.stdin?.end();
   });
