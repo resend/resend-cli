@@ -38,7 +38,8 @@
     "test": "vitest run",
     "test:e2e": "vitest run --config vitest.config.e2e.ts",
     "sync-skill-version": "node scripts/sync-skill-version.mjs",
-    "prepack": "pnpm run sync-skill-version && pnpm build"
+    "version": "pnpm run sync-skill-version && git add skills/resend-cli/SKILL.md",
+    "prepack": "pnpm build"
   },
   "dependencies": {
     "@clack/prompts": "1.1.0",
