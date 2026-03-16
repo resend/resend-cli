@@ -201,7 +201,10 @@ export const doctorCommand = new Command('doctor')
       name: 'Credential Storage',
       status: usingSecure ? 'pass' : 'warn',
       message: usingSecure ? backend.name : 'plaintext file',
-      ...(!usingSecure && creds?.storage === 'secure_storage'
+      ...(!usingSecure &&
+      (creds?.storage === 'secure_storage' ||
+        process.env.RESEND_CREDENTIAL_STORE === 'secure_storage' ||
+        process.env.RESEND_CREDENTIAL_STORE === 'keychain')
         ? {
             detail:
               'Secure backend unavailable despite secure storage preference — falling back to plaintext',
