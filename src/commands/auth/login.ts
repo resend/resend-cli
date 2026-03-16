@@ -147,6 +147,7 @@ export const loginCommand = new Command('login')
           },
           { json: globalOpts.json },
         );
+        return;
       }
       spinner.stop('API key is valid');
     } catch (err) {
