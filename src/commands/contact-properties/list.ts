@@ -63,6 +63,8 @@ export const listContactPropertiesCommand = new Command('list')
           printPaginationHint(list, 'contact-properties list', {
             limit,
             before: opts.before,
+            apiKey: globalOpts.apiKey,
+            profile: globalOpts.profile,
           });
         },
       },

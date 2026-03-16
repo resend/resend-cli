@@ -53,6 +53,8 @@ or "resend contacts add-segment".`,
           printPaginationHint(list, 'segments list', {
             limit,
             before: opts.before,
+            apiKey: globalOpts.apiKey,
+            profile: globalOpts.profile,
           });
         },
       },

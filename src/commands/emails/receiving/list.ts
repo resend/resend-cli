@@ -54,6 +54,8 @@ export const listReceivingCommand = new Command('list')
           printPaginationHint(list, 'emails receiving list', {
             limit,
             before: opts.before,
+            apiKey: globalOpts.apiKey,
+            profile: globalOpts.profile,
           });
         },
       },

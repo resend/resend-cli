@@ -79,6 +79,8 @@ export const listEmailsCommand = new Command('list')
           printPaginationHint(list, 'emails list', {
             limit,
             before: opts.before,
+            apiKey: globalOpts.apiKey,
+            profile: globalOpts.profile,
           });
         },
       },

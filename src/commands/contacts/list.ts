@@ -52,6 +52,8 @@ Pagination: use --after or --before with a contact ID as the cursor.
           printPaginationHint(list, 'contacts list', {
             limit,
             before: opts.before,
+            apiKey: globalOpts.apiKey,
+            profile: globalOpts.profile,
           });
         },
       },

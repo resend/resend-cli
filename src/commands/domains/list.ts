@@ -48,6 +48,8 @@ export const listDomainsCommand = new Command('list')
           printPaginationHint(list, 'domains list', {
             limit,
             before: opts.before,
+            apiKey: globalOpts.apiKey,
+            profile: globalOpts.profile,
           });
         },
       },

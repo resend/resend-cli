@@ -51,6 +51,8 @@ export const listTemplatesCommand = new Command('list')
           printPaginationHint(list, 'templates list', {
             limit,
             before: opts.before,
+            apiKey: globalOpts.apiKey,
+            profile: globalOpts.profile,
           });
         },
       },

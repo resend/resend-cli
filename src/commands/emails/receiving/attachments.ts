@@ -63,6 +63,8 @@ export const listAttachmentsCommand = new Command('attachments')
           printPaginationHint(list, `emails receiving attachments ${emailId}`, {
             limit,
             before: opts.before,
+            apiKey: globalOpts.apiKey,
+            profile: globalOpts.profile,
           });
         },
       },

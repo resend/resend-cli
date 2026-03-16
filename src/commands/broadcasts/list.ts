@@ -55,6 +55,8 @@ To retrieve full details (html, from, subject), use: resend broadcasts get <id>`
           printPaginationHint(list, 'broadcasts list', {
             limit,
             before: opts.before,
+            apiKey: globalOpts.apiKey,
+            profile: globalOpts.profile,
           });
         },
       },

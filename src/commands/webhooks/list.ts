@@ -50,6 +50,8 @@ The response includes has_more: true when additional pages exist.`,
           printPaginationHint(list, 'webhooks list', {
             limit,
             before: opts.before,
+            apiKey: globalOpts.apiKey,
+            profile: globalOpts.profile,
           });
         },
       },
