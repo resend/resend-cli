@@ -105,7 +105,7 @@ describe('whoami command', () => {
       join(configDir, 'credentials.json'),
       JSON.stringify({
         active_profile: 'default',
-        storage: 'keychain',
+        storage: 'secure_storage',
         profiles: { default: { api_key: '' } },
       }),
     );
@@ -135,7 +135,6 @@ describe('whoami command', () => {
     const parsed = JSON.parse(output);
     expect(parsed.authenticated).toBe(true);
     expect(parsed.api_key).toBe('re_...key1');
-    expect(parsed.source).toBe('config');
-    expect(parsed.storage).toBe('keychain');
+    expect(parsed.source).toBe('secure_storage');
   });
 });

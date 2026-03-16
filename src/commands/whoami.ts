@@ -1,7 +1,6 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../lib/client';
 import {
-  getStorageType,
   listProfiles,
   maskKey,
   resolveApiKeyAsync,
@@ -71,8 +70,6 @@ Shows which profile is active and where the API key comes from.`,
 
     const profile = resolved.profile ?? resolveProfileName(profileFlag);
 
-    const storage = getStorageType();
-
     if (globalOpts.json || !isInteractive()) {
       outputResult(
         {
@@ -80,26 +77,24 @@ Shows which profile is active and where the API key comes from.`,
           profile,
           api_key: maskKey(resolved.key),
           source: resolved.source,
-          ...(resolved.source === 'config'
-            ? { storage: storage ?? 'file' }
-            : {}),
         },
         { json: globalOpts.json },
       );
       return;
     }
 
+    const sourceLabel =
+      resolved.source === 'secure_storage'
+        ? 'secure storage'
+        : resolved.source === 'config'
+          ? 'config file'
+          : resolved.source === 'env'
+            ? 'environment variable'
+            : 'flag';
+
     console.log('');
     console.log(`  Profile: ${profile}`);
     console.log(`  API Key: ${maskKey(resolved.key)}`);
-    console.log(
-      `  Source:  ${resolved.source === 'config' ? 'config file' : resolved.source === 'env' ? 'environment variable' : 'flag'}`,
-    );
-    if (resolved.source === 'config') {
-      const effectiveStorage = storage ?? 'file';
-      console.log(
-        `  Storage: ${effectiveStorage === 'keychain' ? 'secure storage' : 'plaintext file'}`,
-      );
-    }
+    console.log(`  Source:  ${sourceLabel}`);
     console.log('');
   });

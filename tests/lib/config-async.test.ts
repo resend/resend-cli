@@ -67,7 +67,7 @@ describe('resolveApiKeyAsync', () => {
       join(configDir, 'credentials.json'),
       JSON.stringify({
         active_profile: 'default',
-        storage: 'keychain',
+        storage: 'secure_storage',
         profiles: { default: {} },
       }),
     );
@@ -92,7 +92,7 @@ describe('resolveApiKeyAsync', () => {
     const result = await resolveApiKeyAsync();
     expect(result).toEqual({
       key: 're_keychain_key',
-      source: 'config',
+      source: 'secure_storage',
       profile: 'default',
     });
     expect(mockBackend.get).toHaveBeenCalledWith('resend-cli', 'default');
@@ -105,7 +105,7 @@ describe('resolveApiKeyAsync', () => {
       join(configDir, 'credentials.json'),
       JSON.stringify({
         active_profile: 'default',
-        storage: 'keychain',
+        storage: 'secure_storage',
         profiles: { default: { api_key: 're_unmigrated_key' } },
       }),
     );
@@ -142,7 +142,7 @@ describe('resolveApiKeyAsync', () => {
       join(configDir, 'credentials.json'),
       JSON.stringify({
         active_profile: 'default',
-        storage: 'keychain',
+        storage: 'secure_storage',
         profiles: { default: {} },
       }),
     );
@@ -226,7 +226,7 @@ describe('removeApiKeyAsync', () => {
       join(configDir, 'credentials.json'),
       JSON.stringify({
         active_profile: 'default',
-        storage: 'keychain',
+        storage: 'secure_storage',
         profiles: { default: {}, other: {} },
       }),
     );
@@ -259,7 +259,7 @@ describe('removeApiKeyAsync', () => {
       join(configDir, 'credentials.json'),
       JSON.stringify({
         active_profile: 'default',
-        storage: 'keychain',
+        storage: 'secure_storage',
         profiles: { default: {}, other: {} },
       }),
     );
@@ -318,7 +318,7 @@ describe('removeAllApiKeysAsync', () => {
       join(configDir, 'credentials.json'),
       JSON.stringify({
         active_profile: 'default',
-        storage: 'keychain',
+        storage: 'secure_storage',
         profiles: { default: {}, staging: {}, prod: {} },
       }),
     );
@@ -354,7 +354,7 @@ describe('removeAllApiKeysAsync', () => {
       join(configDir, 'credentials.json'),
       JSON.stringify({
         active_profile: 'default',
-        storage: 'keychain',
+        storage: 'secure_storage',
         profiles: { default: {}, staging: {} },
       }),
     );
@@ -408,7 +408,7 @@ describe('renameProfileAsync', () => {
       join(configDir, 'credentials.json'),
       JSON.stringify({
         active_profile: 'old-name',
-        storage: 'keychain',
+        storage: 'secure_storage',
         profiles: { 'old-name': {} },
       }),
     );
@@ -453,7 +453,7 @@ describe('renameProfileAsync', () => {
       join(configDir, 'credentials.json'),
       JSON.stringify({
         active_profile: 'old-name',
-        storage: 'keychain',
+        storage: 'secure_storage',
         profiles: { 'old-name': { api_key: 're_file_key' } },
       }),
     );

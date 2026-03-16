@@ -14,7 +14,7 @@ import {
   SERVICE_NAME,
 } from './credential-store';
 
-export type ApiKeySource = 'flag' | 'env' | 'config';
+export type ApiKeySource = 'flag' | 'env' | 'config' | 'secure_storage';
 export type ResolvedKey = {
   key: string;
   source: ApiKeySource;
@@ -22,7 +22,7 @@ export type ResolvedKey = {
 };
 
 export type Profile = { api_key?: string };
-export type CredentialStorage = 'keychain' | 'file';
+export type CredentialStorage = 'secure_storage' | 'file';
 export type CredentialsFile = {
   active_profile: string;
   storage?: CredentialStorage;
@@ -58,9 +58,11 @@ export function readCredentials(): CredentialsFile | null {
     }
     // New format: { profiles, active_profile }
     if (data.profiles) {
+      const storage =
+        data.storage === 'keychain' ? 'secure_storage' : data.storage;
       return {
         active_profile: data.active_profile ?? 'default',
-        ...(data.storage ? { storage: data.storage } : {}),
+        ...(storage ? { storage } : {}),
         profiles: data.profiles,
       };
     }
@@ -309,12 +311,12 @@ export async function resolveApiKeyAsync(
     creds?.active_profile ||
     'default';
 
-  // If storage is 'keychain', try credential backend first
-  if (creds?.storage === 'keychain') {
+  // If storage is 'secure_storage', try credential backend first
+  if (creds?.storage === 'secure_storage') {
     const backend = await getCredentialBackend();
     const key = await backend.get(SERVICE_NAME, profile);
     if (key) {
-      return { key, source: 'config', profile };
+      return { key, source: 'secure_storage', profile };
     }
     // Fall through: profile may not be migrated yet (api_key still in file)
   }
@@ -329,7 +331,7 @@ export async function resolveApiKeyAsync(
         try {
           await backend.set(SERVICE_NAME, profile, entry.api_key);
           creds.profiles[profile] = {};
-          creds.storage = 'keychain';
+          creds.storage = 'secure_storage';
           writeCredentials(creds);
           process.stderr.write(
             `Notice: API key for profile "${profile}" has been moved to ${backend.name}\n`,
@@ -359,23 +361,23 @@ export async function storeApiKeyAsync(
   const isFileBackend = !backend.isSecure;
 
   if (isFileBackend) {
-    // Do NOT clear a pre-existing `storage: 'keychain'` marker here.
-    // Other profiles may still have their keys stored only in the keychain.
-    // resolveApiKeyAsync already falls through from keychain to file-based
+    // Do NOT clear a pre-existing `storage: 'secure_storage'` marker here.
+    // Other profiles may still have their keys in secure storage.
+    // resolveApiKeyAsync already falls through from secure storage to file-based
     // lookup, so keeping the marker is safe and avoids orphaning those profiles.
     const configPath = storeApiKey(apiKey, profile);
     return { configPath, backend };
   }
 
-  // Store in keychain
+  // Store in secure backend
   await backend.set(SERVICE_NAME, profile, apiKey);
 
-  // Update credentials file: mark storage as keychain, keep profile entry (without api_key)
+  // Update credentials file: mark storage as secure, keep profile entry (without api_key)
   const creds = readCredentials() || {
     active_profile: 'default',
     profiles: {},
   };
-  creds.storage = 'keychain';
+  creds.storage = 'secure_storage';
   creds.profiles[profile] = {};
 
   if (Object.keys(creds.profiles).length === 1) {
@@ -395,7 +397,7 @@ export async function removeApiKeyAsync(profileName?: string): Promise<string> {
     creds?.active_profile ||
     'default';
 
-  if (creds?.storage === 'keychain') {
+  if (creds?.storage === 'secure_storage') {
     const backend = await getCredentialBackend();
     if (backend.isSecure) {
       await backend.delete(SERVICE_NAME, profile);
@@ -409,7 +411,7 @@ export async function removeAllApiKeysAsync(): Promise<string> {
   const creds = readCredentials();
   const configPath = getCredentialsPath();
 
-  if (creds?.storage === 'keychain') {
+  if (creds?.storage === 'secure_storage') {
     const backend = await getCredentialBackend();
     if (backend.isSecure) {
       await Promise.all(
@@ -420,7 +422,7 @@ export async function removeAllApiKeysAsync(): Promise<string> {
     }
   }
 
-  // Remove credentials file (may already be gone if only keychain)
+  // Remove credentials file (may already be gone if only secure storage)
   if (existsSync(configPath)) {
     unlinkSync(configPath);
   }
@@ -433,7 +435,7 @@ export async function renameProfileAsync(
 ): Promise<void> {
   const creds = readCredentials();
 
-  if (creds?.storage === 'keychain') {
+  if (creds?.storage === 'secure_storage') {
     const backend = await getCredentialBackend();
     if (backend.isSecure) {
       const key = await backend.get(SERVICE_NAME, oldName);
@@ -445,9 +447,4 @@ export async function renameProfileAsync(
   }
 
   renameProfile(oldName, newName);
-}
-
-export function getStorageType(): CredentialStorage | undefined {
-  const creds = readCredentials();
-  return creds?.storage;
 }

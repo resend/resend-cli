@@ -1,7 +1,7 @@
 import { Command } from '@commander-js/extra-typings';
 import { Resend } from 'resend';
 import type { GlobalOpts } from '../lib/client';
-import { getStorageType, maskKey, resolveApiKeyAsync } from '../lib/config';
+import { maskKey, readCredentials, resolveApiKeyAsync } from '../lib/config';
 import { getCredentialBackend } from '../lib/credential-store';
 import { buildHelpText } from '../lib/help-text';
 import { errorMessage, outputResult } from '../lib/output';
@@ -155,7 +155,7 @@ export const doctorCommand = new Command('doctor')
       context: `Checks performed:
   CLI Version          Is the installed version up to date?
   API Key              Is a key present (--api-key, RESEND_API_KEY, or credentials file)?
-  Credential Storage   Which backend is storing credentials (keychain vs plaintext file)?
+  Credential Storage   Which backend is storing credentials (secure storage vs plaintext file)?
   API Validation       Is the key valid and accepted by the Resend API?`,
       output: `  {\n    "ok": true,\n    "checks": [\n      {"name":"CLI Version","status":"pass","message":"v0.1.0 (latest)"},\n      {"name":"API Key","status":"pass","message":"re_...abcd (source: env)"},\n      {"name":"Domains","status":"pass","message":"1 verified, 0 pending"}\n    ]\n  }\n  status values: "pass" | "warn" | "fail"\n  Exit code 1 if any check has status "fail"`,
       examples: ['resend doctor', 'resend doctor --json'],
@@ -195,16 +195,16 @@ export const doctorCommand = new Command('doctor')
       ? createSpinner('Checking credential storage...')
       : null;
     const backend = await getCredentialBackend();
-    const storageType = getStorageType();
+    const creds = readCredentials();
     const usingSecure = backend.isSecure;
     const storageCheck: CheckResult = {
       name: 'Credential Storage',
       status: usingSecure ? 'pass' : 'warn',
       message: usingSecure ? backend.name : 'plaintext file',
-      ...(!usingSecure && storageType === 'keychain'
+      ...(!usingSecure && creds?.storage === 'secure_storage'
         ? {
             detail:
-              'Secure backend unavailable despite keychain preference — falling back to plaintext',
+              'Secure backend unavailable despite secure storage preference — falling back to plaintext',
           }
         : {}),
     };

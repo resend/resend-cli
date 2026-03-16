@@ -65,7 +65,7 @@ ${pc.gray('Environment:')}
                             Priority: --api-key flag > RESEND_API_KEY > secure storage/credentials file
   RESEND_PROFILE            Profile — checked after --profile flag, before active_profile in config
                             Priority: --profile flag > RESEND_PROFILE > active_profile in config > "default"
-  RESEND_CREDENTIAL_STORE   Force storage method: "keychain" (secure) or "file" (plaintext)
+  RESEND_CREDENTIAL_STORE   Force storage method: "secure_storage" (secure) or "file" (plaintext)
 
 ${pc.gray('Output:')}
   Human-readable by default. Pass --json or pipe stdout for machine-readable JSON.
