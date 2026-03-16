@@ -6,7 +6,7 @@ Detailed flag specifications for `resend api-keys` commands.
 
 ## api-keys list
 
-List all API keys (IDs and names only — tokens never included).
+List all API keys (IDs, names, and `created_at` only — tokens never included).
 
 ---
 

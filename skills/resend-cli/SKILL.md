@@ -42,7 +42,7 @@ The CLI auto-detects non-TTY environments and outputs JSON — no `--json` flag 
 - Supply ALL required flags. The CLI will NOT prompt when stdin is not a TTY.
 - Pass `--quiet` (or `-q`) to suppress spinners and status messages.
 - Exit `0` = success, `1` = error.
-- Success JSON goes to stdout, error JSON goes to stderr:
+- Error JSON goes to stderr, success JSON goes to stdout:
   ```json
   {"error":{"message":"...","code":"..."}}
   ```
@@ -73,7 +73,7 @@ Auth resolves: `--api-key` flag > `RESEND_API_KEY` env > config file (`resend lo
 | `broadcasts` | create, send, update, delete, list |
 | `contacts` | create, update, delete, segments, topics |
 | `contact-properties` | create, update, delete, list |
-| `segments` | create, list, delete |
+| `segments` | create, get, list, delete |
 | `templates` | create, publish, duplicate, delete, list |
 | `topics` | create, update, delete, list |
 | `webhooks` | create, update, listen, delete, list |

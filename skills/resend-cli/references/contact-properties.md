@@ -20,7 +20,7 @@ Detailed flag specifications for `resend contact-properties` commands.
 |------|------|----------|-------------|
 | `--key <key>` | string | Yes (non-interactive) | Property key name |
 | `--type <type>` | string | Yes (non-interactive) | `string` \| `number` |
-| `--fallback-value <value>` | string | No | Default in templates |
+| `--fallback-value <value>` | string \| number | No | Default in templates (parsed as number when `--type number`) |
 
 Reserved keys: `FIRST_NAME`, `LAST_NAME`, `EMAIL`, `UNSUBSCRIBE_URL`
 

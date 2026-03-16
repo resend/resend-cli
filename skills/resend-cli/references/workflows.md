@@ -48,7 +48,7 @@ resend emails send \
   --to recipient@example.com \
   --subject "Reminder" \
   --text "Don't forget!" \
-  --scheduled-at "2026-01-15T09:00:00Z"
+  --scheduled-at "<future-ISO-8601-datetime>"
 
 # Check status
 resend emails get <email-id>
@@ -129,7 +129,7 @@ resend broadcasts create \
 resend broadcasts send <broadcast-id>
 
 # Schedule for later
-resend broadcasts send <broadcast-id> --scheduled-at "2026-03-15T10:00:00Z"
+resend broadcasts send <broadcast-id> --scheduled-at "<future-ISO-8601-datetime>"
 ```
 
 ---

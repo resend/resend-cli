@@ -21,9 +21,9 @@ Detailed flag specifications for `resend broadcasts` commands.
 | `--from <address>` | string | Yes | Sender address |
 | `--subject <subject>` | string | Yes | Email subject |
 | `--segment-id <id>` | string | Yes | Target segment |
-| `--html <html>` | string | One of html/html-file/text | HTML body (supports `{{{PROPERTY\|fallback}}}`) |
-| `--html-file <path>` | string | One of html/html-file/text | Path to HTML file |
-| `--text <text>` | string | One of html/html-file/text | Plain-text body |
+| `--html <html>` | string | At least one body flag | HTML body (supports `{{{PROPERTY\|fallback}}}`) |
+| `--html-file <path>` | string | At least one body flag | Path to HTML file |
+| `--text <text>` | string | At least one body flag | Plain-text body |
 | `--name <name>` | string | No | Internal label |
 | `--reply-to <address>` | string | No | Reply-to address |
 | `--preview-text <text>` | string | No | Preview text |
