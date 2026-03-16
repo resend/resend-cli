@@ -48,7 +48,10 @@ export const listTemplatesCommand = new Command('list')
         sdkCall: (resend) => resend.templates.list(paginationOpts),
         onInteractive: (list) => {
           console.log(renderTemplatesTable(list.data));
-          printPaginationHint(list);
+          printPaginationHint(list, 'templates list', {
+            limit,
+            before: opts.before,
+          });
         },
       },
       globalOpts,
