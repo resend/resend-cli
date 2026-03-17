@@ -9,7 +9,7 @@ description: >
 license: MIT
 metadata:
   author: resend
-  version: "1.4.1"
+  version: "1.5.0"
   homepage: https://resend.com
   source: https://github.com/resend/resend-cli
 inputs:
