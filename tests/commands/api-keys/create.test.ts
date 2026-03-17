@@ -34,6 +34,7 @@ describe('api-keys create command', () => {
   let errorSpy: MockInstance | undefined;
   let stderrSpy: MockInstance | undefined;
   let exitSpy: MockInstance | undefined;
+  let commandRef: { parent: unknown } | undefined;
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
@@ -49,6 +50,10 @@ describe('api-keys create command', () => {
     errorSpy = undefined;
     stderrSpy = undefined;
     exitSpy = undefined;
+    if (commandRef) {
+      commandRef.parent = null;
+      commandRef = undefined;
+    }
   });
 
   test('creates API key with --name flag', async () => {
@@ -158,6 +163,7 @@ describe('api-keys create command', () => {
       .option('--api-key <key>')
       .option('-q, --quiet')
       .addCommand(createApiKeyCommand);
+    commandRef = createApiKeyCommand as unknown as { parent: unknown };
 
     await expectExit1(() =>
       program.parseAsync(['create', '--json'], { from: 'user' }),
@@ -165,9 +171,6 @@ describe('api-keys create command', () => {
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('missing_name');
-
-    // @ts-expect-error — reset parent to avoid polluting the shared singleton
-    createApiKeyCommand.parent = null;
   });
 
   test('does not call SDK when missing_name error is raised', async () => {

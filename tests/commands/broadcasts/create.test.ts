@@ -36,6 +36,7 @@ describe('broadcasts create command', () => {
   let stderrSpy: MockInstance | undefined;
   let exitSpy: MockInstance | undefined;
   let readFileSpy: MockInstance | undefined;
+  let commandRef: { parent: unknown } | undefined;
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
@@ -53,6 +54,10 @@ describe('broadcasts create command', () => {
     stderrSpy = undefined;
     exitSpy = undefined;
     readFileSpy = undefined;
+    if (commandRef) {
+      commandRef.parent = null;
+      commandRef = undefined;
+    }
   });
 
   test('creates broadcast with required flags', async () => {
@@ -401,6 +406,7 @@ describe('broadcasts create command', () => {
       .option('--api-key <key>')
       .option('-q, --quiet')
       .addCommand(createBroadcastCommand);
+    commandRef = createBroadcastCommand as unknown as { parent: unknown };
 
     await expectExit1(() =>
       program.parseAsync(
@@ -420,9 +426,6 @@ describe('broadcasts create command', () => {
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('missing_from');
-
-    // @ts-expect-error — reset parent to avoid polluting the shared singleton
-    createBroadcastCommand.parent = null;
   });
 
   test('reads html body from --html-file and passes it to SDK', async () => {

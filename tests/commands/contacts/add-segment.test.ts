@@ -36,6 +36,7 @@ describe('contacts add-segment command', () => {
   let errorSpy: MockInstance | undefined;
   let stderrSpy: MockInstance | undefined;
   let exitSpy: MockInstance | undefined;
+  let commandRef: { parent: unknown } | undefined;
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
@@ -51,6 +52,10 @@ describe('contacts add-segment command', () => {
     errorSpy = undefined;
     stderrSpy = undefined;
     exitSpy = undefined;
+    if (commandRef) {
+      commandRef.parent = null;
+      commandRef = undefined;
+    }
   });
 
   test('adds contact to segment by contact ID', async () => {
@@ -156,6 +161,7 @@ describe('contacts add-segment command', () => {
       .option('--api-key <key>')
       .option('-q, --quiet')
       .addCommand(addContactSegmentCommand);
+    commandRef = addContactSegmentCommand as unknown as { parent: unknown };
 
     await expectExit1(() =>
       program.parseAsync(
@@ -166,9 +172,6 @@ describe('contacts add-segment command', () => {
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('missing_segment_id');
-
-    // @ts-expect-error — reset parent to avoid polluting the shared singleton
-    addContactSegmentCommand.parent = null;
   });
 
   test('errors with auth_error when no API key', async () => {

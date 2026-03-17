@@ -37,6 +37,7 @@ describe('contacts create command', () => {
   let errorSpy: MockInstance | undefined;
   let stderrSpy: MockInstance | undefined;
   let exitSpy: MockInstance | undefined;
+  let commandRef: { parent: unknown } | undefined;
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
@@ -52,6 +53,10 @@ describe('contacts create command', () => {
     errorSpy = undefined;
     stderrSpy = undefined;
     exitSpy = undefined;
+    if (commandRef) {
+      commandRef.parent = null;
+      commandRef = undefined;
+    }
   });
 
   test('creates contact with --email flag', async () => {
@@ -215,6 +220,7 @@ describe('contacts create command', () => {
       .option('--api-key <key>')
       .option('-q, --quiet')
       .addCommand(createContactCommand);
+    commandRef = createContactCommand as unknown as { parent: unknown };
 
     await program.parseAsync(
       ['create', '--json', '--email', 'jane@example.com'],
@@ -229,9 +235,6 @@ describe('contacts create command', () => {
 
     logSpy.mockRestore();
     stderrWriteSpy.mockRestore();
-
-    // @ts-expect-error — reset parent to avoid polluting the shared singleton
-    createContactCommand.parent = null;
   });
 
   test('errors with missing_email in non-interactive mode', async () => {

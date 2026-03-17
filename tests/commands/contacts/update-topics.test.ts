@@ -36,6 +36,7 @@ describe('contacts update-topics command', () => {
   let errorSpy: MockInstance | undefined;
   let stderrSpy: MockInstance | undefined;
   let exitSpy: MockInstance | undefined;
+  let commandRef: { parent: unknown } | undefined;
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
@@ -51,6 +52,10 @@ describe('contacts update-topics command', () => {
     errorSpy = undefined;
     stderrSpy = undefined;
     exitSpy = undefined;
+    if (commandRef) {
+      commandRef.parent = null;
+      commandRef = undefined;
+    }
   });
 
   test('updates topics by contact ID', async () => {
@@ -177,6 +182,7 @@ describe('contacts update-topics command', () => {
       .option('--api-key <key>')
       .option('-q, --quiet')
       .addCommand(updateContactTopicsCommand);
+    commandRef = updateContactTopicsCommand as unknown as { parent: unknown };
 
     await expectExit1(() =>
       program.parseAsync(
@@ -187,9 +193,6 @@ describe('contacts update-topics command', () => {
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('missing_topics');
-
-    // @ts-expect-error — reset parent to avoid polluting the shared singleton
-    updateContactTopicsCommand.parent = null;
   });
 
   test('errors with invalid_topics when --topics is not valid JSON', async () => {

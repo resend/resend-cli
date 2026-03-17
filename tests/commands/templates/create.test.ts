@@ -34,6 +34,7 @@ describe('templates create command', () => {
   let errorSpy: MockInstance | undefined;
   let stderrSpy: MockInstance | undefined;
   let exitSpy: MockInstance | undefined;
+  let commandRef: { parent: unknown } | undefined;
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
@@ -49,6 +50,10 @@ describe('templates create command', () => {
     errorSpy = undefined;
     stderrSpy = undefined;
     exitSpy = undefined;
+    if (commandRef) {
+      commandRef.parent = null;
+      commandRef = undefined;
+    }
   });
 
   test('creates template with required flags', async () => {
@@ -143,6 +148,7 @@ describe('templates create command', () => {
       .option('--api-key <key>')
       .option('-q, --quiet')
       .addCommand(createTemplateCommand);
+    commandRef = createTemplateCommand as unknown as { parent: unknown };
 
     await expectExit1(() =>
       program.parseAsync(['create', '--json', '--html', '<h1>Hello</h1>'], {
@@ -152,9 +158,6 @@ describe('templates create command', () => {
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('missing_name');
-
-    // @ts-expect-error — reset parent to avoid polluting the shared singleton
-    createTemplateCommand.parent = null;
   });
 
   test('errors with auth_error when no API key', async () => {

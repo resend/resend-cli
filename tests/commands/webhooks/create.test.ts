@@ -38,6 +38,7 @@ describe('webhooks create command', () => {
   let errorSpy: MockInstance | undefined;
   let stderrSpy: MockInstance | undefined;
   let exitSpy: MockInstance | undefined;
+  let commandRef: { parent: unknown } | undefined;
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
@@ -53,6 +54,10 @@ describe('webhooks create command', () => {
     errorSpy = undefined;
     stderrSpy = undefined;
     exitSpy = undefined;
+    if (commandRef) {
+      commandRef.parent = null;
+      commandRef = undefined;
+    }
   });
 
   test('creates webhook with --endpoint and explicit --events', async () => {
@@ -173,6 +178,7 @@ describe('webhooks create command', () => {
       .option('--api-key <key>')
       .option('-q, --quiet')
       .addCommand(createWebhookCommand);
+    commandRef = createWebhookCommand as unknown as { parent: unknown };
 
     await expectExit1(() =>
       program.parseAsync(
@@ -183,9 +189,6 @@ describe('webhooks create command', () => {
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('missing_events');
-
-    // @ts-expect-error — reset parent to avoid polluting the shared singleton
-    createWebhookCommand.parent = null;
   });
 
   test('does not call SDK when missing_endpoint error is raised', async () => {
