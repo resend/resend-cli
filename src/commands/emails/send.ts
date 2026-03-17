@@ -172,7 +172,7 @@ export const sendCommand = new Command('send')
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
-    const resend = requireClient(globalOpts);
+    const resend = await requireClient(globalOpts);
 
     // Only fetch verified domains in interactive mode — non-interactive
     // callers (CI, agents, scripts) must pass --from explicitly.
