@@ -89,6 +89,17 @@ function shouldSkipCheck(): boolean {
   return false;
 }
 
+export function detectInstallMethodName(): string {
+  const full = detectInstallMethod();
+  if (full.startsWith('npm')) {
+    return 'npm';
+  }
+  if (full.startsWith('brew')) {
+    return 'homebrew';
+  }
+  return 'install-script';
+}
+
 export function detectInstallMethod(): string {
   const execPath = process.execPath || process.argv[0] || '';
   const scriptPath = process.argv[1] || '';
