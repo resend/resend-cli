@@ -150,6 +150,44 @@ describe('webhooks create command', () => {
     expect(output).toContain('missing_events');
   });
 
+  test('errors with missing_events when --json is set even in TTY', async () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { Command } = await import('@commander-js/extra-typings');
+    const { createWebhookCommand } = await import(
+      '../../../src/commands/webhooks/create'
+    );
+    const program = new Command()
+      .option('--profile <name>')
+      .option('--team <name>')
+      .option('--json')
+      .option('--api-key <key>')
+      .option('-q, --quiet')
+      .addCommand(createWebhookCommand);
+
+    await expectExit1(() =>
+      program.parseAsync(
+        ['create', '--json', '--endpoint', 'https://app.example.com/hooks'],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('missing_events');
+
+    // @ts-expect-error — reset parent to avoid polluting the shared singleton
+    createWebhookCommand.parent = null;
+  });
+
   test('does not call SDK when missing_endpoint error is raised', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});

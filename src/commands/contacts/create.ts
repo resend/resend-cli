@@ -66,7 +66,7 @@ Unsubscribed: setting --unsubscribed is a team-wide opt-out from all broadcasts,
     let firstName = opts.firstName;
     let lastName = opts.lastName;
 
-    if (isInteractive() && !opts.firstName) {
+    if (isInteractive() && !globalOpts.json && !opts.firstName) {
       const result = await p.text({
         message: 'First name (optional)',
         placeholder: 'Jane',
@@ -79,7 +79,7 @@ Unsubscribed: setting --unsubscribed is a team-wide opt-out from all broadcasts,
       }
     }
 
-    if (isInteractive() && !opts.lastName) {
+    if (isInteractive() && !globalOpts.json && !opts.lastName) {
       const result = await p.text({
         message: 'Last name (optional)',
         placeholder: 'Smith',

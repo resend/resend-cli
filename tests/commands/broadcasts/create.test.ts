@@ -378,6 +378,53 @@ describe('broadcasts create command', () => {
     expect(mockCreate).not.toHaveBeenCalled();
   });
 
+  test('errors with missing_from when --json is set even in TTY', async () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { Command } = await import('@commander-js/extra-typings');
+    const { createBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/create'
+    );
+    const program = new Command()
+      .option('--profile <name>')
+      .option('--team <name>')
+      .option('--json')
+      .option('--api-key <key>')
+      .option('-q, --quiet')
+      .addCommand(createBroadcastCommand);
+
+    await expectExit1(() =>
+      program.parseAsync(
+        [
+          'create',
+          '--json',
+          '--subject',
+          'News',
+          '--segment-id',
+          '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
+          '--html',
+          '<p>Hi</p>',
+        ],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('missing_from');
+
+    // @ts-expect-error — reset parent to avoid polluting the shared singleton
+    createBroadcastCommand.parent = null;
+  });
+
   test('reads html body from --html-file and passes it to SDK', async () => {
     spies = setupOutputSpies();
     readFileSpy = vi

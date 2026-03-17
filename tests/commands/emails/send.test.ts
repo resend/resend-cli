@@ -527,8 +527,14 @@ describe('send command', () => {
   });
 
   test('errors with missing_flags when --json is set and --from is missing', async () => {
-    Object.defineProperty(process.stdin, 'isTTY', { value: true, writable: true });
-    Object.defineProperty(process.stdout, 'isTTY', { value: true, writable: true });
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
@@ -544,7 +550,16 @@ describe('send command', () => {
 
     await expectExit1(() =>
       program.parseAsync(
-        ['send', '--json', '--to', 'b@test.com', '--subject', 'Test', '--text', 'Hi'],
+        [
+          'send',
+          '--json',
+          '--to',
+          'b@test.com',
+          '--subject',
+          'Test',
+          '--text',
+          'Hi',
+        ],
         { from: 'user' },
       ),
     );

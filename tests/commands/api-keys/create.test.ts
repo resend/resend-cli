@@ -135,6 +135,41 @@ describe('api-keys create command', () => {
     expect(output).toContain('missing_name');
   });
 
+  test('errors with missing_name when --json is set even in TTY', async () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { Command } = await import('@commander-js/extra-typings');
+    const { createApiKeyCommand } = await import(
+      '../../../src/commands/api-keys/create'
+    );
+    const program = new Command()
+      .option('--profile <name>')
+      .option('--team <name>')
+      .option('--json')
+      .option('--api-key <key>')
+      .option('-q, --quiet')
+      .addCommand(createApiKeyCommand);
+
+    await expectExit1(() =>
+      program.parseAsync(['create', '--json'], { from: 'user' }),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('missing_name');
+
+    // @ts-expect-error — reset parent to avoid polluting the shared singleton
+    createApiKeyCommand.parent = null;
+  });
+
   test('does not call SDK when missing_name error is raised', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});

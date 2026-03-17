@@ -133,6 +133,44 @@ describe('contacts add-segment command', () => {
     expect(output).toContain('missing_segment_id');
   });
 
+  test('errors with missing_segment_id when --json is set even in TTY', async () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { Command } = await import('@commander-js/extra-typings');
+    const { addContactSegmentCommand } = await import(
+      '../../../src/commands/contacts/add-segment'
+    );
+    const program = new Command()
+      .option('--profile <name>')
+      .option('--team <name>')
+      .option('--json')
+      .option('--api-key <key>')
+      .option('-q, --quiet')
+      .addCommand(addContactSegmentCommand);
+
+    await expectExit1(() =>
+      program.parseAsync(
+        ['add-segment', '--json', 'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('missing_segment_id');
+
+    // @ts-expect-error — reset parent to avoid polluting the shared singleton
+    addContactSegmentCommand.parent = null;
+  });
+
   test('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;

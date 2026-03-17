@@ -190,6 +190,50 @@ describe('contacts create command', () => {
     ]);
   });
 
+  test('suppresses name prompts when --json is set even in TTY', async () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const stderrWriteSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
+
+    const { Command } = await import('@commander-js/extra-typings');
+    const { createContactCommand } = await import(
+      '../../../src/commands/contacts/create'
+    );
+    const program = new Command()
+      .option('--profile <name>')
+      .option('--team <name>')
+      .option('--json')
+      .option('--api-key <key>')
+      .option('-q, --quiet')
+      .addCommand(createContactCommand);
+
+    await program.parseAsync(
+      ['create', '--json', '--email', 'jane@example.com'],
+      { from: 'user' },
+    );
+
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.email).toBe('jane@example.com');
+    expect(args.firstName).toBeUndefined();
+    expect(args.lastName).toBeUndefined();
+
+    logSpy.mockRestore();
+    stderrWriteSpy.mockRestore();
+
+    // @ts-expect-error — reset parent to avoid polluting the shared singleton
+    createContactCommand.parent = null;
+  });
+
   test('errors with missing_email in non-interactive mode', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});

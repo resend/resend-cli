@@ -88,8 +88,14 @@ describe('login command', () => {
   });
 
   test('errors with missing_key when --json is set but --key is omitted even in TTY', async () => {
-    Object.defineProperty(process.stdin, 'isTTY', { value: true, writable: true });
-    Object.defineProperty(process.stdout, 'isTTY', { value: true, writable: true });
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
