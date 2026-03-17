@@ -1,5 +1,5 @@
 import { Resend } from 'resend';
-import { listProfiles, resolveApiKey } from './config';
+import { listProfiles, resolveApiKeyAsync } from './config';
 import { errorMessage, outputError } from './output';
 import { VERSION } from './version';
 
@@ -14,8 +14,11 @@ export type GlobalOpts = {
 
 process.env.RESEND_USER_AGENT = `resend-cli:${VERSION}`;
 
-export function createClient(flagValue?: string, profileName?: string): Resend {
-  const resolved = resolveApiKey(flagValue, profileName);
+export async function createClient(
+  flagValue?: string,
+  profileName?: string,
+): Promise<Resend> {
+  const resolved = await resolveApiKeyAsync(flagValue, profileName);
   if (!resolved) {
     if (profileName) {
       const profiles = listProfiles();
@@ -33,9 +36,9 @@ export function createClient(flagValue?: string, profileName?: string): Resend {
   return new Resend(resolved.key);
 }
 
-export function requireClient(opts: GlobalOpts): Resend {
+export async function requireClient(opts: GlobalOpts): Promise<Resend> {
   try {
-    return createClient(opts.apiKey, opts.profile ?? opts.team);
+    return await createClient(opts.apiKey, opts.profile ?? opts.team);
   } catch (err) {
     outputError(
       {
