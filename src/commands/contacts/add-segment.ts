@@ -30,7 +30,7 @@ Non-interactive: --segment-id is required.`,
   )
   .action(async (contactId, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const resend = requireClient(globalOpts);
+    const resend = await requireClient(globalOpts);
 
     let segmentId = opts.segmentId;
 

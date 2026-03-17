@@ -50,7 +50,12 @@ or "resend contacts add-segment".`,
         sdkCall: (resend) => resend.segments.list(paginationOpts),
         onInteractive: (list) => {
           console.log(renderSegmentsTable(list.data));
-          printPaginationHint(list);
+          printPaginationHint(list, 'segments list', {
+            limit,
+            before: opts.before,
+            apiKey: globalOpts.apiKey,
+            profile: globalOpts.profile,
+          });
         },
       },
       globalOpts,

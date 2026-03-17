@@ -26,7 +26,7 @@ export const getAttachmentCommand = new Command('attachment')
   )
   .action(async (emailId, attachmentId, _opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const resend = requireClient(globalOpts);
+    const resend = await requireClient(globalOpts);
 
     const data = await withSpinner(
       {
