@@ -202,6 +202,7 @@ export const doctorCommand = new Command('doctor')
       status: usingSecure ? 'pass' : 'warn',
       message: usingSecure ? backend.name : 'plaintext file',
       ...(!usingSecure &&
+      process.env.RESEND_CREDENTIAL_STORE !== 'file' &&
       (creds?.storage === 'secure_storage' ||
         process.env.RESEND_CREDENTIAL_STORE === 'secure_storage' ||
         process.env.RESEND_CREDENTIAL_STORE === 'keychain')
