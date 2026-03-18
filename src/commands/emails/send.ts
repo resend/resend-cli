@@ -243,7 +243,7 @@ export const sendCommand = new Command('send')
 
     const data = await withSpinner(
       {
-        loading: 'Sending email...',
+        loading: opts.scheduledAt ? 'Scheduling email...' : 'Sending email...',
         success: opts.scheduledAt ? 'Email scheduled' : 'Email sent',
         fail: 'Failed to send email',
       },

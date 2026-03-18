@@ -40,8 +40,10 @@ Scheduling:
     await runWrite(
       {
         spinner: {
-          loading: 'Sending broadcast...',
-          success: 'Broadcast sent',
+          loading: opts.scheduledAt
+            ? 'Scheduling broadcast...'
+            : 'Sending broadcast...',
+          success: opts.scheduledAt ? 'Broadcast scheduled' : 'Broadcast sent',
           fail: 'Failed to send broadcast',
         },
         sdkCall: (resend) =>
