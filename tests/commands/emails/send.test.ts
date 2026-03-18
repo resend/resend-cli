@@ -526,6 +526,51 @@ describe('send command', () => {
     expect(opts?.idempotencyKey).toBe('my-key-123');
   });
 
+  test('errors with missing_flags when --json is set and --from is missing', async () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { Command } = await import('@commander-js/extra-typings');
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    const program = new Command()
+      .option('--profile <name>')
+      .option('--team <name>')
+      .option('--json')
+      .option('--api-key <key>')
+      .option('-q, --quiet')
+      .addCommand(sendCommand);
+
+    await expectExit1(() =>
+      program.parseAsync(
+        [
+          'send',
+          '--json',
+          '--to',
+          'b@test.com',
+          '--subject',
+          'Test',
+          '--text',
+          'Hi',
+        ],
+        { from: 'user' },
+      ),
+    );
+
+    // domain list should NOT be called since --json suppresses interactive prompts
+    expect(mockDomainsList).not.toHaveBeenCalled();
+
+    // @ts-expect-error — reset parent to avoid polluting the shared singleton
+    sendCommand.parent = null;
+  });
+
   test('degrades gracefully when domain fetch fails', async () => {
     const { fetchVerifiedDomains } = await import(
       '../../../src/commands/emails/send'

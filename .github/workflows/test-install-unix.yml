@@ -1,11 +1,9 @@
 name: Test Unix Installer
-
 on:
   pull_request:
     paths:
       - install.sh
   workflow_dispatch:
-
 jobs:
   test:
     strategy:
@@ -15,10 +13,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
-
       - name: Run install.sh from repo
         run: bash install.sh
-
       - name: Verify binary exists
         run: |
           exe="$HOME/.resend/bin/resend"
@@ -27,7 +23,6 @@ jobs:
             exit 1
           fi
           echo "Found binary at $exe"
-
       - name: Verify binary runs
         run: |
           "$HOME/.resend/bin/resend" --version

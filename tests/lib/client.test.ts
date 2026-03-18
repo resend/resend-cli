@@ -13,34 +13,40 @@ describe('createClient', () => {
   });
 
   test('returns Resend instance when flag value provided', async () => {
+    // Force file backend so tests don't interact with real OS keychain
+    process.env.RESEND_CREDENTIAL_STORE = 'file';
     const { createClient } = await import('../../src/lib/client');
-    const client = createClient('re_test_key');
+    const client = await createClient('re_test_key');
     expect(client).toBeInstanceOf(Resend);
   });
 
   test('returns Resend instance when env var set', async () => {
     process.env.RESEND_API_KEY = 're_env_key';
+    process.env.RESEND_CREDENTIAL_STORE = 'file';
     const { createClient } = await import('../../src/lib/client');
-    const client = createClient();
+    const client = await createClient();
     expect(client).toBeInstanceOf(Resend);
   });
 
   test('throws when no API key available', async () => {
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend-test';
+    process.env.RESEND_CREDENTIAL_STORE = 'file';
     const { createClient } = await import('../../src/lib/client');
-    expect(() => createClient()).toThrow('No API key found');
+    await expect(createClient()).rejects.toThrow('No API key found');
   });
 
   test('flag value takes priority over env var', async () => {
     process.env.RESEND_API_KEY = 're_env_key';
+    process.env.RESEND_CREDENTIAL_STORE = 'file';
     const { createClient } = await import('../../src/lib/client');
-    const client = createClient('re_flag_key');
+    const client = await createClient('re_flag_key');
     expect(client).toBeInstanceOf(Resend);
   });
 
   test('profile name is threaded through to resolveApiKey', async () => {
     delete process.env.RESEND_API_KEY;
+    process.env.RESEND_CREDENTIAL_STORE = 'file';
     const tmpDir = join(
       tmpdir(),
       `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -63,7 +69,7 @@ describe('createClient', () => {
 
     const { createClient } = await import('../../src/lib/client');
     // Should not throw — resolves staging team's key
-    const client = createClient(undefined, 'staging');
+    const client = await createClient(undefined, 'staging');
     expect(client).toBeInstanceOf(Resend);
 
     rmSync(tmpDir, { recursive: true, force: true });

@@ -1,7 +1,7 @@
 import * as p from '@clack/prompts';
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
-import { listProfiles, removeApiKey } from '../../lib/config';
+import { listProfiles, removeApiKeyAsync } from '../../lib/config';
 import { errorMessage, outputError, outputResult } from '../../lib/output';
 import { cancelAndExit } from '../../lib/prompts';
 import { isInteractive } from '../../lib/tty';
@@ -13,7 +13,7 @@ export async function removeAction(
   let profileName = name;
 
   if (!profileName) {
-    if (!isInteractive()) {
+    if (!isInteractive() || globalOpts.json) {
       outputError(
         {
           message:
@@ -64,7 +64,7 @@ export async function removeAction(
   }
 
   try {
-    removeApiKey(profileName);
+    await removeApiKeyAsync(profileName);
   } catch (err) {
     outputError(
       {
@@ -81,7 +81,7 @@ export async function removeAction(
       { success: true, removed_profile: profileName },
       { json: true },
     );
-  } else if (isInteractive()) {
+  } else if (isInteractive() && !globalOpts.json) {
     console.log(`Profile '${profileName}' removed.`);
   }
 }

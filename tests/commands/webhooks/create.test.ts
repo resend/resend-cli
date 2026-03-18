@@ -38,6 +38,7 @@ describe('webhooks create command', () => {
   let errorSpy: MockInstance | undefined;
   let stderrSpy: MockInstance | undefined;
   let exitSpy: MockInstance | undefined;
+  let commandRef: { parent: unknown } | undefined;
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
@@ -53,6 +54,10 @@ describe('webhooks create command', () => {
     errorSpy = undefined;
     stderrSpy = undefined;
     exitSpy = undefined;
+    if (commandRef) {
+      commandRef.parent = null;
+      commandRef = undefined;
+    }
   });
 
   test('creates webhook with --endpoint and explicit --events', async () => {
@@ -142,6 +147,42 @@ describe('webhooks create command', () => {
     await expectExit1(() =>
       createWebhookCommand.parseAsync(
         ['--endpoint', 'https://app.example.com/hooks'],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('missing_events');
+  });
+
+  test('errors with missing_events when --json is set even in TTY', async () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { Command } = await import('@commander-js/extra-typings');
+    const { createWebhookCommand } = await import(
+      '../../../src/commands/webhooks/create'
+    );
+    const program = new Command()
+      .option('--profile <name>')
+      .option('--team <name>')
+      .option('--json')
+      .option('--api-key <key>')
+      .option('-q, --quiet')
+      .addCommand(createWebhookCommand);
+    commandRef = createWebhookCommand as unknown as { parent: unknown };
+
+    await expectExit1(() =>
+      program.parseAsync(
+        ['create', '--json', '--endpoint', 'https://app.example.com/hooks'],
         { from: 'user' },
       ),
     );
