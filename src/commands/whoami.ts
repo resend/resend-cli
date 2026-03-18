@@ -71,7 +71,7 @@ Shows which profile is active and where the API key comes from.`,
     }
 
     const profile = resolved.profile ?? resolveProfileName(profileFlag);
-    const credentialsPath = join(getConfigDir(), 'credentials.json');
+    const configPath = join(getConfigDir(), 'credentials.json');
 
     if (globalOpts.json || !isInteractive()) {
       outputResult(
@@ -80,9 +80,7 @@ Shows which profile is active and where the API key comes from.`,
           profile,
           api_key: maskKey(resolved.key),
           source: resolved.source,
-          ...(resolved.source === 'config'
-            ? { config_path: credentialsPath }
-            : {}),
+          config_path: configPath,
         },
         { json: globalOpts.json },
       );
@@ -101,12 +99,7 @@ Shows which profile is active and where the API key comes from.`,
     console.log('');
     console.log(`  Profile: ${profile}`);
     console.log(`  API Key: ${maskKey(resolved.key)}`);
-    console.log(
-      `  Source:  ${resolved.source === 'config' ? 'config file' : resolved.source === 'env' ? 'environment variable' : 'flag'}`,
-    );
-    if (resolved.source === 'config') {
-      console.log(`  Config:  ${credentialsPath}`);
-    }
     console.log(`  Source:  ${sourceLabel}`);
+    console.log(`  Config:  ${configPath}`);
     console.log('');
   });
