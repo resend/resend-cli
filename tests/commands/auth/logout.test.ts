@@ -134,7 +134,7 @@ describe('logout command', () => {
   });
 
   test('exits with error when file removal fails', async () => {
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
     spies = setupOutputSpies();
     writeCredentials();
