@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getConfigDir } from './config';
+import { isInteractive } from './tty';
 import { detectInstallMethodName } from './update-check';
 import { VERSION } from './version';
 
@@ -68,11 +69,7 @@ export function trackCommand(command: string, opts: { json?: boolean }): void {
         os: process.platform,
         arch: process.arch,
         node_version: process.version,
-        is_ci:
-          process.env.CI === 'true' ||
-          process.env.CI === '1' ||
-          !!process.env.GITHUB_ACTIONS,
-        json_mode: !!opts.json,
+        interactive: isInteractive() && !opts.json,
         install_method: detectInstallMethodName(),
       },
     };

@@ -107,6 +107,11 @@ describe('trackCommand', () => {
     }
   });
 
+  function parsePayload() {
+    const [, options] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    return JSON.parse(options.body as string);
+  }
+
   test('sends correct payload to PostHog endpoint', () => {
     trackCommand('emails send', { json: true });
 
@@ -115,10 +120,9 @@ describe('trackCommand', () => {
     expect(url).toBe('https://us.i.posthog.com/capture/');
     expect(options.method).toBe('POST');
 
-    const body = JSON.parse(options.body as string);
+    const body = parsePayload();
     expect(body.event).toBe('cli.used');
     expect(body.properties.command).toBe('emails send');
-    expect(body.properties.json_mode).toBe(true);
     expect(body.properties.os).toBe(process.platform);
     expect(body.properties.arch).toBe(process.arch);
     expect(body.properties.node_version).toBe(process.version);
@@ -126,6 +130,67 @@ describe('trackCommand', () => {
     expect(body.distinct_id).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
     );
+  });
+
+  test('interactive is false when --json flag is set', () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    delete process.env.CI;
+    delete process.env.GITHUB_ACTIONS;
+
+    trackCommand('emails send', { json: true });
+    expect(parsePayload().properties.interactive).toBe(false);
+  });
+
+  test('interactive is false when not a TTY', () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: undefined,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: undefined,
+      writable: true,
+    });
+
+    trackCommand('emails list', {});
+    expect(parsePayload().properties.interactive).toBe(false);
+  });
+
+  test('interactive is false in CI even with TTY', () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    process.env.CI = 'true';
+
+    trackCommand('emails list', {});
+    expect(parsePayload().properties.interactive).toBe(false);
+  });
+
+  test('interactive is true with TTY and no --json', () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    delete process.env.CI;
+    delete process.env.GITHUB_ACTIONS;
+
+    trackCommand('emails list', {});
+    expect(parsePayload().properties.interactive).toBe(true);
   });
 
   test('does nothing when disabled', () => {
