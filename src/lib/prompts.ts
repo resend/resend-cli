@@ -1,6 +1,6 @@
 import * as p from '@clack/prompts';
 import type { GlobalOpts } from './client';
-import { renameProfile, validateProfileName } from './config';
+import { renameProfileAsync, validateProfileName } from './config';
 import { errorMessage, outputError } from './output';
 import { isInteractive } from './tty';
 
@@ -82,7 +82,7 @@ export async function promptRenameIfInvalid(
   }
 
   try {
-    renameProfile(profileName, newName);
+    await renameProfileAsync(profileName, newName);
   } catch (err) {
     outputError(
       {
