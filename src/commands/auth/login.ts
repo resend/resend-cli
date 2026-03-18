@@ -57,7 +57,7 @@ export const loginCommand = new Command('login')
     let apiKey = opts.key;
 
     if (!apiKey) {
-      if (!isInteractive()) {
+      if (!isInteractive() || globalOpts.json) {
         outputError(
           {
             message:
@@ -174,7 +174,7 @@ export const loginCommand = new Command('login')
       }
     }
 
-    if (!profileName && isInteractive()) {
+    if (!profileName && isInteractive() && !globalOpts.json) {
       const existingProfiles = listProfiles();
       if (existingProfiles.length > 0) {
         const options = [

@@ -141,7 +141,7 @@ export const sendCommand = new Command('send')
     // Only fetch verified domains in interactive mode — non-interactive
     // callers (CI, agents, scripts) must pass --from explicitly.
     let fromAddress = opts.from;
-    if (!fromAddress && isInteractive()) {
+    if (!fromAddress && isInteractive() && !globalOpts.json) {
       const domains = await fetchVerifiedDomains(resend);
       if (domains.length > 0) {
         fromAddress = await promptForFromAddress(domains);

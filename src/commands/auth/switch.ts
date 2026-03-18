@@ -17,7 +17,7 @@ export async function switchAction(
   let profileName = name;
 
   if (!profileName) {
-    if (!isInteractive()) {
+    if (!isInteractive() || globalOpts.json) {
       outputError(
         {
           message:

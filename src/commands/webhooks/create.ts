@@ -88,7 +88,7 @@ Non-interactive: --endpoint and --events are required.`,
     } else if (opts.events?.length) {
       selectedEvents = opts.events as WebhookEvent[];
     } else {
-      if (!isInteractive()) {
+      if (!isInteractive() || globalOpts.json) {
         outputError(
           { message: 'Missing --events flag.', code: 'missing_events' },
           { json: globalOpts.json },
