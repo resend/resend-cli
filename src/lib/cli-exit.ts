@@ -16,6 +16,7 @@ export function setupCliExitHandler(): void {
       },
       {},
     );
+    process.exit(1);
   });
 }
 
