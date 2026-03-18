@@ -45,6 +45,7 @@ describe('send command', () => {
   let exitSpy: MockInstance | undefined;
 
   beforeEach(() => {
+    vi.resetModules();
     process.env.RESEND_API_KEY = 're_test_key';
     mockSend.mockClear();
     mockDomainsList.mockClear();
