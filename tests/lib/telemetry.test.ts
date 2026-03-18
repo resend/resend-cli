@@ -116,7 +116,7 @@ describe('trackCommand', () => {
     expect(options.method).toBe('POST');
 
     const body = JSON.parse(options.body as string);
-    expect(body.event).toBe('cli_command');
+    expect(body.event).toBe('cli.used');
     expect(body.properties.command).toBe('emails send');
     expect(body.properties.json_mode).toBe(true);
     expect(body.properties.os).toBe(process.platform);

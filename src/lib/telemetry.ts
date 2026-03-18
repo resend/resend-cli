@@ -61,7 +61,7 @@ export function trackCommand(command: string, opts: { json?: boolean }): void {
     const payload = {
       api_key: POSTHOG_API_KEY,
       distinct_id: distinctId,
-      event: 'cli_command',
+      event: 'cli.used',
       properties: {
         command,
         cli_version: VERSION,
