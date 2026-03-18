@@ -53,7 +53,7 @@ describe('promptForMissing', () => {
       value: undefined,
       writable: true,
     });
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { promptForMissing } = await import('../../src/lib/prompts');
@@ -86,7 +86,7 @@ describe('promptForMissing', () => {
       value: undefined,
       writable: true,
     });
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { promptForMissing } = await import('../../src/lib/prompts');
@@ -112,7 +112,7 @@ describe('promptForMissing', () => {
       value: true,
       writable: true,
     });
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { promptForMissing } = await import('../../src/lib/prompts');
@@ -174,7 +174,7 @@ describe('confirmDelete', () => {
       value: undefined,
       writable: true,
     });
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { confirmDelete } = await import('../../src/lib/prompts');
@@ -196,7 +196,7 @@ describe('confirmDelete', () => {
       value: undefined,
       writable: true,
     });
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { confirmDelete } = await import('../../src/lib/prompts');
@@ -218,7 +218,7 @@ describe('confirmDelete', () => {
       value: true,
       writable: true,
     });
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { confirmDelete } = await import('../../src/lib/prompts');

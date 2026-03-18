@@ -1,7 +1,7 @@
+import './user-agent';
 import { Resend } from 'resend';
 import { listProfiles, resolveApiKeyAsync } from './config';
 import { errorMessage, outputError } from './output';
-import { VERSION } from './version';
 
 export type GlobalOpts = {
   apiKey?: string;
@@ -11,8 +11,6 @@ export type GlobalOpts = {
   /** @deprecated Use `profile` instead */
   team?: string;
 };
-
-process.env.RESEND_USER_AGENT = `resend-cli:${VERSION}`;
 
 export async function createClient(
   flagValue?: string,

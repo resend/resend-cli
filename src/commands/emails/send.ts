@@ -93,7 +93,7 @@ export const sendCommand = new Command('send')
   .option('--reply-to <address>', 'Reply-to address')
   .option(
     '--scheduled-at <datetime>',
-    'Schedule email for later (ISO 8601 format, e.g. 2024-08-05T11:52:01.858Z)',
+    'Schedule email for later — ISO 8601 or natural language e.g. "in 1 hour", "tomorrow at 9am ET"',
   )
   .option('--attachment <paths...>', 'File path(s) to attach')
   .option(
@@ -243,8 +243,8 @@ export const sendCommand = new Command('send')
 
     const data = await withSpinner(
       {
-        loading: 'Sending email...',
-        success: 'Email sent',
+        loading: opts.scheduledAt ? 'Scheduling email...' : 'Sending email...',
+        success: opts.scheduledAt ? 'Email scheduled' : 'Email sent',
         fail: 'Failed to send email',
       },
       () =>
@@ -270,7 +270,11 @@ export const sendCommand = new Command('send')
       globalOpts,
     );
     if (!globalOpts.json && isInteractive()) {
-      console.log(`\nEmail sent: ${data.id}`);
+      if (opts.scheduledAt) {
+        console.log(`\nEmail scheduled: ${data.id}`);
+      } else {
+        console.log(`\nEmail sent: ${data.id}`);
+      }
     } else {
       outputResult(data, { json: globalOpts.json });
     }

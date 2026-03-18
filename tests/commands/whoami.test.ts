@@ -82,6 +82,7 @@ describe('whoami command', () => {
     expect(parsed.profile).toBe('production');
     expect(parsed.api_key).toBe('re_...abcd');
     expect(parsed.source).toBe('config');
+    expect(parsed.config_path).toBe(join(tmpDir, 'resend', 'credentials.json'));
   });
 
   test('shows env source when RESEND_API_KEY is set', async () => {
@@ -96,6 +97,7 @@ describe('whoami command', () => {
     const parsed = JSON.parse(output);
     expect(parsed.authenticated).toBe(true);
     expect(parsed.source).toBe('env');
+    expect(parsed.config_path).toBe(join(tmpDir, 'resend', 'credentials.json'));
   });
 
   test('shows authenticated for keychain user (async resolve)', async () => {
@@ -136,5 +138,6 @@ describe('whoami command', () => {
     expect(parsed.authenticated).toBe(true);
     expect(parsed.api_key).toBe('re_...key1');
     expect(parsed.source).toBe('secure_storage');
+    expect(parsed.config_path).toBe(join(tmpDir, 'resend', 'credentials.json'));
   });
 });

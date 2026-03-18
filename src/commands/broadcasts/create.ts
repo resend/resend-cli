@@ -163,7 +163,11 @@ Scheduling:
       {
         spinner: {
           loading: 'Creating broadcast...',
-          success: opts.send ? 'Broadcast sent' : 'Broadcast created',
+          success: opts.send
+            ? opts.scheduledAt
+              ? 'Broadcast scheduled'
+              : 'Broadcast sent'
+            : 'Broadcast created',
           fail: 'Failed to create broadcast',
         },
         sdkCall: (resend) =>
@@ -183,7 +187,11 @@ Scheduling:
           } as CreateBroadcastOptions),
         onInteractive: (d) => {
           if (opts.send) {
-            console.log(`\nBroadcast sent: ${d.id}`);
+            if (opts.scheduledAt) {
+              console.log(`\nBroadcast scheduled: ${d.id}`);
+            } else {
+              console.log(`\nBroadcast sent: ${d.id}`);
+            }
           } else {
             console.log(`\nBroadcast created: ${d.id}`);
             console.log('Status: draft');
