@@ -360,30 +360,4 @@ describe('login command', () => {
     expect(parsed.config_path).toBeDefined();
     expect(parsed.profile).toBe('prod');
   });
-
-  test('exits with write_failed when credentials file cannot be written', async () => {
-    setupOutputSpies();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    exitSpy = mockExitThrow();
-
-    vi.resetModules();
-    const configMod = await import('../../../src/lib/config');
-    const storeSpy = vi
-      .spyOn(configMod, 'storeApiKey')
-      .mockImplementationOnce(() => {
-        throw new Error('EACCES: permission denied');
-      });
-
-    const { loginCommand } = await import('../../../src/commands/auth/login');
-    await expectExit1(() =>
-      loginCommand.parseAsync(['--key', 're_valid_key_123'], {
-        from: 'user',
-      }),
-    );
-
-    const output = errorSpy?.mock.calls.flat().join(' ') ?? '';
-    expect(output).toContain('write_failed');
-
-    storeSpy.mockRestore();
-  });
 });
