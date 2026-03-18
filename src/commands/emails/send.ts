@@ -111,7 +111,7 @@ export const sendCommand = new Command('send')
   .option('--template <id>', 'Template ID to use')
   .option(
     '--var <key=value...>',
-    'Template variables as key=value pairs (e.g. name=John count=42)',
+    'Template variables as key=value pairs (repeatable, e.g. --var name=John --var count=42)',
   )
   .addHelpText(
     'after',
@@ -175,7 +175,7 @@ export const sendCommand = new Command('send')
     if (hasTemplate && opts.attachment) {
       outputError(
         {
-          message: 'Cannot use --attachment with --template.',
+          message: 'Cannot use --attachment with --template',
           code: 'template_attachment_conflict',
         },
         { json: globalOpts.json },
@@ -330,7 +330,6 @@ export const sendCommand = new Command('send')
         ...(opts.bcc && { bcc: opts.bcc }),
         ...(opts.replyTo && { replyTo: opts.replyTo }),
         ...(opts.scheduledAt && { scheduledAt: opts.scheduledAt }),
-        ...(attachments && { attachments }),
         ...(headers && { headers }),
         ...(tags && { tags }),
       };

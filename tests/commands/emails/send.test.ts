@@ -710,6 +710,30 @@ describe('send command', () => {
     expect(output).toContain('template_body_conflict');
   });
 
+  test('errors with template_body_conflict when --template and --html-file used together', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await expectExit1(() =>
+      sendCommand.parseAsync(
+        [
+          '--template',
+          'tmpl_123',
+          '--to',
+          'b@test.com',
+          '--html-file',
+          './email.html',
+        ],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('template_body_conflict');
+  });
+
   test('errors with template_body_conflict when --template and --text used together', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
