@@ -3,7 +3,7 @@ import type { GlobalOpts } from '../lib/client';
 import {
   listProfiles,
   maskKey,
-  resolveApiKey,
+  resolveApiKeyAsync,
   resolveProfileName,
 } from '../lib/config';
 import { buildHelpText } from '../lib/help-text';
@@ -27,10 +27,10 @@ Shows which profile is active and where the API key comes from.`,
       ],
     }),
   )
-  .action((_opts, cmd) => {
+  .action(async (_opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const profileFlag = globalOpts.profile ?? globalOpts.team;
-    const resolved = resolveApiKey(globalOpts.apiKey, profileFlag);
+    const resolved = await resolveApiKeyAsync(globalOpts.apiKey, profileFlag);
 
     if (!resolved) {
       const requestedProfile = profileFlag
@@ -83,11 +83,18 @@ Shows which profile is active and where the API key comes from.`,
       return;
     }
 
+    const sourceLabel =
+      resolved.source === 'secure_storage'
+        ? 'secure storage'
+        : resolved.source === 'config'
+          ? 'config file'
+          : resolved.source === 'env'
+            ? 'environment variable'
+            : 'flag';
+
     console.log('');
     console.log(`  Profile: ${profile}`);
     console.log(`  API Key: ${maskKey(resolved.key)}`);
-    console.log(
-      `  Source:  ${resolved.source === 'config' ? 'config file' : resolved.source === 'env' ? 'environment variable' : 'flag'}`,
-    );
+    console.log(`  Source:  ${sourceLabel}`);
     console.log('');
   });

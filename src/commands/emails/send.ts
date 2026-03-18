@@ -136,12 +136,12 @@ export const sendCommand = new Command('send')
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
-    const resend = requireClient(globalOpts);
+    const resend = await requireClient(globalOpts);
 
     // Only fetch verified domains in interactive mode — non-interactive
     // callers (CI, agents, scripts) must pass --from explicitly.
     let fromAddress = opts.from;
-    if (!fromAddress && isInteractive()) {
+    if (!fromAddress && isInteractive() && !globalOpts.json) {
       const domains = await fetchVerifiedDomains(resend);
       if (domains.length > 0) {
         fromAddress = await promptForFromAddress(domains);

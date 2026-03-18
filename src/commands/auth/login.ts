@@ -5,9 +5,9 @@ import { Resend } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
 import {
   listProfiles,
-  resolveApiKey,
+  resolveApiKeyAsync,
   setActiveProfile,
-  storeApiKey,
+  storeApiKeyAsync,
   validateProfileName,
 } from '../../lib/config';
 import { buildHelpText } from '../../lib/help-text';
@@ -41,7 +41,7 @@ function openInBrowser(url: string): Promise<boolean> {
 }
 
 export const loginCommand = new Command('login')
-  .description('Save a Resend API key to the local credentials file')
+  .description('Save a Resend API key')
   .option('--key <key>', 'API key to store (required in non-interactive mode)')
   .addHelpText(
     'after',
@@ -70,7 +70,7 @@ export const loginCommand = new Command('login')
     let apiKey = typeof opts.key === 'string' ? opts.key.trim() : opts.key;
 
     if (!apiKey) {
-      if (!isInteractive()) {
+      if (!isInteractive() || globalOpts.json) {
         outputError(
           {
             message:
@@ -83,7 +83,7 @@ export const loginCommand = new Command('login')
 
       p.intro('Resend Authentication');
 
-      const existing = resolveApiKey(globalOpts.apiKey);
+      const existing = await resolveApiKeyAsync();
       if (existing) {
         const sourceLabel = SOURCE_LABEL[existing.source] ?? existing.source;
         p.log.info(
@@ -151,7 +151,18 @@ export const loginCommand = new Command('login')
 
     try {
       const resend = new Resend(apiKey);
-      await resend.domains.list();
+      const { error } = await resend.domains.list();
+      if (error) {
+        spinner.fail('API key validation failed');
+        outputError(
+          {
+            message: error.message || 'Failed to validate API key',
+            code: 'validation_failed',
+          },
+          { json: globalOpts.json },
+        );
+        return;
+      }
       spinner.stop('API key is valid');
     } catch (err) {
       spinner.fail('API key validation failed');
@@ -178,7 +189,7 @@ export const loginCommand = new Command('login')
       }
     }
 
-    if (!profileName && isInteractive()) {
+    if (!profileName && isInteractive() && !globalOpts.json) {
       const existingProfiles = listProfiles();
       if (existingProfiles.length > 0) {
         const options = [
@@ -242,23 +253,8 @@ export const loginCommand = new Command('login')
       }
     }
 
+    const { configPath, backend } = await storeApiKeyAsync(apiKey, profileName);
     const profileLabel = profileName || 'default';
-
-    let configPath: string;
-    try {
-      configPath = storeApiKey(apiKey, profileLabel);
-    } catch (err) {
-      outputError(
-        {
-          message: errorMessage(
-            err,
-            'Could not write credentials file. Check permissions or disk space.',
-          ),
-          code: 'write_failed',
-        },
-        { json: globalOpts.json },
-      );
-    }
 
     // Auto-switch to the newly added profile (only when user specified a profile)
     if (profileName) {
@@ -277,15 +273,33 @@ export const loginCommand = new Command('login')
 
     if (globalOpts.json) {
       outputResult(
-        { success: true, config_path: configPath, profile: profileLabel },
+        {
+          success: true,
+          config_path: configPath,
+          profile: profileLabel,
+          storage: backend.name,
+        },
         { json: true },
       );
     } else {
-      const msg = `API key stored for profile '${profileLabel}' at ${configPath}`;
+      const storageInfo = !backend.isSecure
+        ? `at ${configPath}`
+        : `in ${backend.name}`;
+      const msg = `API key stored for profile '${profileLabel}' ${storageInfo}`;
       if (isInteractive()) {
         p.outro(msg);
       } else {
         console.log(msg);
+      }
+
+      if (!backend.isSecure && process.platform === 'linux') {
+        const hint =
+          'Tip: Install libsecret-tools and a Secret Service provider (e.g. gnome-keyring) to store keys in secure storage instead of a plaintext file.';
+        if (isInteractive()) {
+          p.log.info(hint);
+        } else {
+          console.log(hint);
+        }
       }
     }
   });

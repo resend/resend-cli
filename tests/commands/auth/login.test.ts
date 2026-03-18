@@ -1,4 +1,10 @@
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -17,15 +23,18 @@ import {
   setupOutputSpies,
 } from '../../helpers';
 
-// Mock the Resend SDK
-const mockDomainsList = vi.fn(async () => ({
+// Mock the Resend SDK – default: valid key; override via mockDomainListResult
+let mockDomainListResult: { data: unknown; error: unknown } = {
   data: { data: [] },
   error: null,
-}));
+};
+
 vi.mock('resend', () => ({
   Resend: class MockResend {
     constructor(public key: string) {}
-    domains = { list: mockDomainsList };
+    domains = {
+      list: vi.fn(async () => mockDomainListResult),
+    };
   },
 }));
 
@@ -36,12 +45,15 @@ describe('login command', () => {
   let tmpDir: string;
 
   beforeEach(() => {
+    mockDomainListResult = { data: { data: [] }, error: null };
     tmpDir = join(
       tmpdir(),
       `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     );
     mkdirSync(tmpDir, { recursive: true });
     process.env.XDG_CONFIG_HOME = tmpDir;
+    // Force file backend so tests don't interact with real OS keychain
+    process.env.RESEND_CREDENTIAL_STORE = 'file';
   });
 
   afterEach(async () => {
@@ -59,25 +71,36 @@ describe('login command', () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  test('exits with validation_failed when API rejects the key', async () => {
-    mockDomainsList.mockRejectedValueOnce(new Error('Invalid API key'));
+  test('rejects key that fails API validation', async () => {
+    mockDomainListResult = {
+      data: null,
+      error: {
+        statusCode: 400,
+        message: 'API key is invalid',
+        name: 'validation_error',
+      },
+    };
+
     setupOutputSpies();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { loginCommand } = await import('../../../src/commands/auth/login');
     await expectExit1(() =>
-      loginCommand.parseAsync(['--key', 're_valid_format_but_invalid_key'], {
+      loginCommand.parseAsync(['--key', 're_fake_invalid_key'], {
         from: 'user',
       }),
     );
 
-    const output = errorSpy?.mock.calls.flat().join(' ') ?? '';
+    const output = errorSpy?.mock.calls[0][0] as string;
     expect(output).toContain('validation_failed');
+
+    // Credentials file must not be created for an invalid key
+    const configPath = join(tmpDir, 'resend', 'credentials.json');
+    expect(existsSync(configPath)).toBe(false);
   });
 
-  test('rejects key not starting with re_ with invalid_key_format', async () => {
-    setupOutputSpies();
+  test('rejects key not starting with re_', async () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
@@ -144,7 +167,39 @@ describe('login command', () => {
     expect(output).toContain('missing_key');
   });
 
-  test('non-interactive login stores as default when no --profile (does not switch active)', async () => {
+  test('errors with missing_key when --json is set but --key is omitted even in TTY', async () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { Command } = await import('@commander-js/extra-typings');
+    const { loginCommand } = await import('../../../src/commands/auth/login');
+    const program = new Command()
+      .option('--profile <name>')
+      .option('--team <name>')
+      .option('--json')
+      .option('--api-key <key>')
+      .option('-q, --quiet')
+      .addCommand(loginCommand);
+
+    await expectExit1(() =>
+      program.parseAsync(['login', '--json'], { from: 'user' }),
+    );
+
+    const raw = errorSpy?.mock.calls.map((c) => c[0]).join(' ');
+    expect(raw).toContain('missing_key');
+
+    loginCommand.parent = null;
+  });
+
+  test('non-interactive login stores as default when profiles exist', async () => {
     // Pre-populate credentials with an existing profile
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });

@@ -190,7 +190,7 @@ For example, if using ngrok: ngrok http 4318`,
       selectedEvents = ALL_WEBHOOK_EVENTS;
     }
 
-    const resend = requireClient(globalOpts);
+    const resend = await requireClient(globalOpts);
     const jsonMode = globalOpts.json || !isInteractive();
 
     // Start local server

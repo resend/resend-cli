@@ -1,6 +1,6 @@
 {
   "name": "resend-cli",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "The official CLI for Resend",
   "license": "MIT",
   "repository": {
@@ -12,14 +12,16 @@
     "cli",
     "resend",
     "email",
-    "api"
+    "api",
+    "tanstack-intent"
   ],
   "engines": {
     "node": ">=20"
   },
   "packageManager": "pnpm@10.32.1",
   "files": [
-    "dist/cli.cjs"
+    "dist/cli.cjs",
+    "skills/"
   ],
   "type": "module",
   "bin": {
@@ -35,14 +37,16 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "vitest run --config vitest.config.e2e.ts",
-    "prepack": "pnpm build"
+    "sync-skill-version": "node scripts/sync-skill-version.mjs",
+    "version": "pnpm run sync-skill-version && git add skills/resend-cli/SKILL.md",
+    "prepack": "pnpm run sync-skill-version && pnpm build"
   },
   "dependencies": {
     "@clack/prompts": "1.1.0",
     "@commander-js/extra-typings": "14.0.0",
     "commander": "14.0.3",
-    "picocolors": "^1.1.1",
-    "resend": "6.9.3"
+    "picocolors": "1.1.1",
+    "resend": "6.9.4"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -51,12 +55,12 @@
     ]
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.6",
+    "@biomejs/biome": "2.4.7",
     "@types/node": "24.12.0",
     "esbuild": "0.27.4",
     "tsx": "4.21.0",
     "typescript": "5.9.3",
-    "vitest": "3.2.4",
+    "vitest": "4.1.0",
     "@yao-pkg/pkg": "6.14.1"
   }
 }
