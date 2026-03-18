@@ -727,6 +727,30 @@ describe('send command', () => {
     expect(output).toContain('template_body_conflict');
   });
 
+  test('errors with template_attachment_conflict when --template and --attachment used together', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await expectExit1(() =>
+      sendCommand.parseAsync(
+        [
+          '--template',
+          'tmpl_123',
+          '--to',
+          'b@test.com',
+          '--attachment',
+          'file.pdf',
+        ],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('template_attachment_conflict');
+  });
+
   test('degrades gracefully when domain fetch fails', async () => {
     const { fetchVerifiedDomains } = await import(
       '../../../src/commands/emails/send'

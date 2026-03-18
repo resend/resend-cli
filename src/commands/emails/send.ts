@@ -127,6 +127,7 @@ export const sendCommand = new Command('send')
         'invalid_tag',
         'invalid_var',
         'template_body_conflict',
+        'template_attachment_conflict',
         'send_error',
       ],
       examples: [
@@ -166,6 +167,16 @@ export const sendCommand = new Command('send')
         {
           message: 'Cannot use --template with --html, --html-file, or --text',
           code: 'template_body_conflict',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
+    if (hasTemplate && opts.attachment) {
+      outputError(
+        {
+          message: 'Cannot use --attachment with --template.',
+          code: 'template_attachment_conflict',
         },
         { json: globalOpts.json },
       );
