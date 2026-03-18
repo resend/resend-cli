@@ -134,9 +134,9 @@ describe('logout command', () => {
   });
 
   test('exits with error when file removal fails', async () => {
+    spies = setupOutputSpies();
     errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
-    spies = setupOutputSpies();
     writeCredentials();
 
     // Make the credentials file a directory so unlinkSync throws

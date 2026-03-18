@@ -20,6 +20,7 @@ import {
   captureTestEnv,
   expectExit1,
   mockExitThrow,
+  setNonInteractive,
   setupOutputSpies,
 } from '../../helpers';
 
@@ -75,6 +76,7 @@ describe('login command', () => {
       },
     };
 
+    setNonInteractive();
     errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
@@ -94,6 +96,7 @@ describe('login command', () => {
   });
 
   test('rejects key not starting with re_', async () => {
+    setNonInteractive();
     errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
