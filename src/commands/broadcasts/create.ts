@@ -78,7 +78,7 @@ Scheduling:
     let segmentId = opts.segmentId;
 
     if (!from) {
-      if (!isInteractive()) {
+      if (!isInteractive() || globalOpts.json) {
         outputError(
           { message: 'Missing --from flag.', code: 'missing_from' },
           { json: globalOpts.json },
@@ -96,7 +96,7 @@ Scheduling:
     }
 
     if (!subject) {
-      if (!isInteractive()) {
+      if (!isInteractive() || globalOpts.json) {
         outputError(
           { message: 'Missing --subject flag.', code: 'missing_subject' },
           { json: globalOpts.json },
@@ -114,7 +114,7 @@ Scheduling:
     }
 
     if (!segmentId) {
-      if (!isInteractive()) {
+      if (!isInteractive() || globalOpts.json) {
         outputError(
           { message: 'Missing --segment-id flag.', code: 'missing_segment' },
           { json: globalOpts.json },
@@ -139,7 +139,7 @@ Scheduling:
     }
 
     if (!html && !text) {
-      if (!isInteractive()) {
+      if (!isInteractive() || globalOpts.json) {
         outputError(
           {
             message: 'Missing body. Provide --html, --html-file, or --text.',
@@ -163,7 +163,11 @@ Scheduling:
       {
         spinner: {
           loading: 'Creating broadcast...',
-          success: opts.send ? 'Broadcast sent' : 'Broadcast created',
+          success: opts.send
+            ? opts.scheduledAt
+              ? 'Broadcast scheduled'
+              : 'Broadcast sent'
+            : 'Broadcast created',
           fail: 'Failed to create broadcast',
         },
         sdkCall: (resend) =>
@@ -183,7 +187,11 @@ Scheduling:
           } as CreateBroadcastOptions),
         onInteractive: (d) => {
           if (opts.send) {
-            console.log(`\nBroadcast sent: ${d.id}`);
+            if (opts.scheduledAt) {
+              console.log(`\nBroadcast scheduled: ${d.id}`);
+            } else {
+              console.log(`\nBroadcast sent: ${d.id}`);
+            }
           } else {
             console.log(`\nBroadcast created: ${d.id}`);
             console.log('Status: draft');

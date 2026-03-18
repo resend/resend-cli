@@ -163,7 +163,7 @@ describe('send command', () => {
       tmpdir(),
       `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     );
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -186,7 +186,7 @@ describe('send command', () => {
 
   test('errors listing missing flags in non-interactive mode', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -201,7 +201,7 @@ describe('send command', () => {
 
   test('errors when no body and non-interactive', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -363,7 +363,7 @@ describe('send command', () => {
 
   test('errors with file_read_error for missing attachment', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -419,7 +419,7 @@ describe('send command', () => {
 
   test('errors with invalid_header for malformed header', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -475,7 +475,7 @@ describe('send command', () => {
 
   test('errors with invalid_tag for malformed tag', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -524,6 +524,51 @@ describe('send command', () => {
     expect(mockSend).toHaveBeenCalledTimes(1);
     const opts = mockSend.mock.calls[0][1] as Record<string, unknown>;
     expect(opts?.idempotencyKey).toBe('my-key-123');
+  });
+
+  test('errors with missing_flags when --json is set and --from is missing', async () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { Command } = await import('@commander-js/extra-typings');
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    const program = new Command()
+      .option('--profile <name>')
+      .option('--team <name>')
+      .option('--json')
+      .option('--api-key <key>')
+      .option('-q, --quiet')
+      .addCommand(sendCommand);
+
+    await expectExit1(() =>
+      program.parseAsync(
+        [
+          'send',
+          '--json',
+          '--to',
+          'b@test.com',
+          '--subject',
+          'Test',
+          '--text',
+          'Hi',
+        ],
+        { from: 'user' },
+      ),
+    );
+
+    // domain list should NOT be called since --json suppresses interactive prompts
+    expect(mockDomainsList).not.toHaveBeenCalled();
+
+    // @ts-expect-error — reset parent to avoid polluting the shared singleton
+    sendCommand.parent = null;
   });
 
   test('degrades gracefully when domain fetch fails', async () => {

@@ -35,7 +35,7 @@ Non-interactive: --segment-id is required.`,
     let segmentId = opts.segmentId;
 
     if (!segmentId) {
-      if (!isInteractive()) {
+      if (!isInteractive() || globalOpts.json) {
         outputError(
           { message: 'Missing --segment-id flag.', code: 'missing_segment_id' },
           { json: globalOpts.json },

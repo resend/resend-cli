@@ -19,9 +19,12 @@ import { topicsCommand } from './commands/topics/index';
 import { updateCommand } from './commands/update';
 import { webhooksCommand } from './commands/webhooks/index';
 import { whoamiCommand } from './commands/whoami';
+import { setupCliExitHandler } from './lib/cli-exit';
 import { errorMessage, outputError } from './lib/output';
 import { checkForUpdates } from './lib/update-check';
 import { PACKAGE_NAME, VERSION } from './lib/version';
+
+setupCliExitHandler();
 
 const program = new Command()
   .name('resend')
@@ -83,6 +86,20 @@ ${pc.gray('Examples:')}
   ${pc.blue('$ resend emails send')}
 `,
   )
+  .action(() => {
+    const opts = program.opts();
+    if (opts.apiKey) {
+      outputError(
+        {
+          message:
+            '--api-key is a per-command override and was not saved. To store your API key, run `resend login`.',
+          code: 'missing_command',
+        },
+        { json: opts.json },
+      );
+    }
+    program.help();
+  })
   .addCommand(loginCommand)
   .addCommand(logoutCommand)
   .addCommand(emailsCommand)

@@ -49,7 +49,7 @@ Topics not included in the array are left unchanged.`,
     let topicsJson = opts.topics;
 
     if (!topicsJson) {
-      if (!isInteractive()) {
+      if (!isInteractive() || globalOpts.json) {
         outputError(
           { message: 'Missing --topics flag.', code: 'missing_topics' },
           { json: globalOpts.json },

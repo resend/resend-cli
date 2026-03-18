@@ -53,7 +53,7 @@ describe('promptForMissing', () => {
       value: undefined,
       writable: true,
     });
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { promptForMissing } = await import('../../src/lib/prompts');
@@ -86,7 +86,7 @@ describe('promptForMissing', () => {
       value: undefined,
       writable: true,
     });
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { promptForMissing } = await import('../../src/lib/prompts');
@@ -96,6 +96,32 @@ describe('promptForMissing', () => {
         { from: undefined },
         [{ flag: 'from', message: 'From' }],
         {},
+      ),
+    );
+
+    const allErrors = errorSpy?.mock.calls.map((c) => c[0]).join(' ');
+    expect(allErrors).toContain('missing_flags');
+  });
+
+  test('exits with missing_flags error when --json is set even in TTY', async () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { promptForMissing } = await import('../../src/lib/prompts');
+
+    await expectExit1(() =>
+      promptForMissing(
+        { from: undefined },
+        [{ flag: 'from', message: 'From' }],
+        { json: true },
       ),
     );
 
@@ -148,7 +174,7 @@ describe('confirmDelete', () => {
       value: undefined,
       writable: true,
     });
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { confirmDelete } = await import('../../src/lib/prompts');
@@ -170,7 +196,29 @@ describe('confirmDelete', () => {
       value: undefined,
       writable: true,
     });
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { confirmDelete } = await import('../../src/lib/prompts');
+    await expectExit1(() =>
+      confirmDelete('res_123', 'Delete?', { json: true }),
+    );
+
+    const raw = errorSpy?.mock.calls.map((c) => c[0]).join(' ');
+    const parsed = JSON.parse(raw);
+    expect(parsed.error.code).toBe('confirmation_required');
+  });
+
+  test('exits with confirmation_required when --json is set even in TTY', async () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { confirmDelete } = await import('../../src/lib/prompts');

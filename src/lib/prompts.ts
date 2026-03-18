@@ -1,4 +1,5 @@
 import * as p from '@clack/prompts';
+import { getCancelExitCode } from './cli-exit';
 import type { GlobalOpts } from './client';
 import { renameProfileAsync, validateProfileName } from './config';
 import { errorMessage, outputError } from './output';
@@ -14,7 +15,7 @@ export interface FieldSpec {
 
 export function cancelAndExit(message: string): never {
   p.cancel(message);
-  process.exit(0);
+  process.exit(getCancelExitCode());
 }
 
 /**
@@ -26,7 +27,7 @@ export async function confirmDelete(
   confirmMessage: string,
   globalOpts: GlobalOpts,
 ): Promise<void> {
-  if (!isInteractive()) {
+  if (!isInteractive() || globalOpts.json) {
     outputError(
       {
         message: 'Use --yes to confirm deletion in non-interactive mode.',
@@ -112,7 +113,7 @@ export async function requireText(
     return value;
   }
 
-  if (!isInteractive()) {
+  if (!isInteractive() || globalOpts.json) {
     outputError(error, { json: globalOpts.json });
   }
 
@@ -143,7 +144,7 @@ export async function requireSelect<V extends string>(
     return value;
   }
 
-  if (!isInteractive()) {
+  if (!isInteractive() || globalOpts.json) {
     outputError(error, { json: globalOpts.json });
   }
 
@@ -172,7 +173,7 @@ export async function promptForMissing<
     return current as { [K in keyof T]: string };
   }
 
-  if (!isInteractive()) {
+  if (!isInteractive() || globalOpts.json) {
     const flags = missing.map((f) => `--${f.flag}`).join(', ');
     outputError(
       { message: `Missing required flags: ${flags}`, code: 'missing_flags' },

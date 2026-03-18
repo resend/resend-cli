@@ -36,6 +36,7 @@ describe('broadcasts create command', () => {
   let stderrSpy: MockInstance | undefined;
   let exitSpy: MockInstance | undefined;
   let readFileSpy: MockInstance | undefined;
+  let commandRef: { parent: unknown } | undefined;
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
@@ -53,6 +54,10 @@ describe('broadcasts create command', () => {
     stderrSpy = undefined;
     exitSpy = undefined;
     readFileSpy = undefined;
+    if (commandRef) {
+      commandRef.parent = null;
+      commandRef = undefined;
+    }
   });
 
   test('creates broadcast with required flags', async () => {
@@ -197,7 +202,7 @@ describe('broadcasts create command', () => {
 
   test('errors with missing_from when --from absent in non-interactive mode', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createBroadcastCommand } = await import(
@@ -223,7 +228,7 @@ describe('broadcasts create command', () => {
 
   test('errors with missing_subject when --subject absent in non-interactive mode', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createBroadcastCommand } = await import(
@@ -249,7 +254,7 @@ describe('broadcasts create command', () => {
 
   test('errors with missing_segment when --segment-id absent in non-interactive mode', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createBroadcastCommand } = await import(
@@ -275,7 +280,7 @@ describe('broadcasts create command', () => {
 
   test('errors with missing_body when no body flag in non-interactive mode', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createBroadcastCommand } = await import(
@@ -303,7 +308,7 @@ describe('broadcasts create command', () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createBroadcastCommand } = await import(
@@ -334,7 +339,7 @@ describe('broadcasts create command', () => {
     mockCreate.mockResolvedValueOnce(
       mockSdkError('Segment not found', 'not_found'),
     );
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);
@@ -365,7 +370,7 @@ describe('broadcasts create command', () => {
 
   test('does not call SDK when validation fails', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createBroadcastCommand } = await import(
@@ -376,6 +381,51 @@ describe('broadcasts create command', () => {
     );
 
     expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  test('errors with missing_from when --json is set even in TTY', async () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { Command } = await import('@commander-js/extra-typings');
+    const { createBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/create'
+    );
+    const program = new Command()
+      .option('--profile <name>')
+      .option('--team <name>')
+      .option('--json')
+      .option('--api-key <key>')
+      .option('-q, --quiet')
+      .addCommand(createBroadcastCommand);
+    commandRef = createBroadcastCommand as unknown as { parent: unknown };
+
+    await expectExit1(() =>
+      program.parseAsync(
+        [
+          'create',
+          '--json',
+          '--subject',
+          'News',
+          '--segment-id',
+          '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
+          '--html',
+          '<p>Hi</p>',
+        ],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('missing_from');
   });
 
   test('reads html body from --html-file and passes it to SDK', async () => {
@@ -408,7 +458,7 @@ describe('broadcasts create command', () => {
 
   test('errors with file_read_error when --html-file path is unreadable', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);

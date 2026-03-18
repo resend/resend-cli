@@ -20,6 +20,7 @@ import {
   captureTestEnv,
   expectExit1,
   mockExitThrow,
+  setNonInteractive,
   setupOutputSpies,
 } from '../../helpers';
 
@@ -75,7 +76,8 @@ describe('login command', () => {
       },
     };
 
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { loginCommand } = await import('../../../src/commands/auth/login');
@@ -94,7 +96,8 @@ describe('login command', () => {
   });
 
   test('rejects key not starting with re_', async () => {
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { loginCommand } = await import('../../../src/commands/auth/login');
@@ -118,7 +121,7 @@ describe('login command', () => {
 
   test('requires --key in non-interactive mode', async () => {
     setupOutputSpies();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { loginCommand } = await import('../../../src/commands/auth/login');
@@ -127,6 +130,39 @@ describe('login command', () => {
     expect(errorSpy).toBeDefined();
     const output = errorSpy?.mock.calls[0][0] as string;
     expect(output).toContain('missing_key');
+  });
+
+  test('errors with missing_key when --json is set but --key is omitted even in TTY', async () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { Command } = await import('@commander-js/extra-typings');
+    const { loginCommand } = await import('../../../src/commands/auth/login');
+    const program = new Command()
+      .option('--profile <name>')
+      .option('--team <name>')
+      .option('--json')
+      .option('--api-key <key>')
+      .option('-q, --quiet')
+      .addCommand(loginCommand);
+
+    await expectExit1(() =>
+      program.parseAsync(['login', '--json'], { from: 'user' }),
+    );
+
+    const raw = errorSpy?.mock.calls.map((c) => c[0]).join(' ');
+    expect(raw).toContain('missing_key');
+
+    // @ts-expect-error — reset parent to avoid polluting the shared singleton
+    loginCommand.parent = null;
   });
 
   test('non-interactive login stores as default when profiles exist', async () => {

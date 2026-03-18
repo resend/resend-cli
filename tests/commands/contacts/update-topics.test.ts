@@ -36,6 +36,7 @@ describe('contacts update-topics command', () => {
   let errorSpy: MockInstance | undefined;
   let stderrSpy: MockInstance | undefined;
   let exitSpy: MockInstance | undefined;
+  let commandRef: { parent: unknown } | undefined;
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
@@ -51,6 +52,10 @@ describe('contacts update-topics command', () => {
     errorSpy = undefined;
     stderrSpy = undefined;
     exitSpy = undefined;
+    if (commandRef) {
+      commandRef.parent = null;
+      commandRef = undefined;
+    }
   });
 
   test('updates topics by contact ID', async () => {
@@ -135,7 +140,7 @@ describe('contacts update-topics command', () => {
 
   test('errors with missing_topics when --topics absent in non-interactive mode', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { updateContactTopicsCommand } = await import(
@@ -154,9 +159,45 @@ describe('contacts update-topics command', () => {
     expect(output).toContain('missing_topics');
   });
 
+  test('errors with missing_topics when --json is set even in TTY', async () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { Command } = await import('@commander-js/extra-typings');
+    const { updateContactTopicsCommand } = await import(
+      '../../../src/commands/contacts/update-topics'
+    );
+    const program = new Command()
+      .option('--profile <name>')
+      .option('--team <name>')
+      .option('--json')
+      .option('--api-key <key>')
+      .option('-q, --quiet')
+      .addCommand(updateContactTopicsCommand);
+    commandRef = updateContactTopicsCommand as unknown as { parent: unknown };
+
+    await expectExit1(() =>
+      program.parseAsync(
+        ['update-topics', '--json', 'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('missing_topics');
+  });
+
   test('errors with invalid_topics when --topics is not valid JSON', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { updateContactTopicsCommand } = await import(
@@ -175,7 +216,7 @@ describe('contacts update-topics command', () => {
 
   test('errors with invalid_topics when --topics is not an array', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { updateContactTopicsCommand } = await import(
@@ -196,7 +237,7 @@ describe('contacts update-topics command', () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { updateContactTopicsCommand } = await import(
@@ -222,7 +263,7 @@ describe('contacts update-topics command', () => {
     mockUpdateTopics.mockResolvedValueOnce(
       mockSdkError('Topic not found', 'not_found'),
     );
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);

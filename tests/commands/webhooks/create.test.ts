@@ -38,6 +38,7 @@ describe('webhooks create command', () => {
   let errorSpy: MockInstance | undefined;
   let stderrSpy: MockInstance | undefined;
   let exitSpy: MockInstance | undefined;
+  let commandRef: { parent: unknown } | undefined;
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
@@ -53,6 +54,10 @@ describe('webhooks create command', () => {
     errorSpy = undefined;
     stderrSpy = undefined;
     exitSpy = undefined;
+    if (commandRef) {
+      commandRef.parent = null;
+      commandRef = undefined;
+    }
   });
 
   test('creates webhook with --endpoint and explicit --events', async () => {
@@ -115,7 +120,7 @@ describe('webhooks create command', () => {
 
   test('errors with missing_endpoint in non-interactive mode when --endpoint absent', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createWebhookCommand } = await import(
@@ -133,7 +138,7 @@ describe('webhooks create command', () => {
 
   test('errors with missing_events in non-interactive mode when --events absent', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createWebhookCommand } = await import(
@@ -150,9 +155,45 @@ describe('webhooks create command', () => {
     expect(output).toContain('missing_events');
   });
 
+  test('errors with missing_events when --json is set even in TTY', async () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { Command } = await import('@commander-js/extra-typings');
+    const { createWebhookCommand } = await import(
+      '../../../src/commands/webhooks/create'
+    );
+    const program = new Command()
+      .option('--profile <name>')
+      .option('--team <name>')
+      .option('--json')
+      .option('--api-key <key>')
+      .option('-q, --quiet')
+      .addCommand(createWebhookCommand);
+    commandRef = createWebhookCommand as unknown as { parent: unknown };
+
+    await expectExit1(() =>
+      program.parseAsync(
+        ['create', '--json', '--endpoint', 'https://app.example.com/hooks'],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('missing_events');
+  });
+
   test('does not call SDK when missing_endpoint error is raised', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createWebhookCommand } = await import(
@@ -171,7 +212,7 @@ describe('webhooks create command', () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createWebhookCommand } = await import(
@@ -198,7 +239,7 @@ describe('webhooks create command', () => {
     mockCreate.mockResolvedValueOnce(
       mockSdkError('Invalid endpoint', 'validation_error'),
     );
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);

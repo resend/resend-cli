@@ -37,6 +37,7 @@ describe('contacts create command', () => {
   let errorSpy: MockInstance | undefined;
   let stderrSpy: MockInstance | undefined;
   let exitSpy: MockInstance | undefined;
+  let commandRef: { parent: unknown } | undefined;
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
@@ -52,6 +53,10 @@ describe('contacts create command', () => {
     errorSpy = undefined;
     stderrSpy = undefined;
     exitSpy = undefined;
+    if (commandRef) {
+      commandRef.parent = null;
+      commandRef = undefined;
+    }
   });
 
   test('creates contact with --email flag', async () => {
@@ -190,9 +195,51 @@ describe('contacts create command', () => {
     ]);
   });
 
+  test('suppresses name prompts when --json is set even in TTY', async () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const stderrWriteSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
+
+    const { Command } = await import('@commander-js/extra-typings');
+    const { createContactCommand } = await import(
+      '../../../src/commands/contacts/create'
+    );
+    const program = new Command()
+      .option('--profile <name>')
+      .option('--team <name>')
+      .option('--json')
+      .option('--api-key <key>')
+      .option('-q, --quiet')
+      .addCommand(createContactCommand);
+    commandRef = createContactCommand as unknown as { parent: unknown };
+
+    await program.parseAsync(
+      ['create', '--json', '--email', 'jane@example.com'],
+      { from: 'user' },
+    );
+
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.email).toBe('jane@example.com');
+    expect(args.firstName).toBeUndefined();
+    expect(args.lastName).toBeUndefined();
+
+    logSpy.mockRestore();
+    stderrWriteSpy.mockRestore();
+  });
+
   test('errors with missing_email in non-interactive mode', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createContactCommand } = await import(
@@ -208,7 +255,7 @@ describe('contacts create command', () => {
 
   test('errors with invalid_properties when --properties is not valid JSON', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createContactCommand } = await import(
@@ -229,7 +276,7 @@ describe('contacts create command', () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createContactCommand } = await import(
@@ -250,7 +297,7 @@ describe('contacts create command', () => {
     mockCreate.mockResolvedValueOnce(
       mockSdkError('Contact already exists', 'validation_error'),
     );
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);
