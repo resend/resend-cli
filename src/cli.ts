@@ -86,6 +86,20 @@ ${pc.gray('Examples:')}
   ${pc.blue('$ resend emails send')}
 `,
   )
+  .action(() => {
+    const opts = program.opts();
+    if (opts.apiKey) {
+      outputError(
+        {
+          message:
+            '--api-key is a per-command override and was not saved. To store your API key, run `resend login`.',
+          code: 'missing_command',
+        },
+        { json: opts.json },
+      );
+    }
+    program.help();
+  })
   .addCommand(loginCommand)
   .addCommand(logoutCommand)
   .addCommand(emailsCommand)
