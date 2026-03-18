@@ -34,6 +34,7 @@ describe('api-keys create command', () => {
   let errorSpy: MockInstance | undefined;
   let stderrSpy: MockInstance | undefined;
   let exitSpy: MockInstance | undefined;
+  let commandRef: { parent: unknown } | undefined;
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
@@ -49,6 +50,10 @@ describe('api-keys create command', () => {
     errorSpy = undefined;
     stderrSpy = undefined;
     exitSpy = undefined;
+    if (commandRef) {
+      commandRef.parent = null;
+      commandRef = undefined;
+    }
   });
 
   test('creates API key with --name flag', async () => {
@@ -129,6 +134,39 @@ describe('api-keys create command', () => {
     );
     await expectExit1(() =>
       createApiKeyCommand.parseAsync([], { from: 'user' }),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('missing_name');
+  });
+
+  test('errors with missing_name when --json is set even in TTY', async () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { Command } = await import('@commander-js/extra-typings');
+    const { createApiKeyCommand } = await import(
+      '../../../src/commands/api-keys/create'
+    );
+    const program = new Command()
+      .option('--profile <name>')
+      .option('--team <name>')
+      .option('--json')
+      .option('--api-key <key>')
+      .option('-q, --quiet')
+      .addCommand(createApiKeyCommand);
+    commandRef = createApiKeyCommand as unknown as { parent: unknown };
+
+    await expectExit1(() =>
+      program.parseAsync(['create', '--json'], { from: 'user' }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

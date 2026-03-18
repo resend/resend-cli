@@ -8,17 +8,24 @@ import {
 } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import {
+  type CredentialBackend,
+  getCredentialBackend,
+  SERVICE_NAME,
+} from './credential-store';
 
-export type ApiKeySource = 'flag' | 'env' | 'config';
+export type ApiKeySource = 'flag' | 'env' | 'config' | 'secure_storage';
 export type ResolvedKey = {
   key: string;
   source: ApiKeySource;
   profile?: string;
 };
 
-export type Profile = { api_key: string };
+export type Profile = { api_key?: string };
+export type CredentialStorage = 'secure_storage' | 'file';
 export type CredentialsFile = {
   active_profile: string;
+  storage?: CredentialStorage;
   profiles: Record<string, Profile>;
 };
 
@@ -51,8 +58,11 @@ export function readCredentials(): CredentialsFile | null {
     }
     // New format: { profiles, active_profile }
     if (data.profiles) {
+      const storage =
+        data.storage === 'keychain' ? 'secure_storage' : data.storage;
       return {
         active_profile: data.active_profile ?? 'default',
+        ...(storage ? { storage } : {}),
         profiles: data.profiles,
       };
     }
@@ -276,4 +286,165 @@ export function maskKey(key: string): string {
     return `${key.slice(0, 3)}...`;
   }
   return `${key.slice(0, 3)}...${key.slice(-4)}`;
+}
+
+// --- Async variants that route through the credential backend ---
+
+export async function resolveApiKeyAsync(
+  flagValue?: string,
+  profileName?: string,
+): Promise<ResolvedKey | null> {
+  if (flagValue) {
+    return { key: flagValue, source: 'flag' };
+  }
+
+  const envKey = process.env.RESEND_API_KEY;
+  if (envKey) {
+    return { key: envKey, source: 'env' };
+  }
+
+  const creds = readCredentials();
+  const profile =
+    profileName ||
+    process.env.RESEND_PROFILE ||
+    process.env.RESEND_TEAM ||
+    creds?.active_profile ||
+    'default';
+
+  // If storage is 'secure_storage', try credential backend first
+  if (creds?.storage === 'secure_storage') {
+    const backend = await getCredentialBackend();
+    const key = await backend.get(SERVICE_NAME, profile);
+    if (key) {
+      return { key, source: 'secure_storage', profile };
+    }
+    // Fall through: profile may not be migrated yet (api_key still in file)
+  }
+
+  // File-based storage (or unmigrated profile in mixed state)
+  if (creds) {
+    const entry = creds.profiles[profile];
+    if (entry?.api_key) {
+      // Auto-migrate: move plaintext key to secure storage if available
+      const backend = await getCredentialBackend();
+      if (backend.isSecure) {
+        try {
+          await backend.set(SERVICE_NAME, profile, entry.api_key);
+          creds.profiles[profile] = {};
+          creds.storage = 'secure_storage';
+          writeCredentials(creds);
+          process.stderr.write(
+            `Notice: API key for profile "${profile}" has been moved to ${backend.name}\n`,
+          );
+        } catch {
+          // Non-fatal — plaintext key still works
+        }
+      }
+      return { key: entry.api_key, source: 'config', profile };
+    }
+  }
+
+  return null;
+}
+
+export async function storeApiKeyAsync(
+  apiKey: string,
+  profileName?: string,
+): Promise<{ configPath: string; backend: CredentialBackend }> {
+  const profile = profileName || 'default';
+  const validationError = validateProfileName(profile);
+  if (validationError) {
+    throw new Error(validationError);
+  }
+
+  const backend = await getCredentialBackend();
+  const isFileBackend = !backend.isSecure;
+
+  if (isFileBackend) {
+    // Do NOT clear a pre-existing `storage: 'secure_storage'` marker here.
+    // Other profiles may still have their keys in secure storage.
+    // resolveApiKeyAsync already falls through from secure storage to file-based
+    // lookup, so keeping the marker is safe and avoids orphaning those profiles.
+    const configPath = storeApiKey(apiKey, profile);
+    return { configPath, backend };
+  }
+
+  // Store in secure backend
+  await backend.set(SERVICE_NAME, profile, apiKey);
+
+  // Update credentials file: mark storage as secure, keep profile entry (without api_key)
+  const creds = readCredentials() || {
+    active_profile: 'default',
+    profiles: {},
+  };
+  creds.storage = 'secure_storage';
+  creds.profiles[profile] = {};
+
+  if (Object.keys(creds.profiles).length === 1) {
+    creds.active_profile = profile;
+  }
+
+  const configPath = writeCredentials(creds);
+  return { configPath, backend };
+}
+
+export async function removeApiKeyAsync(profileName?: string): Promise<string> {
+  const creds = readCredentials();
+  const profile =
+    profileName ||
+    process.env.RESEND_PROFILE ||
+    process.env.RESEND_TEAM ||
+    creds?.active_profile ||
+    'default';
+
+  if (creds?.storage === 'secure_storage') {
+    const backend = await getCredentialBackend();
+    if (backend.isSecure) {
+      await backend.delete(SERVICE_NAME, profile);
+    }
+  }
+
+  return removeApiKey(profile);
+}
+
+export async function removeAllApiKeysAsync(): Promise<string> {
+  const creds = readCredentials();
+  const configPath = getCredentialsPath();
+
+  if (creds?.storage === 'secure_storage') {
+    const backend = await getCredentialBackend();
+    if (backend.isSecure) {
+      await Promise.all(
+        Object.keys(creds.profiles).map((profile) =>
+          backend.delete(SERVICE_NAME, profile),
+        ),
+      );
+    }
+  }
+
+  // Remove credentials file (may already be gone if only secure storage)
+  if (existsSync(configPath)) {
+    unlinkSync(configPath);
+  }
+  return configPath;
+}
+
+export async function renameProfileAsync(
+  oldName: string,
+  newName: string,
+): Promise<void> {
+  const creds = readCredentials();
+
+  if (creds?.storage === 'secure_storage') {
+    const backend = await getCredentialBackend();
+    if (backend.isSecure) {
+      const key = await backend.get(SERVICE_NAME, oldName);
+      if (key) {
+        await backend.set(SERVICE_NAME, newName, key);
+        await backend.delete(SERVICE_NAME, oldName);
+      }
+    }
+  }
+
+  renameProfile(oldName, newName);
 }

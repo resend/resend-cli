@@ -59,7 +59,7 @@ Non-interactive: --name and a body (--html or --html-file) are required.`,
     let name = opts.name;
 
     if (!name) {
-      if (!isInteractive()) {
+      if (!isInteractive() || globalOpts.json) {
         outputError(
           { message: 'Missing --name flag.', code: 'missing_name' },
           { json: globalOpts.json },
@@ -93,7 +93,7 @@ Non-interactive: --name and a body (--html or --html-file) are required.`,
     }
 
     if (!html) {
-      if (!isInteractive()) {
+      if (!isInteractive() || globalOpts.json) {
         outputError(
           {
             message: 'Missing body. Provide --html or --html-file.',
