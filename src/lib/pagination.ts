@@ -1,4 +1,5 @@
 import type { GlobalOpts } from './client';
+import { maskKey } from './config';
 import { outputError } from './output';
 
 export function parseLimitOpt(raw: string, globalOpts: GlobalOpts): number {
@@ -23,14 +24,30 @@ export function buildPaginationOpts(
   return after ? { limit, after } : before ? { limit, before } : { limit };
 }
 
-export function printPaginationHint(list: {
-  has_more: boolean;
-  data: Array<{ id: string }>;
-}): void {
-  if (list.has_more && list.data.length > 0) {
-    const last = list.data[list.data.length - 1];
-    console.log(
-      `\nMore results available. Use --after ${last.id} to fetch the next page.`,
-    );
+export function printPaginationHint(
+  list: {
+    has_more: boolean;
+    data: Array<{ id: string }>;
+  },
+  command: string,
+  opts: { limit?: number; before?: string; apiKey?: string; profile?: string },
+): void {
+  if (!list.has_more || list.data.length === 0) {
+    return;
   }
+
+  // API returns items newest-first; for backward pagination the next cursor
+  // is the first item, for forward pagination it's the last item.
+  const backward = Boolean(opts.before);
+  const cursor = backward
+    ? list.data[0].id
+    : list.data[list.data.length - 1].id;
+  const flag = backward ? '--before' : '--after';
+  const limitFlag = opts.limit ? ` --limit ${opts.limit}` : '';
+  const apiKeyFlag = opts.apiKey ? ` --api-key ${maskKey(opts.apiKey)}` : '';
+  const profileFlag = opts.profile ? ` --profile ${opts.profile}` : '';
+
+  console.log(
+    `\nFetch the next page:\n$ resend ${command} ${flag} ${cursor}${limitFlag}${apiKeyFlag}${profileFlag}`,
+  );
 }

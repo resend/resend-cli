@@ -37,6 +37,7 @@ describe('contacts create command', () => {
   let errorSpy: MockInstance | undefined;
   let stderrSpy: MockInstance | undefined;
   let exitSpy: MockInstance | undefined;
+  let commandRef: { parent: unknown } | undefined;
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
@@ -52,6 +53,10 @@ describe('contacts create command', () => {
     errorSpy = undefined;
     stderrSpy = undefined;
     exitSpy = undefined;
+    if (commandRef) {
+      commandRef.parent = null;
+      commandRef = undefined;
+    }
   });
 
   test('creates contact with --email flag', async () => {
@@ -188,6 +193,48 @@ describe('contacts create command', () => {
       { id: '3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c' },
       { id: 'e8d7c6b5-a4f3-2e1d-0c9b-8a7f6e5d4c3b' },
     ]);
+  });
+
+  test('suppresses name prompts when --json is set even in TTY', async () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const stderrWriteSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
+
+    const { Command } = await import('@commander-js/extra-typings');
+    const { createContactCommand } = await import(
+      '../../../src/commands/contacts/create'
+    );
+    const program = new Command()
+      .option('--profile <name>')
+      .option('--team <name>')
+      .option('--json')
+      .option('--api-key <key>')
+      .option('-q, --quiet')
+      .addCommand(createContactCommand);
+    commandRef = createContactCommand as unknown as { parent: unknown };
+
+    await program.parseAsync(
+      ['create', '--json', '--email', 'jane@example.com'],
+      { from: 'user' },
+    );
+
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.email).toBe('jane@example.com');
+    expect(args.firstName).toBeUndefined();
+    expect(args.lastName).toBeUndefined();
+
+    logSpy.mockRestore();
+    stderrWriteSpy.mockRestore();
   });
 
   test('errors with missing_email in non-interactive mode', async () => {

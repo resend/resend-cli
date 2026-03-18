@@ -49,7 +49,7 @@ Permissions:
     let permission = opts.permission;
 
     if (!name) {
-      if (!isInteractive()) {
+      if (!isInteractive() || globalOpts.json) {
         outputError(
           { message: 'Missing --name flag.', code: 'missing_name' },
           { json: globalOpts.json },

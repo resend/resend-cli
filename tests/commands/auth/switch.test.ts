@@ -88,6 +88,28 @@ describe('auth switch command', () => {
     expect(output.error.code).toBe('missing_name');
   });
 
+  test('errors with missing_name when --json is set even in TTY', async () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+    storeApiKey('re_default');
+
+    const program = await createProgram();
+    await expectExit1(() =>
+      program.parseAsync(['switch', '--json'], { from: 'user' }),
+    );
+
+    const output = JSON.parse(errorSpy?.mock.calls[0][0] as string);
+    expect(output.error.code).toBe('missing_name');
+  });
+
   test('errors when profile does not exist', async () => {
     spies = setupOutputSpies();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});

@@ -30,12 +30,12 @@ Non-interactive: --segment-id is required.`,
   )
   .action(async (contactId, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const resend = requireClient(globalOpts);
+    const resend = await requireClient(globalOpts);
 
     let segmentId = opts.segmentId;
 
     if (!segmentId) {
-      if (!isInteractive()) {
+      if (!isInteractive() || globalOpts.json) {
         outputError(
           { message: 'Missing --segment-id flag.', code: 'missing_segment_id' },
           { json: globalOpts.json },

@@ -1,12 +1,10 @@
 name: Test Windows Installer
-
 on:
   pull_request:
     paths:
       - install.ps1
       - .github/workflows/test-install-windows.yml
   workflow_dispatch:
-
 jobs:
   test-install:
     runs-on: windows-latest
@@ -18,11 +16,9 @@ jobs:
         shell: ${{ matrix.shell }}
     steps:
       - uses: actions/checkout@v6
-
       - name: Run installer via Invoke-Expression (simulates irm | iex)
         run: |
           Invoke-Expression (Get-Content -Raw .\install.ps1)
-
       - name: Verify binary exists
         run: |
           $exe = "$env:USERPROFILE\.resend\bin\resend.exe"
@@ -31,7 +27,6 @@ jobs:
             exit 1
           }
           Write-Host "Found binary at $exe"
-
       - name: Verify binary runs
         run: |
           $exe = "$env:USERPROFILE\.resend\bin\resend.exe"
@@ -40,7 +35,6 @@ jobs:
             Write-Error "resend --version failed"
             exit 1
           }
-
       - name: Verify PATH was updated
         run: |
           $binDir = "$env:USERPROFILE\.resend\bin"
@@ -50,7 +44,6 @@ jobs:
             exit 1
           }
           Write-Host "PATH correctly updated"
-
   test-error-path:
     runs-on: windows-latest
     strategy:
@@ -61,14 +54,12 @@ jobs:
         shell: ${{ matrix.shell }}
     steps:
       - uses: actions/checkout@v6
-
       - name: Run installer with bogus version (expect failure)
         id: bogus
         continue-on-error: true
         run: |
           $env:RESEND_VERSION = 'v99.99.99'
           Invoke-Expression (Get-Content -Raw .\install.ps1)
-
       - name: Assert installer failed
         run: |
           if ('${{ steps.bogus.outcome }}' -ne 'failure') {
