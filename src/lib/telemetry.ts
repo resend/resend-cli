@@ -1,3 +1,4 @@
+import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getConfigDir } from './config';
@@ -59,7 +60,7 @@ export function trackCommand(command: string, opts: { json?: boolean }): void {
 
     const distinctId = getOrCreateAnonymousId();
 
-    const payload = {
+    const payload = JSON.stringify({
       api_key: POSTHOG_API_KEY,
       distinct_id: distinctId,
       event: 'cli.used',
@@ -72,13 +73,26 @@ export function trackCommand(command: string, opts: { json?: boolean }): void {
         interactive: isInteractive() && !opts.json,
         install_method: detectInstallMethodName(),
       },
-    };
+    });
 
-    fetch(POSTHOG_HOST, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(3000),
-    }).catch(() => {});
+    const child = spawn(
+      process.execPath,
+      process.execArgv.concat([process.argv[1], 'telemetry', 'flush', payload]),
+      {
+        detached: true,
+        stdio: 'ignore',
+        env: { ...process.env, RESEND_TELEMETRY_DISABLED: '1' },
+      },
+    );
+    child.unref();
   } catch {}
+}
+
+export async function flushPayload(payload: string): Promise<void> {
+  await fetch(POSTHOG_HOST, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: payload,
+    signal: AbortSignal.timeout(3000),
+  });
 }

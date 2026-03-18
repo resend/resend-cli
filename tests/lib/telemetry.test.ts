@@ -11,6 +11,7 @@ import {
   vi,
 } from 'vitest';
 import {
+  flushPayload,
   getOrCreateAnonymousId,
   isDisabled,
   trackCommand,
@@ -19,6 +20,10 @@ import { captureTestEnv } from '../helpers';
 
 const testConfigDir = join(tmpdir(), `resend-telemetry-test-${process.pid}`);
 const testResendDir = join(testConfigDir, 'resend');
+
+vi.mock('node:child_process', () => ({
+  spawn: vi.fn(() => ({ unref: vi.fn() })),
+}));
 
 describe('isDisabled', () => {
   const restoreEnv = captureTestEnv();
@@ -80,18 +85,22 @@ describe('getOrCreateAnonymousId', () => {
 
 describe('trackCommand', () => {
   const restoreEnv = captureTestEnv();
-  let fetchSpy: MockInstance;
+  let spawnMock: MockInstance;
   let stderrSpy: MockInstance;
+  let unrefMock: ReturnType<typeof vi.fn>;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     mkdirSync(testResendDir, { recursive: true });
     process.env.XDG_CONFIG_HOME = testConfigDir;
     delete process.env.DO_NOT_TRACK;
     delete process.env.RESEND_TELEMETRY_DISABLED;
 
-    fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
-      ok: true,
-    } as Response);
+    unrefMock = vi.fn();
+    const cp = await import('node:child_process');
+    spawnMock = vi
+      .mocked(cp.spawn)
+      // @ts-expect-error -- only unref() is needed for this test
+      .mockReturnValue({ unref: unrefMock });
 
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
@@ -99,7 +108,7 @@ describe('trackCommand', () => {
   });
 
   afterEach(() => {
-    fetchSpy.mockRestore();
+    spawnMock.mockClear();
     stderrSpy.mockRestore();
     restoreEnv();
     if (existsSync(testConfigDir)) {
@@ -108,17 +117,22 @@ describe('trackCommand', () => {
   });
 
   function parsePayload() {
-    const [, options] = fetchSpy.mock.calls[0] as [string, RequestInit];
-    return JSON.parse(options.body as string);
+    const args = spawnMock.mock.calls[0][1] as string[];
+    const payloadArg = args[args.length - 1];
+    return JSON.parse(payloadArg);
   }
 
-  test('sends correct payload to PostHog endpoint', () => {
+  test('spawns detached process with correct payload', () => {
     trackCommand('emails send', { json: true });
 
-    expect(fetchSpy).toHaveBeenCalledOnce();
-    const [url, options] = fetchSpy.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe('https://us.i.posthog.com/capture/');
-    expect(options.method).toBe('POST');
+    expect(spawnMock).toHaveBeenCalledOnce();
+    const [execPath, args, options] = spawnMock.mock.calls[0];
+    expect(execPath).toBe(process.execPath);
+    expect(args).toContain('telemetry');
+    expect(args).toContain('flush');
+    expect(options.detached).toBe(true);
+    expect(options.stdio).toBe('ignore');
+    expect(options.env.RESEND_TELEMETRY_DISABLED).toBe('1');
 
     const body = parsePayload();
     expect(body.event).toBe('cli.used');
@@ -130,6 +144,11 @@ describe('trackCommand', () => {
     expect(body.distinct_id).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
     );
+  });
+
+  test('calls child.unref()', () => {
+    trackCommand('emails send', {});
+    expect(unrefMock).toHaveBeenCalledOnce();
   });
 
   test('interactive is false when --json flag is set', () => {
@@ -196,11 +215,13 @@ describe('trackCommand', () => {
   test('does nothing when disabled', () => {
     process.env.RESEND_TELEMETRY_DISABLED = '1';
     trackCommand('emails send', {});
-    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(spawnMock).not.toHaveBeenCalled();
   });
 
-  test('handles fetch failures gracefully', () => {
-    fetchSpy.mockRejectedValue(new Error('network error'));
+  test('handles spawn failures gracefully', () => {
+    spawnMock.mockImplementation(() => {
+      throw new Error('spawn error');
+    });
     expect(() => trackCommand('emails send', {})).not.toThrow();
   });
 
@@ -217,5 +238,42 @@ describe('trackCommand', () => {
     expect(existsSync(join(testResendDir, 'telemetry-notice-shown'))).toBe(
       true,
     );
+  });
+});
+
+describe('flushPayload', () => {
+  let fetchSpy: MockInstance;
+
+  beforeEach(() => {
+    fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+    } as Response);
+  });
+
+  afterEach(() => {
+    fetchSpy.mockRestore();
+  });
+
+  test('POSTs payload to PostHog endpoint', async () => {
+    const payload = JSON.stringify({
+      api_key: 'test-key',
+      distinct_id: 'test-id',
+      event: 'cli.used',
+      properties: { command: 'emails send' },
+    });
+
+    await flushPayload(payload);
+
+    expect(fetchSpy).toHaveBeenCalledOnce();
+    const [url, options] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('https://us.i.posthog.com/capture/');
+    expect(options.method).toBe('POST');
+    expect(options.headers).toEqual({ 'Content-Type': 'application/json' });
+    expect(options.body).toBe(payload);
+  });
+
+  test('propagates fetch errors', async () => {
+    fetchSpy.mockRejectedValue(new Error('network error'));
+    await expect(flushPayload('{}')).rejects.toThrow('network error');
   });
 });
