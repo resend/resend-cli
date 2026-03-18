@@ -89,10 +89,14 @@ ${pc.gray('Examples:')}
   .action(() => {
     const opts = program.opts();
     if (opts.apiKey) {
-      process.stderr.write(
-        `\n${pc.yellow('hint:')} --api-key is a per-command override and was not saved.\n      To store your API key, run ${pc.blue('resend login')}.\n\n`,
+      outputError(
+        {
+          message:
+            '--api-key is a per-command override and was not saved. To store your API key, run `resend login`.',
+          code: 'missing_command',
+        },
+        { json: opts.json },
       );
-      process.exit(1);
     }
     program.help();
   })
