@@ -123,7 +123,11 @@ export function trackCommand(
     const child = spawn(process.execPath, args, {
       detached: true,
       stdio: 'ignore',
-      env: { ...process.env, RESEND_TELEMETRY_DISABLED: '1' },
+      env: {
+        ...process.env,
+        RESEND_TELEMETRY_DISABLED: '1',
+        ...(isCompiled ? { PKG_EXECPATH: '' } : {}),
+      },
     });
     child.unref();
   } catch {}
