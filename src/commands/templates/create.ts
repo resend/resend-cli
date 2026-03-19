@@ -35,7 +35,7 @@ export const createTemplateCommand = new Command('create')
     buildHelpText({
       context: `Creates a new draft template. Use "resend templates publish" to make it available for sending.
 
---name is required. Body: provide --html or --html-file (mutually exclusive). Optionally add --text or --text-file for plain-text.
+--name is required. Body: provide --html or --html-file. Optionally add --text or --text-file for plain-text.
 
 --var declares a template variable using the format KEY:type or KEY:type:fallback.
   Valid types: string, number.
@@ -85,16 +85,6 @@ Non-interactive: --name and a body (--html or --html-file) are required. --text-
       name = result;
     }
 
-    if (opts.html && opts.htmlFile) {
-      outputError(
-        {
-          message: '--html and --html-file are mutually exclusive.',
-          code: 'invalid_options',
-        },
-        { json: globalOpts.json },
-      );
-    }
-
     if (opts.htmlFile === '-' && opts.textFile === '-') {
       outputError(
         {
@@ -110,6 +100,11 @@ Non-interactive: --name and a body (--html or --html-file) are required. --text-
     let text = opts.text;
 
     if (opts.htmlFile) {
+      if (opts.html) {
+        process.stderr.write(
+          'Warning: both --html and --html-file provided; using --html-file\n',
+        );
+      }
       html = readFile(opts.htmlFile, globalOpts);
     }
 
