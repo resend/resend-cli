@@ -6,6 +6,7 @@ import { authCommand } from './commands/auth/index';
 import { loginCommand } from './commands/auth/login';
 import { logoutCommand } from './commands/auth/logout';
 import { broadcastsCommand } from './commands/broadcasts/index';
+import { completionCommand } from './commands/completion';
 import { contactPropertiesCommand } from './commands/contact-properties/index';
 import { contactsCommand } from './commands/contacts/index';
 import { doctorCommand } from './commands/doctor';
@@ -138,7 +139,8 @@ ${pc.gray('Examples:')}
   .addCommand(doctorCommand)
   .addCommand(openCommand)
   .addCommand(updateCommand)
-  .addCommand(teamsDeprecatedCommand);
+  .addCommand(teamsDeprecatedCommand)
+  .addCommand(completionCommand);
 
 const telemetryCommand = new Command('telemetry')
   .description('Telemetry management')
