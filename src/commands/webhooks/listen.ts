@@ -13,7 +13,7 @@ import { outputError } from '../../lib/output';
 import { requireText } from '../../lib/prompts';
 import { createSpinner } from '../../lib/spinner';
 import { isInteractive } from '../../lib/tty';
-import { ALL_WEBHOOK_EVENTS } from './utils';
+import { ALL_WEBHOOK_EVENTS, normalizeEvents } from './utils';
 
 const SVIX_HEADERS = ['svix-id', 'svix-timestamp', 'svix-signature'];
 
@@ -185,7 +185,7 @@ For example, if using ngrok: ngrok http 4318`,
     if (opts.events?.includes('all')) {
       selectedEvents = ALL_WEBHOOK_EVENTS;
     } else if (opts.events?.length) {
-      selectedEvents = opts.events as WebhookEvent[];
+      selectedEvents = normalizeEvents(opts.events) as WebhookEvent[];
     } else {
       selectedEvents = ALL_WEBHOOK_EVENTS;
     }

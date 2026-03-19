@@ -118,6 +118,74 @@ describe('webhooks create command', () => {
     expect(parsed.signing_secret).toBe('whsec_test1234');
   });
 
+  test('splits comma-separated events', async () => {
+    spies = setupOutputSpies();
+
+    const { createWebhookCommand } = await import(
+      '../../../src/commands/webhooks/create'
+    );
+    await createWebhookCommand.parseAsync(
+      [
+        '--endpoint',
+        'https://app.example.com/hooks',
+        '--events',
+        'email.sent,email.bounced',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.events).toEqual(['email.sent', 'email.bounced']);
+  });
+
+  test('handles mixed comma and space-separated events', async () => {
+    spies = setupOutputSpies();
+
+    const { createWebhookCommand } = await import(
+      '../../../src/commands/webhooks/create'
+    );
+    await createWebhookCommand.parseAsync(
+      [
+        '--endpoint',
+        'https://app.example.com/hooks',
+        '--events',
+        'email.sent,email.bounced',
+        'email.clicked',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.events).toEqual([
+      'email.sent',
+      'email.bounced',
+      'email.clicked',
+    ]);
+  });
+
+  test('trims spaces around comma-separated events', async () => {
+    spies = setupOutputSpies();
+
+    const { createWebhookCommand } = await import(
+      '../../../src/commands/webhooks/create'
+    );
+    await createWebhookCommand.parseAsync(
+      [
+        '--endpoint',
+        'https://app.example.com/hooks',
+        '--events',
+        'email.sent, email.bounced',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.events).toEqual(['email.sent', 'email.bounced']);
+  });
+
   test('errors with missing_endpoint in non-interactive mode when --endpoint absent', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
