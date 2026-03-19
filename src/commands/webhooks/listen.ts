@@ -181,11 +181,15 @@ For example, if using ngrok: ngrok http 4318`,
       );
     }
 
+    const normalized = opts.events?.length
+      ? normalizeEvents(opts.events)
+      : undefined;
+
     let selectedEvents: WebhookEvent[];
-    if (opts.events?.includes('all')) {
+    if (normalized?.includes('all')) {
       selectedEvents = ALL_WEBHOOK_EVENTS;
-    } else if (opts.events?.length) {
-      selectedEvents = normalizeEvents(opts.events) as WebhookEvent[];
+    } else if (normalized?.length) {
+      selectedEvents = normalized as WebhookEvent[];
     } else {
       selectedEvents = ALL_WEBHOOK_EVENTS;
     }

@@ -84,10 +84,14 @@ Non-interactive: --endpoint and --events are required.`,
 
     let selectedEvents: WebhookEvent[];
 
-    if (opts.events?.includes('all')) {
+    const normalized = opts.events?.length
+      ? normalizeEvents(opts.events)
+      : undefined;
+
+    if (normalized?.includes('all')) {
       selectedEvents = ALL_WEBHOOK_EVENTS;
-    } else if (opts.events?.length) {
-      selectedEvents = normalizeEvents(opts.events) as WebhookEvent[];
+    } else if (normalized?.length) {
+      selectedEvents = normalized as WebhookEvent[];
     } else {
       if (!isInteractive() || globalOpts.json) {
         outputError(

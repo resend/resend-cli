@@ -58,10 +58,13 @@ Use "all" as a shorthand for all 17 event types.
       );
     }
 
-    const selectedEvents = opts.events?.includes('all')
+    const normalized = opts.events?.length
+      ? normalizeEvents(opts.events)
+      : undefined;
+    const selectedEvents = normalized?.includes('all')
       ? ALL_WEBHOOK_EVENTS
-      : opts.events?.length
-        ? (normalizeEvents(opts.events) as WebhookEvent[])
+      : normalized?.length
+        ? (normalized as WebhookEvent[])
         : undefined;
 
     await runWrite(
