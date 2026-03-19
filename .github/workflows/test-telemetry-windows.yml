@@ -1,9 +1,6 @@
 name: Test Telemetry (Windows)
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - feat-telemetry
 jobs:
   test:
     runs-on: windows-latest
