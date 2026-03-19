@@ -97,15 +97,21 @@ export function trackCommand(command: string, opts: { json?: boolean }): void {
     );
     writeFileSync(tmpPath, payload, { mode: 0o600 });
 
-    const child = spawn(
-      process.execPath,
-      process.execArgv.concat([process.argv[1], 'telemetry', 'flush', tmpPath]),
-      {
-        detached: true,
-        stdio: 'ignore',
-        env: { ...process.env, RESEND_TELEMETRY_DISABLED: '1' },
-      },
-    );
+    const isCompiled = 'pkg' in process;
+    const args = isCompiled
+      ? ['telemetry', 'flush', tmpPath]
+      : process.execArgv.concat([
+          process.argv[1],
+          'telemetry',
+          'flush',
+          tmpPath,
+        ]);
+
+    const child = spawn(process.execPath, args, {
+      detached: true,
+      stdio: 'ignore',
+      env: { ...process.env, RESEND_TELEMETRY_DISABLED: '1' },
+    });
     child.unref();
   } catch {}
 }
