@@ -138,14 +138,13 @@ const telemetryCommand = new Command('telemetry')
 
 telemetryCommand
   .command('flush')
-  .argument('<payload>')
-  .action(async (payload) => {
-    const { flushPayload } = await import('./lib/telemetry');
-    await flushPayload(payload);
+  .argument('<file>')
+  .action(async (file) => {
+    const { flushFromFile } = await import('./lib/telemetry');
+    await flushFromFile(file);
   });
 
-(telemetryCommand as unknown as { _hidden: boolean })._hidden = true;
-program.addCommand(telemetryCommand);
+program.addCommand(telemetryCommand, { hidden: true });
 
 // Hide the deprecated --team option from help
 const teamOption = program.options.find((o) => o.long === '--team');
@@ -162,7 +161,9 @@ program
       return;
     }
 
-    trackCommand(lastCommandName, program.opts());
+    if (lastCommandName) {
+      trackCommand(lastCommandName, program.opts());
+    }
 
     return checkForUpdates().catch(() => {});
   })

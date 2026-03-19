@@ -1,4 +1,10 @@
-import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -11,6 +17,7 @@ import {
   vi,
 } from 'vitest';
 import {
+  flushFromFile,
   flushPayload,
   getOrCreateAnonymousId,
   isDisabled,
@@ -108,6 +115,13 @@ describe('trackCommand', () => {
   });
 
   afterEach(() => {
+    for (const call of spawnMock.mock.calls) {
+      const args = call[1] as string[];
+      const filePath = args[args.length - 1];
+      if (filePath?.endsWith('.json') && existsSync(filePath)) {
+        rmSync(filePath, { force: true });
+      }
+    }
     spawnMock.mockClear();
     stderrSpy.mockRestore();
     restoreEnv();
@@ -118,11 +132,13 @@ describe('trackCommand', () => {
 
   function parsePayload() {
     const args = spawnMock.mock.calls[0][1] as string[];
-    const payloadArg = args[args.length - 1];
-    return JSON.parse(payloadArg);
+    const filePath = args[args.length - 1];
+    const content = readFileSync(filePath, 'utf-8');
+    rmSync(filePath, { force: true });
+    return JSON.parse(content);
   }
 
-  test('spawns detached process with correct payload', () => {
+  test('spawns detached process with payload in temp file', () => {
     trackCommand('emails send', { json: true });
 
     expect(spawnMock).toHaveBeenCalledOnce();
@@ -130,6 +146,8 @@ describe('trackCommand', () => {
     expect(execPath).toBe(process.execPath);
     expect(args).toContain('telemetry');
     expect(args).toContain('flush');
+    const filePath = args[args.length - 1] as string;
+    expect(filePath).toMatch(/resend-telemetry-.*\.json$/);
     expect(options.detached).toBe(true);
     expect(options.stdio).toBe('ignore');
     expect(options.env.RESEND_TELEMETRY_DISABLED).toBe('1');
@@ -137,8 +155,8 @@ describe('trackCommand', () => {
     const body = parsePayload();
     expect(body.event).toBe('cli.used');
     expect(body.properties.command).toBe('emails send');
-    expect(body.properties.os).toBe(process.platform);
-    expect(body.properties.arch).toBe(process.arch);
+    expect(body.properties.os).toBe('macOS');
+    expect(body.properties.arch).toBeUndefined();
     expect(body.properties.node_version).toBe(process.version);
     expect(body.api_key).toBeTruthy();
     expect(body.distinct_id).toMatch(
@@ -272,8 +290,43 @@ describe('flushPayload', () => {
     expect(options.body).toBe(payload);
   });
 
+  test('rejects invalid JSON', async () => {
+    await expect(flushPayload('not json')).rejects.toThrow();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
   test('propagates fetch errors', async () => {
     fetchSpy.mockRejectedValue(new Error('network error'));
     await expect(flushPayload('{}')).rejects.toThrow('network error');
+  });
+});
+
+describe('flushFromFile', () => {
+  let fetchSpy: MockInstance;
+  const tmpFile = join(tmpdir(), `resend-flush-test-${process.pid}.json`);
+
+  beforeEach(() => {
+    fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+    } as Response);
+  });
+
+  afterEach(() => {
+    fetchSpy.mockRestore();
+    if (existsSync(tmpFile)) {
+      rmSync(tmpFile);
+    }
+  });
+
+  test('reads file, deletes it, and sends payload', async () => {
+    const payload = JSON.stringify({ event: 'test' });
+    writeFileSync(tmpFile, payload);
+
+    await flushFromFile(tmpFile);
+
+    expect(fetchSpy).toHaveBeenCalledOnce();
+    const [, options] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    expect(options.body).toBe(payload);
+    expect(existsSync(tmpFile)).toBe(false);
   });
 });

@@ -1,5 +1,12 @@
 import { spawn } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { getConfigDir } from './config';
 import { isInteractive } from './tty';
@@ -8,6 +15,16 @@ import { VERSION } from './version';
 
 const POSTHOG_API_KEY = 'phc_REPLACE_ME';
 const POSTHOG_HOST = 'https://us.i.posthog.com/capture/';
+
+const OS_NAMES: Record<string, string> = {
+  darwin: 'macOS',
+  win32: 'Windows',
+  linux: 'Linux',
+};
+
+function friendlyOs(): string {
+  return OS_NAMES[process.platform] ?? process.platform;
+}
 
 export function isDisabled(): boolean {
   return (
@@ -67,17 +84,22 @@ export function trackCommand(command: string, opts: { json?: boolean }): void {
       properties: {
         command,
         cli_version: VERSION,
-        os: process.platform,
-        arch: process.arch,
+        os: friendlyOs(),
         node_version: process.version,
         interactive: isInteractive() && !opts.json,
         install_method: detectInstallMethodName(),
       },
     });
 
+    const tmpPath = join(
+      tmpdir(),
+      `resend-telemetry-${process.pid}-${Date.now()}.json`,
+    );
+    writeFileSync(tmpPath, payload, { mode: 0o600 });
+
     const child = spawn(
       process.execPath,
-      process.execArgv.concat([process.argv[1], 'telemetry', 'flush', payload]),
+      process.execArgv.concat([process.argv[1], 'telemetry', 'flush', tmpPath]),
       {
         detached: true,
         stdio: 'ignore',
@@ -89,10 +111,17 @@ export function trackCommand(command: string, opts: { json?: boolean }): void {
 }
 
 export async function flushPayload(payload: string): Promise<void> {
+  JSON.parse(payload);
   await fetch(POSTHOG_HOST, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: payload,
     signal: AbortSignal.timeout(3000),
   });
+}
+
+export async function flushFromFile(filePath: string): Promise<void> {
+  const payload = readFileSync(filePath, 'utf-8');
+  unlinkSync(filePath);
+  await flushPayload(payload);
 }

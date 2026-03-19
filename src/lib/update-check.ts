@@ -97,7 +97,7 @@ export function detectInstallMethodName(): string {
   if (full.startsWith('brew')) {
     return 'homebrew';
   }
-  return 'install-script';
+  return 'other';
 }
 
 export function detectInstallMethod(): string {
