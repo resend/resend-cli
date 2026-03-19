@@ -643,7 +643,7 @@ describe('send command', () => {
 
   test('errors with invalid_var when --var used without --template', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -672,7 +672,7 @@ describe('send command', () => {
 
   test('errors with invalid_var for malformed --var', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -689,7 +689,7 @@ describe('send command', () => {
 
   test('errors with template_body_conflict when --template and --html used together', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -713,7 +713,7 @@ describe('send command', () => {
 
   test('errors with template_body_conflict when --template and --html-file used together', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -737,7 +737,7 @@ describe('send command', () => {
 
   test('errors with template_body_conflict when --template and --text used together', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -754,7 +754,7 @@ describe('send command', () => {
 
   test('errors with template_attachment_conflict when --template and --attachment used together', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
