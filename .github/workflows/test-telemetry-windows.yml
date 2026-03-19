@@ -21,14 +21,23 @@ jobs:
           POSTHOG_PUBLIC_KEY: ${{ secrets.POSTHOG_STAGING_KEY }}
       - name: Build Windows binary
         run: pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-win-x64 --output dist/resend.exe
-      - name: Test flush command
+      - name: Test telemetry spawn from binary
         shell: bash
         run: |
-          TMPFILE="$(mktemp "${TMPDIR:-/tmp}/resend-telemetry-ci-XXXXXX.json")"
-          echo '{"api_key":"${{ secrets.POSTHOG_STAGING_KEY }}","distinct_id":"ci-windows","event":"cli.used","properties":{"command":"ci smoke test","os":"Windows","install_method":"ci"}}' > "$TMPFILE"
-          dist/resend.exe telemetry flush "$TMPFILE"
-          if [ -f "$TMPFILE" ]; then
-            echo "::error::File was not consumed — flush did not run"
+          # Clear any leftover telemetry files
+          rm -f "$TEMP"/resend-telemetry-*.json 2>/dev/null
+
+          # Run a real command that triggers telemetry
+          dist/resend.exe --api-key re_fake whoami
+
+          # Give the detached child time to flush
+          sleep 10
+
+          # Verify the temp file was consumed by the child
+          remaining=$(ls "$TEMP"/resend-telemetry-*.json 2>/dev/null | wc -l)
+          if [ "$remaining" -gt 0 ]; then
+            echo "::error::Telemetry temp file was not consumed — detached self-spawn failed"
+            ls -la "$TEMP"/resend-telemetry-*.json
             exit 1
           fi
-          echo "Flush OK — file consumed and sent"
+          echo "Telemetry spawn OK — temp file consumed by child process"
