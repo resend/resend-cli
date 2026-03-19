@@ -68,7 +68,10 @@ function showFirstRunNotice(): void {
   );
 }
 
-export function trackCommand(command: string, opts: { json?: boolean }): void {
+export function trackCommand(
+  command: string,
+  opts: { json?: boolean; flags?: string[]; globalFlags?: string[] },
+): void {
   if (isDisabled()) {
     return;
   }
@@ -78,18 +81,27 @@ export function trackCommand(command: string, opts: { json?: boolean }): void {
 
     const distinctId = getOrCreateAnonymousId();
 
+    const properties: Record<string, unknown> = {
+      command,
+      cli_version: VERSION,
+      os: friendlyOs(),
+      node_version: process.version,
+      interactive: isInteractive() && !opts.json,
+      install_method: detectInstallMethodName(),
+    };
+
+    if (opts.flags?.length) {
+      properties.flags = opts.flags;
+    }
+    if (opts.globalFlags?.length) {
+      properties.global_flags = opts.globalFlags;
+    }
+
     const payload = JSON.stringify({
       api_key: POSTHOG_API_KEY,
       distinct_id: distinctId,
       event: 'cli.used',
-      properties: {
-        command,
-        cli_version: VERSION,
-        os: friendlyOs(),
-        node_version: process.version,
-        interactive: isInteractive() && !opts.json,
-        install_method: detectInstallMethodName(),
-      },
+      properties,
     });
 
     const tmpPath = join(

@@ -28,6 +28,8 @@ import { PACKAGE_NAME, VERSION } from './lib/version';
 setupCliExitHandler();
 
 let lastCommandName = '';
+let lastFlags: string[] = [];
+let lastGlobalFlags: string[] = [];
 
 const program = new Command()
   .name('resend')
@@ -65,6 +67,20 @@ const program = new Command()
       parts.unshift(cmd.name());
     }
     lastCommandName = parts.join(' ');
+
+    const extractFlags = (cmd: typeof actionCommand) =>
+      cmd.options
+        .filter(
+          (opt) => cmd.getOptionValueSource(opt.attributeName()) === 'cli',
+        )
+        .map(
+          (opt) =>
+            opt.long?.replace(/^--/, '') ?? opt.short?.replace(/^-/, '') ?? '',
+        )
+        .filter(Boolean);
+
+    lastFlags = extractFlags(actionCommand);
+    lastGlobalFlags = extractFlags(thisCommand);
 
     if (actionCommand.optsWithGlobals().quiet) {
       thisCommand.setOptionValue('json', true);
@@ -162,7 +178,11 @@ program
     }
 
     if (lastCommandName) {
-      trackCommand(lastCommandName, program.opts());
+      trackCommand(lastCommandName, {
+        ...program.opts(),
+        flags: lastFlags,
+        globalFlags: lastGlobalFlags,
+      });
     }
 
     return checkForUpdates().catch(() => {});

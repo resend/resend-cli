@@ -235,6 +235,30 @@ describe('trackCommand', () => {
     expect(parsePayload().properties.interactive).toBe(true);
   });
 
+  test('includes flags in payload when provided', () => {
+    trackCommand('emails send', {
+      flags: ['to', 'subject'],
+      globalFlags: ['json'],
+    });
+    const body = parsePayload();
+    expect(body.properties.flags).toEqual(['to', 'subject']);
+    expect(body.properties.global_flags).toEqual(['json']);
+  });
+
+  test('omits flags from payload when empty', () => {
+    trackCommand('emails list', {});
+    const body = parsePayload();
+    expect(body.properties.flags).toBeUndefined();
+    expect(body.properties.global_flags).toBeUndefined();
+  });
+
+  test('omits flags from payload when arrays are empty', () => {
+    trackCommand('emails list', { flags: [], globalFlags: [] });
+    const body = parsePayload();
+    expect(body.properties.flags).toBeUndefined();
+    expect(body.properties.global_flags).toBeUndefined();
+  });
+
   test('does nothing when disabled', () => {
     process.env.RESEND_TELEMETRY_DISABLED = '1';
     trackCommand('emails send', {});
