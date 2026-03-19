@@ -7,7 +7,7 @@ function loadDotenv() {
     for (const line of content.split('\n')) {
       const match = line.match(/^\s*([^#=]+?)\s*=\s*(.*?)\s*$/);
       if (match) {
-        process.env[match[1]] ??= match[2];
+        process.env[match[1]] ??= match[2].replace(/^(['"])(.*)\1$/, '$2');
       }
     }
   } catch {}
