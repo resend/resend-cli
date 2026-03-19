@@ -46,7 +46,7 @@ export const createBroadcastCommand = new Command('create')
     'after',
     buildHelpText({
       context: `Non-interactive: --from, --subject, and --segment-id are required.
-Body: provide exactly one of --html, --html-file, --text, or --text-file.
+Body: provide at least one of --html, --html-file, --text, or --text-file.
 
 Variable interpolation:
   HTML bodies support triple-brace syntax for contact properties.
