@@ -1,5 +1,6 @@
 name: Test Telemetry (Windows)
 on:
+  workflow_dispatch:
   push:
     branches:
       - feat-telemetry
@@ -22,22 +23,32 @@ jobs:
       - name: Build Windows binary
         run: pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-win-x64 --output dist/resend.exe
       - name: Test telemetry spawn from binary
-        shell: bash
         run: |
-          # Clear any leftover telemetry files
-          rm -f "$TEMP"/resend-telemetry-*.json 2>/dev/null
+          $tmpdir = [System.IO.Path]::GetTempPath()
+
+          # Clear leftover telemetry files
+          Remove-Item "$tmpdir\resend-telemetry-*.json" -ErrorAction SilentlyContinue
 
           # Run a real command that triggers telemetry
           dist/resend.exe --api-key re_fake whoami
+          Write-Host "Binary exited with code $LASTEXITCODE"
 
           # Give the detached child time to flush
-          sleep 10
+          Start-Sleep -Seconds 10
 
           # Verify the temp file was consumed by the child
-          remaining=$(ls "$TEMP"/resend-telemetry-*.json 2>/dev/null | wc -l)
-          if [ "$remaining" -gt 0 ]; then
-            echo "::error::Telemetry temp file was not consumed — detached self-spawn failed"
-            ls -la "$TEMP"/resend-telemetry-*.json
+          $remaining = Get-ChildItem "$tmpdir\resend-telemetry-*.json" -ErrorAction SilentlyContinue
+          if ($remaining) {
+            Write-Host "::error::Telemetry temp file was not consumed — detached self-spawn failed"
+            $remaining | Format-Table Name, Length, LastWriteTime
             exit 1
-          fi
-          echo "Telemetry spawn OK — temp file consumed by child process"
+          }
+          Write-Host "Telemetry spawn OK — temp file consumed by child process"
+      - name: How to verify the event
+        if: always()
+        run: |
+          Write-Host "Check the staging PostHog project for a 'cli.used' event with:"
+          Write-Host "  command: whoami"
+          Write-Host "  os: Windows"
+          Write-Host "  distinct_id: starts with a UUID"
+          Write-Host "  install_method: other"
