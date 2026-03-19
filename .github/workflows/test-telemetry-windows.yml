@@ -51,7 +51,7 @@ jobs:
             Write-Host "::error::Telemetry temp file was not consumed — detached self-spawn failed"
             $remaining | Format-Table Name, Length, LastWriteTime
             exit 1
-          fi
+          }
           Write-Host "Telemetry spawn OK — file created and consumed by child process"
       - name: How to verify the event
         if: always()
