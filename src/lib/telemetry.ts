@@ -52,6 +52,10 @@ export function getOrCreateAnonymousId(): string {
 }
 
 function showFirstRunNotice(interactive: boolean): void {
+  if (!interactive) {
+    return;
+  }
+
   const configDir = getConfigDir();
   const markerPath = join(configDir, 'telemetry-notice-shown');
 
@@ -62,12 +66,10 @@ function showFirstRunNotice(interactive: boolean): void {
   mkdirSync(configDir, { recursive: true, mode: 0o700 });
   writeFileSync(markerPath, '', { mode: 0o600 });
 
-  if (interactive) {
-    process.stderr.write(
-      '\nResend collects anonymous CLI usage data to improve the tool.\n' +
-        'To opt out: export RESEND_TELEMETRY_DISABLED=1\n\n',
-    );
-  }
+  process.stderr.write(
+    '\nResend collects anonymous CLI usage data to improve the tool.\n' +
+      'To opt out: export RESEND_TELEMETRY_DISABLED=1\n\n',
+  );
 }
 
 export function trackCommand(
