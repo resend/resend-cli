@@ -33,6 +33,15 @@ jobs:
           dist/resend.exe --api-key re_fake whoami
           Write-Host "Binary exited with code $LASTEXITCODE"
 
+          # Verify the temp file WAS created
+          Start-Sleep -Seconds 1
+          $created = Get-ChildItem "$tmpdir\resend-telemetry-*.json" -ErrorAction SilentlyContinue
+          if (-not $created) {
+            Write-Host "::error::Telemetry temp file was never created — trackCommand did not fire"
+            exit 1
+          }
+          Write-Host "Temp file created: $($created.FullName)"
+
           # Give the detached child time to flush
           Start-Sleep -Seconds 10
 
@@ -42,13 +51,12 @@ jobs:
             Write-Host "::error::Telemetry temp file was not consumed — detached self-spawn failed"
             $remaining | Format-Table Name, Length, LastWriteTime
             exit 1
-          }
-          Write-Host "Telemetry spawn OK — temp file consumed by child process"
+          fi
+          Write-Host "Telemetry spawn OK — file created and consumed by child process"
       - name: How to verify the event
         if: always()
         run: |
           Write-Host "Check the staging PostHog project for a 'cli.used' event with:"
           Write-Host "  command: whoami"
           Write-Host "  os: Windows"
-          Write-Host "  distinct_id: starts with a UUID"
           Write-Host "  install_method: other"
