@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { basename } from 'node:path';
 import * as p from '@clack/prompts';
 import { Command } from '@commander-js/extra-typings';
-import type { Resend } from 'resend';
+import type { CreateEmailOptions, Resend } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
 import { readFile } from '../../lib/files';
@@ -108,11 +108,16 @@ export const sendCommand = new Command('send')
     '--idempotency-key <key>',
     'Deduplicate this send request using this key',
   )
+  .option('--template <id>', 'Template ID to use')
+  .option(
+    '--var <key=value...>',
+    'Template variables as key=value pairs (repeatable, e.g. --var name=John --var count=42)',
+  )
   .addHelpText(
     'after',
     buildHelpText({
       context:
-        'Required: --from, --to, --subject, and one of --text | --html | --html-file',
+        'Required: --to and either --template or (--from, --subject, and one of --text | --html | --html-file)',
       output: '  {"id":"<email-id>"}',
       errorCodes: [
         'auth_error',
@@ -120,6 +125,9 @@ export const sendCommand = new Command('send')
         'file_read_error',
         'invalid_header',
         'invalid_tag',
+        'invalid_var',
+        'template_body_conflict',
+        'template_attachment_conflict',
         'send_error',
       ],
       examples: [
@@ -129,6 +137,8 @@ export const sendCommand = new Command('send')
         'resend emails send --from you@domain.com --to user@example.com --subject "Hi" --text "Hi" --scheduled-at 2024-08-05T11:52:01.858Z',
         'resend emails send --from you@domain.com --to user@example.com --subject "Hi" --text "Hi" --attachment ./report.pdf',
         'resend emails send --from you@domain.com --to user@example.com --subject "Hi" --text "Hi" --headers X-Entity-Ref-ID=123 --tags category=marketing',
+        'resend emails send --template tmpl_123 --to user@example.com',
+        'resend emails send --template tmpl_123 --to user@example.com --var name=John --var count=42',
         'RESEND_API_KEY=re_123 resend emails send --from you@domain.com --to user@example.com --subject "Hi" --text "Hi"',
       ],
     }),
@@ -138,31 +148,95 @@ export const sendCommand = new Command('send')
 
     const resend = await requireClient(globalOpts);
 
+    const hasTemplate = !!opts.template;
+
+    // Validate: --var requires --template
+    if (opts.var && !hasTemplate) {
+      outputError(
+        {
+          message: '--var can only be used with --template',
+          code: 'invalid_var',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
+    // Validate: template and body flags are mutually exclusive
+    if (hasTemplate && (opts.html || opts.htmlFile || opts.text)) {
+      outputError(
+        {
+          message: 'Cannot use --template with --html, --html-file, or --text',
+          code: 'template_body_conflict',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
+    if (hasTemplate && opts.attachment) {
+      outputError(
+        {
+          message: 'Cannot use --attachment with --template',
+          code: 'template_attachment_conflict',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
+    // Parse key=value template variables
+    const variables = opts.var
+      ? Object.fromEntries(
+          opts.var.map((v) => {
+            const eq = v.indexOf('=');
+            if (eq < 1) {
+              outputError(
+                {
+                  message: `Invalid var format: "${v}". Expected key=value.`,
+                  code: 'invalid_var',
+                },
+                { json: globalOpts.json },
+              );
+            }
+            const key = v.slice(0, eq);
+            const raw = v.slice(eq + 1);
+            const num = Number(raw);
+            return [key, raw !== '' && !Number.isNaN(num) ? num : raw];
+          }),
+        )
+      : undefined;
+
     // Only fetch verified domains in interactive mode — non-interactive
     // callers (CI, agents, scripts) must pass --from explicitly.
     let fromAddress = opts.from;
-    if (!fromAddress && isInteractive() && !globalOpts.json) {
+    if (!fromAddress && !hasTemplate && isInteractive() && !globalOpts.json) {
       const domains = await fetchVerifiedDomains(resend);
       if (domains.length > 0) {
         fromAddress = await promptForFromAddress(domains);
       }
     }
 
+    const promptFields = [
+      {
+        flag: 'from',
+        message: 'From address',
+        placeholder: 'you@example.com',
+        required: !hasTemplate,
+      },
+      {
+        flag: 'to',
+        message: 'To address',
+        placeholder: 'recipient@example.com',
+      },
+      {
+        flag: 'subject',
+        message: 'Subject',
+        placeholder: 'Hello!',
+        required: !hasTemplate,
+      },
+    ];
+
     const filled = await promptForMissing(
       { from: fromAddress, to: opts.to?.[0], subject: opts.subject },
-      [
-        {
-          flag: 'from',
-          message: 'From address',
-          placeholder: 'you@example.com',
-        },
-        {
-          flag: 'to',
-          message: 'To address',
-          placeholder: 'recipient@example.com',
-        },
-        { flag: 'subject', message: 'Subject', placeholder: 'Hello!' },
-      ],
+      promptFields,
       globalOpts,
     );
 
@@ -174,7 +248,7 @@ export const sendCommand = new Command('send')
     }
 
     let body: string | undefined = text;
-    if (!html && !text) {
+    if (!hasTemplate && !html && !text) {
       body = await requireText(
         undefined,
         {
@@ -241,6 +315,40 @@ export const sendCommand = new Command('send')
       return { name: t.slice(0, eq), value: t.slice(eq + 1) };
     });
 
+    // Build payload based on template vs content mode
+    let payload: CreateEmailOptions;
+    if (hasTemplate) {
+      payload = {
+        template: {
+          id: opts.template as string,
+          ...(variables && { variables }),
+        },
+        to: toAddresses,
+        ...(filled.from && { from: filled.from }),
+        ...(filled.subject && { subject: filled.subject }),
+        ...(opts.cc && { cc: opts.cc }),
+        ...(opts.bcc && { bcc: opts.bcc }),
+        ...(opts.replyTo && { replyTo: opts.replyTo }),
+        ...(opts.scheduledAt && { scheduledAt: opts.scheduledAt }),
+        ...(headers && { headers }),
+        ...(tags && { tags }),
+      };
+    } else {
+      payload = {
+        from: filled.from,
+        to: toAddresses,
+        subject: filled.subject,
+        ...(html ? { html } : { text: body as string }),
+        ...(opts.cc && { cc: opts.cc }),
+        ...(opts.bcc && { bcc: opts.bcc }),
+        ...(opts.replyTo && { replyTo: opts.replyTo }),
+        ...(opts.scheduledAt && { scheduledAt: opts.scheduledAt }),
+        ...(attachments && { attachments }),
+        ...(headers && { headers }),
+        ...(tags && { tags }),
+      };
+    }
+
     const data = await withSpinner(
       {
         loading: opts.scheduledAt ? 'Scheduling email...' : 'Sending email...',
@@ -249,19 +357,7 @@ export const sendCommand = new Command('send')
       },
       () =>
         resend.emails.send(
-          {
-            from: filled.from,
-            to: toAddresses,
-            subject: filled.subject,
-            ...(html ? { html } : { text: body as string }),
-            ...(opts.cc && { cc: opts.cc }),
-            ...(opts.bcc && { bcc: opts.bcc }),
-            ...(opts.replyTo && { replyTo: opts.replyTo }),
-            ...(opts.scheduledAt && { scheduledAt: opts.scheduledAt }),
-            ...(attachments && { attachments }),
-            ...(headers && { headers }),
-            ...(tags && { tags }),
-          },
+          payload,
           opts.idempotencyKey
             ? { idempotencyKey: opts.idempotencyKey }
             : undefined,

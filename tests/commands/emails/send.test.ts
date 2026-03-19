@@ -45,6 +45,7 @@ describe('send command', () => {
   let exitSpy: MockInstance | undefined;
 
   beforeEach(() => {
+    vi.resetModules();
     process.env.RESEND_API_KEY = 're_test_key';
     mockSend.mockClear();
     mockDomainsList.mockClear();
@@ -569,6 +570,210 @@ describe('send command', () => {
 
     // @ts-expect-error — reset parent to avoid polluting the shared singleton
     sendCommand.parent = null;
+  });
+
+  test('sends with --template and --to only', async () => {
+    spies = setupOutputSpies();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await sendCommand.parseAsync(
+      ['--template', 'tmpl_123', '--to', 'b@test.com'],
+      { from: 'user' },
+    );
+
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    const callArgs = mockSend.mock.calls[0][0] as Record<string, unknown>;
+    expect(callArgs.template).toEqual({ id: 'tmpl_123' });
+    expect(callArgs.to).toEqual(['b@test.com']);
+    expect(callArgs.from).toBeUndefined();
+    expect(callArgs.subject).toBeUndefined();
+    expect(callArgs.html).toBeUndefined();
+    expect(callArgs.text).toBeUndefined();
+  });
+
+  test('sends with --template and --var key=value pairs', async () => {
+    spies = setupOutputSpies();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await sendCommand.parseAsync(
+      [
+        '--template',
+        'tmpl_123',
+        '--to',
+        'b@test.com',
+        '--var',
+        'name=John',
+        'count=42',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    const callArgs = mockSend.mock.calls[0][0] as Record<string, unknown>;
+    expect(callArgs.template).toEqual({
+      id: 'tmpl_123',
+      variables: { name: 'John', count: 42 },
+    });
+  });
+
+  test('sends with --template plus --from and --subject overrides', async () => {
+    spies = setupOutputSpies();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await sendCommand.parseAsync(
+      [
+        '--template',
+        'tmpl_123',
+        '--to',
+        'b@test.com',
+        '--from',
+        'a@test.com',
+        '--subject',
+        'Override',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    const callArgs = mockSend.mock.calls[0][0] as Record<string, unknown>;
+    expect(callArgs.template).toEqual({ id: 'tmpl_123' });
+    expect(callArgs.from).toBe('a@test.com');
+    expect(callArgs.subject).toBe('Override');
+  });
+
+  test('errors with invalid_var when --var used without --template', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await expectExit1(() =>
+      sendCommand.parseAsync(
+        [
+          '--from',
+          'a@test.com',
+          '--to',
+          'b@test.com',
+          '--subject',
+          'Test',
+          '--text',
+          'Hi',
+          '--var',
+          'name=John',
+        ],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_var');
+    expect(output).toContain('--template');
+  });
+
+  test('errors with invalid_var for malformed --var', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await expectExit1(() =>
+      sendCommand.parseAsync(
+        ['--template', 'tmpl_123', '--to', 'b@test.com', '--var', 'no-equals'],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_var');
+  });
+
+  test('errors with template_body_conflict when --template and --html used together', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await expectExit1(() =>
+      sendCommand.parseAsync(
+        [
+          '--template',
+          'tmpl_123',
+          '--to',
+          'b@test.com',
+          '--html',
+          '<h1>Hi</h1>',
+        ],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('template_body_conflict');
+  });
+
+  test('errors with template_body_conflict when --template and --html-file used together', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await expectExit1(() =>
+      sendCommand.parseAsync(
+        [
+          '--template',
+          'tmpl_123',
+          '--to',
+          'b@test.com',
+          '--html-file',
+          './email.html',
+        ],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('template_body_conflict');
+  });
+
+  test('errors with template_body_conflict when --template and --text used together', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await expectExit1(() =>
+      sendCommand.parseAsync(
+        ['--template', 'tmpl_123', '--to', 'b@test.com', '--text', 'Hi'],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('template_body_conflict');
+  });
+
+  test('errors with template_attachment_conflict when --template and --attachment used together', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await expectExit1(() =>
+      sendCommand.parseAsync(
+        [
+          '--template',
+          'tmpl_123',
+          '--to',
+          'b@test.com',
+          '--attachment',
+          'file.pdf',
+        ],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('template_attachment_conflict');
   });
 
   test('degrades gracefully when domain fetch fails', async () => {
