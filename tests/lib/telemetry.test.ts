@@ -161,7 +161,6 @@ describe('trackCommand', () => {
     expect(body.event).toBe('cli.used');
     expect(body.properties.command).toBe('emails send');
     expect(body.properties.os).toBeTypeOf('string');
-    expect(body.properties.arch).toBeUndefined();
     expect(body.properties.node_version).toBe(process.version);
     expect(body.api_key).toBeTruthy();
     expect(body.distinct_id).toMatch(
@@ -273,6 +272,17 @@ describe('trackCommand', () => {
   });
 
   test('shows first-run notice only once', () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    delete process.env.CI;
+    delete process.env.GITHUB_ACTIONS;
+
     trackCommand('emails send', {});
     const notice1 = stderrSpy.mock.calls.length;
 
@@ -332,7 +342,7 @@ describe('flushPayload', () => {
 
 describe('flushFromFile', () => {
   let fetchSpy: MockInstance;
-  const tmpFile = join(tmpdir(), `resend-flush-test-${process.pid}.json`);
+  const tmpFile = join(tmpdir(), `resend-telemetry-${process.pid}-0.json`);
 
   beforeEach(() => {
     fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({

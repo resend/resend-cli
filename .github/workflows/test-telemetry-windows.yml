@@ -24,9 +24,10 @@ jobs:
       - name: Test flush command
         shell: bash
         run: |
-          echo '{"api_key":"${{ secrets.POSTHOG_STAGING_KEY }}","distinct_id":"ci-windows","event":"cli.used","properties":{"command":"ci smoke test","os":"Windows","install_method":"ci"}}' > "$RUNNER_TEMP/telemetry-test.json"
-          dist/resend.exe telemetry flush "$RUNNER_TEMP/telemetry-test.json"
-          if [ -f "$RUNNER_TEMP/telemetry-test.json" ]; then
+          TMPFILE="$(mktemp "${TMPDIR:-/tmp}/resend-telemetry-ci-XXXXXX.json")"
+          echo '{"api_key":"${{ secrets.POSTHOG_STAGING_KEY }}","distinct_id":"ci-windows","event":"cli.used","properties":{"command":"ci smoke test","os":"Windows","install_method":"ci"}}' > "$TMPFILE"
+          dist/resend.exe telemetry flush "$TMPFILE"
+          if [ -f "$TMPFILE" ]; then
             echo "::error::File was not consumed — flush did not run"
             exit 1
           fi

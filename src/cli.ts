@@ -173,7 +173,7 @@ program
   .then(() => {
     // Skip the background update notice when the user explicitly ran `update`
     const ran = program.args[0];
-    if (ran === 'update') {
+    if (ran === 'update' || ran === 'telemetry') {
       return;
     }
 

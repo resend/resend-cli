@@ -51,7 +51,7 @@ export function getOrCreateAnonymousId(): string {
   return id;
 }
 
-function showFirstRunNotice(): void {
+function showFirstRunNotice(interactive: boolean): void {
   const configDir = getConfigDir();
   const markerPath = join(configDir, 'telemetry-notice-shown');
 
@@ -62,10 +62,12 @@ function showFirstRunNotice(): void {
   mkdirSync(configDir, { recursive: true, mode: 0o700 });
   writeFileSync(markerPath, '', { mode: 0o600 });
 
-  process.stderr.write(
-    '\nResend collects anonymous CLI usage data to improve the tool.\n' +
-      'To opt out: export RESEND_TELEMETRY_DISABLED=1\n\n',
-  );
+  if (interactive) {
+    process.stderr.write(
+      '\nResend collects anonymous CLI usage data to improve the tool.\n' +
+        'To opt out: export RESEND_TELEMETRY_DISABLED=1\n\n',
+    );
+  }
 }
 
 export function trackCommand(
@@ -77,7 +79,8 @@ export function trackCommand(
   }
 
   try {
-    showFirstRunNotice();
+    const interactive = isInteractive() && !opts.json;
+    showFirstRunNotice(interactive);
 
     const distinctId = getOrCreateAnonymousId();
 
@@ -86,7 +89,7 @@ export function trackCommand(
       cli_version: VERSION,
       os: friendlyOs(),
       node_version: process.version,
-      interactive: isInteractive() && !opts.json,
+      interactive,
       install_method: detectInstallMethodName(),
     };
 
@@ -144,7 +147,14 @@ export async function flushPayload(payload: string): Promise<void> {
 }
 
 export async function flushFromFile(filePath: string): Promise<void> {
-  const payload = readFileSync(filePath, 'utf-8');
-  unlinkSync(filePath);
+  const resolved = join(filePath);
+  if (
+    !resolved.startsWith(tmpdir()) ||
+    !/resend-telemetry-.*\.json$/.test(resolved)
+  ) {
+    throw new Error('invalid telemetry flush path');
+  }
+  const payload = readFileSync(resolved, 'utf-8');
+  unlinkSync(resolved);
   await flushPayload(payload);
 }
