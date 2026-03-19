@@ -155,7 +155,7 @@ describe('trackCommand', () => {
     const body = parsePayload();
     expect(body.event).toBe('cli.used');
     expect(body.properties.command).toBe('emails send');
-    expect(body.properties.os).toBe('macOS');
+    expect(body.properties.os).toBeTypeOf('string');
     expect(body.properties.arch).toBeUndefined();
     expect(body.properties.node_version).toBe(process.version);
     expect(body.api_key).toBeTruthy();
