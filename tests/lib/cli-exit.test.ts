@@ -12,10 +12,12 @@ describe('cli-exit', () => {
   beforeEach(() => {
     exitSpy = mockExitThrow();
     process.removeAllListeners('SIGINT');
+    process.removeAllListeners('uncaughtException');
   });
 
   afterEach(() => {
     process.removeAllListeners('SIGINT');
+    process.removeAllListeners('uncaughtException');
     vi.restoreAllMocks();
   });
 
