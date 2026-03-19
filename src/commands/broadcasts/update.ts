@@ -18,9 +18,13 @@ export const updateBroadcastCommand = new Command('update')
   )
   .option(
     '--html-file <path>',
-    'Path to an HTML file to replace the body (supports {{{FIRST_NAME|fallback}}} variable interpolation)',
+    'Path to an HTML file to replace the body (use "-" for stdin, supports {{{FIRST_NAME|fallback}}} variable interpolation)',
   )
   .option('--text <text>', 'Update plain-text body')
+  .option(
+    '--text-file <path>',
+    'Path to a plain-text file to replace the body (use "-" for stdin)',
+  )
   .option('--name <name>', 'Update internal label')
   .addHelpText(
     'after',
@@ -36,6 +40,8 @@ Variable interpolation:
         'auth_error',
         'no_changes',
         'file_read_error',
+        'invalid_options',
+        'stdin_read_error',
         'update_error',
       ],
       examples: [
@@ -54,22 +60,49 @@ Variable interpolation:
       !opts.html &&
       !opts.htmlFile &&
       !opts.text &&
+      !opts.textFile &&
       !opts.name
     ) {
       outputError(
         {
           message:
-            'Provide at least one option to update: --from, --subject, --html, --html-file, --text, or --name.',
+            'Provide at least one option to update: --from, --subject, --html, --html-file, --text, --text-file, or --name.',
           code: 'no_changes',
         },
         { json: globalOpts.json },
       );
     }
 
+    if (opts.htmlFile === '-' && opts.textFile === '-') {
+      outputError(
+        {
+          message:
+            'Cannot read both --html-file and --text-file from stdin. Pipe to one and pass the other as a file path.',
+          code: 'invalid_options',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
     let html = opts.html;
+    let text = opts.text;
 
     if (opts.htmlFile) {
+      if (opts.html) {
+        process.stderr.write(
+          'Warning: both --html and --html-file provided; using --html-file\n',
+        );
+      }
       html = readFile(opts.htmlFile, globalOpts);
+    }
+
+    if (opts.textFile) {
+      if (opts.text) {
+        process.stderr.write(
+          'Warning: both --text and --text-file provided; using --text-file\n',
+        );
+      }
+      text = readFile(opts.textFile, globalOpts);
     }
 
     await runWrite(
@@ -84,7 +117,7 @@ Variable interpolation:
             ...(opts.from && { from: opts.from }),
             ...(opts.subject && { subject: opts.subject }),
             ...(html && { html }),
-            ...(opts.text && { text: opts.text }),
+            ...(text && { text }),
             ...(opts.name && { name: opts.name }),
           }),
         errorCode: 'update_error',

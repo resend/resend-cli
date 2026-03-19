@@ -572,6 +572,279 @@ describe('send command', () => {
     sendCommand.parent = null;
   });
 
+  test('reads plain text body from --text-file', async () => {
+    spies = setupOutputSpies();
+
+    const tmpFile = join(
+      dirname(fileURLToPath(import.meta.url)),
+      '__test_body.txt',
+    );
+    writeFileSync(tmpFile, 'Plain text from file');
+
+    try {
+      const { sendCommand } = await import('../../../src/commands/emails/send');
+      await sendCommand.parseAsync(
+        [
+          '--from',
+          'a@test.com',
+          '--to',
+          'b@test.com',
+          '--subject',
+          'Test',
+          '--text-file',
+          tmpFile,
+        ],
+        { from: 'user' },
+      );
+
+      const callArgs = mockSend.mock.calls[0][0] as Record<string, unknown>;
+      expect(callArgs.text).toBe('Plain text from file');
+    } finally {
+      unlinkSync(tmpFile);
+    }
+  });
+
+  test('--text-file - reads from stdin', async () => {
+    spies = setupOutputSpies();
+
+    const files = await import('../../../src/lib/files');
+    const readFileSpy = vi
+      .spyOn(files, 'readFile')
+      .mockReturnValue('stdin text content');
+
+    try {
+      const { sendCommand } = await import('../../../src/commands/emails/send');
+      await sendCommand.parseAsync(
+        [
+          '--from',
+          'a@test.com',
+          '--to',
+          'b@test.com',
+          '--subject',
+          'Test',
+          '--text-file',
+          '-',
+        ],
+        { from: 'user' },
+      );
+
+      expect(readFileSpy).toHaveBeenCalledWith('-', expect.anything());
+      const callArgs = mockSend.mock.calls[0][0] as Record<string, unknown>;
+      expect(callArgs.text).toBe('stdin text content');
+    } finally {
+      readFileSpy.mockRestore();
+    }
+  });
+
+  test('--html-file - reads from stdin', async () => {
+    spies = setupOutputSpies();
+
+    const files = await import('../../../src/lib/files');
+    const readFileSpy = vi
+      .spyOn(files, 'readFile')
+      .mockReturnValue('<h1>stdin html</h1>');
+
+    try {
+      const { sendCommand } = await import('../../../src/commands/emails/send');
+      await sendCommand.parseAsync(
+        [
+          '--from',
+          'a@test.com',
+          '--to',
+          'b@test.com',
+          '--subject',
+          'Test',
+          '--html-file',
+          '-',
+        ],
+        { from: 'user' },
+      );
+
+      expect(readFileSpy).toHaveBeenCalledWith('-', expect.anything());
+      const callArgs = mockSend.mock.calls[0][0] as Record<string, unknown>;
+      expect(callArgs.html).toBe('<h1>stdin html</h1>');
+    } finally {
+      readFileSpy.mockRestore();
+    }
+  });
+
+  test('sends both html and text when both provided', async () => {
+    spies = setupOutputSpies();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await sendCommand.parseAsync(
+      [
+        '--from',
+        'a@test.com',
+        '--to',
+        'b@test.com',
+        '--subject',
+        'Test',
+        '--html',
+        '<h1>Hello</h1>',
+        '--text',
+        'Hello',
+      ],
+      { from: 'user' },
+    );
+
+    const callArgs = mockSend.mock.calls[0][0] as Record<string, unknown>;
+    expect(callArgs.html).toBe('<h1>Hello</h1>');
+    expect(callArgs.text).toBe('Hello');
+  });
+
+  test('warns to stderr when --html and --html-file both provided', async () => {
+    spies = setupOutputSpies();
+
+    const tmpFile = join(
+      dirname(fileURLToPath(import.meta.url)),
+      '__test_html_warn.html',
+    );
+    writeFileSync(tmpFile, '<h1>From file</h1>');
+
+    try {
+      const { sendCommand } = await import('../../../src/commands/emails/send');
+      await sendCommand.parseAsync(
+        [
+          '--from',
+          'a@test.com',
+          '--to',
+          'b@test.com',
+          '--subject',
+          'Test',
+          '--html',
+          '<h1>Inline</h1>',
+          '--html-file',
+          tmpFile,
+        ],
+        { from: 'user' },
+      );
+
+      const stderrOutput = spies.stderrSpy.mock.calls.map((c) => c[0]).join('');
+      expect(stderrOutput).toContain('--html-file');
+      const callArgs = mockSend.mock.calls[0][0] as Record<string, unknown>;
+      expect(callArgs.html).toBe('<h1>From file</h1>');
+    } finally {
+      unlinkSync(tmpFile);
+    }
+  });
+
+  test('warns to stderr when --text and --text-file both provided', async () => {
+    spies = setupOutputSpies();
+
+    const tmpFile = join(
+      dirname(fileURLToPath(import.meta.url)),
+      '__test_text_warn.txt',
+    );
+    writeFileSync(tmpFile, 'From file');
+
+    try {
+      const { sendCommand } = await import('../../../src/commands/emails/send');
+      await sendCommand.parseAsync(
+        [
+          '--from',
+          'a@test.com',
+          '--to',
+          'b@test.com',
+          '--subject',
+          'Test',
+          '--text',
+          'Inline text',
+          '--text-file',
+          tmpFile,
+        ],
+        { from: 'user' },
+      );
+
+      const stderrOutput = spies.stderrSpy.mock.calls.map((c) => c[0]).join('');
+      expect(stderrOutput).toContain('--text-file');
+      const callArgs = mockSend.mock.calls[0][0] as Record<string, unknown>;
+      expect(callArgs.text).toBe('From file');
+    } finally {
+      unlinkSync(tmpFile);
+    }
+  });
+
+  test('errors when --html-file - and --text-file - both read stdin', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await expectExit1(() =>
+      sendCommand.parseAsync(
+        [
+          '--from',
+          'a@test.com',
+          '--to',
+          'b@test.com',
+          '--subject',
+          'Test',
+          '--html-file',
+          '-',
+          '--text-file',
+          '-',
+        ],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_options');
+  });
+
+  test('errors with invalid_options when --subject is empty string', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await expectExit1(() =>
+      sendCommand.parseAsync(
+        [
+          '--from',
+          'a@test.com',
+          '--to',
+          'b@test.com',
+          '--subject',
+          '',
+          '--text',
+          'Hi',
+        ],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_options');
+  });
+
+  test('errors with invalid_options when --from is empty string', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await expectExit1(() =>
+      sendCommand.parseAsync(
+        [
+          '--from',
+          '',
+          '--to',
+          'b@test.com',
+          '--subject',
+          'Test',
+          '--text',
+          'Hi',
+        ],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_options');
+  });
+
   test('sends with --template and --to only', async () => {
     spies = setupOutputSpies();
 
@@ -744,6 +1017,30 @@ describe('send command', () => {
     await expectExit1(() =>
       sendCommand.parseAsync(
         ['--template', 'tmpl_123', '--to', 'b@test.com', '--text', 'Hi'],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('template_body_conflict');
+  });
+
+  test('errors with template_body_conflict when --template and --text-file used together', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await expectExit1(() =>
+      sendCommand.parseAsync(
+        [
+          '--template',
+          'tmpl_123',
+          '--to',
+          'b@test.com',
+          '--text-file',
+          './body.txt',
+        ],
         { from: 'user' },
       ),
     );

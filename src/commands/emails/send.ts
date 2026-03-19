@@ -86,8 +86,15 @@ export const sendCommand = new Command('send')
   .option('--to <addresses...>', 'Recipient address(es) (required)')
   .option('--subject <subject>', 'Email subject (required)')
   .option('--html <html>', 'HTML body')
-  .option('--html-file <path>', 'Path to an HTML file for the body')
+  .option(
+    '--html-file <path>',
+    'Path to an HTML file for the body (use "-" for stdin)',
+  )
   .option('--text <text>', 'Plain-text body')
+  .option(
+    '--text-file <path>',
+    'Path to a plain-text file for the body (use "-" for stdin)',
+  )
   .option('--cc <addresses...>', 'CC recipients')
   .option('--bcc <addresses...>', 'BCC recipients')
   .option('--reply-to <address>', 'Reply-to address')
@@ -117,12 +124,14 @@ export const sendCommand = new Command('send')
     'after',
     buildHelpText({
       context:
-        'Required: --to and either --template or (--from, --subject, and one of --text | --html | --html-file)',
+        'Required: --to and either --template or (--from, --subject, and one of --text | --text-file | --html | --html-file)',
       output: '  {"id":"<email-id>"}',
       errorCodes: [
         'auth_error',
         'missing_body',
         'file_read_error',
+        'invalid_options',
+        'stdin_read_error',
         'invalid_header',
         'invalid_tag',
         'invalid_var',
@@ -137,6 +146,8 @@ export const sendCommand = new Command('send')
         'resend emails send --from you@domain.com --to user@example.com --subject "Hi" --text "Hi" --scheduled-at 2024-08-05T11:52:01.858Z',
         'resend emails send --from you@domain.com --to user@example.com --subject "Hi" --text "Hi" --attachment ./report.pdf',
         'resend emails send --from you@domain.com --to user@example.com --subject "Hi" --text "Hi" --headers X-Entity-Ref-ID=123 --tags category=marketing',
+        'resend emails send --from you@domain.com --to user@example.com --subject "Hi" --text-file ./body.txt',
+        'echo "Hello" | resend emails send --from you@domain.com --to user@example.com --subject "Hi" --text-file -',
         'resend emails send --template tmpl_123 --to user@example.com',
         'resend emails send --template tmpl_123 --to user@example.com --var name=John --var count=42',
         'RESEND_API_KEY=re_123 resend emails send --from you@domain.com --to user@example.com --subject "Hi" --text "Hi"',
@@ -145,6 +156,24 @@ export const sendCommand = new Command('send')
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+
+    if (opts.htmlFile === '-' && opts.textFile === '-') {
+      outputError(
+        {
+          message:
+            'Cannot read both --html-file and --text-file from stdin. Pipe to one and pass the other as a file path.',
+          code: 'invalid_options',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
+    if (opts.from === '') {
+      outputError(
+        { message: '--from cannot be empty', code: 'invalid_options' },
+        { json: globalOpts.json },
+      );
+    }
 
     const resend = await requireClient(globalOpts);
 
@@ -162,10 +191,14 @@ export const sendCommand = new Command('send')
     }
 
     // Validate: template and body flags are mutually exclusive
-    if (hasTemplate && (opts.html || opts.htmlFile || opts.text)) {
+    if (
+      hasTemplate &&
+      (opts.html || opts.htmlFile || opts.text || opts.textFile)
+    ) {
       outputError(
         {
-          message: 'Cannot use --template with --html, --html-file, or --text',
+          message:
+            'Cannot use --template with --html, --html-file, --text, or --text-file',
           code: 'template_body_conflict',
         },
         { json: globalOpts.json },
@@ -204,8 +237,6 @@ export const sendCommand = new Command('send')
         )
       : undefined;
 
-    // Only fetch verified domains in interactive mode — non-interactive
-    // callers (CI, agents, scripts) must pass --from explicitly.
     let fromAddress = opts.from;
     if (!fromAddress && !hasTemplate && isInteractive() && !globalOpts.json) {
       const domains = await fetchVerifiedDomains(resend);
@@ -241,10 +272,24 @@ export const sendCommand = new Command('send')
     );
 
     let html = opts.html;
-    const text = opts.text;
+    let text = opts.text;
 
     if (opts.htmlFile) {
+      if (opts.html) {
+        process.stderr.write(
+          'Warning: both --html and --html-file provided; using --html-file\n',
+        );
+      }
       html = readFile(opts.htmlFile, globalOpts);
+    }
+
+    if (opts.textFile) {
+      if (opts.text) {
+        process.stderr.write(
+          'Warning: both --text and --text-file provided; using --text-file\n',
+        );
+      }
+      text = readFile(opts.textFile, globalOpts);
     }
 
     let body: string | undefined = text;
@@ -256,7 +301,8 @@ export const sendCommand = new Command('send')
           placeholder: 'Type your message...',
         },
         {
-          message: 'Missing email body. Provide --html, --html-file, or --text',
+          message:
+            'Missing email body. Provide --html, --html-file, --text, or --text-file',
           code: 'missing_body',
         },
         globalOpts,
@@ -338,7 +384,8 @@ export const sendCommand = new Command('send')
         from: filled.from,
         to: toAddresses,
         subject: filled.subject,
-        ...(html ? { html } : { text: body as string }),
+        ...(html && { html }),
+        ...(body && { text: body }),
         ...(opts.cc && { cc: opts.cc }),
         ...(opts.bcc && { bcc: opts.bcc }),
         ...(opts.replyTo && { replyTo: opts.replyTo }),

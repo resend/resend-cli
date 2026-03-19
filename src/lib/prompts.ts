@@ -165,6 +165,20 @@ export async function promptForMissing<
   fields: FieldSpec[],
   globalOpts: GlobalOpts,
 ): Promise<{ [K in keyof T]: string }> {
+  const emptyFlags = fields.filter(
+    (f) => f.required !== false && current[f.flag] === '',
+  );
+  if (emptyFlags.length > 0) {
+    const flags = emptyFlags.map((f) => `--${f.flag}`).join(', ');
+    outputError(
+      {
+        message: `Empty value for required flags: ${flags}`,
+        code: 'invalid_options',
+      },
+      { json: globalOpts.json },
+    );
+  }
+
   const missing = fields.filter(
     (f) => f.required !== false && !current[f.flag],
   );

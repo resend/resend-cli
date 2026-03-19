@@ -456,6 +456,152 @@ describe('broadcasts create command', () => {
     expect(args.html).toBe('<p>From file</p>');
   });
 
+  test('reads text body from --text-file and passes it to SDK', async () => {
+    spies = setupOutputSpies();
+    readFileSpy = vi
+      .spyOn(files, 'readFile')
+      .mockReturnValue('Plain text from file');
+
+    const { createBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/create'
+    );
+    await createBroadcastCommand.parseAsync(
+      [
+        '--from',
+        'hello@domain.com',
+        '--subject',
+        'News',
+        '--segment-id',
+        '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
+        '--text-file',
+        '/fake/body.txt',
+      ],
+      { from: 'user' },
+    );
+
+    expect(readFileSpy).toHaveBeenCalledTimes(1);
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.text).toBe('Plain text from file');
+  });
+
+  test('warns to stderr when --html and --html-file both provided, html-file wins', async () => {
+    spies = setupOutputSpies();
+    readFileSpy = vi
+      .spyOn(files, 'readFile')
+      .mockReturnValue('<p>From file</p>');
+
+    const { createBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/create'
+    );
+    await createBroadcastCommand.parseAsync(
+      [
+        '--from',
+        'hello@domain.com',
+        '--subject',
+        'News',
+        '--segment-id',
+        '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
+        '--html',
+        '<p>Inline</p>',
+        '--html-file',
+        '/fake/email.html',
+      ],
+      { from: 'user' },
+    );
+
+    const stderrOutput = spies.stderrSpy.mock.calls.map((c) => c[0]).join('');
+    expect(stderrOutput).toContain('--html-file');
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.html).toBe('<p>From file</p>');
+  });
+
+  test('warns to stderr when --text and --text-file both provided, text-file wins', async () => {
+    spies = setupOutputSpies();
+    readFileSpy = vi.spyOn(files, 'readFile').mockReturnValue('From file');
+
+    const { createBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/create'
+    );
+    await createBroadcastCommand.parseAsync(
+      [
+        '--from',
+        'hello@domain.com',
+        '--subject',
+        'News',
+        '--segment-id',
+        '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
+        '--text',
+        'Inline text',
+        '--text-file',
+        '/fake/body.txt',
+      ],
+      { from: 'user' },
+    );
+
+    const stderrOutput = spies.stderrSpy.mock.calls.map((c) => c[0]).join('');
+    expect(stderrOutput).toContain('--text-file');
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.text).toBe('From file');
+  });
+
+  test('errors with invalid_options when --html-file - and --text-file - both read stdin', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { createBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/create'
+    );
+    await expectExit1(() =>
+      createBroadcastCommand.parseAsync(
+        [
+          '--from',
+          'hello@domain.com',
+          '--subject',
+          'News',
+          '--segment-id',
+          '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
+          '--html-file',
+          '-',
+          '--text-file',
+          '-',
+        ],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_options');
+  });
+
+  test('--text-file - passes stdin to readFile', async () => {
+    spies = setupOutputSpies();
+    readFileSpy = vi
+      .spyOn(files, 'readFile')
+      .mockReturnValue('stdin text content');
+
+    const { createBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/create'
+    );
+    await createBroadcastCommand.parseAsync(
+      [
+        '--from',
+        'hello@domain.com',
+        '--subject',
+        'News',
+        '--segment-id',
+        '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
+        '--text-file',
+        '-',
+      ],
+      { from: 'user' },
+    );
+
+    expect(readFileSpy).toHaveBeenCalledWith('-', expect.anything());
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.text).toBe('stdin text content');
+  });
+
   test('errors with file_read_error when --html-file path is unreadable', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});

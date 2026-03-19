@@ -11,6 +11,7 @@ import {
   test,
   vi,
 } from 'vitest';
+import * as files from '../../../src/lib/files';
 import {
   captureTestEnv,
   expectExit1,
@@ -52,6 +53,7 @@ describe('batch command', () => {
   let errorSpy: MockInstance | undefined;
   let stderrSpy: MockInstance | undefined;
   let exitSpy: MockInstance | undefined;
+  let readFileSpy: MockInstance | undefined;
   let tmpFile: string;
 
   beforeEach(() => {
@@ -64,10 +66,12 @@ describe('batch command', () => {
     errorSpy?.mockRestore();
     stderrSpy?.mockRestore();
     exitSpy?.mockRestore();
+    readFileSpy?.mockRestore();
     spies = undefined;
     errorSpy = undefined;
     stderrSpy = undefined;
     exitSpy = undefined;
+    readFileSpy = undefined;
     if (tmpFile) {
       const { unlinkSync } = require('node:fs');
       try {
@@ -356,6 +360,19 @@ describe('batch command', () => {
     // When no errors, output should be the plain array (no wrapper object)
     expect(Array.isArray(parsed)).toBe(true);
     expect(parsed).toEqual([{ id: 'abc123' }, { id: 'def456' }]);
+  });
+
+  test('--file - passes stdin to readFile', async () => {
+    spies = setupOutputSpies();
+    readFileSpy = vi
+      .spyOn(files, 'readFile')
+      .mockReturnValue(JSON.stringify(VALID_EMAILS));
+
+    const { batchCommand } = await import('../../../src/commands/emails/batch');
+    await batchCommand.parseAsync(['--file', '-'], { from: 'user' });
+
+    expect(readFileSpy).toHaveBeenCalledWith('-', expect.anything());
+    expect(mockBatchSend).toHaveBeenCalledTimes(1);
   });
 
   test('errors with batch_error when SDK returns an error', async () => {
