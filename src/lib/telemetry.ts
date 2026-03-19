@@ -13,7 +13,7 @@ import { isInteractive } from './tty';
 import { detectInstallMethodName } from './update-check';
 import { VERSION } from './version';
 
-const POSTHOG_API_KEY = 'phc_REPLACE_ME';
+const POSTHOG_API_KEY: string = process.env.POSTHOG_PUBLIC_KEY ?? '';
 const POSTHOG_HOST = 'https://us.i.posthog.com/capture/';
 
 const OS_NAMES: Record<string, string> = {
@@ -28,6 +28,7 @@ function friendlyOs(): string {
 
 export function isDisabled(): boolean {
   return (
+    !POSTHOG_API_KEY ||
     process.env.DO_NOT_TRACK === '1' ||
     process.env.RESEND_TELEMETRY_DISABLED === '1'
   );

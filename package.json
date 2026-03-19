@@ -30,7 +30,7 @@
   "scripts": {
     "dev": "tsx src/cli.ts",
     "dev:watch": "tsx --watch src/cli.ts",
-    "build": "esbuild src/cli.ts --bundle --platform=node --format=cjs --minify --outfile=dist/cli.cjs",
+    "build": "node scripts/build.mjs",
     "build:bin": "pnpm build && pkg dist/cli.cjs --compress Brotli --target node24 --output dist/resend",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
@@ -39,7 +39,7 @@
     "test:e2e": "vitest run --config vitest.config.e2e.ts",
     "sync-skill-version": "node scripts/sync-skill-version.mjs",
     "version": "pnpm run sync-skill-version && git add skills/resend-cli/SKILL.md",
-    "prepack": "pnpm run sync-skill-version && pnpm build"
+    "prepack": "pnpm run sync-skill-version && pnpm build && node scripts/verify-bundle.mjs"
   },
   "dependencies": {
     "@clack/prompts": "1.1.0",

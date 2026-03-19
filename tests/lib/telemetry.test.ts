@@ -16,6 +16,11 @@ import {
   test,
   vi,
 } from 'vitest';
+
+vi.hoisted(() => {
+  process.env.POSTHOG_PUBLIC_KEY = 'phc_test_key';
+});
+
 import {
   flushFromFile,
   flushPayload,
