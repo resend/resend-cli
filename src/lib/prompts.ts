@@ -74,7 +74,7 @@ export async function promptRenameIfInvalid(
 
   const newName = await p.text({
     message: 'Enter a new name for this profile:',
-    placeholder: profileName.replace(/[^a-zA-Z0-9_-]/g, '-'),
+    placeholder: profileName.replace(/[^a-zA-Z0-9._-]/g, '-'),
     validate: (v) => validateProfileName(v as string),
   });
 

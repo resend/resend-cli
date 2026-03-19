@@ -546,11 +546,13 @@ describe('validateProfileName', () => {
     expect(validateProfileName('prod-2024')).toBeUndefined();
     expect(validateProfileName('Production')).toBeUndefined();
     expect(validateProfileName('MyProfile')).toBeUndefined();
+    expect(validateProfileName('resend.com')).toBeUndefined();
+    expect(validateProfileName('my.profile')).toBeUndefined();
   });
 
   test('rejects spaces and special characters', () => {
-    expect(validateProfileName('my profile')).toContain('letters');
-    expect(validateProfileName('profile@org')).toContain('letters');
+    expect(validateProfileName('my profile')).toContain('dots');
+    expect(validateProfileName('profile@org')).toContain('dots');
   });
 
   test('rejects empty name', () => {

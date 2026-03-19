@@ -78,7 +78,7 @@ export async function renameAction(
 
     const result = await p.text({
       message: `Enter new name for '${from}':`,
-      placeholder: from.replace(/[^a-zA-Z0-9_-]/g, '-'),
+      placeholder: from.replace(/[^a-zA-Z0-9._-]/g, '-'),
       validate: (v) => validateProfileName(v as string),
     });
 
