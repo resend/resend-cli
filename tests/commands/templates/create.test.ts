@@ -166,15 +166,14 @@ describe('templates create command', () => {
 
   test('reads text body from --text-file and passes it to SDK', async () => {
     spies = setupOutputSpies();
-    readFileSpy = vi.spyOn(files, 'readFile').mockReturnValue('<h1>HTML</h1>');
+    readFileSpy = vi
+      .spyOn(files, 'readFile')
+      .mockReturnValueOnce('<h1>HTML</h1>')
+      .mockReturnValueOnce('Plain text from file');
 
     const { createTemplateCommand } = await import(
       '../../../src/commands/templates/create'
     );
-
-    readFileSpy
-      .mockReturnValueOnce('<h1>HTML</h1>')
-      .mockReturnValueOnce('Plain text from file');
 
     await createTemplateCommand.parseAsync(
       [

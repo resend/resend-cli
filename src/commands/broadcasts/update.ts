@@ -48,6 +48,7 @@ Variable interpolation:
         'resend broadcasts update d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6 --subject "Updated Subject"',
         'resend broadcasts update d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6 --html-file ./new-email.html',
         'resend broadcasts update d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6 --name "Q1 Newsletter" --from "news@domain.com" --json',
+        'echo "<p>New content</p>" | resend broadcasts update d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6 --html-file -',
       ],
     }),
   )

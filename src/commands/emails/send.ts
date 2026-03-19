@@ -393,7 +393,7 @@ export const sendCommand = new Command('send')
         ...(attachments && { attachments }),
         ...(headers && { headers }),
         ...(tags && { tags }),
-      };
+      } as CreateEmailOptions;
     }
 
     const data = await withSpinner(
