@@ -6,6 +6,7 @@ import {
 import { Command } from '@commander-js/extra-typings';
 import pc from 'picocolors';
 import type { Resend, WebhookEvent } from 'resend';
+import { getCancelExitCode, setSigintHandler } from '../../lib/cli-exit';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
@@ -372,10 +373,10 @@ For example, if using ngrok: ngrok http 4318`,
       }
       cleaningUp = true;
       await cleanup(resend, webhookId, server);
-      process.exit(0);
+      process.exit(getCancelExitCode());
     };
 
-    process.on('SIGINT', handleSignal);
+    setSigintHandler(handleSignal);
     process.on('SIGTERM', handleSignal);
 
     // Keep the process alive until signal
