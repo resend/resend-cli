@@ -117,7 +117,9 @@ ${pc.gray('Examples:')}
 `,
   )
   .action(() => {
-    printBannerPlain();
+    if (process.stdout.isTTY) {
+      printBannerPlain();
+    }
     const opts = program.opts();
     if (opts.apiKey) {
       outputError(
