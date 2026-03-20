@@ -106,18 +106,7 @@ function collectValueFlags(node: CommandNode): string[] {
 // --- Bash ---
 
 export function generateBashCompletion(tree: CommandNode): string {
-  const globalOpts = tree.options;
   const entries = flattenTree(tree, '', []);
-  const childEntries = entries.slice(1);
-
-  const choiceOptions: Map<string, string[]> = new Map();
-  for (const entry of entries) {
-    for (const opt of entry.options) {
-      if (opt.choices && opt.long) {
-        choiceOptions.set(opt.long, opt.choices);
-      }
-    }
-  }
 
   const lines: string[] = [];
   const name = tree.name;
@@ -139,17 +128,6 @@ export function generateBashCompletion(tree: CommandNode): string {
   lines.push('  fi');
   lines.push('');
 
-  if (choiceOptions.size > 0) {
-    lines.push('  case "$prev" in');
-    for (const [flag, choices] of choiceOptions) {
-      lines.push(
-        `    ${flag}) COMPREPLY=($(compgen -W "${choices.join(' ')}" -- "$cur")); return ;;`,
-      );
-    }
-    lines.push('  esac');
-    lines.push('');
-  }
-
   const valueFlags = collectValueFlags(tree);
   const valueFlagPattern = valueFlags.join('|');
 
@@ -168,53 +146,47 @@ export function generateBashCompletion(tree: CommandNode): string {
   lines.push('    i=$((i + 1))');
   lines.push('  done');
   lines.push('');
-  lines.push('  if [[ "$cur" == -* ]]; then');
-  lines.push('    case "$cmd_path" in');
+  lines.push('  case "$cmd_path" in');
 
-  for (const entry of childEntries) {
+  for (const entry of entries) {
+    const key =
+      entry.path === tree.name ? '' : entry.path.replace(`${tree.name} `, '');
+    const choiceOpts = entry.options.filter((o) => o.choices && o.long);
     const optFlags = entry.options
       .map((o) => o.long)
       .filter(Boolean)
       .join(' ');
-    if (optFlags) {
-      const key = entry.path.replace(`${tree.name} `, '');
-      lines.push(
-        `      "${key}") COMPREPLY=($(compgen -W "${optFlags}" -- "$cur")) ;;`,
-      );
-    }
-  }
-  {
-    const rootFlags = globalOpts
-      .map((o) => o.long)
-      .filter(Boolean)
-      .join(' ');
-    if (rootFlags) {
-      lines.push(
-        `      "") COMPREPLY=($(compgen -W "${rootFlags}" -- "$cur")) ;;`,
-      );
-    }
-  }
+    const subs = entry.subcommands.map((s) => s.name).join(' ');
 
-  lines.push('    esac');
-  lines.push('    return');
-  lines.push('  fi');
-  lines.push('');
-  lines.push('  case "$cmd_path" in');
+    const hasChoices = choiceOpts.length > 0;
+    const hasOptions = optFlags.length > 0;
+    const hasSubs = subs.length > 0;
 
-  for (const entry of childEntries) {
-    if (entry.subcommands.length === 0) {
+    if (!hasChoices && !hasOptions && !hasSubs) {
       continue;
     }
-    const subs = entry.subcommands.map((s) => s.name).join(' ');
-    const key = entry.path.replace(`${tree.name} `, '');
-    lines.push(
-      `    "${key}") COMPREPLY=($(compgen -W "${subs}" -- "$cur")) ;;`,
-    );
-  }
 
-  {
-    const rootSubs = entries[0].subcommands.map((s) => s.name).join(' ');
-    lines.push(`    "") COMPREPLY=($(compgen -W "${rootSubs}" -- "$cur")) ;;`);
+    lines.push(`    "${key}")`);
+    if (hasChoices) {
+      lines.push('      case "$prev" in');
+      for (const opt of choiceOpts) {
+        lines.push(
+          `        ${opt.long}) COMPREPLY=($(compgen -W "${opt.choices?.join(' ')}" -- "$cur")); return ;;`,
+        );
+      }
+      lines.push('      esac');
+    }
+    if (hasOptions) {
+      lines.push('      if [[ "$cur" == -* ]]; then');
+      lines.push(
+        `        COMPREPLY=($(compgen -W "${optFlags}" -- "$cur")); return`,
+      );
+      lines.push('      fi');
+    }
+    if (hasSubs) {
+      lines.push(`      COMPREPLY=($(compgen -W "${subs}" -- "$cur"))`);
+    }
+    lines.push('      ;;');
   }
 
   lines.push('  esac');
@@ -228,18 +200,7 @@ export function generateBashCompletion(tree: CommandNode): string {
 // --- Zsh ---
 
 export function generateZshCompletion(tree: CommandNode): string {
-  const globalOpts = tree.options;
   const entries = flattenTree(tree, '', []);
-  const childEntries = entries.slice(1);
-
-  const choiceOptions: Map<string, string[]> = new Map();
-  for (const entry of entries) {
-    for (const opt of entry.options) {
-      if (opt.choices && opt.long) {
-        choiceOptions.set(opt.long, opt.choices);
-      }
-    }
-  }
 
   const lines: string[] = [];
   const name = tree.name;
@@ -254,15 +215,6 @@ export function generateZshCompletion(tree: CommandNode): string {
   // biome-ignore lint/suspicious/noTemplateCurlyInString: zsh syntax
   lines.push('  prev="${words[$CURRENT-1]}"');
   lines.push('');
-
-  if (choiceOptions.size > 0) {
-    lines.push('  case "$prev" in');
-    for (const [flag, choices] of choiceOptions) {
-      lines.push(`    ${flag}) compadd -- ${choices.join(' ')}; return ;;`);
-    }
-    lines.push('  esac');
-    lines.push('');
-  }
 
   const valueFlags = collectValueFlags(tree);
   const valueFlagPattern = valueFlags.join('|');
@@ -280,57 +232,46 @@ export function generateZshCompletion(tree: CommandNode): string {
   lines.push('    esac');
   lines.push('  done');
   lines.push('');
-  lines.push('  if [[ "$cur" == -* ]]; then');
-  lines.push('    case "$cmd_path" in');
-
-  for (const entry of childEntries) {
-    const opts = entry.options.filter((o) => o.long);
-    if (opts.length > 0) {
-      const key = entry.path.replace(`${tree.name} `, '');
-      const descs = opts
-        .map((o) => `"${o.long}:${escapeZsh(o.description)}"`)
-        .join(' ');
-      lines.push(
-        `      "${key}") local -a opts=(${descs}); _describe 'option' opts ;;`,
-      );
-    }
-  }
-  {
-    const opts = globalOpts.filter((o) => o.long);
-    if (opts.length > 0) {
-      const descs = opts
-        .map((o) => `"${o.long}:${escapeZsh(o.description)}"`)
-        .join(' ');
-      lines.push(
-        `      "") local -a opts=(${descs}); _describe 'option' opts ;;`,
-      );
-    }
-  }
-
-  lines.push('    esac');
-  lines.push('    return');
-  lines.push('  fi');
-  lines.push('');
   lines.push('  case "$cmd_path" in');
 
-  for (const entry of childEntries) {
-    if (entry.subcommands.length === 0) {
+  for (const entry of entries) {
+    const key =
+      entry.path === tree.name ? '' : entry.path.replace(`${tree.name} `, '');
+    const choiceOpts = entry.options.filter((o) => o.choices && o.long);
+    const opts = entry.options.filter((o) => o.long);
+    const hasSubs = entry.subcommands.length > 0;
+
+    if (choiceOpts.length === 0 && opts.length === 0 && !hasSubs) {
       continue;
     }
-    const key = entry.path.replace(`${tree.name} `, '');
-    const descs = entry.subcommands
-      .map((s) => `"${s.name}:${escapeZsh(s.description)}"`)
-      .join(' ');
-    lines.push(
-      `    "${key}") local -a cmds=(${descs}); _describe 'command' cmds ;;`,
-    );
-  }
 
-  {
-    const descs = entries[0].subcommands
-      .map((s) => `"${s.name}:${escapeZsh(s.description)}"`)
-      .join(' ');
-    lines.push(`    "") local -a cmds=(${descs}); _describe 'command' cmds ;;`);
+    lines.push(`    "${key}")`);
+    if (choiceOpts.length > 0) {
+      lines.push('      case "$prev" in');
+      for (const opt of choiceOpts) {
+        lines.push(
+          `        ${opt.long}) compadd -- ${opt.choices?.join(' ')}; return ;;`,
+        );
+      }
+      lines.push('      esac');
+    }
+    if (opts.length > 0) {
+      lines.push('      if [[ "$cur" == -* ]]; then');
+      const descs = opts
+        .map((o) => `"${o.long}:${escapeZsh(o.description)}"`)
+        .join(' ');
+      lines.push(
+        `        local -a opts=(${descs}); _describe 'option' opts; return`,
+      );
+      lines.push('      fi');
+    }
+    if (hasSubs) {
+      const descs = entry.subcommands
+        .map((s) => `"${s.name}:${escapeZsh(s.description)}"`)
+        .join(' ');
+      lines.push(`      local -a cmds=(${descs}); _describe 'command' cmds`);
+    }
+    lines.push('      ;;');
   }
 
   lines.push('  esac');
@@ -450,85 +391,54 @@ export function generatePowerShellCompletion(tree: CommandNode): string {
   lines.push('');
   lines.push('  $prev = if ($words.Count -ge 2) { $words[-2] } else { "" }');
   lines.push('');
+  lines.push('  switch ($joined) {');
 
-  const choiceOptions: Map<string, string[]> = new Map();
   for (const entry of entries) {
-    for (const opt of entry.options) {
-      if (opt.choices && opt.long) {
-        choiceOptions.set(opt.long, opt.choices);
-      }
-    }
-  }
-
-  if (choiceOptions.size > 0) {
-    lines.push('  switch ($prev) {');
-    for (const [flag, choices] of choiceOptions) {
-      const choicesList = choices.map((c) => `"${c}"`).join(', ');
-      lines.push(
-        `    "${flag}" { @(${choicesList}) | Where-Object { $_ -like "$cur*" } | ForEach-Object { [System.Management.Automation.CompletionResult]::new($_) }; return }`,
-      );
-    }
-    lines.push('  }');
-    lines.push('');
-  }
-
-  lines.push('  $completions = @()');
-  lines.push('');
-  lines.push('  if ($cur -like "-*") {');
-  lines.push('    $opts = switch ($joined) {');
-
-  const childEntries = entries.slice(1);
-  for (const entry of childEntries) {
+    const key =
+      entry.path === tree.name ? '' : entry.path.replace(`${tree.name} `, '');
+    const choiceOpts = entry.options.filter((o) => o.choices && o.long);
     const optFlags = entry.options
       .map((o) => o.long)
       .filter(Boolean)
       .map((f) => `"${f}"`)
       .join(', ');
-    if (optFlags) {
-      const key = entry.path.replace(`${tree.name} `, '');
-      lines.push(`      "${key}" { @(${optFlags}) }`);
-    }
-  }
-  {
-    const rootFlags = tree.options
-      .map((o) => o.long)
-      .filter(Boolean)
-      .map((f) => `"${f}"`)
-      .join(', ');
-    if (rootFlags) {
-      lines.push(`      default { @(${rootFlags}) }`);
-    }
-  }
+    const subs = entry.subcommands.map((s) => `"${s.name}"`).join(', ');
 
-  lines.push('    }');
-  lines.push(
-    '    $completions = $opts | Where-Object { $_ -like "$cur*" } | ForEach-Object { [System.Management.Automation.CompletionResult]::new($_) }',
-  );
-  lines.push('  } else {');
-  lines.push('    $subs = switch ($joined) {');
+    const hasChoices = choiceOpts.length > 0;
+    const hasOptions = optFlags.length > 0;
+    const hasSubs = subs.length > 0;
 
-  for (const entry of childEntries) {
-    if (entry.subcommands.length === 0) {
+    if (!hasChoices && !hasOptions && !hasSubs) {
       continue;
     }
-    const subs = entry.subcommands.map((s) => `"${s.name}"`).join(', ');
-    const key = entry.path.replace(`${tree.name} `, '');
-    lines.push(`      "${key}" { @(${subs}) }`);
-  }
-  {
-    const rootSubs = entries[0].subcommands
-      .map((s) => `"${s.name}"`)
-      .join(', ');
-    lines.push(`      default { @(${rootSubs}) }`);
+
+    lines.push(`    "${key}" {`);
+    if (hasChoices) {
+      lines.push('      switch ($prev) {');
+      for (const opt of choiceOpts) {
+        const choicesList = opt.choices?.map((c) => `"${c}"`).join(', ');
+        lines.push(
+          `        "${opt.long}" { @(${choicesList}) | Where-Object { $_ -like "$cur*" } | ForEach-Object { [System.Management.Automation.CompletionResult]::new($_) }; return }`,
+        );
+      }
+      lines.push('      }');
+    }
+    if (hasOptions) {
+      lines.push('      if ($cur -like "-*") {');
+      lines.push(
+        `        @(${optFlags}) | Where-Object { $_ -like "$cur*" } | ForEach-Object { [System.Management.Automation.CompletionResult]::new($_) }; return`,
+      );
+      lines.push('      }');
+    }
+    if (hasSubs) {
+      lines.push(
+        `      @(${subs}) | Where-Object { $_ -like "$cur*" } | ForEach-Object { [System.Management.Automation.CompletionResult]::new($_) }`,
+      );
+    }
+    lines.push('    }');
   }
 
-  lines.push('    }');
-  lines.push(
-    '    $completions = $subs | Where-Object { $_ -like "$cur*" } | ForEach-Object { [System.Management.Automation.CompletionResult]::new($_) }',
-  );
   lines.push('  }');
-  lines.push('');
-  lines.push('  $completions');
   lines.push('}');
 
   return lines.join('\n');
