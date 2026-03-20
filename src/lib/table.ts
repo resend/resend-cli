@@ -32,8 +32,6 @@ const BOX = isUnicodeSupported
 
 export type ColumnOption = { fixed?: boolean };
 
-const MIN_USEFUL_WIDTH = 12;
-
 export function getTerminalWidth(): number | undefined {
   return process.stdout.columns;
 }
@@ -58,7 +56,7 @@ export function renderTable(
   headers: string[],
   rows: string[][],
   emptyMessage = '(no results)',
-  columns?: ColumnOption[],
+  _columns?: ColumnOption[],
 ): string {
   if (rows.length === 0) {
     return emptyMessage;
@@ -72,45 +70,7 @@ export function renderTable(
     const N = widths.length;
     const totalWidth = widths.reduce((s, w) => s + w, 0) + 3 * N + 1;
     if (totalWidth > termWidth) {
-      const excess = totalWidth - termWidth;
-      const capacities = widths.map((w, i) => {
-        if (columns?.[i]?.fixed) {
-          return 0;
-        }
-        return Math.max(0, w - headers[i].length);
-      });
-      const totalCapacity = capacities.reduce((s, c) => s + c, 0);
-
-      let useCards = false;
-      if (totalCapacity < excess) {
-        useCards = true;
-      } else {
-        for (let i = 0; i < N; i++) {
-          if (
-            !columns?.[i]?.fixed &&
-            capacities[i] > 0 &&
-            widths[i] >= MIN_USEFUL_WIDTH
-          ) {
-            const share = Math.round((capacities[i] / totalCapacity) * excess);
-            if (widths[i] - share < MIN_USEFUL_WIDTH) {
-              useCards = true;
-              break;
-            }
-          }
-        }
-      }
-
-      if (useCards) {
-        return renderCards(headers, rows);
-      }
-
-      const reduction = Math.min(excess, totalCapacity);
-      for (let i = 0; i < N; i++) {
-        if (capacities[i] > 0) {
-          const share = Math.round((capacities[i] / totalCapacity) * reduction);
-          widths[i] = widths[i] - share;
-        }
-      }
+      return renderCards(headers, rows);
     }
   }
 
@@ -123,17 +83,7 @@ export function renderTable(
   const row = (cells: string[]) =>
     BOX.v +
     ' ' +
-    cells
-      .map((c, i) => {
-        const display =
-          c.length > widths[i]
-            ? widths[i] >= 4
-              ? `${c.slice(0, widths[i] - 3)}...`
-              : c.slice(0, widths[i])
-            : c;
-        return display.padEnd(widths[i]);
-      })
-      .join(` ${BOX.v} `) +
+    cells.map((c, i) => c.padEnd(widths[i])).join(` ${BOX.v} `) +
     ' ' +
     BOX.v;
   return [top, row(headers), mid, ...rows.map(row), bot].join('\n');
