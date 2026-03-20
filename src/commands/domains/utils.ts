@@ -35,12 +35,7 @@ export function renderDomainsTable(
   domains: Array<{ id: string; name: string; status: string; region: string }>,
 ): string {
   const rows = domains.map((d) => [d.name, d.status, d.region, d.id]);
-  return renderTable(['Name', 'Status', 'Region', 'ID'], rows, '(no domains)', [
-    {},
-    {},
-    {},
-    { fixed: true },
-  ]);
+  return renderTable(['Name', 'Status', 'Region', 'ID'], rows, '(no domains)');
 }
 
 export function statusIndicator(status: string): string {

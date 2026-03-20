@@ -67,6 +67,5 @@ export function renderTemplatesTable(
     ['Name', 'Status', 'Alias', 'ID', 'Created'],
     rows,
     '(no templates)',
-    [{}, {}, {}, { fixed: true }, {}],
   );
 }

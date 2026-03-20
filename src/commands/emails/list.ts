@@ -31,7 +31,6 @@ function renderSentEmailsTable(emails: SentEmail[]): string {
     ['From', 'To', 'Subject', 'Status', 'Created', 'ID'],
     rows,
     '(no sent emails)',
-    [{}, {}, {}, {}, {}, { fixed: true }],
   );
 }
 

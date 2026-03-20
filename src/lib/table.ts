@@ -30,8 +30,6 @@ const BOX = isUnicodeSupported
       mm: '+',
     };
 
-export type ColumnOption = { fixed?: boolean };
-
 export function getTerminalWidth(): number | undefined {
   return process.stdout.columns;
 }
@@ -56,7 +54,6 @@ export function renderTable(
   headers: string[],
   rows: string[][],
   emptyMessage = '(no results)',
-  _columns?: ColumnOption[],
 ): string {
   if (rows.length === 0) {
     return emptyMessage;
