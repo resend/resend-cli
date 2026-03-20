@@ -54,5 +54,5 @@ export const RESEND_URLS = {
   templates: `${RESEND_BASE}/templates`,
   template: (id: string) => `${RESEND_BASE}/templates/${id}`,
   broadcasts: `${RESEND_BASE}/broadcasts`,
-  broadcast: (id: string) => `${RESEND_BASE}/broadcasts/${id}/editor`,
+  broadcast: (id: string) => `${RESEND_BASE}/broadcasts/${id}`,
 } as const;

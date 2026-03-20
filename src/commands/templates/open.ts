@@ -5,7 +5,7 @@ import { buildHelpText } from '../../lib/help-text';
 
 export const openTemplateCommand = new Command('open')
   .description('Open a template or the templates list in the Resend dashboard')
-  .argument('[id]', 'Template ID or alias — omit to open the templates list')
+  .argument('[id]', 'Template ID — omit to open the templates list')
   .addHelpText(
     'after',
     buildHelpText({
@@ -15,7 +15,6 @@ export const openTemplateCommand = new Command('open')
       examples: [
         'resend templates open',
         'resend templates open 78261eea-8f8b-4381-83c6-79fa7120f1cf',
-        'resend templates open my-template-alias',
       ],
     }),
   )

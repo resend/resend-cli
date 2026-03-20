@@ -3,7 +3,7 @@ import * as browser from '../../../src/lib/browser';
 
 describe('broadcasts open command', () => {
   beforeEach(() => {
-    vi.spyOn(browser, 'openInBrowser').mockResolvedValue(true);
+    vi.spyOn(browser, 'openInBrowserOrLog').mockResolvedValue();
   });
 
   afterEach(() => {
@@ -16,9 +16,10 @@ describe('broadcasts open command', () => {
     );
     await openBroadcastCommand.parseAsync([], { from: 'user' });
 
-    expect(browser.openInBrowser).toHaveBeenCalledTimes(1);
-    expect(browser.openInBrowser).toHaveBeenCalledWith(
+    expect(browser.openInBrowserOrLog).toHaveBeenCalledTimes(1);
+    expect(browser.openInBrowserOrLog).toHaveBeenCalledWith(
       browser.RESEND_URLS.broadcasts,
+      expect.any(Object),
     );
   });
 
@@ -31,9 +32,10 @@ describe('broadcasts open command', () => {
       { from: 'user' },
     );
 
-    expect(browser.openInBrowser).toHaveBeenCalledTimes(1);
-    expect(browser.openInBrowser).toHaveBeenCalledWith(
+    expect(browser.openInBrowserOrLog).toHaveBeenCalledTimes(1);
+    expect(browser.openInBrowserOrLog).toHaveBeenCalledWith(
       browser.RESEND_URLS.broadcast('d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'),
+      expect.any(Object),
     );
   });
 });

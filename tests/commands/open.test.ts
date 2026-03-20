@@ -3,7 +3,7 @@ import * as browser from '../../src/lib/browser';
 
 describe('resend open command', () => {
   beforeEach(() => {
-    vi.spyOn(browser, 'openInBrowser').mockResolvedValue(true);
+    vi.spyOn(browser, 'openInBrowserOrLog').mockResolvedValue();
   });
 
   afterEach(() => {
@@ -14,9 +14,10 @@ describe('resend open command', () => {
     const { openCommand } = await import('../../src/commands/open');
     await openCommand.parseAsync([], { from: 'user' });
 
-    expect(browser.openInBrowser).toHaveBeenCalledTimes(1);
-    expect(browser.openInBrowser).toHaveBeenCalledWith(
+    expect(browser.openInBrowserOrLog).toHaveBeenCalledTimes(1);
+    expect(browser.openInBrowserOrLog).toHaveBeenCalledWith(
       browser.RESEND_URLS.emails,
+      expect.any(Object),
     );
   });
 });
