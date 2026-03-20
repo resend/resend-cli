@@ -86,7 +86,11 @@ export function renderTable(
         useCards = true;
       } else {
         for (let i = 0; i < N; i++) {
-          if (!columns?.[i]?.fixed && capacities[i] > 0) {
+          if (
+            !columns?.[i]?.fixed &&
+            capacities[i] > 0 &&
+            widths[i] >= MIN_USEFUL_WIDTH
+          ) {
             const share = Math.round((capacities[i] / totalCapacity) * excess);
             if (widths[i] - share < MIN_USEFUL_WIDTH) {
               useCards = true;
