@@ -58,7 +58,10 @@ export async function promptForFromAddress(domains: string[]): Promise<string> {
         if (!v || !v.includes('@')) {
           return 'Enter a valid email address';
         }
-        if (!v.endsWith(`@${domain}`)) {
+        const addr = v.includes('<')
+          ? v.slice(v.indexOf('<') + 1, v.indexOf('>'))
+          : v;
+        if (!addr.endsWith(`@${domain}`)) {
           return `Address must use @${domain}`;
         }
         return undefined;
