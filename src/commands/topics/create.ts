@@ -46,7 +46,7 @@ Non-interactive: --name is required.`,
 
     const name = await requireText(
       opts.name,
-      { message: 'Topic name', placeholder: 'Product Updates' },
+      { message: 'Topic name', placeholder: 'e.g. Product Updates' },
       { message: 'Missing --name flag.', code: 'missing_name' },
       globalOpts,
     );

@@ -249,18 +249,21 @@ export const sendCommand = new Command('send')
       {
         flag: 'from',
         message: 'From address',
-        placeholder: 'you@example.com',
+        placeholder: 'onboarding@resend.dev',
+        defaultValue: 'onboarding@resend.dev',
         required: !hasTemplate,
       },
       {
         flag: 'to',
         message: 'To address',
-        placeholder: 'recipient@example.com',
+        placeholder: 'delivered@resend.dev',
+        defaultValue: 'delivered@resend.dev',
       },
       {
         flag: 'subject',
         message: 'Subject',
         placeholder: 'Hello!',
+        defaultValue: 'Hello!',
         required: !hasTemplate,
       },
     ];
@@ -298,7 +301,8 @@ export const sendCommand = new Command('send')
         undefined,
         {
           message: 'Email body (plain text)',
-          placeholder: 'Type your message...',
+          placeholder: 'Hello, World!',
+          defaultValue: 'Hello, World!',
         },
         {
           message:

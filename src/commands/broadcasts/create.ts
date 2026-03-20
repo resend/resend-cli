@@ -104,7 +104,7 @@ Scheduling:
       }
       const result = await p.text({
         message: 'From address',
-        placeholder: 'hello@domain.com',
+        placeholder: 'e.g. hello@domain.com',
         validate: (v) => (!v ? 'Required' : undefined),
       });
       if (p.isCancel(result)) {
@@ -122,7 +122,7 @@ Scheduling:
       }
       const result = await p.text({
         message: 'Subject',
-        placeholder: 'Weekly Newsletter',
+        placeholder: 'e.g. Weekly Newsletter',
         validate: (v) => (!v ? 'Required' : undefined),
       });
       if (p.isCancel(result)) {

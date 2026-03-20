@@ -59,6 +59,7 @@ Permissions:
       const nameResult = await p.text({
         message: 'Key name',
         placeholder: 'My API Key',
+        defaultValue: 'My API Key',
         validate: (v) => {
           if (!v) {
             return 'Name is required';
