@@ -116,8 +116,8 @@ describe('login command', () => {
   });
 
   test('rejects empty or whitespace-only key with missing_key in non-interactive', async () => {
-    setupOutputSpies();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { loginCommand } = await import('../../../src/commands/auth/login');
@@ -130,7 +130,7 @@ describe('login command', () => {
   });
 
   test('trims API key before storing', async () => {
-    setupOutputSpies();
+    setNonInteractive();
 
     const { loginCommand } = await import('../../../src/commands/auth/login');
     await loginCommand.parseAsync(['--key', '  re_trimmed_key_456  '], {
@@ -288,8 +288,8 @@ describe('login command', () => {
   });
 
   test('rejects invalid profile name with invalid_profile_name', async () => {
-    setupOutputSpies();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { Command } = await import('@commander-js/extra-typings');
