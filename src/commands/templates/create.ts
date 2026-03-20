@@ -13,9 +13,16 @@ export const createTemplateCommand = new Command('create')
   .description('Create a new template')
   .option('--name <name>', 'Template name — required')
   .option('--html <html>', 'HTML body')
-  .option('--html-file <path>', 'Path to an HTML file for the body')
+  .option(
+    '--html-file <path>',
+    'Path to an HTML file for the body (use "-" for stdin)',
+  )
   .option('--subject <subject>', 'Email subject')
   .option('--text <text>', 'Plain-text body')
+  .option(
+    '--text-file <path>',
+    'Path to a plain-text file for the body (use "-" for stdin)',
+  )
   .option('--from <address>', 'Sender address')
   .option('--reply-to <address>', 'Reply-to address')
   .option('--alias <alias>', 'Template alias for lookup by name')
@@ -28,7 +35,7 @@ export const createTemplateCommand = new Command('create')
     buildHelpText({
       context: `Creates a new draft template. Use "resend templates publish" to make it available for sending.
 
---name is required. Body: provide --html or --html-file (mutually exclusive).
+--name is required. Body: provide --html or --html-file. Optionally add --text or --text-file for plain-text.
 
 --var declares a template variable using the format KEY:type or KEY:type:fallback.
   Valid types: string, number.
@@ -36,13 +43,15 @@ export const createTemplateCommand = new Command('create')
     --html "<p>Hi {{{NAME}}}, your total is {{{PRICE}}}</p>"
     --var NAME:string --var PRICE:number:0
 
-Non-interactive: --name and a body (--html or --html-file) are required.`,
+Non-interactive: --name and a body (--html or --html-file) are required. --text-file provides a plain-text fallback.`,
       output: `  {"object":"template","id":"<template-id>"}`,
       errorCodes: [
         'auth_error',
         'missing_name',
         'missing_body',
         'file_read_error',
+        'invalid_options',
+        'stdin_read_error',
         'create_error',
       ],
       examples: [
@@ -76,10 +85,11 @@ Non-interactive: --name and a body (--html or --html-file) are required.`,
       name = result;
     }
 
-    if (opts.html && opts.htmlFile) {
+    if (opts.htmlFile === '-' && opts.textFile === '-') {
       outputError(
         {
-          message: '--html and --html-file are mutually exclusive.',
+          message:
+            'Cannot read both --html-file and --text-file from stdin. Pipe to one and pass the other as a file path.',
           code: 'invalid_options',
         },
         { json: globalOpts.json },
@@ -87,9 +97,24 @@ Non-interactive: --name and a body (--html or --html-file) are required.`,
     }
 
     let html = opts.html;
+    let text = opts.text;
 
     if (opts.htmlFile) {
+      if (opts.html) {
+        process.stderr.write(
+          'Warning: both --html and --html-file provided; using --html-file\n',
+        );
+      }
       html = readFile(opts.htmlFile, globalOpts);
+    }
+
+    if (opts.textFile) {
+      if (opts.text) {
+        process.stderr.write(
+          'Warning: both --text and --text-file provided; using --text-file\n',
+        );
+      }
+      text = readFile(opts.textFile, globalOpts);
     }
 
     if (!html) {
@@ -126,7 +151,7 @@ Non-interactive: --name and a body (--html or --html-file) are required.`,
               name,
               html,
               ...(opts.subject && { subject: opts.subject }),
-              ...(opts.text && { text: opts.text }),
+              ...(text && { text }),
               ...(opts.from && { from: opts.from }),
               ...(opts.replyTo && { replyTo: opts.replyTo }),
               ...(opts.alias && { alias: opts.alias }),

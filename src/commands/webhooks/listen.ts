@@ -6,6 +6,7 @@ import {
 import { Command } from '@commander-js/extra-typings';
 import pc from 'picocolors';
 import type { Resend, WebhookEvent } from 'resend';
+import { getCancelExitCode, setSigintHandler } from '../../lib/cli-exit';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
@@ -13,7 +14,7 @@ import { outputError } from '../../lib/output';
 import { requireText } from '../../lib/prompts';
 import { createSpinner } from '../../lib/spinner';
 import { isInteractive } from '../../lib/tty';
-import { ALL_WEBHOOK_EVENTS } from './utils';
+import { ALL_WEBHOOK_EVENTS, normalizeEvents } from './utils';
 
 const SVIX_HEADERS = ['svix-id', 'svix-timestamp', 'svix-signature'];
 
@@ -181,11 +182,15 @@ For example, if using ngrok: ngrok http 4318`,
       );
     }
 
+    const normalized = opts.events?.length
+      ? normalizeEvents(opts.events)
+      : undefined;
+
     let selectedEvents: WebhookEvent[];
-    if (opts.events?.includes('all')) {
+    if (normalized?.includes('all')) {
       selectedEvents = ALL_WEBHOOK_EVENTS;
-    } else if (opts.events?.length) {
-      selectedEvents = opts.events as WebhookEvent[];
+    } else if (normalized?.length) {
+      selectedEvents = normalized as WebhookEvent[];
     } else {
       selectedEvents = ALL_WEBHOOK_EVENTS;
     }
@@ -368,10 +373,10 @@ For example, if using ngrok: ngrok http 4318`,
       }
       cleaningUp = true;
       await cleanup(resend, webhookId, server);
-      process.exit(0);
+      process.exit(getCancelExitCode());
     };
 
-    process.on('SIGINT', handleSignal);
+    setSigintHandler(handleSignal);
     process.on('SIGTERM', handleSignal);
 
     // Keep the process alive until signal

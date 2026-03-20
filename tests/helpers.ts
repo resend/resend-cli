@@ -71,18 +71,25 @@ export function mockSdkError(message: string, name = 'error') {
   return { data: null, error: { message, name }, headers: null };
 }
 
-export async function expectExit1(fn: () => Promise<unknown>): Promise<void> {
+export async function expectExitCode(
+  code: number,
+  fn: () => Promise<unknown>,
+): Promise<void> {
   let threw = false;
   try {
     await fn();
   } catch (err) {
     threw = true;
     expect(err).toBeInstanceOf(ExitError);
-    expect((err as ExitError).code).toBe(1);
+    expect((err as ExitError).code).toBe(code);
   }
   if (!threw) {
     throw new Error(
-      'Expected command to exit with code 1 but it completed successfully',
+      `Expected command to exit with code ${code} but it completed successfully`,
     );
   }
+}
+
+export async function expectExit1(fn: () => Promise<unknown>): Promise<void> {
+  return expectExitCode(1, fn);
 }

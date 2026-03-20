@@ -1,0 +1,59 @@
+name: Test Telemetry (Windows)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build Node bundle
+        run: pnpm build
+        env:
+          POSTHOG_PUBLIC_KEY: ${{ secrets.POSTHOG_STAGING_KEY }}
+      - name: Build Windows binary
+        run: pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-win-x64 --output dist/resend.exe
+      - name: Test telemetry spawn from binary
+        run: |
+          $tmpdir = [System.IO.Path]::GetTempPath()
+
+          # Clear leftover telemetry files
+          Remove-Item "$tmpdir\resend-telemetry-*.json" -ErrorAction SilentlyContinue
+
+          # Run a real command that triggers telemetry
+          dist/resend.exe --api-key re_fake whoami
+          Write-Host "Binary exited with code $LASTEXITCODE"
+
+          # Verify the temp file WAS created
+          Start-Sleep -Seconds 1
+          $created = Get-ChildItem "$tmpdir\resend-telemetry-*.json" -ErrorAction SilentlyContinue
+          if (-not $created) {
+            Write-Host "::error::Telemetry temp file was never created — trackCommand did not fire"
+            exit 1
+          }
+          Write-Host "Temp file created: $($created.FullName)"
+
+          # Give the detached child time to flush
+          Start-Sleep -Seconds 10
+
+          # Verify the temp file was consumed by the child
+          $remaining = Get-ChildItem "$tmpdir\resend-telemetry-*.json" -ErrorAction SilentlyContinue
+          if ($remaining) {
+            Write-Host "::error::Telemetry temp file was not consumed — detached self-spawn failed"
+            $remaining | Format-Table Name, Length, LastWriteTime
+            exit 1
+          }
+          Write-Host "Telemetry spawn OK — file created and consumed by child process"
+      - name: How to verify the event
+        if: always()
+        run: |
+          Write-Host "Check the staging PostHog project for a 'cli.used' event with:"
+          Write-Host "  command: whoami"
+          Write-Host "  os: Windows"
+          Write-Host "  install_method: other"

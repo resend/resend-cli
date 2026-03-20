@@ -7,7 +7,7 @@ import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
 import { cancelAndExit, requireText } from '../../lib/prompts';
 import { isInteractive } from '../../lib/tty';
-import { ALL_WEBHOOK_EVENTS } from './utils';
+import { ALL_WEBHOOK_EVENTS, normalizeEvents } from './utils';
 
 export const createWebhookCommand = new Command('create')
   .description(
@@ -19,7 +19,7 @@ export const createWebhookCommand = new Command('create')
   )
   .option(
     '--events <events...>',
-    'Event types to subscribe to. Use "all" as shorthand for all 17 events.',
+    'Event types to subscribe to (comma or space-separated). Use "all" for all 17 events.',
   )
   .addHelpText(
     'after',
@@ -29,8 +29,9 @@ Events fire per-recipient: a batch email to 3 recipients generates 3 email.sent 
 
 --endpoint must use HTTPS.
 
---events accepts space-separated event types or the special value "all":
+--events accepts comma or space-separated event types, or the special value "all":
   resend webhooks create --endpoint https://... --events email.sent email.delivered
+  resend webhooks create --endpoint https://... --events email.sent,email.delivered
   resend webhooks create --endpoint https://... --events all
 
 Available event types (17 total):
@@ -83,10 +84,14 @@ Non-interactive: --endpoint and --events are required.`,
 
     let selectedEvents: WebhookEvent[];
 
-    if (opts.events?.includes('all')) {
+    const normalized = opts.events?.length
+      ? normalizeEvents(opts.events)
+      : undefined;
+
+    if (normalized?.includes('all')) {
       selectedEvents = ALL_WEBHOOK_EVENTS;
-    } else if (opts.events?.length) {
-      selectedEvents = opts.events as WebhookEvent[];
+    } else if (normalized?.length) {
+      selectedEvents = normalized as WebhookEvent[];
     } else {
       if (!isInteractive() || globalOpts.json) {
         outputError(

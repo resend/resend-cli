@@ -71,8 +71,8 @@ describe('outputError', () => {
     });
   });
 
-  test('outputs JSON error when json is true', () => {
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  test('outputs JSON error to stdout when json is true', () => {
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = vi
       .spyOn(process, 'exit')
       .mockImplementation(() => undefined as never);
@@ -107,7 +107,7 @@ describe('outputError', () => {
   });
 
   test('uses custom exit code', () => {
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = vi
       .spyOn(process, 'exit')
       .mockImplementation(() => undefined as never);
@@ -122,7 +122,7 @@ describe('outputError', () => {
       value: undefined,
       writable: true,
     });
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = vi
       .spyOn(process, 'exit')
       .mockImplementation(() => undefined as never);

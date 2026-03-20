@@ -118,9 +118,77 @@ describe('webhooks create command', () => {
     expect(parsed.signing_secret).toBe('whsec_test1234');
   });
 
+  test('splits comma-separated events', async () => {
+    spies = setupOutputSpies();
+
+    const { createWebhookCommand } = await import(
+      '../../../src/commands/webhooks/create'
+    );
+    await createWebhookCommand.parseAsync(
+      [
+        '--endpoint',
+        'https://app.example.com/hooks',
+        '--events',
+        'email.sent,email.bounced',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.events).toEqual(['email.sent', 'email.bounced']);
+  });
+
+  test('handles mixed comma and space-separated events', async () => {
+    spies = setupOutputSpies();
+
+    const { createWebhookCommand } = await import(
+      '../../../src/commands/webhooks/create'
+    );
+    await createWebhookCommand.parseAsync(
+      [
+        '--endpoint',
+        'https://app.example.com/hooks',
+        '--events',
+        'email.sent,email.bounced',
+        'email.clicked',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.events).toEqual([
+      'email.sent',
+      'email.bounced',
+      'email.clicked',
+    ]);
+  });
+
+  test('trims spaces around comma-separated events', async () => {
+    spies = setupOutputSpies();
+
+    const { createWebhookCommand } = await import(
+      '../../../src/commands/webhooks/create'
+    );
+    await createWebhookCommand.parseAsync(
+      [
+        '--endpoint',
+        'https://app.example.com/hooks',
+        '--events',
+        'email.sent, email.bounced',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.events).toEqual(['email.sent', 'email.bounced']);
+  });
+
   test('errors with missing_endpoint in non-interactive mode when --endpoint absent', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createWebhookCommand } = await import(
@@ -138,7 +206,7 @@ describe('webhooks create command', () => {
 
   test('errors with missing_events in non-interactive mode when --events absent', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createWebhookCommand } = await import(
@@ -164,7 +232,7 @@ describe('webhooks create command', () => {
       value: true,
       writable: true,
     });
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { Command } = await import('@commander-js/extra-typings');
@@ -193,7 +261,7 @@ describe('webhooks create command', () => {
 
   test('does not call SDK when missing_endpoint error is raised', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createWebhookCommand } = await import(
@@ -212,7 +280,7 @@ describe('webhooks create command', () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createWebhookCommand } = await import(
@@ -239,7 +307,7 @@ describe('webhooks create command', () => {
     mockCreate.mockResolvedValueOnce(
       mockSdkError('Invalid endpoint', 'validation_error'),
     );
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);

@@ -21,6 +21,13 @@ export const ALL_WEBHOOK_EVENTS: WebhookEvent[] = [
   'domain.deleted',
 ];
 
+export function normalizeEvents(raw: string[]): string[] {
+  return raw
+    .flatMap((e) => e.split(','))
+    .map((e) => e.trim())
+    .filter(Boolean);
+}
+
 export function renderWebhooksTable(webhooks: Webhook[]): string {
   const rows = webhooks.map((w) => {
     const eventsStr = (w.events ?? []).join(', ');
