@@ -30,13 +30,17 @@ const BOX = isUnicodeSupported
       mm: '+',
     };
 
-export function getTerminalWidth(): number | undefined {
+function getTerminalWidth(): number | undefined {
   return process.stdout.columns;
 }
 
-function renderCards(headers: string[], rows: string[][]): string {
+function renderCards(
+  headers: string[],
+  rows: string[][],
+  termWidth: number,
+): string {
   const labelWidth = Math.max(...headers.map((h) => h.length));
-  const sepWidth = Math.max(20, Math.min(getTerminalWidth() ?? 40, 40));
+  const sepWidth = Math.max(20, Math.min(termWidth, 60));
 
   return rows
     .map((row, idx) => {
@@ -64,10 +68,10 @@ export function renderTable(
 
   const termWidth = getTerminalWidth();
   if (termWidth !== undefined) {
-    const N = widths.length;
-    const totalWidth = widths.reduce((s, w) => s + w, 0) + 3 * N + 1;
+    const totalWidth =
+      widths.reduce((s, w) => s + w, 0) + 3 * widths.length + 1;
     if (totalWidth > termWidth) {
-      return renderCards(headers, rows);
+      return renderCards(headers, rows, termWidth);
     }
   }
 
