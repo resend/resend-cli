@@ -196,7 +196,7 @@ describe('renderTable card layout fallback', () => {
   });
 
   test('card layout includes all values untruncated', () => {
-    setTerminalWidth(50);
+    setTerminalWidth(30);
     const output = renderTable(
       ['Name', 'Description', 'ID'],
       [['my-widget', 'A very long description of the widget', 'abc-123']],
@@ -209,7 +209,7 @@ describe('renderTable card layout fallback', () => {
   });
 
   test('card layout separates rows with blank lines', () => {
-    setTerminalWidth(40);
+    setTerminalWidth(30);
     const output = renderTable(
       ['Name', 'Description', 'ID'],
       [
