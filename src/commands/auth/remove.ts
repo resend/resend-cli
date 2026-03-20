@@ -81,7 +81,7 @@ export async function removeAction(
       { success: true, removed_profile: profileName },
       { json: true },
     );
-  } else if (isInteractive() && !globalOpts.json) {
+  } else {
     console.log(`Profile '${profileName}' removed.`);
   }
 }
