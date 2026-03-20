@@ -31,6 +31,5 @@ export function renderBroadcastsTable(
     ['Name', 'Status', 'Created', 'ID'],
     rows,
     '(no broadcasts)',
-    [{}, {}, {}, { fixed: true }],
   );
 }
