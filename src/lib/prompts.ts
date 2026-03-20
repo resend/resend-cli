@@ -9,6 +9,7 @@ export interface FieldSpec {
   flag: string;
   message: string;
   placeholder?: string;
+  defaultValue?: string;
   required?: boolean;
   validate?: (value: string | undefined) => string | undefined;
 }
@@ -104,6 +105,7 @@ export async function requireText(
   prompt: {
     message: string;
     placeholder?: string;
+    defaultValue?: string;
     validate?: (value: string | undefined) => string | Error | undefined;
   },
   error: { message: string; code: string },
@@ -120,6 +122,7 @@ export async function requireText(
   const result = await p.text({
     message: prompt.message,
     placeholder: prompt.placeholder,
+    defaultValue: prompt.defaultValue,
     validate:
       prompt.validate ??
       ((v) =>
@@ -203,6 +206,7 @@ export async function promptForMissing<
           p.text({
             message: field.message,
             placeholder: field.placeholder,
+            defaultValue: field.defaultValue,
             validate:
               field.validate ??
               ((v) =>
