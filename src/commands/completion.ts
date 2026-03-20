@@ -66,7 +66,7 @@ async function resolveShell(explicit?: string): Promise<Shell> {
   return result;
 }
 
-function getProfilePath(shell: Shell): string {
+function getProfilePath(shell: 'bash' | 'zsh' | 'powershell'): string {
   switch (shell) {
     case 'bash':
       return process.platform === 'darwin'
@@ -89,8 +89,6 @@ function getProfilePath(shell: Shell): string {
         'powershell',
         'Microsoft.PowerShell_profile.ps1',
       );
-    case 'fish':
-      return join(homedir(), '.config', 'fish', 'config.fish');
   }
 }
 
