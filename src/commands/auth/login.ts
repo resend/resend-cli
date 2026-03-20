@@ -240,16 +240,7 @@ export const loginCommand = new Command('login')
           profileName = choice;
         }
       } else {
-        const newName = await p.text({
-          message: 'Enter a name for this profile:',
-          placeholder: 'default',
-          initialValue: 'default',
-          validate: (v) => validateProfileName((v ?? '').trim() || 'default'),
-        });
-        if (p.isCancel(newName)) {
-          cancelAndExit('Login cancelled.');
-        }
-        profileName = (newName ?? '').trim() || 'default';
+        profileName = 'default';
       }
     }
 

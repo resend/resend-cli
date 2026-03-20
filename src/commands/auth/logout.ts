@@ -38,7 +38,7 @@ If no credentials file exists, exits cleanly with no error.`,
   .action(async (_opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
-    const configPath = getCredentialsPath()
+    const configPath = getCredentialsPath();
     const creds = readCredentials();
 
     if (!creds && !existsSync(configPath)) {
