@@ -25,6 +25,7 @@ export function renderContactsTable(
     ['Email', 'First Name', 'Last Name', 'Unsubscribed', 'ID'],
     rows,
     '(no contacts)',
+    [{}, {}, {}, {}, { fixed: true }],
   );
 }
 
@@ -39,6 +40,7 @@ export function renderContactTopicsTable(topics: ContactTopic[]): string {
     ['Name', 'Subscription', 'ID', 'Description'],
     rows,
     '(no topic subscriptions)',
+    [{}, {}, { fixed: true }, {}],
   );
 }
 

@@ -18,6 +18,7 @@ export function renderReceivingEmailsTable(
     ['From', 'To', 'Subject', 'Created At', 'ID'],
     rows,
     '(no received emails)',
+    [{}, {}, {}, {}, { fixed: true }],
   );
 }
 
@@ -34,5 +35,6 @@ export function renderAttachmentsTable(
     ['Filename', 'Content-Type', 'Size (bytes)', 'ID'],
     rows,
     '(no attachments)',
+    [{}, {}, {}, { fixed: true }],
   );
 }

@@ -39,5 +39,6 @@ export function renderWebhooksTable(webhooks: Webhook[]): string {
     ['Endpoint', 'Events', 'Status', 'ID'],
     rows,
     '(no webhooks)',
+    [{}, {}, {}, { fixed: true }],
   );
 }

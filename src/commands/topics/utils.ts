@@ -12,5 +12,6 @@ export function renderTopicsTable(topics: Topic[]): string {
     ['Name', 'Description', 'ID', 'Created'],
     rows,
     '(no topics)',
+    [{}, {}, { fixed: true }, {}],
   );
 }

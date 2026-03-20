@@ -1,30 +1,46 @@
 import type { DomainRecords } from 'resend';
 import { renderTable } from '../../lib/table';
+import { isUnicodeSupported } from '../../lib/tty';
+
+const h = isUnicodeSupported ? String.fromCodePoint(0x2500) : '-';
 
 export function renderDnsRecordsTable(
   records: DomainRecords[],
   domainName: string,
 ): string {
-  const rows = records.map((r) => {
+  if (records.length === 0) {
+    return '(no DNS records)';
+  }
+
+  const cards = records.map((r) => {
     const displayName = r.name
       ? r.name.includes('.')
         ? r.name
         : `${r.name}.${domainName}`
       : domainName;
-    return [r.type, displayName, r.ttl, r.value];
+
+    const separator = `${h}${h} ${r.type} ${h.repeat(40)}`;
+    return [
+      separator,
+      `  Name   ${displayName}`,
+      `  TTL    ${r.ttl}`,
+      `  Value  ${r.value}`,
+    ].join('\n');
   });
-  return renderTable(
-    ['Type', 'Name', 'TTL', 'Value'],
-    rows,
-    '(no DNS records)',
-  );
+
+  return cards.join('\n\n');
 }
 
 export function renderDomainsTable(
   domains: Array<{ id: string; name: string; status: string; region: string }>,
 ): string {
   const rows = domains.map((d) => [d.name, d.status, d.region, d.id]);
-  return renderTable(['Name', 'Status', 'Region', 'ID'], rows, '(no domains)');
+  return renderTable(['Name', 'Status', 'Region', 'ID'], rows, '(no domains)', [
+    {},
+    {},
+    {},
+    { fixed: true },
+  ]);
 }
 
 export function statusIndicator(status: string): string {

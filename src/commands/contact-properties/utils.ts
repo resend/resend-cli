@@ -13,5 +13,6 @@ export function renderContactPropertiesTable(props: ContactProperty[]): string {
     ['Key', 'Type', 'Fallback Value', 'ID', 'Created'],
     rows,
     '(no contact properties)',
+    [{}, {}, {}, { fixed: true }, {}],
   );
 }
