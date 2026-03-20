@@ -4,7 +4,6 @@ import { requireClient } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { outputResult } from '../../../lib/output';
 import { withSpinner } from '../../../lib/spinner';
-import { isInteractive } from '../../../lib/tty';
 
 export const getAttachmentCommand = new Command('attachment')
   .description('Retrieve a single attachment from a received (inbound) email')
@@ -40,7 +39,7 @@ export const getAttachmentCommand = new Command('attachment')
       globalOpts,
     );
 
-    if (!globalOpts.json && isInteractive()) {
+    if (!globalOpts.json && process.stdout.isTTY) {
       const d = data;
       console.log(`\n${d.filename ?? '(unnamed)'}`);
       console.log(`ID:           ${d.id}`);

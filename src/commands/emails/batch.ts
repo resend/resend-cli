@@ -7,7 +7,6 @@ import { buildHelpText } from '../../lib/help-text';
 import { outputError, outputResult } from '../../lib/output';
 import { requireText } from '../../lib/prompts';
 import { withSpinner } from '../../lib/spinner';
-import { isInteractive } from '../../lib/tty';
 
 export const batchCommand = new Command('batch')
   .description('Send up to 100 emails in a single API request from a JSON file')
@@ -145,7 +144,7 @@ export const batchCommand = new Command('batch')
       batchData as { errors?: { index: number; message: string }[] }
     ).errors;
 
-    if (!globalOpts.json && isInteractive()) {
+    if (!globalOpts.json && process.stdout.isTTY) {
       console.log(
         `Sent ${emailIds.length} email${emailIds.length === 1 ? '' : 's'}`,
       );

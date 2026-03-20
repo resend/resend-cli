@@ -3,7 +3,6 @@ import type { GlobalOpts } from '../lib/client';
 import { buildHelpText } from '../lib/help-text';
 import { outputError, outputResult } from '../lib/output';
 import { createSpinner } from '../lib/spinner';
-import { isInteractive } from '../lib/tty';
 import {
   detectInstallMethod,
   fetchLatestVersion,
@@ -25,7 +24,7 @@ Shows the current version, latest version, and how to upgrade.`,
   )
   .action(async (_opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const interactive = isInteractive() && !globalOpts.json;
+    const interactive = !globalOpts.json && !!process.stdout.isTTY;
 
     const spinner = interactive
       ? createSpinner('Checking for updates...')
@@ -45,7 +44,7 @@ Shows the current version, latest version, and how to upgrade.`,
     const updateAvailable = isNewer(VERSION, latest);
     const upgrade = detectInstallMethod();
 
-    if (globalOpts.json || !isInteractive()) {
+    if (globalOpts.json || !process.stdout.isTTY) {
       outputResult(
         {
           current: VERSION,

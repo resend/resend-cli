@@ -13,7 +13,6 @@ import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
 import { requireText } from '../../lib/prompts';
 import { createSpinner } from '../../lib/spinner';
-import { isInteractive } from '../../lib/tty';
 import { ALL_WEBHOOK_EVENTS, normalizeEvents } from './utils';
 
 const SVIX_HEADERS = ['svix-id', 'svix-timestamp', 'svix-signature'];
@@ -196,7 +195,7 @@ For example, if using ngrok: ngrok http 4318`,
     }
 
     const resend = await requireClient(globalOpts);
-    const jsonMode = globalOpts.json || !isInteractive();
+    const jsonMode = !!globalOpts.json || !process.stdout.isTTY;
 
     // Start local server
     const server = createServer(

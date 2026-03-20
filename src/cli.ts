@@ -19,6 +19,7 @@ import { topicsCommand } from './commands/topics/index';
 import { updateCommand } from './commands/update';
 import { webhooksCommand } from './commands/webhooks/index';
 import { whoamiCommand } from './commands/whoami';
+import { shouldAutoEnableJson } from './lib/auto-json';
 import { setupCliExitHandler } from './lib/cli-exit';
 import { printBannerPlain } from './lib/logo';
 import { errorMessage, outputError } from './lib/output';
@@ -83,10 +84,14 @@ const program = new Command()
     lastFlags = extractFlags(actionCommand);
     lastGlobalFlags = extractFlags(thisCommand);
 
-    if (actionCommand.optsWithGlobals().quiet) {
+    const opts = actionCommand.optsWithGlobals();
+    if (shouldAutoEnableJson(opts.json)) {
       thisCommand.setOptionValue('json', true);
     }
-    if (actionCommand.optsWithGlobals().insecureStorage) {
+    if (opts.quiet) {
+      thisCommand.setOptionValue('json', true);
+    }
+    if (opts.insecureStorage) {
       process.env.RESEND_CREDENTIAL_STORE = 'file';
     }
   })

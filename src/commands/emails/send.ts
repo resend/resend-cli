@@ -412,7 +412,7 @@ export const sendCommand = new Command('send')
       'send_error',
       globalOpts,
     );
-    if (!globalOpts.json && isInteractive()) {
+    if (!globalOpts.json && process.stdout.isTTY) {
       if (opts.scheduledAt) {
         console.log(`\nEmail scheduled: ${data.id}`);
       } else {

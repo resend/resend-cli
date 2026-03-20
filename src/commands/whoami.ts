@@ -10,7 +10,6 @@ import {
 } from '../lib/config';
 import { buildHelpText } from '../lib/help-text';
 import { outputError, outputResult } from '../lib/output';
-import { isInteractive } from '../lib/tty';
 
 export const whoamiCommand = new Command('whoami')
   .description('Show current authentication status')
@@ -53,7 +52,7 @@ Shows which profile is active and where the API key comes from.`,
           ? 'profile_not_found'
           : 'not_authenticated';
 
-      if (globalOpts.json || !isInteractive()) {
+      if (globalOpts.json || !process.stdout.isTTY) {
         outputResult(
           {
             authenticated: false,
@@ -73,7 +72,7 @@ Shows which profile is active and where the API key comes from.`,
     const profile = resolved.profile ?? resolveProfileName(profileFlag);
     const configPath = join(getConfigDir(), 'credentials.json');
 
-    if (globalOpts.json || !isInteractive()) {
+    if (globalOpts.json || !process.stdout.isTTY) {
       outputResult(
         {
           authenticated: true,

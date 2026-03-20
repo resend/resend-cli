@@ -82,7 +82,7 @@ Topics not included in the array are left unchanged.`,
       globalOpts,
     );
 
-    if (!globalOpts.json && isInteractive()) {
+    if (!globalOpts.json && process.stdout.isTTY) {
       console.log(`Topic subscriptions updated for contact: ${id}`);
     } else {
       outputResult(data, { json: globalOpts.json });

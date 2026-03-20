@@ -7,7 +7,6 @@ import { requireClient } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { errorMessage, outputError } from '../../../lib/output';
 import { createSpinner } from '../../../lib/spinner';
-import { isInteractive } from '../../../lib/tty';
 
 const PAGE_SIZE = 100;
 
@@ -70,7 +69,7 @@ Ctrl+C exits cleanly.`,
     }
 
     const resend = await requireClient(globalOpts);
-    const jsonMode = globalOpts.json || !isInteractive();
+    const jsonMode = !!globalOpts.json || !process.stdout.isTTY;
 
     // Initial poll — just grab the latest email to establish our starting point
     const spinner = createSpinner(

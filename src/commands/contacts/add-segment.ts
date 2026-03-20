@@ -70,7 +70,7 @@ Non-interactive: --segment-id is required.`,
       globalOpts,
     );
 
-    if (!globalOpts.json && isInteractive()) {
+    if (!globalOpts.json && process.stdout.isTTY) {
       console.log(`Contact added to segment: ${segmentId}`);
     } else {
       outputResult(data, { json: globalOpts.json });

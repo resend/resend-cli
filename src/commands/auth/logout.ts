@@ -43,7 +43,7 @@ If no credentials file exists, exits cleanly with no error.`,
     const creds = readCredentials();
 
     if (!creds && !existsSync(configPath)) {
-      if (!globalOpts.json && isInteractive()) {
+      if (!globalOpts.json && process.stdout.isTTY) {
         console.log('No saved credentials found. Nothing to remove.');
       } else {
         outputResult(
@@ -86,7 +86,7 @@ If no credentials file exists, exits cleanly with no error.`,
       );
     }
 
-    if (!globalOpts.json && isInteractive()) {
+    if (!globalOpts.json && process.stdout.isTTY) {
       const msg = logoutAll
         ? 'Logged out. All API keys removed.'
         : `Logged out. API key removed for profile '${profileLabel}'.`;

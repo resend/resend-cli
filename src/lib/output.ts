@@ -9,14 +9,10 @@ export interface OutputOptions {
   exitCode?: number;
 }
 
+// Safety net: preAction sets json=true for non-TTY/CI, but this fallback covers
+// direct calls to outputResult/outputError that bypass the Commander pipeline.
 function shouldOutputJson(json?: boolean): boolean {
-  if (json) {
-    return true;
-  }
-  if (!process.stdout.isTTY) {
-    return true;
-  }
-  return false;
+  return !!json || !process.stdout.isTTY;
 }
 
 export function outputResult(data: unknown, opts: OutputOptions = {}): void {

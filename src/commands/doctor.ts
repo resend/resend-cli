@@ -6,7 +6,6 @@ import { getCredentialBackend } from '../lib/credential-store';
 import { buildHelpText } from '../lib/help-text';
 import { errorMessage, outputResult } from '../lib/output';
 import { createSpinner } from '../lib/spinner';
-import { isInteractive } from '../lib/tty';
 import { GITHUB_RELEASES_URL } from '../lib/update-check';
 import { VERSION } from '../lib/version';
 
@@ -164,7 +163,7 @@ export const doctorCommand = new Command('doctor')
   .action(async (_opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const checks: CheckResult[] = [];
-    const interactive = isInteractive() && !globalOpts.json;
+    const interactive = !globalOpts.json && !!process.stdout.isTTY;
 
     if (interactive) {
       console.log('\n  Resend Doctor\n');
@@ -235,7 +234,7 @@ export const doctorCommand = new Command('doctor')
 
     const hasFails = checks.some((c) => c.status === 'fail');
 
-    if (!globalOpts.json && isInteractive()) {
+    if (!globalOpts.json && process.stdout.isTTY) {
       console.log('');
     } else {
       outputResult({ ok: !hasFails, checks }, { json: globalOpts.json });

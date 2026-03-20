@@ -4,7 +4,6 @@ import { requireClient } from './client';
 import { outputResult } from './output';
 import { confirmDelete } from './prompts';
 import { withSpinner } from './spinner';
-import { isInteractive } from './tty';
 
 type SdkCall<T> = (
   resend: Resend,
@@ -30,7 +29,7 @@ export async function runGet<T>(
     'fetch_error',
     globalOpts,
   );
-  if (!globalOpts.json && isInteractive()) {
+  if (!globalOpts.json && process.stdout.isTTY) {
     config.onInteractive(data);
   } else {
     outputResult(data, { json: globalOpts.json });
@@ -63,7 +62,7 @@ export async function runDelete(
     'delete_error',
     globalOpts,
   );
-  if (!globalOpts.json && isInteractive()) {
+  if (!globalOpts.json && process.stdout.isTTY) {
     console.log(config.successMsg);
   } else {
     outputResult(
@@ -92,7 +91,7 @@ export async function runCreate<T>(
     'create_error',
     globalOpts,
   );
-  if (!globalOpts.json && isInteractive()) {
+  if (!globalOpts.json && process.stdout.isTTY) {
     config.onInteractive(data);
   } else {
     outputResult(data, { json: globalOpts.json });
@@ -120,7 +119,7 @@ export async function runWrite<T>(
     config.errorCode,
     globalOpts,
   );
-  if (!globalOpts.json && isInteractive()) {
+  if (!globalOpts.json && process.stdout.isTTY) {
     console.log(config.successMsg);
   } else {
     outputResult(data, { json: globalOpts.json });
@@ -149,7 +148,7 @@ export async function runList<T>(
     'list_error',
     globalOpts,
   );
-  if (!globalOpts.json && isInteractive()) {
+  if (!globalOpts.json && process.stdout.isTTY) {
     config.onInteractive(result);
   } else {
     outputResult(result, { json: globalOpts.json });
