@@ -20,6 +20,7 @@ import {
   captureTestEnv,
   expectExit1,
   mockExitThrow,
+  setNonInteractive,
   setupOutputSpies,
 } from '../../helpers';
 
@@ -81,8 +82,8 @@ describe('login command', () => {
       },
     };
 
-    setupOutputSpies();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { loginCommand } = await import('../../../src/commands/auth/login');
@@ -101,7 +102,8 @@ describe('login command', () => {
   });
 
   test('rejects key not starting with re_', async () => {
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { loginCommand } = await import('../../../src/commands/auth/login');
@@ -156,7 +158,7 @@ describe('login command', () => {
 
   test('requires --key in non-interactive mode', async () => {
     setupOutputSpies();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { loginCommand } = await import('../../../src/commands/auth/login');
@@ -176,7 +178,7 @@ describe('login command', () => {
       value: true,
       writable: true,
     });
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { Command } = await import('@commander-js/extra-typings');

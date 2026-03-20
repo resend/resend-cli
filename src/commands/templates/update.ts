@@ -11,9 +11,16 @@ export const updateTemplateCommand = new Command('update')
   .argument('<id>', 'Template ID or alias')
   .option('--name <name>', 'Update template name')
   .option('--html <html>', 'Update HTML body')
-  .option('--html-file <path>', 'Path to an HTML file to replace the body')
+  .option(
+    '--html-file <path>',
+    'Path to an HTML file to replace the body (use "-" for stdin)',
+  )
   .option('--subject <subject>', 'Update subject')
   .option('--text <text>', 'Update plain-text body')
+  .option(
+    '--text-file <path>',
+    'Path to a plain-text file to replace the body (use "-" for stdin)',
+  )
   .option('--from <address>', 'Update sender address')
   .option('--reply-to <address>', 'Update reply-to address')
   .option('--alias <alias>', 'Update template alias')
@@ -34,6 +41,8 @@ export const updateTemplateCommand = new Command('update')
         'auth_error',
         'no_changes',
         'file_read_error',
+        'invalid_options',
+        'stdin_read_error',
         'update_error',
       ],
       examples: [
@@ -53,6 +62,7 @@ export const updateTemplateCommand = new Command('update')
       opts.htmlFile == null &&
       opts.subject == null &&
       opts.text == null &&
+      opts.textFile == null &&
       opts.from == null &&
       opts.replyTo == null &&
       opts.alias == null &&
@@ -61,7 +71,7 @@ export const updateTemplateCommand = new Command('update')
       outputError(
         {
           message:
-            'Provide at least one option to update: --name, --html, --html-file, --subject, --text, --from, --reply-to, --alias, or --var.',
+            'Provide at least one option to update: --name, --html, --html-file, --subject, --text, --text-file, --from, --reply-to, --alias, or --var.',
           code: 'no_changes',
         },
         { json: globalOpts.json },
@@ -78,10 +88,31 @@ export const updateTemplateCommand = new Command('update')
       );
     }
 
+    if (opts.htmlFile === '-' && opts.textFile === '-') {
+      outputError(
+        {
+          message:
+            'Cannot read both --html-file and --text-file from stdin. Pipe to one and pass the other as a file path.',
+          code: 'invalid_options',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
     let html = opts.html;
+    let text = opts.text;
 
     if (opts.htmlFile) {
       html = readFile(opts.htmlFile, globalOpts);
+    }
+
+    if (opts.textFile) {
+      if (opts.text) {
+        process.stderr.write(
+          'Warning: both --text and --text-file provided; using --text-file\n',
+        );
+      }
+      text = readFile(opts.textFile, globalOpts);
     }
 
     await runWrite(
@@ -96,7 +127,7 @@ export const updateTemplateCommand = new Command('update')
             ...(opts.name != null && { name: opts.name }),
             ...(html != null && { html }),
             ...(opts.subject != null && { subject: opts.subject }),
-            ...(opts.text != null && { text: opts.text }),
+            ...(text != null && { text }),
             ...(opts.from != null && { from: opts.from }),
             ...(opts.replyTo != null && { replyTo: opts.replyTo }),
             ...(opts.alias != null && { alias: opts.alias }),

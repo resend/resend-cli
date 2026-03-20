@@ -1,7 +1,7 @@
-import { execFile } from 'node:child_process';
 import * as p from '@clack/prompts';
 import { Command } from '@commander-js/extra-typings';
 import { Resend } from 'resend';
+import { openInBrowser } from '../../lib/browser';
 import type { GlobalOpts } from '../../lib/client';
 import {
   listProfiles,
@@ -23,22 +23,6 @@ const SOURCE_LABEL: Record<string, string> = {
   env: 'environment (RESEND_API_KEY)',
   config: 'saved credentials',
 };
-
-function openInBrowser(url: string): Promise<boolean> {
-  return new Promise((resolve) => {
-    // `start` on Windows is a shell built-in, not an executable.
-    // Must invoke via `cmd.exe /c start <url>`.
-    const cmd =
-      process.platform === 'win32'
-        ? 'cmd.exe'
-        : process.platform === 'darwin'
-          ? 'open'
-          : 'xdg-open';
-    const args =
-      process.platform === 'win32' ? ['/c', 'start', '""', url] : [url];
-    execFile(cmd, args, { timeout: 5000 }, (err) => resolve(!err));
-  });
-}
 
 export const loginCommand = new Command('login')
   .description('Save a Resend API key')

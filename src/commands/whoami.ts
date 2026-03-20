@@ -1,6 +1,8 @@
+import { join } from 'node:path';
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../lib/client';
 import {
+  getConfigDir,
   listProfiles,
   maskKey,
   resolveApiKeyAsync,
@@ -18,7 +20,7 @@ export const whoamiCommand = new Command('whoami')
       setup: true,
       context: `Local only — no network calls.
 Shows which profile is active and where the API key comes from.`,
-      output: `  {"authenticated":true,"profile":"production","api_key":"re_...abcd","source":"config"}
+      output: `  {"authenticated":true,"profile":"production","api_key":"re_...abcd","source":"config","config_path":"/Users/you/.config/resend/credentials.json"}
   {"authenticated":false}`,
       examples: [
         'resend whoami',
@@ -69,6 +71,7 @@ Shows which profile is active and where the API key comes from.`,
     }
 
     const profile = resolved.profile ?? resolveProfileName(profileFlag);
+    const configPath = join(getConfigDir(), 'credentials.json');
 
     if (globalOpts.json || !isInteractive()) {
       outputResult(
@@ -77,6 +80,7 @@ Shows which profile is active and where the API key comes from.`,
           profile,
           api_key: maskKey(resolved.key),
           source: resolved.source,
+          config_path: configPath,
         },
         { json: globalOpts.json },
       );
@@ -96,5 +100,6 @@ Shows which profile is active and where the API key comes from.`,
     console.log(`  Profile: ${profile}`);
     console.log(`  API Key: ${maskKey(resolved.key)}`);
     console.log(`  Source:  ${sourceLabel}`);
+    console.log(`  Config:  ${configPath}`);
     console.log('');
   });

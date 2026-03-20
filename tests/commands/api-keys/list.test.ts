@@ -96,7 +96,7 @@ describe('api-keys list command', () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { listApiKeysCommand } = await import(
@@ -115,7 +115,7 @@ describe('api-keys list command', () => {
     mockList.mockResolvedValueOnce(
       mockSdkError('Unauthorized', 'unauthorized'),
     );
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);

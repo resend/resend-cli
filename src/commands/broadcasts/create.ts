@@ -20,9 +20,13 @@ export const createBroadcastCommand = new Command('create')
   )
   .option(
     '--html-file <path>',
-    'Path to an HTML file for the body (supports {{{FIRST_NAME|fallback}}} variable interpolation)',
+    'Path to an HTML file for the body (use "-" for stdin, supports {{{FIRST_NAME|fallback}}} variable interpolation)',
   )
   .option('--text <text>', 'Plain-text body')
+  .option(
+    '--text-file <path>',
+    'Path to a plain-text file for the body (use "-" for stdin)',
+  )
   .option('--name <name>', 'Internal label for the broadcast (optional)')
   .option('--reply-to <address>', 'Reply-to address (optional)')
   .option(
@@ -42,7 +46,7 @@ export const createBroadcastCommand = new Command('create')
     'after',
     buildHelpText({
       context: `Non-interactive: --from, --subject, and --segment-id are required.
-Body: provide exactly one of --html, --html-file, or --text.
+Body: provide at least one of --html, --html-file, --text, or --text-file.
 
 Variable interpolation:
   HTML bodies support triple-brace syntax for contact properties.
@@ -60,6 +64,8 @@ Scheduling:
         'missing_segment',
         'missing_body',
         'file_read_error',
+        'invalid_options',
+        'stdin_read_error',
         'create_error',
       ],
       examples: [
@@ -67,11 +73,23 @@ Scheduling:
         'resend broadcasts create --from hello@domain.com --subject "Launch" --segment-id 7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d --html-file ./email.html --send',
         'resend broadcasts create --from hello@domain.com --subject "Launch" --segment-id 7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d --text "Hello!" --send --scheduled-at "tomorrow at 9am ET"',
         'resend broadcasts create --from hello@domain.com --subject "News" --segment-id 7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d --html "<p>Hi</p>" --json',
+        'echo "<p>Hello</p>" | resend broadcasts create --from hello@domain.com --subject "Update" --segment-id 7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d --html-file -',
       ],
     }),
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+
+    if (opts.htmlFile === '-' && opts.textFile === '-') {
+      outputError(
+        {
+          message:
+            'Cannot read both --html-file and --text-file from stdin. Pipe to one and pass the other as a file path.',
+          code: 'invalid_options',
+        },
+        { json: globalOpts.json },
+      );
+    }
 
     let from = opts.from;
     let subject = opts.subject;
@@ -135,14 +153,29 @@ Scheduling:
     let text = opts.text;
 
     if (opts.htmlFile) {
+      if (opts.html) {
+        process.stderr.write(
+          'Warning: both --html and --html-file provided; using --html-file\n',
+        );
+      }
       html = readFile(opts.htmlFile, globalOpts);
+    }
+
+    if (opts.textFile) {
+      if (opts.text) {
+        process.stderr.write(
+          'Warning: both --text and --text-file provided; using --text-file\n',
+        );
+      }
+      text = readFile(opts.textFile, globalOpts);
     }
 
     if (!html && !text) {
       if (!isInteractive() || globalOpts.json) {
         outputError(
           {
-            message: 'Missing body. Provide --html, --html-file, or --text.',
+            message:
+              'Missing body. Provide --html, --html-file, --text, or --text-file.',
             code: 'missing_body',
           },
           { json: globalOpts.json },
@@ -163,7 +196,11 @@ Scheduling:
       {
         spinner: {
           loading: 'Creating broadcast...',
-          success: opts.send ? 'Broadcast sent' : 'Broadcast created',
+          success: opts.send
+            ? opts.scheduledAt
+              ? 'Broadcast scheduled'
+              : 'Broadcast sent'
+            : 'Broadcast created',
           fail: 'Failed to create broadcast',
         },
         sdkCall: (resend) =>
@@ -183,7 +220,11 @@ Scheduling:
           } as CreateBroadcastOptions),
         onInteractive: (d) => {
           if (opts.send) {
-            console.log(`\nBroadcast sent: ${d.id}`);
+            if (opts.scheduledAt) {
+              console.log(`\nBroadcast scheduled: ${d.id}`);
+            } else {
+              console.log(`\nBroadcast sent: ${d.id}`);
+            }
           } else {
             console.log(`\nBroadcast created: ${d.id}`);
             console.log('Status: draft');

@@ -13,7 +13,7 @@ export const batchCommand = new Command('batch')
   .description('Send up to 100 emails in a single API request from a JSON file')
   .option(
     '--file <path>',
-    'Path to a JSON file containing an array of email objects (required in non-interactive mode)',
+    'Path to a JSON file containing an array of email objects (use "-" for stdin; required in non-interactive mode)',
   )
   .option(
     '--idempotency-key <key>',
@@ -35,6 +35,7 @@ export const batchCommand = new Command('batch')
         'auth_error',
         'missing_file',
         'file_read_error',
+        'stdin_read_error',
         'invalid_json',
         'invalid_format',
         'batch_error',
@@ -44,6 +45,7 @@ export const batchCommand = new Command('batch')
         'resend emails batch --file ./emails.json --json',
         'resend emails batch --file ./emails.json --idempotency-key my-batch-2026-02-18',
         'resend emails batch --file ./emails.json --batch-validation permissive',
+        'echo \'[{"from":"you@domain.com","to":["user@example.com"],"subject":"Hi","text":"Hello"}]\' | resend emails batch --file -',
         'RESEND_API_KEY=re_123 resend emails batch --file ./emails.json --json',
       ],
     }),

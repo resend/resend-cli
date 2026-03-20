@@ -8,7 +8,17 @@ concurrency:
   group: release
   cancel-in-progress: false
 jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify PostHog key is configured
+        run: |
+          if [ -z "${{ secrets.POSTHOG_PUBLIC_KEY }}" ]; then
+            echo "::error::POSTHOG_PUBLIC_KEY secret is not set"
+            exit 1
+          fi
   test-binary:
+    needs: preflight
     strategy:
       fail-fast: false
       matrix:
@@ -25,7 +35,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
       - uses: actions/setup-node@v6
         with:
           node-version: 24
@@ -34,6 +44,8 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Build Node bundle
         run: pnpm build
+        env:
+          POSTHOG_PUBLIC_KEY: ${{ secrets.POSTHOG_PUBLIC_KEY }}
       - name: Build binary
         run: pnpm exec pkg dist/cli.cjs --compress Brotli --target ${{ matrix.target }} --output ${{ matrix.binary }}
       - name: Verify binary runs
@@ -41,10 +53,11 @@ jobs:
           ${{ matrix.binary }} --version
           ${{ matrix.binary }} --help
   test-binary-linux-arm64:
+    needs: preflight
     runs-on: blacksmith-2vcpu-ubuntu-2204
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
       - uses: actions/setup-node@v6
         with:
           node-version: 24
@@ -53,6 +66,8 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Build Node bundle
         run: pnpm build
+        env:
+          POSTHOG_PUBLIC_KEY: ${{ secrets.POSTHOG_PUBLIC_KEY }}
       - name: Build binary (no-bytecode workaround)
         run: pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-linux-arm64 --output dist/resend --no-bytecode --public-packages "*" --public
       - name: Set up QEMU
@@ -70,7 +85,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
       - uses: actions/setup-node@v6
         with:
           node-version: 24
@@ -79,6 +94,8 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Build Node bundle
         run: pnpm build
+        env:
+          POSTHOG_PUBLIC_KEY: ${{ secrets.POSTHOG_PUBLIC_KEY }}
       - name: Build macOS binaries
         run: |
           pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-macos-arm64 --output dist/resend-darwin-arm64
@@ -108,7 +125,7 @@ jobs:
     runs-on: blacksmith-2vcpu-ubuntu-2204
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
       - uses: actions/setup-node@v6
         with:
           node-version: 24
@@ -117,6 +134,8 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Build Node bundle
         run: pnpm build
+        env:
+          POSTHOG_PUBLIC_KEY: ${{ secrets.POSTHOG_PUBLIC_KEY }}
       - name: Build binaries
         run: |
           pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-linux-x64   --output dist/resend-linux-x64

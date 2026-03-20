@@ -4,7 +4,7 @@ import { runWrite } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
-import { ALL_WEBHOOK_EVENTS } from './utils';
+import { ALL_WEBHOOK_EVENTS, normalizeEvents } from './utils';
 
 export const updateWebhookCommand = new Command('update')
   .description(
@@ -14,7 +14,7 @@ export const updateWebhookCommand = new Command('update')
   .option('--endpoint <endpoint>', 'New HTTPS URL for this webhook')
   .option(
     '--events <events...>',
-    'Replace the full event subscription list. Use "all" for all 17 events.',
+    'Replace the full event subscription list (comma or space-separated). Use "all" for all 17 events.',
   )
   .addOption(
     new Option(
@@ -58,9 +58,14 @@ Use "all" as a shorthand for all 17 event types.
       );
     }
 
-    const selectedEvents = opts.events?.includes('all')
+    const normalized = opts.events?.length
+      ? normalizeEvents(opts.events)
+      : undefined;
+    const selectedEvents = normalized?.includes('all')
       ? ALL_WEBHOOK_EVENTS
-      : (opts.events as WebhookEvent[] | undefined);
+      : normalized?.length
+        ? (normalized as WebhookEvent[])
+        : undefined;
 
     await runWrite(
       {

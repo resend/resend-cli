@@ -89,6 +89,20 @@ function shouldSkipCheck(): boolean {
   return false;
 }
 
+export function detectInstallMethodName(): string {
+  const full = detectInstallMethod();
+  if (full.startsWith('npm')) {
+    return 'npm';
+  }
+  if (full.startsWith('brew')) {
+    return 'homebrew';
+  }
+  if (full.startsWith('curl') || full.startsWith('irm')) {
+    return 'install-script';
+  }
+  return 'manual';
+}
+
 export function detectInstallMethod(): string {
   const execPath = process.execPath || process.argv[0] || '';
   const scriptPath = process.argv[1] || '';
@@ -109,7 +123,7 @@ export function detectInstallMethod(): string {
     return 'brew update && brew upgrade resend';
   }
 
-  // Install script (default install location)
+  // Install script (default install location ~/.resend/bin/)
   if (/[/\\]\.resend[/\\]bin[/\\]/.test(execPath)) {
     if (process.platform === 'win32') {
       return 'irm https://resend.com/install.ps1 | iex';
@@ -117,11 +131,8 @@ export function detectInstallMethod(): string {
     return 'curl -fsSL https://resend.com/install.sh | bash';
   }
 
-  // Default
-  if (process.platform === 'win32') {
-    return 'irm https://resend.com/install.ps1 | iex';
-  }
-  return 'curl -fsSL https://resend.com/install.sh | bash';
+  // Unknown — likely a manual download from GitHub Releases
+  return 'https://github.com/resend/resend-cli/releases/latest';
 }
 
 function formatNotice(latestVersion: string): string {

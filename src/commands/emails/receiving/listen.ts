@@ -1,6 +1,7 @@
 import { Command } from '@commander-js/extra-typings';
 import pc from 'picocolors';
 import type { ListReceivingEmail } from 'resend';
+import { getCancelExitCode, setSigintHandler } from '../../../lib/cli-exit';
 import type { GlobalOpts } from '../../../lib/client';
 import { requireClient } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
@@ -204,10 +205,10 @@ Ctrl+C exits cleanly.`,
       if (!jsonMode) {
         process.stderr.write('\nStopped listening.\n');
       }
-      process.exit(0);
+      process.exit(getCancelExitCode());
     };
 
-    process.on('SIGINT', handleSignal);
+    setSigintHandler(handleSignal);
     process.on('SIGTERM', handleSignal);
 
     // Keep alive

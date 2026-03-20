@@ -5,6 +5,7 @@ import { deleteTemplateCommand } from './delete';
 import { duplicateTemplateCommand } from './duplicate';
 import { getTemplateCommand } from './get';
 import { listTemplatesCommand } from './list';
+import { openTemplateCommand } from './open';
 import { publishTemplateCommand } from './publish';
 import { updateTemplateCommand } from './update';
 
@@ -36,11 +37,14 @@ Template variables:
         'resend templates publish 78261eea-8f8b-4381-83c6-79fa7120f1cf',
         'resend templates duplicate 78261eea-8f8b-4381-83c6-79fa7120f1cf',
         'resend templates delete 78261eea-8f8b-4381-83c6-79fa7120f1cf --yes',
+        'resend templates open',
+        'resend templates open 78261eea-8f8b-4381-83c6-79fa7120f1cf',
       ],
     }),
   )
   .addCommand(createTemplateCommand)
   .addCommand(getTemplateCommand)
+  .addCommand(openTemplateCommand)
   .addCommand(listTemplatesCommand, { isDefault: true })
   .addCommand(updateTemplateCommand)
   .addCommand(deleteTemplateCommand)
