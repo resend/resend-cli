@@ -7,6 +7,7 @@ import {
   test,
   vi,
 } from 'vitest';
+import * as files from '../../../src/lib/files';
 import {
   captureTestEnv,
   expectExit1,
@@ -34,6 +35,7 @@ describe('templates create command', () => {
   let errorSpy: MockInstance | undefined;
   let stderrSpy: MockInstance | undefined;
   let exitSpy: MockInstance | undefined;
+  let readFileSpy: MockInstance | undefined;
   let commandRef: { parent: unknown } | undefined;
 
   beforeEach(() => {
@@ -46,10 +48,12 @@ describe('templates create command', () => {
     errorSpy?.mockRestore();
     stderrSpy?.mockRestore();
     exitSpy?.mockRestore();
+    readFileSpy?.mockRestore();
     spies = undefined;
     errorSpy = undefined;
     stderrSpy = undefined;
     exitSpy = undefined;
+    readFileSpy = undefined;
     if (commandRef) {
       commandRef.parent = null;
       commandRef = undefined;
@@ -91,7 +95,7 @@ describe('templates create command', () => {
 
   test('errors with missing_name when --name absent in non-interactive mode', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createTemplateCommand } = await import(
@@ -109,7 +113,7 @@ describe('templates create command', () => {
 
   test('errors with missing_body when no body flag in non-interactive mode', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createTemplateCommand } = await import(
@@ -134,7 +138,7 @@ describe('templates create command', () => {
       value: true,
       writable: true,
     });
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { Command } = await import('@commander-js/extra-typings');
@@ -160,11 +164,67 @@ describe('templates create command', () => {
     expect(output).toContain('missing_name');
   });
 
+  test('reads text body from --text-file and passes it to SDK', async () => {
+    spies = setupOutputSpies();
+    readFileSpy = vi
+      .spyOn(files, 'readFile')
+      .mockReturnValueOnce('<h1>HTML</h1>')
+      .mockReturnValueOnce('Plain text from file');
+
+    const { createTemplateCommand } = await import(
+      '../../../src/commands/templates/create'
+    );
+
+    await createTemplateCommand.parseAsync(
+      [
+        '--name',
+        'Welcome',
+        '--html-file',
+        '/fake/email.html',
+        '--text-file',
+        '/fake/body.txt',
+      ],
+      { from: 'user' },
+    );
+
+    expect(readFileSpy).toHaveBeenCalledTimes(2);
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.html).toBe('<h1>HTML</h1>');
+    expect(args.text).toBe('Plain text from file');
+  });
+
+  test('warns to stderr when --text and --text-file both provided, text-file wins', async () => {
+    spies = setupOutputSpies();
+    readFileSpy = vi.spyOn(files, 'readFile').mockReturnValue('From file');
+
+    const { createTemplateCommand } = await import(
+      '../../../src/commands/templates/create'
+    );
+    await createTemplateCommand.parseAsync(
+      [
+        '--name',
+        'Welcome',
+        '--html',
+        '<h1>Hello</h1>',
+        '--text',
+        'Inline text',
+        '--text-file',
+        '/fake/body.txt',
+      ],
+      { from: 'user' },
+    );
+
+    const stderrOutput = spies.stderrSpy.mock.calls.map((c) => c[0]).join('');
+    expect(stderrOutput).toContain('--text-file');
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.text).toBe('From file');
+  });
+
   test('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createTemplateCommand } = await import(
@@ -186,7 +246,7 @@ describe('templates create command', () => {
     mockCreate.mockResolvedValueOnce(
       mockSdkError('Template name taken', 'validation_error'),
     );
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);

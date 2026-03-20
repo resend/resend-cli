@@ -1,6 +1,7 @@
 import * as p from '@clack/prompts';
+import { getCancelExitCode } from './cli-exit';
 import type { GlobalOpts } from './client';
-import { renameProfile, validateProfileName } from './config';
+import { renameProfileAsync, validateProfileName } from './config';
 import { errorMessage, outputError } from './output';
 import { isInteractive } from './tty';
 
@@ -14,7 +15,7 @@ export interface FieldSpec {
 
 export function cancelAndExit(message: string): never {
   p.cancel(message);
-  process.exit(0);
+  process.exit(getCancelExitCode());
 }
 
 /**
@@ -73,7 +74,7 @@ export async function promptRenameIfInvalid(
 
   const newName = await p.text({
     message: 'Enter a new name for this profile:',
-    placeholder: profileName.replace(/[^a-zA-Z0-9_-]/g, '-'),
+    placeholder: profileName.replace(/[^a-zA-Z0-9._-]/g, '-'),
     validate: (v) => validateProfileName(v as string),
   });
 
@@ -82,7 +83,7 @@ export async function promptRenameIfInvalid(
   }
 
   try {
-    renameProfile(profileName, newName);
+    await renameProfileAsync(profileName, newName);
   } catch (err) {
     outputError(
       {
@@ -164,6 +165,20 @@ export async function promptForMissing<
   fields: FieldSpec[],
   globalOpts: GlobalOpts,
 ): Promise<{ [K in keyof T]: string }> {
+  const emptyFlags = fields.filter(
+    (f) => f.required !== false && current[f.flag] === '',
+  );
+  if (emptyFlags.length > 0) {
+    const flags = emptyFlags.map((f) => `--${f.flag}`).join(', ');
+    outputError(
+      {
+        message: `Empty value for required flags: ${flags}`,
+        code: 'invalid_options',
+      },
+      { json: globalOpts.json },
+    );
+  }
+
   const missing = fields.filter(
     (f) => f.required !== false && !current[f.flag],
   );

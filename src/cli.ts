@@ -19,10 +19,18 @@ import { topicsCommand } from './commands/topics/index';
 import { updateCommand } from './commands/update';
 import { webhooksCommand } from './commands/webhooks/index';
 import { whoamiCommand } from './commands/whoami';
+import { setupCliExitHandler } from './lib/cli-exit';
 import { printWelcome } from './lib/logo';
 import { errorMessage, outputError } from './lib/output';
+import { trackCommand } from './lib/telemetry';
 import { checkForUpdates } from './lib/update-check';
 import { PACKAGE_NAME, VERSION } from './lib/version';
+
+setupCliExitHandler();
+
+let lastCommandName = '';
+let lastFlags: string[] = [];
+let lastGlobalFlags: string[] = [];
 
 const program = new Command()
   .name('resend')
@@ -51,6 +59,30 @@ const program = new Command()
     'Save API key as plaintext instead of secure storage',
   )
   .hook('preAction', (thisCommand, actionCommand) => {
+    const parts: string[] = [];
+    for (
+      let cmd = actionCommand;
+      cmd?.parent;
+      cmd = cmd.parent as typeof actionCommand
+    ) {
+      parts.unshift(cmd.name());
+    }
+    lastCommandName = parts.join(' ');
+
+    const extractFlags = (cmd: typeof actionCommand) =>
+      cmd.options
+        .filter(
+          (opt) => cmd.getOptionValueSource(opt.attributeName()) === 'cli',
+        )
+        .map(
+          (opt) =>
+            opt.long?.replace(/^--/, '') ?? opt.short?.replace(/^-/, '') ?? '',
+        )
+        .filter(Boolean);
+
+    lastFlags = extractFlags(actionCommand);
+    lastGlobalFlags = extractFlags(thisCommand);
+
     if (actionCommand.optsWithGlobals().quiet) {
       thisCommand.setOptionValue('json', true);
     }
@@ -84,6 +116,21 @@ ${pc.gray('Examples:')}
   ${pc.blue('$ resend emails send')}
 `,
   )
+  .action(() => {
+    printWelcome(VERSION);
+    const opts = program.opts();
+    if (opts.apiKey) {
+      outputError(
+        {
+          message:
+            '--api-key is a per-command override and was not saved. To store your API key, run `resend login`.',
+          code: 'missing_command',
+        },
+        { json: opts.json },
+      );
+    }
+    program.help();
+  })
   .addCommand(loginCommand)
   .addCommand(logoutCommand)
   .addCommand(emailsCommand)
@@ -103,38 +150,48 @@ ${pc.gray('Examples:')}
   .addCommand(updateCommand)
   .addCommand(teamsDeprecatedCommand);
 
+const telemetryCommand = new Command('telemetry')
+  .description('Telemetry management')
+  .helpCommand(false);
+
+telemetryCommand
+  .command('flush')
+  .argument('<file>')
+  .action(async (file) => {
+    const { flushFromFile } = await import('./lib/telemetry');
+    await flushFromFile(file);
+  });
+
+program.addCommand(telemetryCommand, { hidden: true });
+
 // Hide the deprecated --team option from help
 const teamOption = program.options.find((o) => o.long === '--team');
 if (teamOption) {
   teamOption.hidden = true;
 }
 
-const args = process.argv.slice(2);
-if (args.length === 0) {
-  (async () => {
-    printWelcome(VERSION);
-    await checkForUpdates();
-  })().catch((err) => {
+program
+  .parseAsync()
+  .then(() => {
+    // Skip the background update notice when the user explicitly ran `update`
+    const ran = program.args[0];
+    if (ran === 'update' || ran === 'telemetry') {
+      return;
+    }
+
+    if (lastCommandName) {
+      trackCommand(lastCommandName, {
+        ...program.opts(),
+        flags: lastFlags,
+        globalFlags: lastGlobalFlags,
+      });
+    }
+
+    return checkForUpdates().catch(() => {});
+  })
+  .catch((err) => {
     outputError({
-      message: errorMessage(err, 'Failed to show welcome'),
-      code: 'welcome_error',
+      message: errorMessage(err, 'An unexpected error occurred'),
+      code: 'unexpected_error',
     });
   });
-} else {
-  program
-    .parseAsync()
-    .then(() => {
-      // Skip the background update notice when the user explicitly ran `update`
-      const ran = program.args[0];
-      if (ran === 'update') {
-        return;
-      }
-      return checkForUpdates().catch(() => {});
-    })
-    .catch((err) => {
-      outputError({
-        message: errorMessage(err, 'An unexpected error occurred'),
-        code: 'unexpected_error',
-      });
-    });
-}
