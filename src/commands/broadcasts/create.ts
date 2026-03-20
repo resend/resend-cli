@@ -3,6 +3,8 @@ import { Command } from '@commander-js/extra-typings';
 import type { CreateBroadcastOptions } from 'resend';
 import { runCreate } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
+import { requireClient } from '../../lib/client';
+import { fetchVerifiedDomains, promptForFromAddress } from '../../lib/domains';
 import { readFile } from '../../lib/files';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
@@ -91,9 +93,18 @@ Scheduling:
       );
     }
 
+    const resend = await requireClient(globalOpts);
+
     let from = opts.from;
     let subject = opts.subject;
     let segmentId = opts.segmentId;
+
+    if (!from && isInteractive() && !globalOpts.json) {
+      const domains = await fetchVerifiedDomains(resend);
+      if (domains.length > 0) {
+        from = await promptForFromAddress(domains);
+      }
+    }
 
     if (!from) {
       if (!isInteractive() || globalOpts.json) {
