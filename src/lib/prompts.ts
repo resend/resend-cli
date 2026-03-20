@@ -126,7 +126,9 @@ export async function requireText(
     validate:
       prompt.validate ??
       ((v) =>
-        !v || v.length === 0 ? `${prompt.message} is required` : undefined),
+        !prompt.defaultValue && (!v || v.length === 0)
+          ? `${prompt.message} is required`
+          : undefined),
   });
   if (p.isCancel(result)) {
     cancelAndExit('Cancelled.');
@@ -210,7 +212,7 @@ export async function promptForMissing<
             validate:
               field.validate ??
               ((v) =>
-                !v || v.length === 0
+                !field.defaultValue && (!v || v.length === 0)
                   ? `${field.message} is required`
                   : undefined),
           }),
