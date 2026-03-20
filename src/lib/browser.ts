@@ -15,9 +15,17 @@ export function openInBrowser(url: string): Promise<boolean> {
         : process.platform === 'darwin'
           ? 'open'
           : 'xdg-open';
+    const safeUrl = url.replaceAll('"', '');
     const args =
-      process.platform === 'win32' ? ['/c', 'start', '""', url] : [url];
-    execFile(cmd, args, { timeout: 5000 }, (err) => resolve(!err));
+      process.platform === 'win32'
+        ? ['/c', 'start', '""', `"${safeUrl}"`]
+        : [url];
+    execFile(
+      cmd,
+      args,
+      { timeout: 5000, windowsVerbatimArguments: true },
+      (err) => resolve(!err),
+    );
   });
 }
 
