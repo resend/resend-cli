@@ -54,18 +54,8 @@ export async function promptForFromAddress(domains: string[]): Promise<string> {
     const custom = await p.text({
       message: 'From address',
       placeholder: `you@${domain}`,
-      validate: (v) => {
-        if (!v || !v.includes('@')) {
-          return 'Enter a valid email address';
-        }
-        const addr = v.includes('<')
-          ? v.slice(v.indexOf('<') + 1, v.indexOf('>'))
-          : v;
-        if (!addr.endsWith(`@${domain}`)) {
-          return `Address must use @${domain}`;
-        }
-        return undefined;
-      },
+      validate: (v) =>
+        !v || !v.includes('@') ? 'Enter a valid email address' : undefined,
     });
     if (p.isCancel(custom)) {
       cancelAndExit('Send cancelled.');
