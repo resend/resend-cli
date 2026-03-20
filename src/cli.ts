@@ -20,7 +20,7 @@ import { updateCommand } from './commands/update';
 import { webhooksCommand } from './commands/webhooks/index';
 import { whoamiCommand } from './commands/whoami';
 import { setupCliExitHandler } from './lib/cli-exit';
-import { printWelcome } from './lib/logo';
+import { printBannerPlain } from './lib/logo';
 import { errorMessage, outputError } from './lib/output';
 import { trackCommand } from './lib/telemetry';
 import { checkForUpdates } from './lib/update-check';
@@ -117,7 +117,7 @@ ${pc.gray('Examples:')}
 `,
   )
   .action(() => {
-    printWelcome(VERSION);
+    printBannerPlain();
     const opts = program.opts();
     if (opts.apiKey) {
       outputError(
