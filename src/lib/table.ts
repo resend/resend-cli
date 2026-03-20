@@ -30,10 +30,35 @@ const BOX = isUnicodeSupported
       mm: '+',
     };
 
+export type ColumnOption = { fixed?: boolean };
+
+const MIN_USEFUL_WIDTH = 12;
+
+export function getTerminalWidth(): number | undefined {
+  return process.stdout.columns;
+}
+
+function renderCards(headers: string[], rows: string[][]): string {
+  const labelWidth = Math.max(...headers.map((h) => h.length));
+  const sepWidth = Math.max(20, Math.min(getTerminalWidth() ?? 40, 40));
+
+  return rows
+    .map((row, idx) => {
+      const label = String(idx + 1);
+      const sep = `${BOX.h}${BOX.h} ${label} ${BOX.h.repeat(Math.max(0, sepWidth - label.length - 4))}`;
+      const fields = headers.map(
+        (h, i) => `  ${h.padEnd(labelWidth)}  ${row[i]}`,
+      );
+      return [sep, ...fields].join('\n');
+    })
+    .join('\n\n');
+}
+
 export function renderTable(
   headers: string[],
   rows: string[][],
   emptyMessage = '(no results)',
+  columns?: ColumnOption[],
 ): string {
   if (rows.length === 0) {
     return emptyMessage;
@@ -41,6 +66,50 @@ export function renderTable(
   const widths = headers.map((h, i) =>
     Math.max(h.length, ...rows.map((r) => r[i].length)),
   );
+
+  const termWidth = getTerminalWidth();
+  if (termWidth !== undefined) {
+    const N = widths.length;
+    const totalWidth = widths.reduce((s, w) => s + w, 0) + 3 * N + 1;
+    if (totalWidth > termWidth) {
+      const excess = totalWidth - termWidth;
+      const capacities = widths.map((w, i) => {
+        if (columns?.[i]?.fixed) {
+          return 0;
+        }
+        return Math.max(0, w - headers[i].length);
+      });
+      const totalCapacity = capacities.reduce((s, c) => s + c, 0);
+
+      let useCards = false;
+      if (totalCapacity < excess) {
+        useCards = true;
+      } else {
+        for (let i = 0; i < N; i++) {
+          if (!columns?.[i]?.fixed && capacities[i] > 0) {
+            const share = Math.round((capacities[i] / totalCapacity) * excess);
+            if (widths[i] - share < MIN_USEFUL_WIDTH) {
+              useCards = true;
+              break;
+            }
+          }
+        }
+      }
+
+      if (useCards) {
+        return renderCards(headers, rows);
+      }
+
+      const reduction = Math.min(excess, totalCapacity);
+      for (let i = 0; i < N; i++) {
+        if (capacities[i] > 0) {
+          const share = Math.round((capacities[i] / totalCapacity) * reduction);
+          widths[i] = widths[i] - share;
+        }
+      }
+    }
+  }
+
   const top =
     BOX.tl + widths.map((w) => BOX.h.repeat(w + 2)).join(BOX.tm) + BOX.tr;
   const mid =
@@ -50,7 +119,17 @@ export function renderTable(
   const row = (cells: string[]) =>
     BOX.v +
     ' ' +
-    cells.map((c, i) => c.padEnd(widths[i])).join(` ${BOX.v} `) +
+    cells
+      .map((c, i) => {
+        const display =
+          c.length > widths[i]
+            ? widths[i] >= 4
+              ? `${c.slice(0, widths[i] - 3)}...`
+              : c.slice(0, widths[i])
+            : c;
+        return display.padEnd(widths[i]);
+      })
+      .join(` ${BOX.v} `) +
     ' ' +
     BOX.v;
   return [top, row(headers), mid, ...rows.map(row), bot].join('\n');
