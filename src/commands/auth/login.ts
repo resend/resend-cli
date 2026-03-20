@@ -18,6 +18,12 @@ import { isInteractive } from '../../lib/tty';
 
 const RESEND_API_KEYS_URL = 'https://resend.com/api-keys?new=true';
 
+const SOURCE_LABEL: Record<string, string> = {
+  flag: 'command line (--api-key)',
+  env: 'environment (RESEND_API_KEY)',
+  config: 'saved credentials',
+};
+
 export const loginCommand = new Command('login')
   .description('Save a Resend API key')
   .option('--key <key>', 'API key to store (required in non-interactive mode)')
@@ -27,8 +33,15 @@ export const loginCommand = new Command('login')
       setup: true,
       context:
         'Non-interactive: --key is required (no prompts will appear when stdin/stdout is not a TTY).',
-      output: `  {"success":true,"config_path":"<path>"}`,
-      errorCodes: ['missing_key', 'invalid_key_format', 'validation_failed'],
+      output: `  {"success":true,"config_path":"<path>","profile":"<name>"}`,
+      errorCodes: [
+        'missing_key',
+        'invalid_key_format',
+        'validation_failed',
+        'invalid_profile_name',
+        'switch_failed',
+        'write_failed',
+      ],
       examples: [
         'resend login --key re_123456789',
         'resend login                      (interactive — prompts and opens browser)',
@@ -38,7 +51,7 @@ export const loginCommand = new Command('login')
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    let apiKey = opts.key;
+    let apiKey = typeof opts.key === 'string' ? opts.key.trim() : opts.key;
 
     if (!apiKey) {
       if (!isInteractive() || globalOpts.json) {
@@ -56,8 +69,9 @@ export const loginCommand = new Command('login')
 
       const existing = await resolveApiKeyAsync();
       if (existing) {
+        const sourceLabel = SOURCE_LABEL[existing.source] ?? existing.source;
         p.log.info(
-          `Existing API key found (source: ${existing.source}). Enter a new key to replace it.`,
+          `Existing API key found (${sourceLabel}). Enter a new key to replace it.`,
         );
       }
 
@@ -104,10 +118,10 @@ export const loginCommand = new Command('login')
         cancelAndExit('Login cancelled.');
       }
 
-      apiKey = result;
+      apiKey = result.trim();
     }
 
-    if (!apiKey.startsWith('re_')) {
+    if (!apiKey || !apiKey.startsWith('re_')) {
       outputError(
         {
           message: 'Invalid API key format. Key must start with re_',
@@ -145,7 +159,8 @@ export const loginCommand = new Command('login')
       );
     }
 
-    let profileName = globalOpts.profile ?? globalOpts.team;
+    let profileName =
+      (globalOpts.profile ?? globalOpts.team)?.trim() || undefined;
 
     if (profileName) {
       const profileError = validateProfileName(profileName);
@@ -182,12 +197,23 @@ export const loginCommand = new Command('login')
         if (choice === '__new__') {
           const newName = await p.text({
             message: 'Enter a name for the new profile:',
-            validate: (v) => validateProfileName(v as string),
+            validate: (v) => validateProfileName((v ?? '').trim()),
           });
           if (p.isCancel(newName)) {
             cancelAndExit('Login cancelled.');
           }
-          profileName = newName;
+          profileName = (newName ?? '').trim() || 'default';
+          const alreadyExists = existingProfiles.some(
+            (pr) => pr.name === profileName,
+          );
+          if (alreadyExists) {
+            const overwrite = await p.confirm({
+              message: `Profile '${profileName}' already exists. Overwrite?`,
+            });
+            if (p.isCancel(overwrite) || !overwrite) {
+              cancelAndExit('Login cancelled.');
+            }
+          }
         } else if (validateProfileName(choice)) {
           const renamed = await promptRenameIfInvalid(choice, globalOpts);
           if (!renamed) {
@@ -205,10 +231,10 @@ export const loginCommand = new Command('login')
     const { configPath, backend } = await storeApiKeyAsync(apiKey, profileName);
     const profileLabel = profileName || 'default';
 
-    // Auto-switch to the newly added profile
+    // Auto-switch to the newly added profile (only when user specified a profile)
     if (profileName) {
       try {
-        setActiveProfile(profileName);
+        setActiveProfile(profileLabel);
       } catch (err) {
         outputError(
           {

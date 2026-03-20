@@ -1,10 +1,9 @@
 import { existsSync } from 'node:fs';
-import { join } from 'node:path';
 import * as p from '@clack/prompts';
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import {
-  getConfigDir,
+  getCredentialsPath,
   readCredentials,
   removeAllApiKeysAsync,
   removeApiKeyAsync,
@@ -39,7 +38,7 @@ If no credentials file exists, exits cleanly with no error.`,
   .action(async (_opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
-    const configPath = join(getConfigDir(), 'credentials.json');
+    const configPath = getCredentialsPath();
     const creds = readCredentials();
 
     if (!creds && !existsSync(configPath)) {
