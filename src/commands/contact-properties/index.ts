@@ -7,9 +7,7 @@ import { listContactPropertiesCommand } from './list';
 import { updateContactPropertyCommand } from './update';
 
 export const contactPropertiesCommand = new Command('contact-properties')
-  .description(
-    'Manage contact property definitions — schema for custom data on contacts',
-  )
+  .description('Manage contact property definitions')
   .addHelpText(
     'after',
     buildHelpText({

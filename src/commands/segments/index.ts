@@ -6,9 +6,7 @@ import { getSegmentCommand } from './get';
 import { listSegmentsCommand } from './list';
 
 export const segmentsCommand = new Command('segments')
-  .description(
-    'Manage segments — named groups of contacts used to target broadcasts',
-  )
+  .description('Manage segments')
   .addHelpText(
     'after',
     buildHelpText({

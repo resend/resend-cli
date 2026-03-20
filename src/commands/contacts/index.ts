@@ -12,7 +12,7 @@ import { updateContactCommand } from './update';
 import { updateContactTopicsCommand } from './update-topics';
 
 export const contactsCommand = new Command('contacts')
-  .description('Manage contacts — the global list of people you send email to')
+  .description('Manage contacts')
   .addHelpText(
     'after',
     buildHelpText({

@@ -93,18 +93,6 @@ const program = new Command()
   .addHelpText(
     'after',
     `
-${pc.gray('Environment:')}
-  RESEND_API_KEY            API key — checked after --api-key, before stored credentials
-                            Priority: --api-key flag > RESEND_API_KEY > secure storage/credentials file
-  RESEND_PROFILE            Profile — checked after --profile flag, before active_profile in config
-                            Priority: --profile flag > RESEND_PROFILE > active_profile in config > "default"
-  RESEND_CREDENTIAL_STORE   Force storage method: "secure_storage" (secure) or "file" (plaintext)
-
-${pc.gray('Output:')}
-  Human-readable by default. Pass --json or pipe stdout for machine-readable JSON.
-  Use --quiet (-q) in CI to suppress spinners and status messages (implies --json).
-  Errors always exit with code 1: {"error":{"message":"...","code":"..."}}
-
 ${pc.gray('Examples:')}
 
 - Login to Resend
@@ -134,21 +122,21 @@ ${pc.gray('Examples:')}
     program.help();
   })
   .addCommand(loginCommand)
-  .addCommand(logoutCommand)
   .addCommand(emailsCommand)
-  .addCommand(domainsCommand)
-  .addCommand(apiKeysCommand)
   .addCommand(broadcastsCommand)
+  .addCommand(templatesCommand)
   .addCommand(contactsCommand)
   .addCommand(contactPropertiesCommand)
   .addCommand(segmentsCommand)
-  .addCommand(templatesCommand)
   .addCommand(topicsCommand)
+  .addCommand(domainsCommand)
+  .addCommand(apiKeysCommand)
   .addCommand(webhooksCommand)
-  .addCommand(doctorCommand)
   .addCommand(authCommand)
-  .addCommand(openCommand)
+  .addCommand(logoutCommand)
   .addCommand(whoamiCommand)
+  .addCommand(doctorCommand)
+  .addCommand(openCommand)
   .addCommand(updateCommand)
   .addCommand(teamsDeprecatedCommand);
 

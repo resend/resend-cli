@@ -10,7 +10,7 @@ import { publishTemplateCommand } from './publish';
 import { updateTemplateCommand } from './update';
 
 export const templatesCommand = new Command('templates')
-  .description('Manage templates — reusable email templates with variables')
+  .description('Manage templates')
   .addHelpText(
     'after',
     buildHelpText({

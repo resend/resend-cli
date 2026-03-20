@@ -13,6 +13,10 @@ export const authCommand = new Command('auth')
     'after',
     buildHelpText({
       setup: true,
+      context: `Environment variables:
+  RESEND_API_KEY            API key (overrides stored credentials)
+  RESEND_PROFILE            Profile name (overrides config default)
+  RESEND_CREDENTIAL_STORE   Storage method: "secure_storage" or "file"`,
       examples: [
         'resend login',
         'resend login --key re_123456789',

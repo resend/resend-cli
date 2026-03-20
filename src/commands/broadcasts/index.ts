@@ -9,7 +9,7 @@ import { sendBroadcastCommand } from './send';
 import { updateBroadcastCommand } from './update';
 
 export const broadcastsCommand = new Command('broadcasts')
-  .description('Manage broadcasts — bulk email to a segment of contacts')
+  .description('Manage broadcasts')
   .addHelpText(
     'after',
     buildHelpText({
