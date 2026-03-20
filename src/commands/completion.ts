@@ -141,12 +141,21 @@ function installCompletion(shell: Shell, script: string): void {
       }
 
       if (needsFpath) {
-        const snippet = `\n${MARKER}\nfpath=(${completionDir} $fpath)\n`;
-        writeFileSync(profilePath, snippet, { flag: 'a' });
+        const fpathLine = `${MARKER}\nfpath=(${completionDir} $fpath)\n`;
+        const existing = existsSync(profilePath)
+          ? readFileSync(profilePath, 'utf8')
+          : '';
+        const compinitMatch = existing.match(/^.*compinit.*$/m);
+        if (compinitMatch) {
+          const idx = existing.indexOf(compinitMatch[0]);
+          const before = existing.slice(0, idx);
+          const after = existing.slice(idx);
+          writeFileSync(profilePath, `${before}${fpathLine}\n${after}`);
+        } else {
+          const snippet = `\n${fpathLine}autoload -Uz compinit && compinit\n`;
+          writeFileSync(profilePath, snippet, { flag: 'a' });
+        }
         p.log.info(`Added completion path to ${profilePath}`);
-        p.log.info(
-          'Ensure compinit is called after the fpath line (most zsh frameworks do this already).',
-        );
       }
       p.log.info('Restart your shell to activate completions.');
       return;

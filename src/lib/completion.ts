@@ -190,7 +190,7 @@ export function generateBashCompletion(tree: CommandNode): string {
       .join(' ');
     if (rootFlags) {
       lines.push(
-        `      *) COMPREPLY=($(compgen -W "${rootFlags}" -- "$cur")) ;;`,
+        `      "") COMPREPLY=($(compgen -W "${rootFlags}" -- "$cur")) ;;`,
       );
     }
   }
@@ -214,10 +214,7 @@ export function generateBashCompletion(tree: CommandNode): string {
 
   {
     const rootSubs = entries[0].subcommands.map((s) => s.name).join(' ');
-    lines.push(
-      `    "${tree.name}") COMPREPLY=($(compgen -W "${rootSubs}" -- "$cur")) ;;`,
-    );
-    lines.push(`    *) COMPREPLY=($(compgen -W "${rootSubs}" -- "$cur")) ;;`);
+    lines.push(`    "") COMPREPLY=($(compgen -W "${rootSubs}" -- "$cur")) ;;`);
   }
 
   lines.push('  esac');
@@ -287,22 +284,26 @@ export function generateZshCompletion(tree: CommandNode): string {
   lines.push('    case "$cmd_path" in');
 
   for (const entry of childEntries) {
-    const optFlags = entry.options
-      .map((o) => o.long)
-      .filter(Boolean)
-      .join(' ');
-    if (optFlags) {
+    const opts = entry.options.filter((o) => o.long);
+    if (opts.length > 0) {
       const key = entry.path.replace(`${tree.name} `, '');
-      lines.push(`      "${key}") compadd -- ${optFlags} ;;`);
+      const descs = opts
+        .map((o) => `"${o.long}:${escapeZsh(o.description)}"`)
+        .join(' ');
+      lines.push(
+        `      "${key}") local -a opts=(${descs}); _describe 'option' opts ;;`,
+      );
     }
   }
   {
-    const rootFlags = globalOpts
-      .map((o) => o.long)
-      .filter(Boolean)
-      .join(' ');
-    if (rootFlags) {
-      lines.push(`      *) compadd -- ${rootFlags} ;;`);
+    const opts = globalOpts.filter((o) => o.long);
+    if (opts.length > 0) {
+      const descs = opts
+        .map((o) => `"${o.long}:${escapeZsh(o.description)}"`)
+        .join(' ');
+      lines.push(
+        `      "") local -a opts=(${descs}); _describe 'option' opts ;;`,
+      );
     }
   }
 
@@ -316,14 +317,20 @@ export function generateZshCompletion(tree: CommandNode): string {
     if (entry.subcommands.length === 0) {
       continue;
     }
-    const subs = entry.subcommands.map((s) => s.name).join(' ');
     const key = entry.path.replace(`${tree.name} `, '');
-    lines.push(`    "${key}") compadd -- ${subs} ;;`);
+    const descs = entry.subcommands
+      .map((s) => `"${s.name}:${escapeZsh(s.description)}"`)
+      .join(' ');
+    lines.push(
+      `    "${key}") local -a cmds=(${descs}); _describe 'command' cmds ;;`,
+    );
   }
 
   {
-    const rootSubs = entries[0].subcommands.map((s) => s.name).join(' ');
-    lines.push(`    *) compadd -- ${rootSubs} ;;`);
+    const descs = entries[0].subcommands
+      .map((s) => `"${s.name}:${escapeZsh(s.description)}"`)
+      .join(' ');
+    lines.push(`    "") local -a cmds=(${descs}); _describe 'command' cmds ;;`);
   }
 
   lines.push('  esac');
@@ -400,6 +407,10 @@ export function generateFishCompletion(tree: CommandNode): string {
   }
 
   return lines.join('\n');
+}
+
+function escapeZsh(s: string): string {
+  return s.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/:/g, '\\:');
 }
 
 function escapeFish(s: string): string {
