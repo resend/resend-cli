@@ -27,7 +27,7 @@ Non-interactive: --name is required.`,
 
     const name = await requireText(
       opts.name,
-      { message: 'Segment name', placeholder: 'Newsletter Subscribers' },
+      { message: 'Segment name', placeholder: 'e.g. Newsletter Subscribers' },
       { message: 'Missing --name flag.', code: 'missing_name' },
       globalOpts,
     );

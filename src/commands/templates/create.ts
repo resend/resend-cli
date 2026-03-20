@@ -76,7 +76,7 @@ Non-interactive: --name and a body (--html or --html-file) are required. --text-
       }
       const result = await p.text({
         message: 'Template name',
-        placeholder: 'Welcome Email',
+        placeholder: 'e.g. Welcome Email',
         validate: (v) => (!v ? 'Required' : undefined),
       });
       if (p.isCancel(result)) {

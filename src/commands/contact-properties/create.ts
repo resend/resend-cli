@@ -57,7 +57,7 @@ built-in contact fields and may cause unexpected behavior in broadcasts.`,
 
     const key = await requireText(
       opts.key,
-      { message: 'Property key', placeholder: 'company_name' },
+      { message: 'Property key', placeholder: 'e.g. company_name' },
       { message: 'Missing --key flag.', code: 'missing_key' },
       globalOpts,
     );
