@@ -15,6 +15,9 @@ import {
 } from './credential-store';
 
 export type ApiKeyPermission = 'full_access' | 'sending_access';
+
+export const SENDING_KEY_MESSAGE =
+  'Sending-only keys work with: emails send, emails batch, broadcasts send.\nCreate a full access key at https://resend.com/api-keys';
 export type ApiKeySource = 'flag' | 'env' | 'config' | 'secure_storage';
 export type ResolvedKey = {
   key: string;

@@ -1,7 +1,11 @@
 import './user-agent';
 import { Resend } from 'resend';
 import type { ApiKeyPermission } from './config';
-import { listProfiles, resolveApiKeyAsync } from './config';
+import {
+  listProfiles,
+  resolveApiKeyAsync,
+  SENDING_KEY_MESSAGE,
+} from './config';
 import { errorMessage, outputError } from './output';
 
 export type GlobalOpts = {
@@ -79,8 +83,7 @@ export async function requireClient(
       if (!hasPermission(resolved.permission, required)) {
         outputError(
           {
-            message:
-              'This command requires a full access API key. Your current key has sending access only.\nSending-only keys work with: emails send, emails batch, broadcasts send\nCreate a full access key at https://resend.com/api-keys',
+            message: `This command requires a full access API key. Your current key has sending access only.\n${SENDING_KEY_MESSAGE}`,
             code: 'insufficient_permissions',
           },
           { json: opts.json },

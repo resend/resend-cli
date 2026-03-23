@@ -1,7 +1,12 @@
 import { Command } from '@commander-js/extra-typings';
 import { Resend } from 'resend';
 import type { GlobalOpts } from '../lib/client';
-import { maskKey, readCredentials, resolveApiKeyAsync } from '../lib/config';
+import {
+  maskKey,
+  readCredentials,
+  resolveApiKeyAsync,
+  SENDING_KEY_MESSAGE,
+} from '../lib/config';
 import { getCredentialBackend } from '../lib/credential-store';
 import { buildHelpText } from '../lib/help-text';
 import { errorMessage, outputResult } from '../lib/output';
@@ -107,10 +112,8 @@ async function checkApiValidationAndDomains(
         return {
           name: 'API Validation',
           status: 'warn',
-          message:
-            'Sending-only API key — works with: emails send, emails batch, broadcasts send',
-          detail:
-            'Create a full access key at https://resend.com/api-keys for complete CLI access',
+          message: `Sending-only API key`,
+          detail: SENDING_KEY_MESSAGE,
         };
       }
       return {

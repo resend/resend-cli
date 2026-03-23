@@ -6,6 +6,7 @@ import type { GlobalOpts } from '../../lib/client';
 import {
   type ApiKeyPermission,
   listProfiles,
+  SENDING_KEY_MESSAGE,
   setActiveProfile,
   storeApiKeyAsync,
   validateProfileName,
@@ -61,7 +62,7 @@ export const loginCommand = new Command('login')
 
       p.intro('Resend Authentication');
       p.log.info(
-        'Use a full access API key for complete CLI access.\nSending-only keys work with: emails send, emails batch, broadcasts send',
+        `Use a full access API key for complete CLI access.\n${SENDING_KEY_MESSAGE}`,
       );
 
       const method = await p.select({
