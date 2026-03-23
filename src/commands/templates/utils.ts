@@ -2,6 +2,7 @@ import type {
   CreateTemplateOptions,
   ListTemplatesResponseSuccess,
 } from 'resend';
+import type { PickerConfig } from '../../lib/prompts';
 
 type TemplateVariableCreationOptions = NonNullable<
   CreateTemplateOptions['variables']
@@ -52,6 +53,17 @@ export function parseVariables(
     };
   });
 }
+
+export const templatePickerConfig: PickerConfig<{
+  id: string;
+  name: string;
+}> = {
+  resource: 'template',
+  resourcePlural: 'templates',
+  fetchItems: (resend, { limit, after }) =>
+    resend.templates.list({ limit, ...(after && { after }) }),
+  display: (t) => ({ label: t.name, hint: t.id }),
+};
 
 export function renderTemplatesTable(
   templates: ListTemplatesResponseSuccess['data'],

@@ -3,10 +3,12 @@ import { runWrite } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
+import { pickId } from '../../lib/prompts';
+import { contactPropertyPickerConfig } from './utils';
 
 export const updateContactPropertyCommand = new Command('update')
   .description('Update a contact property definition')
-  .argument('<id>', 'Contact property UUID')
+  .argument('[id]', 'Contact property UUID')
   .option(
     '--fallback-value <value>',
     'New fallback value used in broadcast templates when a contact has no value set for this property',
@@ -41,8 +43,9 @@ The fallback value is used in broadcast template interpolation when a contact ha
       ],
     }),
   )
-  .action(async (id, opts, cmd) => {
+  .action(async (idArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const id = await pickId(idArg, contactPropertyPickerConfig, globalOpts);
 
     if (opts.fallbackValue === undefined && !opts.clearFallbackValue) {
       outputError(

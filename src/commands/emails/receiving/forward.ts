@@ -2,10 +2,12 @@ import { Command } from '@commander-js/extra-typings';
 import { runCreate } from '../../../lib/actions';
 import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
+import { pickId } from '../../../lib/prompts';
+import { receivedEmailPickerConfig } from './utils';
 
 export const forwardCommand = new Command('forward')
   .description('Forward a received email')
-  .argument('<id>', 'Received email ID')
+  .argument('[id]', 'Received email ID')
   .requiredOption('--to <addresses...>', 'Recipient address(es)')
   .requiredOption('--from <address>', 'Sender address')
   .addHelpText(
@@ -21,8 +23,9 @@ export const forwardCommand = new Command('forward')
       ],
     }),
   )
-  .action(async (id, opts, cmd) => {
+  .action(async (idArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const id = await pickId(idArg, receivedEmailPickerConfig, globalOpts);
     await runCreate(
       {
         spinner: {

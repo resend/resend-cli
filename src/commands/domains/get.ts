@@ -2,13 +2,18 @@ import { Command } from '@commander-js/extra-typings';
 import { runGet } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
-import { renderDnsRecordsTable, statusIndicator } from './utils';
+import { pickId } from '../../lib/prompts';
+import {
+  domainPickerConfig,
+  renderDnsRecordsTable,
+  statusIndicator,
+} from './utils';
 
 export const getDomainCommand = new Command('get')
   .description(
     'Retrieve a domain with its DNS records and current verification status',
   )
-  .argument('<id>', 'Domain ID')
+  .argument('[id]', 'Domain ID')
   .addHelpText(
     'after',
     buildHelpText({
@@ -21,8 +26,9 @@ export const getDomainCommand = new Command('get')
       ],
     }),
   )
-  .action(async (id, _opts, cmd) => {
+  .action(async (idArg, _opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const id = await pickId(idArg, domainPickerConfig, globalOpts);
     await runGet(
       {
         spinner: {

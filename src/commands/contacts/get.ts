@@ -2,11 +2,13 @@ import { Command } from '@commander-js/extra-typings';
 import { runGet } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
+import { pickId } from '../../lib/prompts';
+import { contactPickerConfig } from './utils';
 
 export const getContactCommand = new Command('get')
   .description('Retrieve a contact by ID or email address')
   .argument(
-    '<id>',
+    '[id]',
     'Contact UUID or email address — both are accepted by the API',
   )
   .addHelpText(
@@ -21,8 +23,9 @@ export const getContactCommand = new Command('get')
       ],
     }),
   )
-  .action(async (id, _opts, cmd) => {
+  .action(async (idArg, _opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const id = await pickId(idArg, contactPickerConfig, globalOpts);
     await runGet(
       {
         spinner: {

@@ -4,12 +4,14 @@ import type { GlobalOpts } from '../../lib/client';
 import { readFile } from '../../lib/files';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
+import { pickId } from '../../lib/prompts';
+import { broadcastPickerConfig } from './utils';
 
 export const updateBroadcastCommand = new Command('update')
   .description(
     'Update a draft broadcast — only drafts can be updated; sent broadcasts are immutable',
   )
-  .argument('<id>', 'Broadcast ID')
+  .argument('[id]', 'Broadcast ID')
   .option('--from <address>', 'Update sender address')
   .option('--subject <subject>', 'Update subject')
   .option(
@@ -52,8 +54,9 @@ Variable interpolation:
       ],
     }),
   )
-  .action(async (id, opts, cmd) => {
+  .action(async (idArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const id = await pickId(idArg, broadcastPickerConfig, globalOpts);
 
     if (
       !opts.from &&

@@ -7,11 +7,12 @@ import {
   parseLimitOpt,
   printPaginationHint,
 } from '../../../lib/pagination';
-import { renderAttachmentsTable } from './utils';
+import { pickId } from '../../../lib/prompts';
+import { receivedEmailPickerConfig, renderAttachmentsTable } from './utils';
 
 export const listAttachmentsCommand = new Command('attachments')
   .description('List attachments on a received (inbound) email')
-  .argument('<emailId>', 'Received email UUID')
+  .argument('[emailId]', 'Received email UUID')
   .option(
     '--limit <n>',
     'Maximum number of attachments to return (1-100)',
@@ -40,8 +41,13 @@ export const listAttachmentsCommand = new Command('attachments')
       ],
     }),
   )
-  .action(async (emailId, opts, cmd) => {
+  .action(async (emailIdArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const emailId = await pickId(
+      emailIdArg,
+      receivedEmailPickerConfig,
+      globalOpts,
+    );
 
     const limit = parseLimitOpt(opts.limit, globalOpts);
     const paginationOpts = buildPaginationOpts(limit, opts.after, opts.before);

@@ -2,10 +2,12 @@ import { Command } from '@commander-js/extra-typings';
 import { runCreate } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
+import { pickId } from '../../lib/prompts';
+import { templatePickerConfig } from './utils';
 
 export const duplicateTemplateCommand = new Command('duplicate')
   .description('Duplicate a template')
-  .argument('<id>', 'Template ID or alias to duplicate')
+  .argument('[id]', 'Template ID or alias to duplicate')
   .addHelpText(
     'after',
     buildHelpText({
@@ -20,8 +22,9 @@ All fields (HTML, subject, variables, etc.) are copied to the new template.`,
       ],
     }),
   )
-  .action(async (id, _opts, cmd) => {
+  .action(async (idArg, _opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const id = await pickId(idArg, templatePickerConfig, globalOpts);
     await runCreate(
       {
         spinner: {

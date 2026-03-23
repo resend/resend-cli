@@ -2,10 +2,12 @@ import { Command } from '@commander-js/extra-typings';
 import { runGet } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
+import { pickId } from '../../lib/prompts';
+import { templatePickerConfig } from './utils';
 
 export const getTemplateCommand = new Command('get')
   .description('Retrieve a template by ID or alias')
-  .argument('<id>', 'Template ID or alias')
+  .argument('[id]', 'Template ID or alias')
   .addHelpText(
     'after',
     buildHelpText({
@@ -19,8 +21,9 @@ export const getTemplateCommand = new Command('get')
       ],
     }),
   )
-  .action(async (id, _opts, cmd) => {
+  .action(async (idArg, _opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const id = await pickId(idArg, templatePickerConfig, globalOpts);
     await runGet(
       {
         spinner: {

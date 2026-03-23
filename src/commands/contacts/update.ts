@@ -3,12 +3,17 @@ import type { UpdateContactOptions } from 'resend';
 import { runWrite } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
-import { contactIdentifier, parsePropertiesJson } from './utils';
+import { pickId } from '../../lib/prompts';
+import {
+  contactIdentifier,
+  contactPickerConfig,
+  parsePropertiesJson,
+} from './utils';
 
 export const updateContactCommand = new Command('update')
   .description("Update a contact's subscription status or custom properties")
   .argument(
-    '<id>',
+    '[id]',
     'Contact UUID or email address — both are accepted by the API',
   )
   .option(
@@ -45,8 +50,9 @@ Properties: --properties merges the given JSON object with existing properties.
       ],
     }),
   )
-  .action(async (id, opts, cmd) => {
+  .action(async (idArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const id = await pickId(idArg, contactPickerConfig, globalOpts);
 
     const properties = parsePropertiesJson(opts.properties, globalOpts);
 

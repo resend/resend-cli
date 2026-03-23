@@ -1,4 +1,5 @@
 import type { Webhook, WebhookEvent } from 'resend';
+import type { PickerConfig } from '../../lib/prompts';
 import { renderTable } from '../../lib/table';
 
 export const ALL_WEBHOOK_EVENTS: WebhookEvent[] = [
@@ -27,6 +28,17 @@ export function normalizeEvents(raw: string[]): string[] {
     .map((e) => e.trim())
     .filter(Boolean);
 }
+
+export const webhookPickerConfig: PickerConfig<{
+  id: string;
+  endpoint: string;
+}> = {
+  resource: 'webhook',
+  resourcePlural: 'webhooks',
+  fetchItems: (resend, { limit, after }) =>
+    resend.webhooks.list({ limit, ...(after && { after }) }),
+  display: (w) => ({ label: w.endpoint, hint: w.id }),
+};
 
 export function renderWebhooksTable(webhooks: Webhook[]): string {
   const rows = webhooks.map((w) => {

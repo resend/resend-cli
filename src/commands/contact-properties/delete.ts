@@ -2,11 +2,13 @@ import { Command } from '@commander-js/extra-typings';
 import { runDelete } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
+import { pickId } from '../../lib/prompts';
+import { contactPropertyPickerConfig } from './utils';
 
 export const deleteContactPropertyCommand = new Command('delete')
   .alias('rm')
   .description('Delete a contact property definition')
-  .argument('<id>', 'Contact property UUID')
+  .argument('[id]', 'Contact property UUID')
   .option(
     '--yes',
     'Skip the confirmation prompt (required in non-interactive mode)',
@@ -27,8 +29,9 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
       ],
     }),
   )
-  .action(async (id, opts, cmd) => {
+  .action(async (idArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const id = await pickId(idArg, contactPropertyPickerConfig, globalOpts);
     await runDelete(
       id,
       !!opts.yes,

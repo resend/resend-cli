@@ -2,11 +2,16 @@ import { Command } from '@commander-js/extra-typings';
 import { runList } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
-import { contactIdentifier, renderContactTopicsTable } from './utils';
+import { pickId } from '../../lib/prompts';
+import {
+  contactIdentifier,
+  contactPickerConfig,
+  renderContactTopicsTable,
+} from './utils';
 
 export const listContactTopicsCommand = new Command('topics')
   .description("List a contact's topic subscriptions")
-  .argument('<id>', 'Contact UUID or email address')
+  .argument('[id]', 'Contact UUID or email address')
   .addHelpText(
     'after',
     buildHelpText({
@@ -25,8 +30,9 @@ Use "resend contacts update-topics <id>" to change subscription statuses.`,
       ],
     }),
   )
-  .action(async (id, _opts, cmd) => {
+  .action(async (idArg, _opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const id = await pickId(idArg, contactPickerConfig, globalOpts);
     // ListContactTopicsBaseOptions uses optional { id?, email? } (not a discriminated
     // union), so contactIdentifier's result is directly assignable without a cast.
     await runList(

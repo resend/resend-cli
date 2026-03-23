@@ -2,10 +2,12 @@ import { Command } from '@commander-js/extra-typings';
 import { runGet } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
+import { pickId } from '../../lib/prompts';
+import { webhookPickerConfig } from './utils';
 
 export const getWebhookCommand = new Command('get')
   .description('Retrieve a webhook endpoint configuration by ID')
-  .argument('<id>', 'Webhook UUID')
+  .argument('[id]', 'Webhook UUID')
   .addHelpText(
     'after',
     buildHelpText({
@@ -19,8 +21,9 @@ To rotate secrets, delete the webhook and recreate it.`,
       ],
     }),
   )
-  .action(async (id, _opts, cmd) => {
+  .action(async (idArg, _opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const id = await pickId(idArg, webhookPickerConfig, globalOpts);
     await runGet(
       {
         spinner: {

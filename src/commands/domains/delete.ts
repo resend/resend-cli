@@ -2,11 +2,13 @@ import { Command } from '@commander-js/extra-typings';
 import { runDelete } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
+import { pickId } from '../../lib/prompts';
+import { domainPickerConfig } from './utils';
 
 export const deleteDomainCommand = new Command('delete')
   .alias('rm')
   .description('Delete a domain')
-  .argument('<id>', 'Domain ID')
+  .argument('[id]', 'Domain ID')
   .option('--yes', 'Skip confirmation prompt')
   .addHelpText(
     'after',
@@ -21,8 +23,9 @@ export const deleteDomainCommand = new Command('delete')
       ],
     }),
   )
-  .action(async (id, opts, cmd) => {
+  .action(async (idArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const id = await pickId(idArg, domainPickerConfig, globalOpts);
     await runDelete(
       id,
       !!opts.yes,

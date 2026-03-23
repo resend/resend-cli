@@ -4,14 +4,18 @@ import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError, outputResult } from '../../lib/output';
-import { cancelAndExit } from '../../lib/prompts';
+import { cancelAndExit, pickId } from '../../lib/prompts';
 import { withSpinner } from '../../lib/spinner';
 import { isInteractive } from '../../lib/tty';
-import { contactIdentifier, parseTopicsJson } from './utils';
+import {
+  contactIdentifier,
+  contactPickerConfig,
+  parseTopicsJson,
+} from './utils';
 
 export const updateContactTopicsCommand = new Command('update-topics')
   .description("Update a contact's topic subscription statuses")
-  .argument('<id>', 'Contact UUID or email address')
+  .argument('[id]', 'Contact UUID or email address')
   .option(
     '--topics <json>',
     'JSON array of topic subscriptions (required) — e.g. \'[{"id":"topic-uuid","subscription":"opt_in"}]\'',
@@ -42,8 +46,9 @@ Topics not included in the array are left unchanged.`,
       ],
     }),
   )
-  .action(async (id, opts, cmd) => {
+  .action(async (idArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const id = await pickId(idArg, contactPickerConfig, globalOpts);
     const resend = await requireClient(globalOpts);
 
     let topicsJson = opts.topics;

@@ -5,14 +5,14 @@ import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError, outputResult } from '../../lib/output';
-import { cancelAndExit } from '../../lib/prompts';
+import { cancelAndExit, pickId } from '../../lib/prompts';
 import { withSpinner } from '../../lib/spinner';
 import { isInteractive } from '../../lib/tty';
-import { segmentContactIdentifier } from './utils';
+import { contactPickerConfig, segmentContactIdentifier } from './utils';
 
 export const addContactSegmentCommand = new Command('add-segment')
   .description('Add a contact to a segment')
-  .argument('<contactId>', 'Contact UUID or email address')
+  .argument('[contactId]', 'Contact UUID or email address')
   .option('--segment-id <id>', 'Segment ID to add the contact to (required)')
   .addHelpText(
     'after',
@@ -28,8 +28,13 @@ Non-interactive: --segment-id is required.`,
       ],
     }),
   )
-  .action(async (contactId, opts, cmd) => {
+  .action(async (contactIdArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const contactId = await pickId(
+      contactIdArg,
+      contactPickerConfig,
+      globalOpts,
+    );
     const resend = await requireClient(globalOpts);
 
     let segmentId = opts.segmentId;

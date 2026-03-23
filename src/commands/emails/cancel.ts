@@ -2,10 +2,12 @@ import { Command } from '@commander-js/extra-typings';
 import { runWrite } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
+import { pickId } from '../../lib/prompts';
+import { emailPickerConfig } from './utils';
 
 export const cancelCommand = new Command('cancel')
   .description('Cancel a scheduled email')
-  .argument('<id>', 'Email ID')
+  .argument('[id]', 'Email ID')
   .addHelpText(
     'after',
     buildHelpText({
@@ -17,8 +19,9 @@ export const cancelCommand = new Command('cancel')
       ],
     }),
   )
-  .action(async (id, _opts, cmd) => {
+  .action(async (idArg, _opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const id = await pickId(idArg, emailPickerConfig, globalOpts);
     await runWrite(
       {
         spinner: {

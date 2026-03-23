@@ -3,12 +3,14 @@ import type { RemoveContactSegmentOptions } from 'resend';
 import { runWrite } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
-import { segmentContactIdentifier } from './utils';
+import { pickId } from '../../lib/prompts';
+import { segmentPickerConfig } from '../segments/utils';
+import { contactPickerConfig, segmentContactIdentifier } from './utils';
 
 export const removeContactSegmentCommand = new Command('remove-segment')
   .description('Remove a contact from a segment')
-  .argument('<contactId>', 'Contact UUID or email address')
-  .argument('<segmentId>', 'Segment ID to remove the contact from')
+  .argument('[contactId]', 'Contact UUID or email address')
+  .argument('[segmentId]', 'Segment ID to remove the contact from')
   .addHelpText(
     'after',
     buildHelpText({
@@ -22,8 +24,18 @@ The <segmentId> argument must be a segment UUID (not an email).`,
       ],
     }),
   )
-  .action(async (contactId, segmentId, _opts, cmd) => {
+  .action(async (contactIdArg, segmentIdArg, _opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const contactId = await pickId(
+      contactIdArg,
+      contactPickerConfig,
+      globalOpts,
+    );
+    const segmentId = await pickId(
+      segmentIdArg,
+      segmentPickerConfig,
+      globalOpts,
+    );
 
     // segmentContactIdentifier resolves UUID vs email for the ContactSegmentsBaseOptions
     // discriminated union. The spread of that union requires an explicit cast.

@@ -4,11 +4,12 @@ import type { GlobalOpts } from '../../lib/client';
 import { readFile } from '../../lib/files';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
-import { parseVariables } from './utils';
+import { pickId } from '../../lib/prompts';
+import { parseVariables, templatePickerConfig } from './utils';
 
 export const updateTemplateCommand = new Command('update')
   .description('Update an existing template')
-  .argument('<id>', 'Template ID or alias')
+  .argument('[id]', 'Template ID or alias')
   .option('--name <name>', 'Update template name')
   .option('--html <html>', 'Update HTML body')
   .option(
@@ -53,8 +54,9 @@ export const updateTemplateCommand = new Command('update')
       ],
     }),
   )
-  .action(async (id, opts, cmd) => {
+  .action(async (idArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const id = await pickId(idArg, templatePickerConfig, globalOpts);
 
     if (
       opts.name == null &&

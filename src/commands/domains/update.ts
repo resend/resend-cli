@@ -4,12 +4,14 @@ import { runWrite } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
+import { pickId } from '../../lib/prompts';
+import { domainPickerConfig } from './utils';
 
 export const updateDomainCommand = new Command('update')
   .description(
     'Update domain settings: TLS mode, open tracking, and click tracking',
   )
-  .argument('<id>', 'Domain ID')
+  .argument('[id]', 'Domain ID')
   .addOption(
     new Option('--tls <mode>', 'TLS mode').choices([
       'opportunistic',
@@ -32,8 +34,9 @@ export const updateDomainCommand = new Command('update')
       ],
     }),
   )
-  .action(async (id, opts, cmd) => {
+  .action(async (idArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const id = await pickId(idArg, domainPickerConfig, globalOpts);
 
     const { tls, openTracking, clickTracking } = opts;
 

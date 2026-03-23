@@ -2,12 +2,14 @@ import { Command } from '@commander-js/extra-typings';
 import { runWrite } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
+import { pickId } from '../../lib/prompts';
+import { broadcastPickerConfig } from './utils';
 
 export const sendBroadcastCommand = new Command('send')
   .description(
     'Send a draft broadcast (API-created drafts only — dashboard broadcasts cannot be sent via API)',
   )
-  .argument('<id>', 'Broadcast ID')
+  .argument('[id]', 'Broadcast ID')
   .option(
     '--scheduled-at <datetime>',
     'Schedule delivery — ISO 8601 or natural language e.g. "in 1 hour", "tomorrow at 9am ET"',
@@ -30,8 +32,9 @@ Scheduling:
       ],
     }),
   )
-  .action(async (id, opts, cmd) => {
+  .action(async (idArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const id = await pickId(idArg, broadcastPickerConfig, globalOpts);
 
     const successMsg = opts.scheduledAt
       ? `\nBroadcast scheduled: ${id}`

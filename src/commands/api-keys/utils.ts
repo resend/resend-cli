@@ -1,4 +1,19 @@
+import type { PickerConfig } from '../../lib/prompts';
 import { renderTable } from '../../lib/table';
+
+export const apiKeyPickerConfig: PickerConfig<{
+  id: string;
+  name: string;
+}> = {
+  resource: 'API key',
+  resourcePlural: 'API keys',
+  fetchItems: (resend) =>
+    resend.apiKeys.list().then((r) => ({
+      ...r,
+      data: r.data ? { data: r.data.data, has_more: false } : null,
+    })),
+  display: (k) => ({ label: k.name, hint: k.id }),
+};
 
 export function renderApiKeysTable(
   keys: Array<{

@@ -1,4 +1,5 @@
 import type { DomainRecords } from 'resend';
+import type { PickerConfig } from '../../lib/prompts';
 import { renderTable } from '../../lib/table';
 import { isUnicodeSupported } from '../../lib/tty';
 
@@ -53,3 +54,14 @@ export function statusIndicator(status: string): string {
       return status;
   }
 }
+
+export const domainPickerConfig: PickerConfig<{
+  id: string;
+  name: string;
+}> = {
+  resource: 'domain',
+  resourcePlural: 'domains',
+  fetchItems: (resend, { limit, after }) =>
+    resend.domains.list({ limit, ...(after && { after }) }),
+  display: (d) => ({ label: d.name, hint: d.id }),
+};

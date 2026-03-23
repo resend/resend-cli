@@ -1,8 +1,11 @@
 import * as p from '@clack/prompts';
+import type { Resend } from 'resend';
 import { getCancelExitCode } from './cli-exit';
 import type { GlobalOpts } from './client';
+import { requireClient } from './client';
 import { renameProfileAsync, validateProfileName } from './config';
 import { errorMessage, outputError } from './output';
+import { createSpinner } from './spinner';
 import { isInteractive } from './tty';
 
 export interface FieldSpec {
@@ -224,4 +227,110 @@ export async function promptForMissing<
   );
 
   return { ...current, ...result } as { [K in keyof T]: string };
+}
+
+// ─── Item picker ──────────────────────────────────────────────────────────────
+
+const PICKER_PAGE_SIZE = 10;
+const FETCH_MORE = '__fetch_more__';
+
+export type PickerConfig<T extends { id: string }> = {
+  resource: string;
+  resourcePlural: string;
+  fetchItems: (
+    resend: Resend,
+    opts: { limit: number; after?: string },
+  ) => Promise<{
+    data: { data: T[]; has_more?: boolean } | null;
+    error: { message: string } | null;
+  }>;
+  display: (item: T) => { label: string; hint?: string };
+};
+
+export async function pickId<T extends { id: string }>(
+  id: string | undefined,
+  config: PickerConfig<T>,
+  globalOpts: GlobalOpts,
+): Promise<string> {
+  if (id) {
+    return id;
+  }
+
+  if (!isInteractive() || globalOpts.json) {
+    outputError(
+      { message: 'Missing required argument: id', code: 'missing_id' },
+      { json: globalOpts.json },
+    );
+  }
+
+  const resend = await requireClient(globalOpts);
+  const allItems: T[] = [];
+
+  for (;;) {
+    const cursor = allItems.at(-1)?.id;
+    const spinner = createSpinner(
+      allItems.length === 0
+        ? `Fetching ${config.resourcePlural}...`
+        : `Fetching more ${config.resourcePlural}...`,
+      globalOpts.quiet,
+    );
+
+    const result = await config.fetchItems(resend, {
+      limit: PICKER_PAGE_SIZE,
+      ...(cursor && { after: cursor }),
+    });
+
+    if (result.error || !result.data) {
+      spinner.fail(`Failed to fetch ${config.resourcePlural}`);
+      outputError(
+        {
+          message: result.error?.message ?? 'Unexpected empty response',
+          code: 'list_error',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
+    spinner.stop(
+      allItems.length === 0
+        ? `${config.resourcePlural} fetched`
+        : `More ${config.resourcePlural} fetched`,
+    );
+    allItems.push(...result.data.data);
+    const hasMore = result.data.has_more ?? false;
+
+    if (allItems.length === 0) {
+      p.log.warn(`No ${config.resourcePlural} found.`);
+      outputError(
+        {
+          message: `No ${config.resourcePlural} found.`,
+          code: 'no_items',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
+    const options: { value: string; label: string; hint?: string }[] =
+      allItems.map((item) => ({
+        value: item.id,
+        ...config.display(item),
+      }));
+
+    if (hasMore) {
+      options.push({ value: FETCH_MORE, label: 'Fetch more...' });
+    }
+
+    const selected = await p.select({
+      message: `Select a ${config.resource}`,
+      options,
+    });
+
+    if (p.isCancel(selected)) {
+      cancelAndExit('Cancelled.');
+    }
+
+    if (selected !== FETCH_MORE) {
+      return selected;
+    }
+  }
 }

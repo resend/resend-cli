@@ -2,7 +2,19 @@ import type {
   ListAttachmentsResponseSuccess,
   ListReceivingEmail,
 } from 'resend';
+import type { PickerConfig } from '../../../lib/prompts';
 import { renderTable } from '../../../lib/table';
+
+export const receivedEmailPickerConfig: PickerConfig<{
+  id: string;
+  subject: string;
+}> = {
+  resource: 'received email',
+  resourcePlural: 'received emails',
+  fetchItems: (resend, { limit, after }) =>
+    resend.emails.receiving.list({ limit, ...(after && { after }) }),
+  display: (e) => ({ label: e.subject || '(no subject)', hint: e.id }),
+};
 
 export function renderReceivingEmailsTable(
   emails: ListReceivingEmail[],

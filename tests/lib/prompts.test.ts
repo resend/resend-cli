@@ -144,6 +144,75 @@ describe('promptForMissing', () => {
   });
 });
 
+describe('pickId', () => {
+  const originalStdinIsTTY = process.stdin.isTTY;
+  const originalStdoutIsTTY = process.stdout.isTTY;
+  let errorSpy: MockInstance | undefined;
+  let exitSpy: MockInstance | undefined;
+
+  afterEach(() => {
+    errorSpy?.mockRestore();
+    exitSpy?.mockRestore();
+    errorSpy = undefined;
+    exitSpy = undefined;
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: originalStdinIsTTY,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: originalStdoutIsTTY,
+      writable: true,
+    });
+  });
+
+  test('returns id immediately when provided', async () => {
+    const { pickId } = await import('../../src/lib/prompts');
+    const result = await pickId('test-id', {} as never, {});
+    expect(result).toBe('test-id');
+  });
+
+  test('exits with missing_id error in non-interactive mode', async () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: undefined,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: undefined,
+      writable: true,
+    });
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { pickId } = await import('../../src/lib/prompts');
+
+    await expectExit1(() => pickId(undefined, {} as never, {}));
+
+    const output = errorSpy?.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('missing_id');
+  });
+
+  test('exits with missing_id error when --json is set even in TTY', async () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { pickId } = await import('../../src/lib/prompts');
+
+    await expectExit1(() => pickId(undefined, {} as never, { json: true }));
+
+    const raw = errorSpy?.mock.calls.map((c) => c[0]).join(' ');
+    const parsed = JSON.parse(raw);
+    expect(parsed.error.code).toBe('missing_id');
+  });
+});
+
 describe('confirmDelete', () => {
   const originalStdinIsTTY = process.stdin.isTTY;
   const originalStdoutIsTTY = process.stdout.isTTY;

@@ -2,10 +2,12 @@ import { Command } from '@commander-js/extra-typings';
 import { runWrite } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
+import { pickId } from '../../lib/prompts';
+import { domainPickerConfig } from './utils';
 
 export const verifyDomainCommand = new Command('verify')
   .description('Trigger async DNS verification for a domain')
-  .argument('<id>', 'Domain ID')
+  .argument('[id]', 'Domain ID')
   .addHelpText(
     'after',
     buildHelpText({
@@ -19,8 +21,9 @@ Poll the status with: resend domains get <id>`,
       ],
     }),
   )
-  .action(async (id, _opts, cmd) => {
+  .action(async (idArg, _opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const id = await pickId(idArg, domainPickerConfig, globalOpts);
 
     await runWrite(
       {

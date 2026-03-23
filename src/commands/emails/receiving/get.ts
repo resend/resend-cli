@@ -2,12 +2,14 @@ import { Command } from '@commander-js/extra-typings';
 import { runGet } from '../../../lib/actions';
 import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
+import { pickId } from '../../../lib/prompts';
+import { receivedEmailPickerConfig } from './utils';
 
 export const getReceivingCommand = new Command('get')
   .description(
     'Retrieve a single received (inbound) email with full details including HTML, text, and headers',
   )
-  .argument('<id>', 'Received email UUID')
+  .argument('[id]', 'Received email UUID')
   .addHelpText(
     'after',
     buildHelpText({
@@ -22,8 +24,9 @@ export const getReceivingCommand = new Command('get')
       ],
     }),
   )
-  .action(async (id, _opts, cmd) => {
+  .action(async (idArg, _opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const id = await pickId(idArg, receivedEmailPickerConfig, globalOpts);
     await runGet(
       {
         spinner: {

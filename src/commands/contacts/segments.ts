@@ -2,12 +2,13 @@ import { Command } from '@commander-js/extra-typings';
 import { runList } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
+import { pickId } from '../../lib/prompts';
 import { renderSegmentsTable } from '../segments/utils';
-import { segmentContactIdentifier } from './utils';
+import { contactPickerConfig, segmentContactIdentifier } from './utils';
 
 export const listContactSegmentsCommand = new Command('segments')
   .description('List the segments a contact belongs to')
-  .argument('<id>', 'Contact UUID or email address')
+  .argument('[id]', 'Contact UUID or email address')
   .addHelpText(
     'after',
     buildHelpText({
@@ -21,8 +22,9 @@ export const listContactSegmentsCommand = new Command('segments')
       ],
     }),
   )
-  .action(async (id, _opts, cmd) => {
+  .action(async (idArg, _opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const id = await pickId(idArg, contactPickerConfig, globalOpts);
     await runList(
       {
         spinner: {

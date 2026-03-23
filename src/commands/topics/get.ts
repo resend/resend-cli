@@ -2,10 +2,12 @@ import { Command } from '@commander-js/extra-typings';
 import { runGet } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
+import { pickId } from '../../lib/prompts';
+import { topicPickerConfig } from './utils';
 
 export const getTopicCommand = new Command('get')
   .description('Retrieve a topic by ID')
-  .argument('<id>', 'Topic UUID')
+  .argument('[id]', 'Topic UUID')
   .addHelpText(
     'after',
     buildHelpText({
@@ -17,8 +19,9 @@ export const getTopicCommand = new Command('get')
       ],
     }),
   )
-  .action(async (id, _opts, cmd) => {
+  .action(async (idArg, _opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const id = await pickId(idArg, topicPickerConfig, globalOpts);
     await runGet(
       {
         spinner: {

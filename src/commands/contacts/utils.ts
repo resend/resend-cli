@@ -1,6 +1,7 @@
 import type { ContactSegmentsBaseOptions, ContactTopic } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
 import { outputError } from '../../lib/output';
+import type { PickerConfig } from '../../lib/prompts';
 import { renderTable } from '../../lib/table';
 
 // ─── Table renderers ─────────────────────────────────────────────────────────
@@ -41,6 +42,17 @@ export function renderContactTopicsTable(topics: ContactTopic[]): string {
     '(no topic subscriptions)',
   );
 }
+
+export const contactPickerConfig: PickerConfig<{
+  id: string;
+  email: string;
+}> = {
+  resource: 'contact',
+  resourcePlural: 'contacts',
+  fetchItems: (resend, { limit, after }) =>
+    resend.contacts.list({ limit, ...(after && { after }) }),
+  display: (c) => ({ label: c.email, hint: c.id }),
+};
 
 // ─── Contact identifier helpers ───────────────────────────────────────────────
 //

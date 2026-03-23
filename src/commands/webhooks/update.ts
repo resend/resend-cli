@@ -4,13 +4,18 @@ import { runWrite } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
-import { ALL_WEBHOOK_EVENTS, normalizeEvents } from './utils';
+import { pickId } from '../../lib/prompts';
+import {
+  ALL_WEBHOOK_EVENTS,
+  normalizeEvents,
+  webhookPickerConfig,
+} from './utils';
 
 export const updateWebhookCommand = new Command('update')
   .description(
     "Update a webhook's endpoint URL, event subscriptions, or enabled status",
   )
-  .argument('<id>', 'Webhook UUID')
+  .argument('[id]', 'Webhook UUID')
   .option('--endpoint <endpoint>', 'New HTTPS URL for this webhook')
   .option(
     '--events <events...>',
@@ -44,8 +49,9 @@ Use "all" as a shorthand for all 17 event types.
       ],
     }),
   )
-  .action(async (id, opts, cmd) => {
+  .action(async (idArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const id = await pickId(idArg, webhookPickerConfig, globalOpts);
 
     if (!opts.endpoint && !opts.events?.length && !opts.status) {
       outputError(

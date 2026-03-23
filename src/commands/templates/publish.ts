@@ -2,10 +2,12 @@ import { Command } from '@commander-js/extra-typings';
 import { runWrite } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
+import { pickId } from '../../lib/prompts';
+import { templatePickerConfig } from './utils';
 
 export const publishTemplateCommand = new Command('publish')
   .description('Publish a draft template')
-  .argument('<id>', 'Template ID or alias')
+  .argument('[id]', 'Template ID or alias')
   .addHelpText(
     'after',
     buildHelpText({
@@ -20,8 +22,9 @@ Publishing an already-published template re-publishes it with the latest draft c
       ],
     }),
   )
-  .action(async (id, _opts, cmd) => {
+  .action(async (idArg, _opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const id = await pickId(idArg, templatePickerConfig, globalOpts);
     await runWrite(
       {
         spinner: {

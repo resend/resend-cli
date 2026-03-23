@@ -3,10 +3,12 @@ import { runWrite } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
+import { pickId } from '../../lib/prompts';
+import { topicPickerConfig } from './utils';
 
 export const updateTopicCommand = new Command('update')
   .description("Update a topic's name or description")
-  .argument('<id>', 'Topic UUID')
+  .argument('[id]', 'Topic UUID')
   .option('--name <name>', 'New topic name')
   .option('--description <description>', 'New description shown to contacts')
   .addHelpText(
@@ -24,8 +26,9 @@ To change the default subscription, delete the topic and recreate it.`,
       ],
     }),
   )
-  .action(async (id, opts, cmd) => {
+  .action(async (idArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const id = await pickId(idArg, topicPickerConfig, globalOpts);
 
     if (!opts.name && !opts.description) {
       outputError(

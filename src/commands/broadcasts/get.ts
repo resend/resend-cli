@@ -2,13 +2,14 @@ import { Command } from '@commander-js/extra-typings';
 import { runGet } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
-import { broadcastStatusIndicator } from './utils';
+import { pickId } from '../../lib/prompts';
+import { broadcastPickerConfig, broadcastStatusIndicator } from './utils';
 
 export const getBroadcastCommand = new Command('get')
   .description(
     'Retrieve full details for a broadcast including HTML body, status, and delivery times',
   )
-  .argument('<id>', 'Broadcast ID')
+  .argument('[id]', 'Broadcast ID')
   .addHelpText(
     'after',
     buildHelpText({
@@ -22,8 +23,9 @@ Use this command to retrieve the full broadcast payload.`,
       ],
     }),
   )
-  .action(async (id, _opts, cmd) => {
+  .action(async (idArg, _opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const id = await pickId(idArg, broadcastPickerConfig, globalOpts);
     await runGet(
       {
         spinner: {
