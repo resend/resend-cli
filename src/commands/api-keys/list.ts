@@ -12,7 +12,7 @@ export const listApiKeysCommand = new Command('list')
   .addHelpText(
     'after',
     buildHelpText({
-      output: `  {"object":"list","data":[{"id":"<id>","name":"<name>","created_at":"<date>"}]}
+      output: `  {"object":"list","data":[{"id":"<id>","name":"<name>","created_at":"<date>","last_used_at":"<date>|null"}]}
   Tokens are never included in list responses.`,
       errorCodes: ['auth_error', 'list_error'],
       examples: ['resend api-keys list', 'resend api-keys list --json'],
