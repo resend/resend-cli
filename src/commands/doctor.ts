@@ -102,6 +102,16 @@ async function checkApiValidationAndDomains(
     const { data, error } = await resend.domains.list();
 
     if (error) {
+      const err = error as { name?: string; message?: string };
+      if (err.name === 'restricted_api_key') {
+        return {
+          name: 'API Validation',
+          status: 'warn',
+          message: 'Sending-only API key — only email commands available',
+          detail:
+            'Create a full access key at https://resend.com/api-keys for complete CLI access',
+        };
+      }
       return {
         name: 'API Validation',
         status: 'fail',

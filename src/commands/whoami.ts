@@ -80,6 +80,7 @@ Shows which profile is active and where the API key comes from.`,
           profile,
           api_key: maskKey(resolved.key),
           source: resolved.source,
+          ...(resolved.permission && { permission: resolved.permission }),
           config_path: configPath,
         },
         { json: globalOpts.json },
@@ -96,10 +97,20 @@ Shows which profile is active and where the API key comes from.`,
             ? 'environment variable'
             : 'flag';
 
+    const permissionLabel =
+      resolved.permission === 'sending_access'
+        ? 'sending access'
+        : resolved.permission === 'full_access'
+          ? 'full access'
+          : undefined;
+
     console.log('');
     console.log(`  Profile: ${profile}`);
     console.log(`  API Key: ${maskKey(resolved.key)}`);
     console.log(`  Source:  ${sourceLabel}`);
+    if (permissionLabel) {
+      console.log(`  Access:  ${permissionLabel}`);
+    }
     console.log(`  Config:  ${configPath}`);
     console.log('');
   });

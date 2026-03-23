@@ -1,5 +1,6 @@
 import './user-agent';
 import { Resend } from 'resend';
+import type { ApiKeyPermission } from './config';
 import { listProfiles, resolveApiKeyAsync } from './config';
 import { errorMessage, outputError } from './output';
 
@@ -11,6 +12,22 @@ export type GlobalOpts = {
   /** @deprecated Use `profile` instead */
   team?: string;
 };
+
+export type RequireClientOpts = {
+  permission?: ApiKeyPermission;
+};
+
+const PERMISSION_HIERARCHY: Record<ApiKeyPermission, number> = {
+  sending_access: 0,
+  full_access: 1,
+};
+
+function hasPermission(
+  stored: ApiKeyPermission,
+  required: ApiKeyPermission,
+): boolean {
+  return PERMISSION_HIERARCHY[stored] >= PERMISSION_HIERARCHY[required];
+}
 
 export async function createClient(
   flagValue?: string,
@@ -34,9 +51,44 @@ export async function createClient(
   return new Resend(resolved.key);
 }
 
-export async function requireClient(opts: GlobalOpts): Promise<Resend> {
+export async function requireClient(
+  opts: GlobalOpts,
+  clientOpts?: RequireClientOpts,
+): Promise<Resend> {
+  const profileName = opts.profile ?? opts.team;
+
   try {
-    return await createClient(opts.apiKey, opts.profile ?? opts.team);
+    const resolved = await resolveApiKeyAsync(opts.apiKey, profileName);
+    if (!resolved) {
+      if (profileName) {
+        const profiles = listProfiles();
+        const exists = profiles.some((p) => p.name === profileName);
+        if (!exists) {
+          throw new Error(
+            `Profile "${profileName}" not found. Available profiles: ${profiles.map((p) => p.name).join(', ') || '(none)'}`,
+          );
+        }
+      }
+      throw new Error(
+        'No API key found. Set RESEND_API_KEY, use --api-key, or run: resend login',
+      );
+    }
+
+    if (resolved.permission) {
+      const required = clientOpts?.permission ?? 'full_access';
+      if (!hasPermission(resolved.permission, required)) {
+        outputError(
+          {
+            message:
+              'This command requires a full access API key. Your current key has sending access only. Create a full access key at https://resend.com/api-keys',
+            code: 'insufficient_permissions',
+          },
+          { json: opts.json },
+        );
+      }
+    }
+
+    return new Resend(resolved.key);
   } catch (err) {
     outputError(
       {

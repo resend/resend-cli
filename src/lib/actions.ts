@@ -1,6 +1,7 @@
 import type { Resend } from 'resend';
-import type { GlobalOpts } from './client';
+import type { GlobalOpts, RequireClientOpts } from './client';
 import { requireClient } from './client';
+import type { ApiKeyPermission } from './config';
 import { outputResult } from './output';
 import { confirmDelete } from './prompts';
 import { withSpinner } from './spinner';
@@ -20,10 +21,14 @@ export async function runGet<T>(
     spinner: SpinnerMessages;
     sdkCall: SdkCall<T>;
     onInteractive: (data: T) => void;
+    permission?: ApiKeyPermission;
   },
   globalOpts: GlobalOpts,
 ): Promise<void> {
-  const resend = await requireClient(globalOpts);
+  const clientOpts: RequireClientOpts | undefined = config.permission
+    ? { permission: config.permission }
+    : undefined;
+  const resend = await requireClient(globalOpts, clientOpts);
   const data = await withSpinner(
     config.spinner,
     () => config.sdkCall(resend),
@@ -50,10 +55,14 @@ export async function runDelete(
     object: string;
     successMsg: string;
     sdkCall: SdkCall<unknown>;
+    permission?: ApiKeyPermission;
   },
   globalOpts: GlobalOpts,
 ): Promise<void> {
-  const resend = await requireClient(globalOpts);
+  const clientOpts: RequireClientOpts | undefined = config.permission
+    ? { permission: config.permission }
+    : undefined;
+  const resend = await requireClient(globalOpts, clientOpts);
   if (!skipConfirm) {
     await confirmDelete(id, config.confirmMessage, globalOpts);
   }
@@ -82,10 +91,14 @@ export async function runCreate<T>(
     spinner: SpinnerMessages;
     sdkCall: SdkCall<T>;
     onInteractive: (data: T) => void;
+    permission?: ApiKeyPermission;
   },
   globalOpts: GlobalOpts,
 ): Promise<void> {
-  const resend = await requireClient(globalOpts);
+  const clientOpts: RequireClientOpts | undefined = config.permission
+    ? { permission: config.permission }
+    : undefined;
+  const resend = await requireClient(globalOpts, clientOpts);
   const data = await withSpinner(
     config.spinner,
     () => config.sdkCall(resend),
@@ -110,10 +123,14 @@ export async function runWrite<T>(
     sdkCall: SdkCall<T>;
     errorCode: string;
     successMsg: string;
+    permission?: ApiKeyPermission;
   },
   globalOpts: GlobalOpts,
 ): Promise<void> {
-  const resend = await requireClient(globalOpts);
+  const clientOpts: RequireClientOpts | undefined = config.permission
+    ? { permission: config.permission }
+    : undefined;
+  const resend = await requireClient(globalOpts, clientOpts);
   const data = await withSpinner(
     config.spinner,
     () => config.sdkCall(resend),
@@ -139,10 +156,14 @@ export async function runList<T>(
     spinner: SpinnerMessages;
     sdkCall: SdkCall<T>;
     onInteractive: (result: T) => void;
+    permission?: ApiKeyPermission;
   },
   globalOpts: GlobalOpts,
 ): Promise<void> {
-  const resend = await requireClient(globalOpts);
+  const clientOpts: RequireClientOpts | undefined = config.permission
+    ? { permission: config.permission }
+    : undefined;
+  const resend = await requireClient(globalOpts, clientOpts);
   const result = await withSpinner(
     config.spinner,
     () => config.sdkCall(resend),

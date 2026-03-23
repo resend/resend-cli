@@ -140,4 +140,53 @@ describe('whoami command', () => {
     expect(parsed.source).toBe('secure_storage');
     expect(parsed.config_path).toBe(join(tmpDir, 'resend', 'credentials.json'));
   });
+
+  test('shows permission in JSON output when stored', async () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'default',
+        profiles: {
+          default: {
+            api_key: 're_sending_key_abcd',
+            permission: 'sending_access',
+          },
+        },
+      }),
+    );
+
+    spies = setupOutputSpies();
+
+    const { whoamiCommand } = await import('../../src/commands/whoami');
+    await whoamiCommand.parseAsync([], { from: 'user' });
+
+    const output = spies.logSpy.mock.calls[0][0] as string;
+    const parsed = JSON.parse(output);
+    expect(parsed.authenticated).toBe(true);
+    expect(parsed.permission).toBe('sending_access');
+  });
+
+  test('omits permission from JSON when not stored', async () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'default',
+        profiles: { default: { api_key: 're_legacy_key_abcd' } },
+      }),
+    );
+
+    spies = setupOutputSpies();
+
+    const { whoamiCommand } = await import('../../src/commands/whoami');
+    await whoamiCommand.parseAsync([], { from: 'user' });
+
+    const output = spies.logSpy.mock.calls[0][0] as string;
+    const parsed = JSON.parse(output);
+    expect(parsed.authenticated).toBe(true);
+    expect(parsed.permission).toBeUndefined();
+  });
 });

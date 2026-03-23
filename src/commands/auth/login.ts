@@ -4,6 +4,7 @@ import { Resend } from 'resend';
 import { openInBrowser } from '../../lib/browser';
 import type { GlobalOpts } from '../../lib/client';
 import {
+  type ApiKeyPermission,
   listProfiles,
   resolveApiKeyAsync,
   setActiveProfile,
@@ -66,6 +67,9 @@ export const loginCommand = new Command('login')
       }
 
       p.intro('Resend Authentication');
+      p.log.info(
+        'Use a full access API key for complete CLI access. Sending-only keys can only send emails.',
+      );
 
       const existing = await resolveApiKeyAsync();
       if (existing) {
@@ -132,22 +136,30 @@ export const loginCommand = new Command('login')
     }
 
     const spinner = createSpinner('Validating API key...', globalOpts.quiet);
+    let detectedPermission: ApiKeyPermission = 'full_access';
 
     try {
       const resend = new Resend(apiKey);
       const { error } = await resend.domains.list();
       if (error) {
-        spinner.fail('API key validation failed');
-        outputError(
-          {
-            message: error.message || 'Failed to validate API key',
-            code: 'validation_failed',
-          },
-          { json: globalOpts.json },
-        );
-        return;
+        const err = error as { name?: string; message?: string };
+        if (err.name === 'restricted_api_key') {
+          detectedPermission = 'sending_access';
+          spinner.warn('API key is valid (sending access only)');
+        } else {
+          spinner.fail('API key validation failed');
+          outputError(
+            {
+              message: err.message || 'Failed to validate API key',
+              code: 'validation_failed',
+            },
+            { json: globalOpts.json },
+          );
+          return;
+        }
+      } else {
+        spinner.stop('API key is valid (full access)');
       }
-      spinner.stop('API key is valid');
     } catch (err) {
       spinner.fail('API key validation failed');
       outputError(
@@ -228,7 +240,11 @@ export const loginCommand = new Command('login')
       }
     }
 
-    const { configPath, backend } = await storeApiKeyAsync(apiKey, profileName);
+    const { configPath, backend } = await storeApiKeyAsync(
+      apiKey,
+      profileName,
+      detectedPermission,
+    );
     const profileLabel = profileName || 'default';
 
     // Auto-switch to the newly added profile (only when user specified a profile)
@@ -253,6 +269,7 @@ export const loginCommand = new Command('login')
           config_path: configPath,
           profile: profileLabel,
           storage: backend.name,
+          permission: detectedPermission,
         },
         { json: true },
       );

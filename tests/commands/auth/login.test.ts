@@ -362,4 +362,74 @@ describe('login command', () => {
     expect(parsed.config_path).toBeDefined();
     expect(parsed.profile).toBe('prod');
   });
+
+  test('accepts sending-only key and stores permission', async () => {
+    mockDomainListResult = {
+      data: null,
+      error: {
+        statusCode: 401,
+        message: 'This API key is restricted to only send emails',
+        name: 'restricted_api_key',
+      },
+    };
+
+    setupOutputSpies();
+
+    const { loginCommand } = await import('../../../src/commands/auth/login');
+    await loginCommand.parseAsync(['--key', 're_sending_only_key_123'], {
+      from: 'user',
+    });
+
+    const configPath = join(tmpDir, 'resend', 'credentials.json');
+    const data = JSON.parse(readFileSync(configPath, 'utf-8'));
+    expect(data.profiles.default.api_key).toBe('re_sending_only_key_123');
+    expect(data.profiles.default.permission).toBe('sending_access');
+  });
+
+  test('stores full_access permission for valid full access key', async () => {
+    setupOutputSpies();
+
+    const { loginCommand } = await import('../../../src/commands/auth/login');
+    await loginCommand.parseAsync(['--key', 're_full_access_key_123'], {
+      from: 'user',
+    });
+
+    const configPath = join(tmpDir, 'resend', 'credentials.json');
+    const data = JSON.parse(readFileSync(configPath, 'utf-8'));
+    expect(data.profiles.default.api_key).toBe('re_full_access_key_123');
+    expect(data.profiles.default.permission).toBe('full_access');
+  });
+
+  test('--json output includes permission for sending-only key', async () => {
+    mockDomainListResult = {
+      data: null,
+      error: {
+        statusCode: 401,
+        message: 'This API key is restricted to only send emails',
+        name: 'restricted_api_key',
+      },
+    };
+
+    setupOutputSpies();
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    const { Command } = await import('@commander-js/extra-typings');
+    const { loginCommand } = await import('../../../src/commands/auth/login');
+    const program = new Command()
+      .option('--profile <name>')
+      .option('--json')
+      .option('--api-key <key>')
+      .option('-q, --quiet')
+      .addCommand(loginCommand);
+
+    await program.parseAsync(
+      ['login', '--key', 're_sending_key', '--profile', 'ci', '--json'],
+      { from: 'user' },
+    );
+
+    const out = logSpy.mock.calls.flat().join('\n');
+    const parsed = JSON.parse(out);
+    expect(parsed.success).toBe(true);
+    expect(parsed.permission).toBe('sending_access');
+  });
 });

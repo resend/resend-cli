@@ -15,15 +15,17 @@ import {
   setupOutputSpies,
 } from '../helpers';
 
-// Mock resend SDK for doctor
+// Mock resend SDK for doctor — default: valid key with one verified domain
+let mockDomainListResult: { data: unknown; error: unknown } = {
+  data: { data: [{ name: 'example.com', status: 'verified' }] },
+  error: null,
+};
+
 vi.mock('resend', () => ({
   Resend: class MockResend {
     constructor(public key: string) {}
     domains = {
-      list: vi.fn(async () => ({
-        data: { data: [{ name: 'example.com', status: 'verified' }] },
-        error: null,
-      })),
+      list: vi.fn(async () => mockDomainListResult),
     };
   },
 }));
@@ -47,6 +49,10 @@ describe('doctor command', () => {
   let exitSpy: MockInstance | undefined;
 
   beforeEach(() => {
+    mockDomainListResult = {
+      data: { data: [{ name: 'example.com', status: 'verified' }] },
+      error: null,
+    };
     process.env.RESEND_API_KEY = 're_test_key_for_doctor';
   });
 
@@ -160,5 +166,31 @@ describe('doctor command', () => {
     await expectExit1(() =>
       program.parseAsync(['doctor', '--json'], { from: 'user' }),
     );
+  });
+
+  test('shows warn for sending-only API key instead of fail', async () => {
+    mockDomainListResult = {
+      data: null,
+      error: {
+        statusCode: 401,
+        message: 'This API key is restricted to only send emails',
+        name: 'restricted_api_key',
+      },
+    };
+
+    spies = setupOutputSpies();
+
+    const program = await createDoctorProgram();
+    await program.parseAsync(['doctor', '--json'], { from: 'user' });
+
+    const output = spies.logSpy.mock.calls[0][0] as string;
+    const parsed = JSON.parse(output);
+
+    const apiCheck = parsed.checks.find(
+      (c: Record<string, unknown>) => c.name === 'API Validation',
+    );
+    expect(apiCheck).toBeDefined();
+    expect(apiCheck.status).toBe('warn');
+    expect(apiCheck.message).toContain('Sending-only');
   });
 });

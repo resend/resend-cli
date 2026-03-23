@@ -53,7 +53,9 @@ export const batchCommand = new Command('batch')
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
-    const resend = await requireClient(globalOpts);
+    const resend = await requireClient(globalOpts, {
+      permission: 'sending_access',
+    });
 
     const filePath = await requireText(
       opts.file,

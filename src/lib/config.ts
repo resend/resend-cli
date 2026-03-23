@@ -14,14 +14,16 @@ import {
   SERVICE_NAME,
 } from './credential-store';
 
+export type ApiKeyPermission = 'full_access' | 'sending_access';
 export type ApiKeySource = 'flag' | 'env' | 'config' | 'secure_storage';
 export type ResolvedKey = {
   key: string;
   source: ApiKeySource;
   profile?: string;
+  permission?: ApiKeyPermission;
 };
 
-export type Profile = { api_key?: string };
+export type Profile = { api_key?: string; permission?: ApiKeyPermission };
 export type CredentialStorage = 'secure_storage' | 'file';
 export type CredentialsFile = {
   active_profile: string;
@@ -132,14 +134,23 @@ export function resolveApiKey(
     const profile = resolveProfileName(profileName);
     const entry = creds.profiles[profile];
     if (entry?.api_key) {
-      return { key: entry.api_key, source: 'config', profile };
+      return {
+        key: entry.api_key,
+        source: 'config',
+        profile,
+        permission: entry.permission,
+      };
     }
   }
 
   return null;
 }
 
-export function storeApiKey(apiKey: string, profileName?: string): string {
+export function storeApiKey(
+  apiKey: string,
+  profileName?: string,
+  permission?: ApiKeyPermission,
+): string {
   const profile = profileName || 'default';
   const validationError = validateProfileName(profile);
   if (validationError) {
@@ -150,7 +161,10 @@ export function storeApiKey(apiKey: string, profileName?: string): string {
     profiles: {},
   };
 
-  creds.profiles[profile] = { api_key: apiKey };
+  creds.profiles[profile] = {
+    api_key: apiKey,
+    ...(permission && { permission }),
+  };
 
   // If this is the first profile, set it as active
   if (Object.keys(creds.profiles).length === 1) {
@@ -316,7 +330,8 @@ export async function resolveApiKeyAsync(
     const backend = await getCredentialBackend();
     const key = await backend.get(SERVICE_NAME, profile);
     if (key) {
-      return { key, source: 'secure_storage', profile };
+      const permission = creds.profiles[profile]?.permission;
+      return { key, source: 'secure_storage', profile, permission };
     }
     // Fall through: profile may not be migrated yet (api_key still in file)
   }
@@ -330,7 +345,9 @@ export async function resolveApiKeyAsync(
       if (backend.isSecure) {
         try {
           await backend.set(SERVICE_NAME, profile, entry.api_key);
-          creds.profiles[profile] = {};
+          creds.profiles[profile] = {
+            ...(entry.permission && { permission: entry.permission }),
+          };
           creds.storage = 'secure_storage';
           writeCredentials(creds);
           process.stderr.write(
@@ -340,7 +357,12 @@ export async function resolveApiKeyAsync(
           // Non-fatal — plaintext key still works
         }
       }
-      return { key: entry.api_key, source: 'config', profile };
+      return {
+        key: entry.api_key,
+        source: 'config',
+        profile,
+        permission: entry.permission,
+      };
     }
   }
 
@@ -350,6 +372,7 @@ export async function resolveApiKeyAsync(
 export async function storeApiKeyAsync(
   apiKey: string,
   profileName?: string,
+  permission?: ApiKeyPermission,
 ): Promise<{ configPath: string; backend: CredentialBackend }> {
   const profile = profileName || 'default';
   const validationError = validateProfileName(profile);
@@ -365,7 +388,7 @@ export async function storeApiKeyAsync(
     // Other profiles may still have their keys in secure storage.
     // resolveApiKeyAsync already falls through from secure storage to file-based
     // lookup, so keeping the marker is safe and avoids orphaning those profiles.
-    const configPath = storeApiKey(apiKey, profile);
+    const configPath = storeApiKey(apiKey, profile, permission);
     return { configPath, backend };
   }
 
@@ -378,7 +401,7 @@ export async function storeApiKeyAsync(
     profiles: {},
   };
   creds.storage = 'secure_storage';
-  creds.profiles[profile] = {};
+  creds.profiles[profile] = { ...(permission && { permission }) };
 
   if (Object.keys(creds.profiles).length === 1) {
     creds.active_profile = profile;

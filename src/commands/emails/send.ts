@@ -107,7 +107,9 @@ export const sendCommand = new Command('send')
       );
     }
 
-    const resend = await requireClient(globalOpts);
+    const resend = await requireClient(globalOpts, {
+      permission: 'sending_access',
+    });
 
     const hasTemplate = !!opts.template;
 
