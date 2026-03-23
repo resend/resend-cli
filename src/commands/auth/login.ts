@@ -6,7 +6,6 @@ import type { GlobalOpts } from '../../lib/client';
 import {
   type ApiKeyPermission,
   listProfiles,
-  resolveApiKeyAsync,
   setActiveProfile,
   storeApiKeyAsync,
   validateProfileName,
@@ -18,12 +17,6 @@ import { createSpinner } from '../../lib/spinner';
 import { isInteractive } from '../../lib/tty';
 
 const RESEND_API_KEYS_URL = 'https://resend.com/api-keys?new=true';
-
-const SOURCE_LABEL: Record<string, string> = {
-  flag: 'command line (--api-key)',
-  env: 'environment (RESEND_API_KEY)',
-  config: 'saved credentials',
-};
 
 export const loginCommand = new Command('login')
   .description('Save a Resend API key')
@@ -70,14 +63,6 @@ export const loginCommand = new Command('login')
       p.log.info(
         'Use a full access API key for complete CLI access. Sending-only keys can only send emails.',
       );
-
-      const existing = await resolveApiKeyAsync();
-      if (existing) {
-        const sourceLabel = SOURCE_LABEL[existing.source] ?? existing.source;
-        p.log.info(
-          `Existing API key found (${sourceLabel}). Enter a new key to replace it.`,
-        );
-      }
 
       const method = await p.select({
         message: 'How would you like to get your API key?',
