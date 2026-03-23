@@ -1074,9 +1074,7 @@ describe('send command', () => {
   });
 
   test('degrades gracefully when domain fetch fails', async () => {
-    const { fetchVerifiedDomains } = await import(
-      '../../../src/commands/emails/send'
-    );
+    const { fetchVerifiedDomains } = await import('../../../src/lib/domains');
     const failingResend = {
       domains: {
         list: vi.fn(async () => {

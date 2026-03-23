@@ -69,7 +69,6 @@ Unsubscribed: setting --unsubscribed is a team-wide opt-out from all broadcasts,
     if (isInteractive() && !globalOpts.json && !opts.firstName) {
       const result = await p.text({
         message: 'First name (optional)',
-        placeholder: 'Jane',
       });
       if (p.isCancel(result)) {
         cancelAndExit('Cancelled.');
@@ -82,7 +81,6 @@ Unsubscribed: setting --unsubscribed is a team-wide opt-out from all broadcasts,
     if (isInteractive() && !globalOpts.json && !opts.lastName) {
       const result = await p.text({
         message: 'Last name (optional)',
-        placeholder: 'Smith',
       });
       if (p.isCancel(result)) {
         cancelAndExit('Cancelled.');
