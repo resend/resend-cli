@@ -231,7 +231,7 @@ export async function promptForMissing<
 
 // ─── Item picker ──────────────────────────────────────────────────────────────
 
-const PICKER_PAGE_SIZE = 10;
+const PICKER_PAGE_SIZE = 20;
 const FETCH_MORE = '__fetch_more__';
 
 export type PickerConfig<T extends { id: string }> = {

@@ -119,7 +119,7 @@ describe('contacts add-segment command', () => {
     expect(parsed.id).toBe('7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d');
   });
 
-  test('errors with missing_segment_id when --segment-id absent in non-interactive mode', async () => {
+  test('errors with missing_id when --segment-id absent in non-interactive mode', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -135,10 +135,10 @@ describe('contacts add-segment command', () => {
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
-    expect(output).toContain('missing_segment_id');
+    expect(output).toContain('missing_id');
   });
 
-  test('errors with missing_segment_id when --json is set even in TTY', async () => {
+  test('errors with missing_id when --json is set even in TTY', async () => {
     Object.defineProperty(process.stdin, 'isTTY', {
       value: true,
       writable: true,
@@ -171,7 +171,7 @@ describe('contacts add-segment command', () => {
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
-    expect(output).toContain('missing_segment_id');
+    expect(output).toContain('missing_id');
   });
 
   test('errors with auth_error when no API key', async () => {
