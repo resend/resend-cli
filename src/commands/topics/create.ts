@@ -1,6 +1,11 @@
 import { Command, Option } from '@commander-js/extra-typings';
 import { runCreate } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
+import {
+  buildEquivalentCommand,
+  type CommandHintFlag,
+  printCommandHint,
+} from '../../lib/command-hint';
 import { buildHelpText } from '../../lib/help-text';
 import { requireText } from '../../lib/prompts';
 
@@ -44,6 +49,8 @@ Non-interactive: --name is required.`,
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
+    const prompted = !opts.name;
+
     const name = await requireText(
       opts.name,
       { message: 'Topic name', placeholder: 'e.g. Product Updates' },
@@ -66,6 +73,21 @@ Non-interactive: --name is required.`,
           }),
         onInteractive: (data) => {
           console.log(`\nTopic created: ${data.id}`);
+          if (prompted) {
+            const flags: CommandHintFlag[] = [{ flag: 'name', value: name }];
+            if (opts.description) {
+              flags.push({ flag: 'description', value: opts.description });
+            }
+            if (opts.defaultSubscription !== 'opt_in') {
+              flags.push({
+                flag: 'default-subscription',
+                value: opts.defaultSubscription,
+              });
+            }
+            printCommandHint(
+              buildEquivalentCommand('resend topics create', flags),
+            );
+          }
         },
       },
       globalOpts,

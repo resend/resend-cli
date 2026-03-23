@@ -1,6 +1,11 @@
 import { Command, Option } from '@commander-js/extra-typings';
 import { runCreate } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
+import {
+  buildEquivalentCommand,
+  type CommandHintFlag,
+  printCommandHint,
+} from '../../lib/command-hint';
 import { buildHelpText } from '../../lib/help-text';
 import { requireText } from '../../lib/prompts';
 import { renderDnsRecordsTable } from './utils';
@@ -43,6 +48,8 @@ export const createDomainCommand = new Command('create')
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
+    const prompted = !opts.name;
+
     const name = await requireText(
       opts.name,
       { message: 'Domain name', placeholder: 'example.com' },
@@ -76,6 +83,24 @@ export const createDomainCommand = new Command('create')
           console.log(
             `\nRun \`resend domains verify ${d.id}\` after configuring DNS.`,
           );
+          if (prompted) {
+            const flags: CommandHintFlag[] = [{ flag: 'name', value: name }];
+            if (opts.region) {
+              flags.push({ flag: 'region', value: opts.region });
+            }
+            if (opts.tls) {
+              flags.push({ flag: 'tls', value: opts.tls });
+            }
+            if (opts.sending) {
+              flags.push({ flag: 'sending', value: true });
+            }
+            if (opts.receiving) {
+              flags.push({ flag: 'receiving', value: true });
+            }
+            printCommandHint(
+              buildEquivalentCommand('resend domains create', flags),
+            );
+          }
         },
       },
       globalOpts,

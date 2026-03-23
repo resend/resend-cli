@@ -9,6 +9,11 @@ import type { Resend, WebhookEvent } from 'resend';
 import { getCancelExitCode, setSigintHandler } from '../../lib/cli-exit';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
+import {
+  buildEquivalentCommand,
+  type CommandHintFlag,
+  printCommandHint,
+} from '../../lib/command-hint';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
 import { requireText } from '../../lib/prompts';
@@ -154,6 +159,8 @@ For example, if using ngrok: ngrok http 4318`,
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+
+    const prompted = !opts.url;
 
     const url = await requireText(
       opts.url,
@@ -360,6 +367,22 @@ For example, if using ngrok: ngrok http 4318`,
           : `http://${opts.forwardTo}`;
         process.stderr.write(`  ${pc.bold('Forward:')}  ${fwd}\n`);
       }
+      if (prompted) {
+        const flags: CommandHintFlag[] = [{ flag: 'url', value: url }];
+        if (opts.forwardTo) {
+          flags.push({ flag: 'forward-to', value: opts.forwardTo });
+        }
+        if (opts.events?.length) {
+          flags.push({ flag: 'events', value: opts.events });
+        }
+        if (opts.port && opts.port !== '4318') {
+          flags.push({ flag: 'port', value: opts.port });
+        }
+        printCommandHint(
+          buildEquivalentCommand('resend webhooks listen', flags),
+        );
+      }
+
       process.stderr.write(
         `\nReady! Listening for webhook events. Press Ctrl+C to stop.\n\n`,
       );

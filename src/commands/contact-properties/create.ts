@@ -2,6 +2,11 @@ import { Command, Option } from '@commander-js/extra-typings';
 import type { CreateContactPropertyOptions } from 'resend';
 import { runCreate } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
+import {
+  buildEquivalentCommand,
+  type CommandHintFlag,
+  printCommandHint,
+} from '../../lib/command-hint';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
 import { requireSelect, requireText } from '../../lib/prompts';
@@ -54,6 +59,8 @@ built-in contact fields and may cause unexpected behavior in broadcasts.`,
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+
+    const prompted = !opts.key || !opts.type;
 
     const key = await requireText(
       opts.key,
@@ -111,6 +118,18 @@ built-in contact fields and may cause unexpected behavior in broadcasts.`,
         sdkCall: (resend) => resend.contactProperties.create(payload),
         onInteractive: (data) => {
           console.log(`\nContact property created: ${data.id}`);
+          if (prompted) {
+            const flags: CommandHintFlag[] = [
+              { flag: 'key', value: key },
+              { flag: 'type', value: type },
+            ];
+            if (opts.fallbackValue !== undefined) {
+              flags.push({ flag: 'fallback-value', value: opts.fallbackValue });
+            }
+            printCommandHint(
+              buildEquivalentCommand('resend contact-properties create', flags),
+            );
+          }
         },
       },
       globalOpts,

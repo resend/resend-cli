@@ -4,6 +4,11 @@ import { Command } from '@commander-js/extra-typings';
 import type { CreateEmailOptions } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
+import {
+  buildEquivalentCommand,
+  type CommandHintFlag,
+  printCommandHint,
+} from '../../lib/command-hint';
 import { fetchVerifiedDomains, promptForFromAddress } from '../../lib/domains';
 import { readFile } from '../../lib/files';
 import { buildHelpText } from '../../lib/help-text';
@@ -168,6 +173,16 @@ export const sendCommand = new Command('send')
           }),
         )
       : undefined;
+
+    const prompted =
+      !opts.from ||
+      !opts.to?.[0] ||
+      !opts.subject ||
+      (!hasTemplate &&
+        !opts.html &&
+        !opts.htmlFile &&
+        !opts.text &&
+        !opts.textFile);
 
     let fromAddress = opts.from;
     if (!fromAddress && !hasTemplate && isInteractive() && !globalOpts.json) {
@@ -353,6 +368,56 @@ export const sendCommand = new Command('send')
         console.log(`\nEmail scheduled: ${data.id}`);
       } else {
         console.log(`\nEmail sent: ${data.id}`);
+      }
+      if (prompted) {
+        const flags: CommandHintFlag[] = [];
+        if (hasTemplate) {
+          flags.push({ flag: 'template', value: opts.template as string });
+        }
+        if (filled.from) {
+          flags.push({ flag: 'from', value: filled.from });
+        }
+        flags.push({ flag: 'to', value: toAddresses });
+        if (filled.subject) {
+          flags.push({ flag: 'subject', value: filled.subject });
+        }
+        if (opts.htmlFile) {
+          flags.push({ flag: 'html-file', value: opts.htmlFile });
+        } else if (html) {
+          flags.push({ flag: 'html', value: html });
+        } else if (opts.textFile) {
+          flags.push({ flag: 'text-file', value: opts.textFile });
+        } else if (body) {
+          flags.push({ flag: 'text', value: body });
+        }
+        if (opts.cc) {
+          flags.push({ flag: 'cc', value: opts.cc });
+        }
+        if (opts.bcc) {
+          flags.push({ flag: 'bcc', value: opts.bcc });
+        }
+        if (opts.replyTo) {
+          flags.push({ flag: 'reply-to', value: opts.replyTo });
+        }
+        if (opts.scheduledAt) {
+          flags.push({ flag: 'scheduled-at', value: opts.scheduledAt });
+        }
+        if (opts.attachment) {
+          flags.push({ flag: 'attachment', value: opts.attachment });
+        }
+        if (opts.headers) {
+          flags.push({ flag: 'headers', value: opts.headers });
+        }
+        if (opts.tags) {
+          flags.push({ flag: 'tags', value: opts.tags });
+        }
+        if (opts.idempotencyKey) {
+          flags.push({ flag: 'idempotency-key', value: opts.idempotencyKey });
+        }
+        if (opts.var) {
+          flags.push({ flag: 'var', value: opts.var });
+        }
+        printCommandHint(buildEquivalentCommand('resend emails send', flags));
       }
     } else {
       outputResult(data, { json: globalOpts.json });

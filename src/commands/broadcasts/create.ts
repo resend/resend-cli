@@ -4,6 +4,11 @@ import type { CreateBroadcastOptions } from 'resend';
 import { runCreate } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
+import {
+  buildEquivalentCommand,
+  type CommandHintFlag,
+  printCommandHint,
+} from '../../lib/command-hint';
 import { fetchVerifiedDomains, promptForFromAddress } from '../../lib/domains';
 import { readFile } from '../../lib/files';
 import { buildHelpText } from '../../lib/help-text';
@@ -95,11 +100,13 @@ Scheduling:
 
     const resend = await requireClient(globalOpts);
 
+    let prompted = false;
     let from = opts.from;
     let subject = opts.subject;
     let segmentId = opts.segmentId;
 
     if (!from && isInteractive() && !globalOpts.json) {
+      prompted = true;
       const domains = await fetchVerifiedDomains(resend);
       if (domains.length > 0) {
         from = await promptForFromAddress(domains);
@@ -113,6 +120,7 @@ Scheduling:
           { json: globalOpts.json },
         );
       }
+      prompted = true;
       const result = await p.text({
         message: 'From address',
         placeholder: 'e.g. hello@domain.com',
@@ -131,6 +139,7 @@ Scheduling:
           { json: globalOpts.json },
         );
       }
+      prompted = true;
       const result = await p.text({
         message: 'Subject',
         placeholder: 'e.g. Weekly Newsletter',
@@ -149,6 +158,7 @@ Scheduling:
           { json: globalOpts.json },
         );
       }
+      prompted = true;
       const result = await p.text({
         message: 'Segment ID',
         placeholder: '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
@@ -192,6 +202,7 @@ Scheduling:
           { json: globalOpts.json },
         );
       }
+      prompted = true;
       const result = await p.text({
         message: 'Body (plain text)',
         placeholder: 'Hello {{{FIRST_NAME|there}}}!',
@@ -240,6 +251,43 @@ Scheduling:
             console.log(`\nBroadcast created: ${d.id}`);
             console.log('Status: draft');
             console.log(`\nSend it with: resend broadcasts send ${d.id}`);
+          }
+          if (prompted) {
+            const flags: CommandHintFlag[] = [
+              { flag: 'from', value: from },
+              { flag: 'subject', value: subject },
+              { flag: 'segment-id', value: segmentId },
+            ];
+            if (opts.htmlFile) {
+              flags.push({ flag: 'html-file', value: opts.htmlFile });
+            } else if (html) {
+              flags.push({ flag: 'html', value: html });
+            } else if (opts.textFile) {
+              flags.push({ flag: 'text-file', value: opts.textFile });
+            } else if (text) {
+              flags.push({ flag: 'text', value: text });
+            }
+            if (opts.name) {
+              flags.push({ flag: 'name', value: opts.name });
+            }
+            if (opts.replyTo) {
+              flags.push({ flag: 'reply-to', value: opts.replyTo });
+            }
+            if (opts.previewText) {
+              flags.push({ flag: 'preview-text', value: opts.previewText });
+            }
+            if (opts.topicId) {
+              flags.push({ flag: 'topic-id', value: opts.topicId });
+            }
+            if (opts.send) {
+              flags.push({ flag: 'send', value: true });
+            }
+            if (opts.send && opts.scheduledAt) {
+              flags.push({ flag: 'scheduled-at', value: opts.scheduledAt });
+            }
+            printCommandHint(
+              buildEquivalentCommand('resend broadcasts create', flags),
+            );
           }
         },
       },

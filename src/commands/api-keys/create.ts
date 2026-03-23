@@ -3,6 +3,11 @@ import { Command, Option } from '@commander-js/extra-typings';
 import pc from 'picocolors';
 import { runCreate } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
+import {
+  buildEquivalentCommand,
+  type CommandHintFlag,
+  printCommandHint,
+} from '../../lib/command-hint';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
 import { cancelAndExit } from '../../lib/prompts';
@@ -47,6 +52,7 @@ Permissions:
 
     let name = opts.name;
     let permission = opts.permission;
+    const prompted = !name;
 
     if (!name) {
       if (!isInteractive() || globalOpts.json) {
@@ -107,6 +113,18 @@ Permissions:
           console.log(
             `\n${pc.yellow('⚠')}  Store this token now — it cannot be retrieved again.`,
           );
+          if (prompted) {
+            const flags: CommandHintFlag[] = [{ flag: 'name', value: name }];
+            if (permission) {
+              flags.push({ flag: 'permission', value: permission });
+            }
+            if (opts.domainId) {
+              flags.push({ flag: 'domain-id', value: opts.domainId });
+            }
+            printCommandHint(
+              buildEquivalentCommand('resend api-keys create', flags),
+            );
+          }
         },
       },
       globalOpts,

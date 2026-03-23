@@ -1,6 +1,10 @@
 import { Command } from '@commander-js/extra-typings';
 import { runCreate } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
+import {
+  buildEquivalentCommand,
+  printCommandHint,
+} from '../../lib/command-hint';
 import { buildHelpText } from '../../lib/help-text';
 import { requireText } from '../../lib/prompts';
 
@@ -25,6 +29,8 @@ Non-interactive: --name is required.`,
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
+    const prompted = !opts.name;
+
     const name = await requireText(
       opts.name,
       { message: 'Segment name', placeholder: 'e.g. Newsletter Subscribers' },
@@ -43,6 +49,13 @@ Non-interactive: --name is required.`,
         onInteractive: (data) => {
           console.log(`\nSegment created: ${data.id}`);
           console.log(`Name: ${data.name}`);
+          if (prompted) {
+            printCommandHint(
+              buildEquivalentCommand('resend segments create', [
+                { flag: 'name', value: name },
+              ]),
+            );
+          }
         },
       },
       globalOpts,

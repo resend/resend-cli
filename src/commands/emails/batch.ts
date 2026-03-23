@@ -2,6 +2,11 @@ import { Command, Option } from '@commander-js/extra-typings';
 import type { CreateBatchOptions } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
+import {
+  buildEquivalentCommand,
+  type CommandHintFlag,
+  printCommandHint,
+} from '../../lib/command-hint';
 import { readFile } from '../../lib/files';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError, outputResult } from '../../lib/output';
@@ -54,6 +59,8 @@ export const batchCommand = new Command('batch')
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
     const resend = await requireClient(globalOpts);
+
+    const prompted = !opts.file;
 
     const filePath = await requireText(
       opts.file,
@@ -159,6 +166,16 @@ export const batchCommand = new Command('batch')
         for (const err of batchErrors) {
           console.warn(`  [${err.index}] ${err.message}`);
         }
+      }
+      if (prompted) {
+        const flags: CommandHintFlag[] = [{ flag: 'file', value: filePath }];
+        if (opts.idempotencyKey) {
+          flags.push({ flag: 'idempotency-key', value: opts.idempotencyKey });
+        }
+        if (opts.batchValidation) {
+          flags.push({ flag: 'batch-validation', value: opts.batchValidation });
+        }
+        printCommandHint(buildEquivalentCommand('resend emails batch', flags));
       }
     } else {
       outputResult(

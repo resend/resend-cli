@@ -3,6 +3,11 @@ import { Command } from '@commander-js/extra-typings';
 import type { WebhookEvent } from 'resend';
 import { runCreate } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
+import {
+  buildEquivalentCommand,
+  type CommandHintFlag,
+  printCommandHint,
+} from '../../lib/command-hint';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
 import { cancelAndExit, requireText } from '../../lib/prompts';
@@ -63,6 +68,8 @@ Non-interactive: --endpoint and --events are required.`,
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
+    let prompted = !opts.endpoint;
+
     const endpoint = await requireText(
       opts.endpoint,
       {
@@ -93,6 +100,7 @@ Non-interactive: --endpoint and --events are required.`,
     } else if (normalized?.length) {
       selectedEvents = normalized as WebhookEvent[];
     } else {
+      prompted = true;
       if (!isInteractive() || globalOpts.json) {
         outputError(
           { message: 'Missing --events flag.', code: 'missing_events' },
@@ -126,6 +134,19 @@ Non-interactive: --endpoint and --events are required.`,
           console.log(`ID:             ${d.id}`);
           console.log(`Signing Secret: ${d.signing_secret}`);
           console.log(`\nSave the signing secret — it is only shown once.`);
+          if (prompted) {
+            const eventsValue =
+              selectedEvents.length === ALL_WEBHOOK_EVENTS.length
+                ? ['all']
+                : (selectedEvents as string[]);
+            const flags: CommandHintFlag[] = [
+              { flag: 'endpoint', value: endpoint },
+              { flag: 'events', value: eventsValue },
+            ];
+            printCommandHint(
+              buildEquivalentCommand('resend webhooks create', flags),
+            );
+          }
         },
       },
       globalOpts,

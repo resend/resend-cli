@@ -2,6 +2,11 @@ import * as p from '@clack/prompts';
 import { Command } from '@commander-js/extra-typings';
 import { runCreate } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
+import {
+  buildEquivalentCommand,
+  type CommandHintFlag,
+  printCommandHint,
+} from '../../lib/command-hint';
 import { buildHelpText } from '../../lib/help-text';
 import { cancelAndExit, requireText } from '../../lib/prompts';
 import { isInteractive } from '../../lib/tty';
@@ -56,6 +61,8 @@ Unsubscribed: setting --unsubscribed is a team-wide opt-out from all broadcasts,
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
+    let prompted = !opts.email;
+
     const email = await requireText(
       opts.email,
       { message: 'Email address', placeholder: 'user@example.com' },
@@ -67,6 +74,7 @@ Unsubscribed: setting --unsubscribed is a team-wide opt-out from all broadcasts,
     let lastName = opts.lastName;
 
     if (isInteractive() && !globalOpts.json && !opts.firstName) {
+      prompted = true;
       const result = await p.text({
         message: 'First name (optional)',
       });
@@ -79,6 +87,7 @@ Unsubscribed: setting --unsubscribed is a team-wide opt-out from all broadcasts,
     }
 
     if (isInteractive() && !globalOpts.json && !opts.lastName) {
+      prompted = true;
       const result = await p.text({
         message: 'Last name (optional)',
       });
@@ -113,6 +122,27 @@ Unsubscribed: setting --unsubscribed is a team-wide opt-out from all broadcasts,
           }),
         onInteractive: (data) => {
           console.log(`\nContact created: ${data.id}`);
+          if (prompted) {
+            const flags: CommandHintFlag[] = [{ flag: 'email', value: email }];
+            if (firstName) {
+              flags.push({ flag: 'first-name', value: firstName });
+            }
+            if (lastName) {
+              flags.push({ flag: 'last-name', value: lastName });
+            }
+            if (opts.unsubscribed) {
+              flags.push({ flag: 'unsubscribed', value: true });
+            }
+            if (opts.properties) {
+              flags.push({ flag: 'properties', value: opts.properties });
+            }
+            if (opts.segmentId) {
+              flags.push({ flag: 'segment-id', value: opts.segmentId });
+            }
+            printCommandHint(
+              buildEquivalentCommand('resend contacts create', flags),
+            );
+          }
         },
       },
       globalOpts,
