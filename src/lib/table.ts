@@ -30,6 +30,30 @@ const BOX = isUnicodeSupported
       mm: '+',
     };
 
+function getTerminalWidth(): number | undefined {
+  return process.stdout.columns;
+}
+
+function renderCards(
+  headers: string[],
+  rows: string[][],
+  termWidth: number,
+): string {
+  const labelWidth = Math.max(...headers.map((h) => h.length));
+  const sepWidth = Math.max(20, Math.min(termWidth, 60));
+
+  return rows
+    .map((row, idx) => {
+      const label = String(idx + 1);
+      const sep = `${BOX.h}${BOX.h} ${label} ${BOX.h.repeat(Math.max(0, sepWidth - label.length - 4))}`;
+      const fields = headers.map(
+        (h, i) => `  ${h.padEnd(labelWidth)}  ${row[i]}`,
+      );
+      return [sep, ...fields].join('\n');
+    })
+    .join('\n\n');
+}
+
 export function renderTable(
   headers: string[],
   rows: string[][],
@@ -41,6 +65,16 @@ export function renderTable(
   const widths = headers.map((h, i) =>
     Math.max(h.length, ...rows.map((r) => r[i].length)),
   );
+
+  const termWidth = getTerminalWidth();
+  if (termWidth !== undefined) {
+    const totalWidth =
+      widths.reduce((s, w) => s + w, 0) + 3 * widths.length + 1;
+    if (totalWidth > termWidth) {
+      return renderCards(headers, rows, termWidth);
+    }
+  }
+
   const top =
     BOX.tl + widths.map((w) => BOX.h.repeat(w + 2)).join(BOX.tm) + BOX.tr;
   const mid =
