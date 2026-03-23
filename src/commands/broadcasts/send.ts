@@ -3,7 +3,7 @@ import { runWrite } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { pickId } from '../../lib/prompts';
-import { broadcastPickerConfig } from './utils';
+import { sendBroadcastPickerConfig } from './utils';
 
 export const sendBroadcastCommand = new Command('send')
   .description(
@@ -34,7 +34,7 @@ Scheduling:
   )
   .action(async (idArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const id = await pickId(idArg, broadcastPickerConfig, globalOpts);
+    const id = await pickId(idArg, sendBroadcastPickerConfig, globalOpts);
 
     const successMsg = opts.scheduledAt
       ? `\nBroadcast scheduled: ${id}`

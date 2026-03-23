@@ -25,6 +25,43 @@ export const broadcastPickerConfig: PickerConfig<{
   display: (b) => ({ label: b.name ?? '(untitled)', hint: b.id }),
 };
 
+export const sendBroadcastPickerConfig: PickerConfig<{
+  id: string;
+  name: string | null;
+  status: string;
+}> = {
+  resource: 'broadcast',
+  resourcePlural: 'broadcasts',
+  fetchItems: async (resend, { limit, after }) => {
+    const result = await resend.broadcasts.list({
+      limit,
+      ...(after && { after }),
+    });
+    if (result.error || !result.data) {
+      return result as {
+        data: {
+          data: { id: string; name: string | null; status: string }[];
+          has_more?: boolean;
+        } | null;
+        error: { message: string } | null;
+      };
+    }
+    return {
+      data: {
+        data: result.data.data.filter(
+          (b: { status: string }) => b.status === 'draft',
+        ),
+        has_more: result.data.has_more,
+      },
+      error: null,
+    };
+  },
+  display: (b) => ({
+    label: b.name ?? '(untitled)',
+    hint: `${broadcastStatusIndicator(b.status)}  ${b.id}`,
+  }),
+};
+
 export function renderBroadcastsTable(
   broadcasts: Array<{
     id: string;

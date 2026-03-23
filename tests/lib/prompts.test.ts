@@ -8,7 +8,8 @@ import {
 } from 'vitest';
 import { expectExit1, mockExitThrow } from '../helpers';
 
-const originalIsTTY = process.stdin.isTTY;
+const originalStdinIsTTY = process.stdin.isTTY;
+const originalStdoutIsTTY = process.stdout.isTTY;
 let errorSpy: MockInstance | undefined;
 let exitSpy: MockInstance | undefined;
 
@@ -31,7 +32,14 @@ afterEach(() => {
   exitSpy?.mockRestore();
   errorSpy = undefined;
   exitSpy = undefined;
-  setTTY(originalIsTTY as boolean | undefined);
+  Object.defineProperty(process.stdin, 'isTTY', {
+    value: originalStdinIsTTY,
+    writable: true,
+  });
+  Object.defineProperty(process.stdout, 'isTTY', {
+    value: originalStdoutIsTTY,
+    writable: true,
+  });
 });
 
 describe('promptForMissing', () => {

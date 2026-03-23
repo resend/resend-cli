@@ -56,7 +56,6 @@ Variable interpolation:
   )
   .action(async (idArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const id = await pickId(idArg, broadcastPickerConfig, globalOpts);
 
     if (
       !opts.from &&
@@ -87,6 +86,8 @@ Variable interpolation:
         { json: globalOpts.json },
       );
     }
+
+    const id = await pickId(idArg, broadcastPickerConfig, globalOpts);
 
     let html = opts.html;
     let text = opts.text;
