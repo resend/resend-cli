@@ -61,7 +61,7 @@ export const loginCommand = new Command('login')
 
       p.intro('Resend Authentication');
       p.log.info(
-        'Use a full access API key for complete CLI access. Sending-only keys can only send emails.',
+        'Use a full access API key for complete CLI access.\nSending-only keys work with: emails send, emails batch, broadcasts send',
       );
 
       const method = await p.select({

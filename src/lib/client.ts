@@ -80,7 +80,7 @@ export async function requireClient(
         outputError(
           {
             message:
-              'This command requires a full access API key. Your current key has sending access only. Create a full access key at https://resend.com/api-keys',
+              'This command requires a full access API key. Your current key has sending access only.\nSending-only keys work with: emails send, emails batch, broadcasts send\nCreate a full access key at https://resend.com/api-keys',
             code: 'insufficient_permissions',
           },
           { json: opts.json },

@@ -52,6 +52,7 @@ Scheduling:
           }),
         errorCode: 'send_error',
         successMsg,
+        permission: 'sending_access',
       },
       globalOpts,
     );
