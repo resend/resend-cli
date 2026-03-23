@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import { basename } from 'node:path';
 import { Command } from '@commander-js/extra-typings';
 import type { CreateEmailOptions } from 'resend';
@@ -7,9 +7,11 @@ import { requireClient } from '../../lib/client';
 import { fetchVerifiedDomains, promptForFromAddress } from '../../lib/domains';
 import { readFile } from '../../lib/files';
 import { buildHelpText } from '../../lib/help-text';
-import { outputError, outputResult } from '../../lib/output';
+import { errorMessage, outputError, outputResult } from '../../lib/output';
 import { promptForMissing, requireText } from '../../lib/prompts';
-import { withSpinner } from '../../lib/spinner';
+import { bundleReactEmail } from '../../lib/react-email-bundler';
+import { renderReactEmail } from '../../lib/react-email-renderer';
+import { createSpinner, withSpinner } from '../../lib/spinner';
 import { isInteractive } from '../../lib/tty';
 
 export const sendCommand = new Command('send')
@@ -26,6 +28,10 @@ export const sendCommand = new Command('send')
   .option(
     '--text-file <path>',
     'Path to a plain-text file for the body (use "-" for stdin)',
+  )
+  .option(
+    '--react-email <path>',
+    'Path to a React Email template (.tsx) to bundle, render, and send',
   )
   .option('--cc <addresses...>', 'CC recipients')
   .option('--bcc <addresses...>', 'BCC recipients')
@@ -56,7 +62,7 @@ export const sendCommand = new Command('send')
     'after',
     buildHelpText({
       context:
-        'Required: --to and either --template or (--from, --subject, and one of --text | --text-file | --html | --html-file)',
+        'Required: --to and either --template, --react-email, or (--from, --subject, and one of --text | --text-file | --html | --html-file)',
       output: '  {"id":"<email-id>"}',
       errorCodes: [
         'auth_error',
@@ -69,6 +75,8 @@ export const sendCommand = new Command('send')
         'invalid_var',
         'template_body_conflict',
         'template_attachment_conflict',
+        'react_email_build_error',
+        'react_email_render_error',
         'send_error',
       ],
       examples: [
@@ -82,6 +90,7 @@ export const sendCommand = new Command('send')
         'echo "Hello" | resend emails send --from you@domain.com --to user@example.com --subject "Hi" --text-file -',
         'resend emails send --template tmpl_123 --to user@example.com',
         'resend emails send --template tmpl_123 --to user@example.com --var name=John --var count=42',
+        'resend emails send --from you@domain.com --to user@example.com --subject "Welcome" --react-email ./emails/welcome.tsx',
         'RESEND_API_KEY=re_123 resend emails send --from you@domain.com --to user@example.com --subject "Hi" --text "Hi"',
       ],
     }),
@@ -119,6 +128,21 @@ export const sendCommand = new Command('send')
         {
           message: '--var can only be used with --template',
           code: 'invalid_var',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
+    // Validate: --react-email is mutually exclusive with body and template flags
+    if (
+      opts.reactEmail &&
+      (opts.html || opts.htmlFile || opts.text || opts.textFile || hasTemplate)
+    ) {
+      outputError(
+        {
+          message:
+            'Cannot use --react-email with --html, --html-file, --text, --text-file, or --template',
+          code: 'invalid_options',
         },
         { json: globalOpts.json },
       );
@@ -229,8 +253,52 @@ export const sendCommand = new Command('send')
       text = readFile(opts.textFile, globalOpts);
     }
 
+    if (opts.reactEmail) {
+      const spinner = createSpinner(
+        'Bundling React Email template...',
+        globalOpts.quiet,
+      );
+      let cjsPath: string;
+      let tmpDir: string;
+      try {
+        const result = await bundleReactEmail(opts.reactEmail);
+        cjsPath = result.cjsPath;
+        tmpDir = result.tmpDir;
+      } catch (err) {
+        spinner.fail('Failed to bundle React Email template');
+        return outputError(
+          {
+            message: errorMessage(err, 'Failed to bundle React Email template'),
+            code: 'react_email_build_error',
+          },
+          { json: globalOpts.json },
+        );
+      }
+      spinner.stop('Bundled React Email template');
+
+      const renderSpinner = createSpinner(
+        'Rendering React Email template...',
+        globalOpts.quiet,
+      );
+      try {
+        html = await renderReactEmail(cjsPath);
+      } catch (err) {
+        renderSpinner.fail('Failed to render React Email template');
+        return outputError(
+          {
+            message: errorMessage(err, 'Failed to render React Email template'),
+            code: 'react_email_render_error',
+          },
+          { json: globalOpts.json },
+        );
+      } finally {
+        rmSync(tmpDir, { recursive: true, force: true });
+      }
+      renderSpinner.stop('Rendered React Email template');
+    }
+
     let body: string | undefined = text;
-    if (!hasTemplate && !html && !text) {
+    if (!hasTemplate && !opts.reactEmail && !html && !text) {
       body = await requireText(
         undefined,
         {
