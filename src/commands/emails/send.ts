@@ -377,7 +377,10 @@ export const sendCommand = new Command('send')
         if (filled.from) {
           flags.push({ flag: 'from', value: filled.from });
         }
-        flags.push({ flag: 'to', value: toAddresses });
+        flags.push({
+          flag: 'to',
+          value: toAddresses.length === 1 ? toAddresses[0] : toAddresses,
+        });
         if (filled.subject) {
           flags.push({ flag: 'subject', value: filled.subject });
         }

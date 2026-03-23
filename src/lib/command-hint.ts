@@ -2,7 +2,7 @@ import pc from 'picocolors';
 
 const MAX_VALUE_LENGTH = 120;
 
-const SAFE_CHARS = /^[a-zA-Z0-9@._:/=+-]+$/;
+const SAFE_CHARS = /^[a-zA-Z0-9@._:/=+\-]+$/;
 
 function shellQuote(s: string): string {
   if (s.length === 0) {
@@ -16,7 +16,7 @@ function shellQuote(s: string): string {
 
 export interface CommandHintFlag {
   flag: string;
-  value: string | string[] | boolean;
+  value: string | string[] | true;
 }
 
 export function buildEquivalentCommand(
