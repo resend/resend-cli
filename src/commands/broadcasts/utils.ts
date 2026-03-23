@@ -32,34 +32,13 @@ export const sendBroadcastPickerConfig: PickerConfig<{
 }> = {
   resource: 'broadcast',
   resourcePlural: 'broadcasts',
-  fetchItems: async (resend, { limit, after }) => {
-    const result = await resend.broadcasts.list({
-      limit,
-      ...(after && { after }),
-    });
-    if (result.error || !result.data) {
-      return result as {
-        data: {
-          data: { id: string; name: string | null; status: string }[];
-          has_more?: boolean;
-        } | null;
-        error: { message: string } | null;
-      };
-    }
-    return {
-      data: {
-        data: result.data.data.filter(
-          (b: { status: string }) => b.status === 'draft',
-        ),
-        has_more: result.data.has_more,
-      },
-      error: null,
-    };
-  },
+  fetchItems: (resend, { limit, after }) =>
+    resend.broadcasts.list({ limit, ...(after && { after }) }),
   display: (b) => ({
     label: b.name ?? '(untitled)',
     hint: `${broadcastStatusIndicator(b.status)}  ${b.id}`,
   }),
+  filter: (b) => b.status === 'draft',
 };
 
 export function renderBroadcastsTable(

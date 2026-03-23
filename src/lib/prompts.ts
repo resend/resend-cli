@@ -245,6 +245,7 @@ export type PickerConfig<T extends { id: string }> = {
     error: { message: string } | null;
   }>;
   display: (item: T) => { label: string; hint?: string };
+  filter?: (item: T) => boolean;
 };
 
 export async function pickId<T extends { id: string }>(
@@ -264,12 +265,12 @@ export async function pickId<T extends { id: string }>(
   }
 
   const resend = await requireClient(globalOpts);
-  const allItems: T[] = [];
+  const allFetched: T[] = [];
 
   for (;;) {
-    const cursor = allItems.at(-1)?.id;
+    const cursor = allFetched.at(-1)?.id;
     const spinner = createSpinner(
-      allItems.length === 0
+      allFetched.length === 0
         ? `Fetching ${config.resourcePlural}...`
         : `Fetching more ${config.resourcePlural}...`,
       globalOpts.quiet,
@@ -292,14 +293,18 @@ export async function pickId<T extends { id: string }>(
     }
 
     spinner.stop(
-      allItems.length === 0
+      allFetched.length === 0
         ? `${config.resourcePlural} fetched`
         : `More ${config.resourcePlural} fetched`,
     );
-    allItems.push(...result.data.data);
+    allFetched.push(...result.data.data);
     const hasMore = result.data.has_more ?? false;
 
-    if (allItems.length === 0) {
+    const displayItems = config.filter
+      ? allFetched.filter(config.filter)
+      : allFetched;
+
+    if (displayItems.length === 0 && !hasMore) {
       p.log.warn(`No ${config.resourcePlural} found.`);
       outputError(
         {
@@ -310,8 +315,12 @@ export async function pickId<T extends { id: string }>(
       );
     }
 
+    if (displayItems.length === 0 && hasMore) {
+      continue;
+    }
+
     const options: { value: string; label: string; hint?: string }[] =
-      allItems.map((item) => ({
+      displayItems.map((item) => ({
         value: item.id,
         ...config.display(item),
       }));
