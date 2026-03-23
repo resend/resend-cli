@@ -29,6 +29,14 @@ vi.mock('resend', () => ({
   },
 }));
 
+const mockBuildReactEmailHtml = vi.fn(
+  async () => '<html><body>Rendered</body></html>',
+);
+
+vi.mock('../../../src/lib/react-email', () => ({
+  buildReactEmailHtml: (...args: unknown[]) => mockBuildReactEmailHtml(...args),
+}));
+
 describe('templates create command', () => {
   const restoreEnv = captureTestEnv();
   let spies: ReturnType<typeof setupOutputSpies> | undefined;
@@ -41,6 +49,7 @@ describe('templates create command', () => {
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
     mockCreate.mockClear();
+    mockBuildReactEmailHtml.mockClear();
   });
 
   afterEach(() => {
@@ -239,6 +248,51 @@ describe('templates create command', () => {
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
+  });
+
+  test('creates template with --react-email flag', async () => {
+    spies = setupOutputSpies();
+
+    const { createTemplateCommand } = await import(
+      '../../../src/commands/templates/create'
+    );
+    await createTemplateCommand.parseAsync(
+      ['--name', 'Welcome', '--react-email', './emails/welcome.tsx'],
+      { from: 'user' },
+    );
+
+    expect(mockBuildReactEmailHtml).toHaveBeenCalledWith(
+      './emails/welcome.tsx',
+      expect.anything(),
+    );
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.html).toBe('<html><body>Rendered</body></html>');
+  });
+
+  test('errors with invalid_options when --react-email and --html used together', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { createTemplateCommand } = await import(
+      '../../../src/commands/templates/create'
+    );
+    await expectExit1(() =>
+      createTemplateCommand.parseAsync(
+        [
+          '--name',
+          'Welcome',
+          '--react-email',
+          './emails/welcome.tsx',
+          '--html',
+          '<h1>Hello</h1>',
+        ],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_options');
   });
 
   test('errors with create_error when SDK returns an error', async () => {

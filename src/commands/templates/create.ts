@@ -6,6 +6,7 @@ import { readFile } from '../../lib/files';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
 import { cancelAndExit } from '../../lib/prompts';
+import { buildReactEmailHtml } from '../../lib/react-email';
 import { isInteractive } from '../../lib/tty';
 import { parseVariables } from './utils';
 
@@ -22,6 +23,10 @@ export const createTemplateCommand = new Command('create')
   .option(
     '--text-file <path>',
     'Path to a plain-text file for the body (use "-" for stdin)',
+  )
+  .option(
+    '--react-email <path>',
+    'Path to a React Email template (.tsx) to bundle, render, and use as HTML body',
   )
   .option('--from <address>', 'Sender address')
   .option('--reply-to <address>', 'Reply-to address')
@@ -52,6 +57,8 @@ Non-interactive: --name and a body (--html or --html-file) are required. --text-
         'file_read_error',
         'invalid_options',
         'stdin_read_error',
+        'react_email_build_error',
+        'react_email_render_error',
         'create_error',
       ],
       examples: [
@@ -96,6 +103,20 @@ Non-interactive: --name and a body (--html or --html-file) are required. --text-
       );
     }
 
+    if (
+      opts.reactEmail &&
+      (opts.html || opts.htmlFile || opts.text || opts.textFile)
+    ) {
+      outputError(
+        {
+          message:
+            'Cannot use --react-email with --html, --html-file, --text, or --text-file',
+          code: 'invalid_options',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
     let html = opts.html;
     let text = opts.text;
 
@@ -115,6 +136,10 @@ Non-interactive: --name and a body (--html or --html-file) are required. --text-
         );
       }
       text = readFile(opts.textFile, globalOpts);
+    }
+
+    if (opts.reactEmail) {
+      html = await buildReactEmailHtml(opts.reactEmail, globalOpts);
     }
 
     if (!html) {

@@ -13,6 +13,7 @@ import {
 } from 'vitest';
 import {
   captureTestEnv,
+  ExitError,
   expectExit1,
   mockExitThrow,
   setNonInteractive,
@@ -37,21 +38,12 @@ vi.mock('resend', () => ({
   },
 }));
 
-const mockBundleReactEmail = vi.fn(async () => ({
-  cjsPath: '/tmp/resend-react-email-test/welcome.cjs',
-  tmpDir: '/tmp/resend-react-email-test',
-}));
-
-const mockRenderReactEmail = vi.fn(
+const mockBuildReactEmailHtml = vi.fn(
   async () => '<html><body>Rendered</body></html>',
 );
 
-vi.mock('../../../src/lib/react-email-bundler', () => ({
-  bundleReactEmail: (...args: unknown[]) => mockBundleReactEmail(...args),
-}));
-
-vi.mock('../../../src/lib/react-email-renderer', () => ({
-  renderReactEmail: (...args: unknown[]) => mockRenderReactEmail(...args),
+vi.mock('../../../src/lib/react-email', () => ({
+  buildReactEmailHtml: (...args: unknown[]) => mockBuildReactEmailHtml(...args),
 }));
 
 describe('send command', () => {
@@ -66,8 +58,7 @@ describe('send command', () => {
     process.env.RESEND_API_KEY = 're_test_key';
     mockSend.mockClear();
     mockDomainsList.mockClear();
-    mockBundleReactEmail.mockClear();
-    mockRenderReactEmail.mockClear();
+    mockBuildReactEmailHtml.mockClear();
   });
 
   afterEach(() => {
@@ -1110,9 +1101,9 @@ describe('send command', () => {
       { from: 'user' },
     );
 
-    expect(mockBundleReactEmail).toHaveBeenCalledWith('./emails/welcome.tsx');
-    expect(mockRenderReactEmail).toHaveBeenCalledWith(
-      '/tmp/resend-react-email-test/welcome.cjs',
+    expect(mockBuildReactEmailHtml).toHaveBeenCalledWith(
+      './emails/welcome.tsx',
+      expect.anything(),
     );
     expect(mockSend).toHaveBeenCalledTimes(1);
     const callArgs = mockSend.mock.calls[0][0] as Record<string, unknown>;
@@ -1255,14 +1246,13 @@ describe('send command', () => {
     expect(output).toContain('invalid_options');
   });
 
-  test('errors with react_email_build_error when bundling fails', async () => {
+  test('exits when buildReactEmailHtml fails', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);
-    exitSpy = mockExitThrow();
-    mockBundleReactEmail.mockRejectedValueOnce(new Error('esbuild failed'));
+    mockBuildReactEmailHtml.mockRejectedValueOnce(new ExitError(1));
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
     await expectExit1(() =>
@@ -1280,39 +1270,6 @@ describe('send command', () => {
         { from: 'user' },
       ),
     );
-
-    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
-    expect(output).toContain('react_email_build_error');
-  });
-
-  test('errors with react_email_render_error when rendering fails', async () => {
-    setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    stderrSpy = vi
-      .spyOn(process.stderr, 'write')
-      .mockImplementation(() => true);
-    exitSpy = mockExitThrow();
-    mockRenderReactEmail.mockRejectedValueOnce(new Error('render() threw'));
-
-    const { sendCommand } = await import('../../../src/commands/emails/send');
-    await expectExit1(() =>
-      sendCommand.parseAsync(
-        [
-          '--from',
-          'a@test.com',
-          '--to',
-          'b@test.com',
-          '--subject',
-          'Test',
-          '--react-email',
-          './emails/welcome.tsx',
-        ],
-        { from: 'user' },
-      ),
-    );
-
-    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
-    expect(output).toContain('react_email_render_error');
   });
 
   test('degrades gracefully when domain fetch fails', async () => {

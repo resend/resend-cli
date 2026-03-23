@@ -1,4 +1,4 @@
-import { readFileSync, rmSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { basename } from 'node:path';
 import { Command } from '@commander-js/extra-typings';
 import type { CreateEmailOptions } from 'resend';
@@ -7,11 +7,10 @@ import { requireClient } from '../../lib/client';
 import { fetchVerifiedDomains, promptForFromAddress } from '../../lib/domains';
 import { readFile } from '../../lib/files';
 import { buildHelpText } from '../../lib/help-text';
-import { errorMessage, outputError, outputResult } from '../../lib/output';
+import { outputError, outputResult } from '../../lib/output';
 import { promptForMissing, requireText } from '../../lib/prompts';
-import { bundleReactEmail } from '../../lib/react-email-bundler';
-import { renderReactEmail } from '../../lib/react-email-renderer';
-import { createSpinner, withSpinner } from '../../lib/spinner';
+import { buildReactEmailHtml } from '../../lib/react-email';
+import { withSpinner } from '../../lib/spinner';
 import { isInteractive } from '../../lib/tty';
 
 export const sendCommand = new Command('send')
@@ -254,47 +253,7 @@ export const sendCommand = new Command('send')
     }
 
     if (opts.reactEmail) {
-      const spinner = createSpinner(
-        'Bundling React Email template...',
-        globalOpts.quiet,
-      );
-      let cjsPath: string;
-      let tmpDir: string;
-      try {
-        const result = await bundleReactEmail(opts.reactEmail);
-        cjsPath = result.cjsPath;
-        tmpDir = result.tmpDir;
-      } catch (err) {
-        spinner.fail('Failed to bundle React Email template');
-        return outputError(
-          {
-            message: errorMessage(err, 'Failed to bundle React Email template'),
-            code: 'react_email_build_error',
-          },
-          { json: globalOpts.json },
-        );
-      }
-      spinner.stop('Bundled React Email template');
-
-      const renderSpinner = createSpinner(
-        'Rendering React Email template...',
-        globalOpts.quiet,
-      );
-      try {
-        html = await renderReactEmail(cjsPath);
-      } catch (err) {
-        renderSpinner.fail('Failed to render React Email template');
-        return outputError(
-          {
-            message: errorMessage(err, 'Failed to render React Email template'),
-            code: 'react_email_render_error',
-          },
-          { json: globalOpts.json },
-        );
-      } finally {
-        rmSync(tmpDir, { recursive: true, force: true });
-      }
-      renderSpinner.stop('Rendered React Email template');
+      html = await buildReactEmailHtml(opts.reactEmail, globalOpts);
     }
 
     let body: string | undefined = text;

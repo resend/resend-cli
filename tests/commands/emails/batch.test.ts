@@ -32,6 +32,14 @@ vi.mock('resend', () => ({
   },
 }));
 
+const mockBuildReactEmailHtml = vi.fn(
+  async () => '<html><body>Rendered</body></html>',
+);
+
+vi.mock('../../../src/lib/react-email', () => ({
+  buildReactEmailHtml: (...args: unknown[]) => mockBuildReactEmailHtml(...args),
+}));
+
 const VALID_EMAILS = [
   {
     from: 'you@domain.com',
@@ -59,6 +67,7 @@ describe('batch command', () => {
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
     mockBatchSend.mockClear();
+    mockBuildReactEmailHtml.mockClear();
   });
 
   afterEach(async () => {
@@ -373,6 +382,41 @@ describe('batch command', () => {
 
     expect(readFileSpy).toHaveBeenCalledWith('-', expect.anything());
     expect(mockBatchSend).toHaveBeenCalledTimes(1);
+  });
+
+  test('injects rendered HTML from --react-email into all batch emails', async () => {
+    spies = setupOutputSpies();
+
+    const emailsWithoutHtml = [
+      {
+        from: 'you@domain.com',
+        to: ['user1@example.com'],
+        subject: 'Hello 1',
+      },
+      {
+        from: 'you@domain.com',
+        to: ['user2@example.com'],
+        subject: 'Hello 2',
+      },
+    ];
+    const file = await writeTmpJson(emailsWithoutHtml);
+    const { batchCommand } = await import('../../../src/commands/emails/batch');
+    await batchCommand.parseAsync(
+      ['--file', file, '--react-email', './emails/welcome.tsx'],
+      { from: 'user' },
+    );
+
+    expect(mockBuildReactEmailHtml).toHaveBeenCalledWith(
+      './emails/welcome.tsx',
+      expect.anything(),
+    );
+    expect(mockBatchSend).toHaveBeenCalledTimes(1);
+    const emails = mockBatchSend.mock.calls[0][0] as Array<
+      Record<string, unknown>
+    >;
+    for (const email of emails) {
+      expect(email.html).toBe('<html><body>Rendered</body></html>');
+    }
   });
 
   test('errors with batch_error when SDK returns an error', async () => {
