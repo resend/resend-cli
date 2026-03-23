@@ -2,6 +2,11 @@ import * as p from '@clack/prompts';
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
+import {
+  buildEquivalentCommand,
+  type CommandHintFlag,
+  printCommandHint,
+} from '../../lib/command-hint';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError, outputResult } from '../../lib/output';
 import { cancelAndExit } from '../../lib/prompts';
@@ -46,6 +51,8 @@ Topics not included in the array are left unchanged.`,
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const resend = await requireClient(globalOpts);
 
+    const prompted = !opts.topics;
+
     let topicsJson = opts.topics;
 
     if (!topicsJson) {
@@ -84,6 +91,14 @@ Topics not included in the array are left unchanged.`,
 
     if (!globalOpts.json && isInteractive()) {
       console.log(`Topic subscriptions updated for contact: ${id}`);
+      if (prompted) {
+        const flags: CommandHintFlag[] = [
+          { flag: 'topics', value: topicsJson },
+        ];
+        printCommandHint(
+          buildEquivalentCommand(`resend contacts update-topics ${id}`, flags),
+        );
+      }
     } else {
       outputResult(data, { json: globalOpts.json });
     }

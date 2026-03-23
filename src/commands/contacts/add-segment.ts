@@ -3,6 +3,10 @@ import { Command } from '@commander-js/extra-typings';
 import type { AddContactSegmentOptions } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
+import {
+  buildEquivalentCommand,
+  printCommandHint,
+} from '../../lib/command-hint';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError, outputResult } from '../../lib/output';
 import { cancelAndExit } from '../../lib/prompts';
@@ -31,6 +35,8 @@ Non-interactive: --segment-id is required.`,
   .action(async (contactId, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const resend = await requireClient(globalOpts);
+
+    const prompted = !opts.segmentId;
 
     let segmentId = opts.segmentId;
 
@@ -72,6 +78,13 @@ Non-interactive: --segment-id is required.`,
 
     if (!globalOpts.json && isInteractive()) {
       console.log(`Contact added to segment: ${segmentId}`);
+      if (prompted) {
+        printCommandHint(
+          buildEquivalentCommand(`resend contacts add-segment ${contactId}`, [
+            { flag: 'segment-id', value: segmentId },
+          ]),
+        );
+      }
     } else {
       outputResult(data, { json: globalOpts.json });
     }

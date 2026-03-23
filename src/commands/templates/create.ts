@@ -2,6 +2,11 @@ import * as p from '@clack/prompts';
 import { Command } from '@commander-js/extra-typings';
 import { runCreate } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
+import {
+  buildEquivalentCommand,
+  type CommandHintFlag,
+  printCommandHint,
+} from '../../lib/command-hint';
 import { readFile } from '../../lib/files';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
@@ -64,6 +69,8 @@ Non-interactive: --name and a body (--html or --html-file) are required. --text-
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+
+    const prompted = !opts.name || (!opts.html && !opts.htmlFile);
 
     let name = opts.name;
 
@@ -160,6 +167,37 @@ Non-interactive: --name and a body (--html or --html-file) are required. --text-
           ),
         onInteractive: (d) => {
           console.log(`\nTemplate created: ${d.id}`);
+          if (prompted) {
+            const flags: CommandHintFlag[] = [{ flag: 'name', value: name }];
+            if (opts.htmlFile) {
+              flags.push({ flag: 'html-file', value: opts.htmlFile });
+            } else if (html) {
+              flags.push({ flag: 'html', value: html });
+            }
+            if (opts.textFile) {
+              flags.push({ flag: 'text-file', value: opts.textFile });
+            } else if (text) {
+              flags.push({ flag: 'text', value: text });
+            }
+            if (opts.subject) {
+              flags.push({ flag: 'subject', value: opts.subject });
+            }
+            if (opts.from) {
+              flags.push({ flag: 'from', value: opts.from });
+            }
+            if (opts.replyTo) {
+              flags.push({ flag: 'reply-to', value: opts.replyTo });
+            }
+            if (opts.alias) {
+              flags.push({ flag: 'alias', value: opts.alias });
+            }
+            if (opts.var) {
+              flags.push({ flag: 'var', value: opts.var });
+            }
+            printCommandHint(
+              buildEquivalentCommand('resend templates create', flags),
+            );
+          }
         },
       },
       globalOpts,
