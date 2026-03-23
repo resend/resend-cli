@@ -191,6 +191,6 @@ describe('doctor command', () => {
     );
     expect(apiCheck).toBeDefined();
     expect(apiCheck.status).toBe('warn');
-    expect(apiCheck.message).toContain('Sending-only');
+    expect(apiCheck.message).toContain('can only send emails');
   });
 });

@@ -107,7 +107,7 @@ async function checkApiValidationAndDomains(
         return {
           name: 'API Validation',
           status: 'warn',
-          message: 'Sending-only API key — only email commands available',
+          message: 'Sending-only API key — can only send emails',
           detail:
             'Create a full access key at https://resend.com/api-keys for complete CLI access',
         };
