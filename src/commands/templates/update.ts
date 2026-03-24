@@ -5,6 +5,7 @@ import { readFile } from '../../lib/files';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
 import { pickId } from '../../lib/prompts';
+import { buildReactEmailHtml } from '../../lib/react-email';
 import { parseVariables, templatePickerConfig } from './utils';
 
 export const updateTemplateCommand = new Command('update')
@@ -21,6 +22,10 @@ export const updateTemplateCommand = new Command('update')
   .option(
     '--text-file <path>',
     'Path to a plain-text file to replace the body (use "-" for stdin)',
+  )
+  .option(
+    '--react-email <path>',
+    'Path to a React Email template (.tsx) to bundle, render, and use as HTML body',
   )
   .option('--from <address>', 'Update sender address')
   .option('--reply-to <address>', 'Update reply-to address')
@@ -44,6 +49,8 @@ export const updateTemplateCommand = new Command('update')
         'file_read_error',
         'invalid_options',
         'stdin_read_error',
+        'react_email_build_error',
+        'react_email_render_error',
         'update_error',
       ],
       examples: [
@@ -62,6 +69,7 @@ export const updateTemplateCommand = new Command('update')
       opts.name == null &&
       opts.html == null &&
       opts.htmlFile == null &&
+      opts.reactEmail == null &&
       opts.subject == null &&
       opts.text == null &&
       opts.textFile == null &&
@@ -73,8 +81,18 @@ export const updateTemplateCommand = new Command('update')
       outputError(
         {
           message:
-            'Provide at least one option to update: --name, --html, --html-file, --subject, --text, --text-file, --from, --reply-to, --alias, or --var.',
+            'Provide at least one option to update: --name, --html, --html-file, --react-email, --subject, --text, --text-file, --from, --reply-to, --alias, or --var.',
           code: 'no_changes',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
+    if (opts.reactEmail && (opts.html || opts.htmlFile)) {
+      outputError(
+        {
+          message: 'Cannot use --react-email with --html or --html-file',
+          code: 'invalid_options',
         },
         { json: globalOpts.json },
       );
@@ -115,6 +133,10 @@ export const updateTemplateCommand = new Command('update')
         );
       }
       text = readFile(opts.textFile, globalOpts);
+    }
+
+    if (opts.reactEmail) {
+      html = await buildReactEmailHtml(opts.reactEmail, globalOpts);
     }
 
     await runWrite(
