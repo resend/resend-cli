@@ -6,6 +6,12 @@ import { bundleReactEmail } from './react-email-bundler';
 import { renderReactEmail } from './react-email-renderer';
 import { createSpinner } from './spinner';
 
+function cleanupTmpDir(tmpDir: string | undefined) {
+  if (tmpDir) {
+    rmSync(tmpDir, { recursive: true, force: true });
+  }
+}
+
 /**
  * Bundles and renders a React Email template (.tsx) to an HTML string.
  * Shows spinners for each phase and exits with the appropriate error code on failure.
@@ -42,9 +48,11 @@ export async function buildReactEmailHtml(
     try {
       const html = await renderReactEmail(result.cjsPath);
       renderSpinner.stop('Rendered React Email template');
+      cleanupTmpDir(tmpDir);
       return html;
     } catch (err) {
       renderSpinner.fail('Failed to render React Email template');
+      cleanupTmpDir(tmpDir);
       return outputError(
         {
           message: errorMessage(err, 'Failed to render React Email template'),
@@ -55,6 +63,7 @@ export async function buildReactEmailHtml(
     }
   } catch (err) {
     spinner.fail('Failed to bundle React Email template');
+    cleanupTmpDir(tmpDir);
     return outputError(
       {
         message: errorMessage(err, 'Failed to bundle React Email template'),
@@ -62,9 +71,5 @@ export async function buildReactEmailHtml(
       },
       { json: globalOpts.json },
     );
-  } finally {
-    if (tmpDir) {
-      rmSync(tmpDir, { recursive: true, force: true });
-    }
   }
 }
