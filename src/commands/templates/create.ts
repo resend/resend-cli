@@ -103,14 +103,10 @@ Non-interactive: --name and a body (--html, --html-file, or --react-email) are r
       );
     }
 
-    if (
-      opts.reactEmail &&
-      (opts.html || opts.htmlFile || opts.text || opts.textFile)
-    ) {
+    if (opts.reactEmail && (opts.html || opts.htmlFile)) {
       outputError(
         {
-          message:
-            'Cannot use --react-email with --html, --html-file, --text, or --text-file',
+          message: 'Cannot use --react-email with --html or --html-file',
           code: 'invalid_options',
         },
         { json: globalOpts.json },

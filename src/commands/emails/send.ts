@@ -133,14 +133,11 @@ export const sendCommand = new Command('send')
     }
 
     // Validate: --react-email is mutually exclusive with body and template flags
-    if (
-      opts.reactEmail &&
-      (opts.html || opts.htmlFile || opts.text || opts.textFile || hasTemplate)
-    ) {
+    if (opts.reactEmail && (opts.html || opts.htmlFile || hasTemplate)) {
       outputError(
         {
           message:
-            'Cannot use --react-email with --html, --html-file, --text, --text-file, or --template',
+            'Cannot use --react-email with --html, --html-file, or --template',
           code: 'invalid_options',
         },
         { json: globalOpts.json },

@@ -1166,60 +1166,30 @@ describe('send command', () => {
     expect(output).toContain('invalid_options');
   });
 
-  test('errors with invalid_options when --react-email and --text used together', async () => {
-    setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    exitSpy = mockExitThrow();
+  test('allows --react-email with --text for plain-text fallback', async () => {
+    spies = setupOutputSpies();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
-    await expectExit1(() =>
-      sendCommand.parseAsync(
-        [
-          '--from',
-          'a@test.com',
-          '--to',
-          'b@test.com',
-          '--subject',
-          'Test',
-          '--react-email',
-          './emails/welcome.tsx',
-          '--text',
-          'Hi',
-        ],
-        { from: 'user' },
-      ),
+    await sendCommand.parseAsync(
+      [
+        '--from',
+        'a@test.com',
+        '--to',
+        'b@test.com',
+        '--subject',
+        'Test',
+        '--react-email',
+        './emails/welcome.tsx',
+        '--text',
+        'Plain text fallback',
+      ],
+      { from: 'user' },
     );
 
-    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
-    expect(output).toContain('invalid_options');
-  });
-
-  test('errors with invalid_options when --react-email and --text-file used together', async () => {
-    setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    exitSpy = mockExitThrow();
-
-    const { sendCommand } = await import('../../../src/commands/emails/send');
-    await expectExit1(() =>
-      sendCommand.parseAsync(
-        [
-          '--from',
-          'a@test.com',
-          '--to',
-          'b@test.com',
-          '--subject',
-          'Test',
-          '--react-email',
-          './emails/welcome.tsx',
-          '--text-file',
-          './body.txt',
-        ],
-        { from: 'user' },
-      ),
-    );
-
-    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
-    expect(output).toContain('invalid_options');
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    const callArgs = mockSend.mock.calls[0][0] as Record<string, unknown>;
+    expect(callArgs.html).toBe('<html><body>Rendered</body></html>');
+    expect(callArgs.text).toBe('Plain text fallback');
   });
 
   test('errors with invalid_options when --react-email and --template used together', async () => {
