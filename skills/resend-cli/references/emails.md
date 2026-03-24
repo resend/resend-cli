@@ -13,9 +13,10 @@ Send an email via the Resend API.
 | `--from <address>` | string | Yes | Sender address (must be on a verified domain) |
 | `--to <addresses...>` | string[] | Yes | Recipient(s), space-separated |
 | `--subject <subject>` | string | Yes | Email subject line |
-| `--text <text>` | string | One of text/html/html-file | Plain-text body |
-| `--html <html>` | string | One of text/html/html-file | HTML body |
-| `--html-file <path>` | string | One of text/html/html-file | Path to HTML file |
+| `--text <text>` | string | One of text/html/html-file/react-email | Plain-text body |
+| `--html <html>` | string | One of text/html/html-file/react-email | HTML body |
+| `--html-file <path>` | string | One of text/html/html-file/react-email | Path to HTML file |
+| `--react-email <path>` | string | One of text/html/html-file/react-email | Path to React Email template (.tsx) — bundles, renders to HTML, and sends |
 | `--cc <addresses...>` | string[] | No | CC recipients |
 | `--bcc <addresses...>` | string[] | No | BCC recipients |
 | `--reply-to <address>` | string | No | Reply-to address |
@@ -72,6 +73,7 @@ Send up to 100 emails in a single request.
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
 | `--file <path>` | string | Yes (non-interactive) | Path to JSON file with email array |
+| `--react-email <path>` | string | No | Path to React Email template (.tsx) — rendered HTML is set on every email in the batch |
 | `--idempotency-key <key>` | string | No | Deduplicate batch |
 | `--batch-validation <mode>` | string | No | `strict` (fail all) or `permissive` (partial success) |
 

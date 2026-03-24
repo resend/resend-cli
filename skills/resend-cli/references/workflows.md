@@ -42,6 +42,21 @@ resend emails send \
   --cc manager@example.com \
   --reply-to support@yourdomain.com
 
+# React Email template (.tsx) — bundles, renders to HTML, and sends
+resend emails send \
+  --from "you@yourdomain.com" \
+  --to recipient@example.com \
+  --subject "Welcome" \
+  --react-email ./emails/welcome.tsx
+
+# React Email with plain-text fallback
+resend emails send \
+  --from "you@yourdomain.com" \
+  --to recipient@example.com \
+  --subject "Welcome" \
+  --react-email ./emails/welcome.tsx \
+  --text "Welcome to our platform!"
+
 # Scheduled email
 resend emails send \
   --from "you@yourdomain.com" \
@@ -117,6 +132,14 @@ resend broadcasts create \
   --segment-id <segment-id> \
   --html "<h1>Hello {{{FIRST_NAME|there}}}</h1><p>News content...</p>" \
   --send
+
+# Create broadcast from a React Email template
+resend broadcasts create \
+  --from "news@yourdomain.com" \
+  --subject "Monthly Update" \
+  --segment-id <segment-id> \
+  --react-email ./emails/newsletter.tsx \
+  --text "Plain-text fallback for email clients that don't support HTML"
 
 # Or create as draft first, then send later
 resend broadcasts create \
@@ -223,6 +246,14 @@ resend templates duplicate welcome-email
 
 # Update the copy
 resend templates update <new-id> --name "Welcome Email v2" --subject "Hey {{{NAME}}}!"
+
+# Create a template from a React Email component
+resend templates create \
+  --name "Onboarding" \
+  --react-email ./emails/onboarding.tsx
+
+# Update a template with a new React Email version
+resend templates update <id> --react-email ./emails/onboarding-v2.tsx
 ```
 
 ---

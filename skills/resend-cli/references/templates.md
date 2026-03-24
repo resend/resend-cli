@@ -19,8 +19,9 @@ Detailed flag specifications for `resend templates` commands.
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
 | `--name <name>` | string | Yes | Template name |
-| `--html <html>` | string | One of html/html-file | HTML body with `{{{VAR_NAME}}}` placeholders |
-| `--html-file <path>` | string | One of html/html-file | Path to HTML file |
+| `--html <html>` | string | One of html/html-file/react-email | HTML body with `{{{VAR_NAME}}}` placeholders |
+| `--html-file <path>` | string | One of html/html-file/react-email | Path to HTML file |
+| `--react-email <path>` | string | One of html/html-file/react-email | Path to React Email template (.tsx) — bundles and renders to HTML |
 | `--subject <subject>` | string | No | Email subject |
 | `--text <text>` | string | No | Plain-text body |
 | `--from <address>` | string | No | Sender address |
@@ -42,7 +43,7 @@ Variable types: `string`, `number`
 
 **Argument:** `<id|alias>` — Template ID or alias
 
-Same optional flags as `create`. At least one required.
+Same optional flags as `create` (including `--react-email`). At least one required.
 
 ---
 

@@ -24,6 +24,7 @@ Detailed flag specifications for `resend broadcasts` commands.
 | `--html <html>` | string | At least one body flag | HTML body (supports `{{{PROPERTY\|fallback}}}`) |
 | `--html-file <path>` | string | At least one body flag | Path to HTML file |
 | `--text <text>` | string | At least one body flag | Plain-text body |
+| `--react-email <path>` | string | At least one body flag | Path to React Email template (.tsx) — bundles and renders to HTML. Compatible with `--text` for plain-text fallback |
 | `--name <name>` | string | No | Internal label |
 | `--reply-to <address>` | string | No | Reply-to address |
 | `--preview-text <text>` | string | No | Preview text |
@@ -66,6 +67,7 @@ Send a draft broadcast.
 | `--html <html>` | string | Update HTML body |
 | `--html-file <path>` | string | Path to HTML file |
 | `--text <text>` | string | Update plain-text body |
+| `--react-email <path>` | string | Path to React Email template (.tsx) — bundles and renders to HTML |
 | `--name <name>` | string | Update internal label |
 
 ---
