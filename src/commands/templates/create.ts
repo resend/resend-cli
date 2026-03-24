@@ -40,7 +40,7 @@ export const createTemplateCommand = new Command('create')
     buildHelpText({
       context: `Creates a new draft template. Use "resend templates publish" to make it available for sending.
 
---name is required. Body: provide --html or --html-file. Optionally add --text or --text-file for plain-text.
+--name is required. Body: provide --html, --html-file, or --react-email. Optionally add --text or --text-file for plain-text.
 
 --var declares a template variable using the format KEY:type or KEY:type:fallback.
   Valid types: string, number.
@@ -48,7 +48,7 @@ export const createTemplateCommand = new Command('create')
     --html "<p>Hi {{{NAME}}}, your total is {{{PRICE}}}</p>"
     --var NAME:string --var PRICE:number:0
 
-Non-interactive: --name and a body (--html or --html-file) are required. --text-file provides a plain-text fallback.`,
+Non-interactive: --name and a body (--html, --html-file, or --react-email) are required. --text-file provides a plain-text fallback.`,
       output: `  {"object":"template","id":"<template-id>"}`,
       errorCodes: [
         'auth_error',
@@ -146,7 +146,8 @@ Non-interactive: --name and a body (--html or --html-file) are required. --text-
       if (!isInteractive() || globalOpts.json) {
         outputError(
           {
-            message: 'Missing body. Provide --html or --html-file.',
+            message:
+              'Missing body. Provide --html, --html-file, or --react-email.',
             code: 'missing_body',
           },
           { json: globalOpts.json },

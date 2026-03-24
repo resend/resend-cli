@@ -267,7 +267,7 @@ export const sendCommand = new Command('send')
         },
         {
           message:
-            'Missing email body. Provide --html, --html-file, --text, or --text-file',
+            'Missing email body. Provide --html, --html-file, --text, --text-file, or --react-email',
           code: 'missing_body',
         },
         globalOpts,

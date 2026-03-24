@@ -53,7 +53,7 @@ export const createBroadcastCommand = new Command('create')
     'after',
     buildHelpText({
       context: `Non-interactive: --from, --subject, and --segment-id are required.
-Body: provide at least one of --html, --html-file, --text, or --text-file.
+Body: provide at least one of --html, --html-file, --text, --text-file, or --react-email.
 
 Variable interpolation:
   HTML bodies support triple-brace syntax for contact properties.
@@ -211,7 +211,7 @@ Scheduling:
         outputError(
           {
             message:
-              'Missing body. Provide --html, --html-file, --text, or --text-file.',
+              'Missing body. Provide --html, --html-file, --text, --text-file, or --react-email.',
             code: 'missing_body',
           },
           { json: globalOpts.json },
