@@ -57,13 +57,13 @@ resend emails send \
   --react-email ./emails/welcome.tsx \
   --text "Welcome to our platform!"
 
-# Scheduled email
+# Scheduled email (ISO 8601 or natural language)
 resend emails send \
   --from "you@yourdomain.com" \
   --to recipient@example.com \
   --subject "Reminder" \
   --text "Don't forget!" \
-  --scheduled-at "<future-ISO-8601-datetime>"
+  --scheduled-at "tomorrow at 9am ET"
 
 # Check status
 resend emails get <email-id>
@@ -151,8 +151,8 @@ resend broadcasts create \
 
 resend broadcasts send <broadcast-id>
 
-# Schedule for later
-resend broadcasts send <broadcast-id> --scheduled-at "<future-ISO-8601-datetime>"
+# Schedule for later (ISO 8601 or natural language)
+resend broadcasts send <broadcast-id> --scheduled-at "in 2 hours"
 ```
 
 ---
@@ -240,6 +240,12 @@ resend templates create \
 
 # Publish the template
 resend templates publish welcome-email
+
+# Send an email using a template
+resend emails send \
+  --to user@example.com \
+  --template <template-id> \
+  --var NAME=Jane --var PLAN=pro
 
 # Duplicate for A/B testing
 resend templates duplicate welcome-email

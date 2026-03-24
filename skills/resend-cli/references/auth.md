@@ -65,3 +65,7 @@ Checks GitHub releases for newer version. Shows upgrade command.
 ## open
 
 Opens `https://resend.com/emails` in the default browser.
+
+`broadcasts` and `templates` also have their own `open` subcommands:
+- `resend broadcasts open [id]` — open a broadcast or the broadcasts list
+- `resend templates open [id]` — open a template or the templates list
