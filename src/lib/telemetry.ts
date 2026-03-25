@@ -140,12 +140,15 @@ export function trackCommand(
 
 export async function flushPayload(payload: string): Promise<void> {
   JSON.parse(payload);
-  await fetch(POSTHOG_HOST, {
+  const res = await fetch(POSTHOG_HOST, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: payload,
     signal: AbortSignal.timeout(3000),
   });
+  if (!res.ok) {
+    throw new Error(`telemetry flush failed: ${res.status}`);
+  }
 }
 
 export async function flushFromFile(filePath: string): Promise<void> {
@@ -157,6 +160,6 @@ export async function flushFromFile(filePath: string): Promise<void> {
     throw new Error('invalid telemetry flush path');
   }
   const payload = readFileSync(resolved, 'utf-8');
-  unlinkSync(resolved);
   await flushPayload(payload);
+  unlinkSync(resolved);
 }
