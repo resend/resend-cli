@@ -95,7 +95,7 @@ Variable interpolation:
       );
     }
 
-    if (opts.reactEmail && (opts.html != null || opts.htmlFile != null)) {
+    if (opts.reactEmail != null && (opts.html != null || opts.htmlFile != null)) {
       outputError(
         {
           message: 'Cannot use --react-email with --html or --html-file',
@@ -110,7 +110,7 @@ Variable interpolation:
     let html = opts.html;
     let text = opts.text;
 
-    if (opts.htmlFile) {
+    if (opts.htmlFile != null) {
       if (opts.html != null) {
         process.stderr.write(
           'Warning: both --html and --html-file provided; using --html-file\n',
@@ -119,7 +119,7 @@ Variable interpolation:
       html = readFile(opts.htmlFile, globalOpts);
     }
 
-    if (opts.textFile) {
+    if (opts.textFile != null) {
       if (opts.text != null) {
         process.stderr.write(
           'Warning: both --text and --text-file provided; using --text-file\n',
@@ -128,7 +128,7 @@ Variable interpolation:
       text = readFile(opts.textFile, globalOpts);
     }
 
-    if (opts.reactEmail) {
+    if (opts.reactEmail != null) {
       html = await buildReactEmailHtml(opts.reactEmail, globalOpts);
     }
 

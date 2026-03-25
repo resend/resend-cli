@@ -89,7 +89,7 @@ export const updateTemplateCommand = new Command('update')
 
     const id = await pickId(idArg, templatePickerConfig, globalOpts);
 
-    if (opts.reactEmail && (opts.html != null || opts.htmlFile != null)) {
+    if (opts.reactEmail != null && (opts.html != null || opts.htmlFile != null)) {
       outputError(
         {
           message: 'Cannot use --react-email with --html or --html-file',
@@ -123,11 +123,11 @@ export const updateTemplateCommand = new Command('update')
     let html = opts.html;
     let text = opts.text;
 
-    if (opts.htmlFile) {
+    if (opts.htmlFile != null) {
       html = readFile(opts.htmlFile, globalOpts);
     }
 
-    if (opts.textFile) {
+    if (opts.textFile != null) {
       if (opts.text != null) {
         process.stderr.write(
           'Warning: both --text and --text-file provided; using --text-file\n',
@@ -136,7 +136,7 @@ export const updateTemplateCommand = new Command('update')
       text = readFile(opts.textFile, globalOpts);
     }
 
-    if (opts.reactEmail) {
+    if (opts.reactEmail != null) {
       html = await buildReactEmailHtml(opts.reactEmail, globalOpts);
     }
 
