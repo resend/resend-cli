@@ -3,6 +3,7 @@ import {
   mkdirSync,
   readFileSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -374,6 +375,47 @@ describe('flushFromFile', () => {
     const [, options] = fetchSpy.mock.calls[0] as [string, RequestInit];
     expect(options.body).toBe(payload);
     expect(existsSync(tmpFile)).toBe(false);
+  });
+
+  test('rejects paths outside the temp directory', async () => {
+    const siblingPath = join(
+      `${tmpdir()}-outside`,
+      `resend-telemetry-${process.pid}-1.json`,
+    );
+
+    await expect(flushFromFile(siblingPath)).rejects.toThrow(
+      'invalid telemetry flush path',
+    );
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  test('rejects symlinks that point outside the temp directory', async () => {
+    if (process.platform === 'win32') {
+      return;
+    }
+
+    const outsideFile = join(testConfigDir, 'outside.json');
+    mkdirSync(testConfigDir, { recursive: true });
+    writeFileSync(outsideFile, JSON.stringify({ event: 'test' }));
+
+    const symlinkPath = join(
+      tmpdir(),
+      `resend-telemetry-${process.pid}-2.json`,
+    );
+    symlinkSync(outsideFile, symlinkPath);
+
+    try {
+      await expect(flushFromFile(symlinkPath)).rejects.toThrow();
+      expect(fetchSpy).not.toHaveBeenCalled();
+      expect(existsSync(symlinkPath)).toBe(true);
+    } finally {
+      if (existsSync(symlinkPath)) {
+        rmSync(symlinkPath, { force: true });
+      }
+      if (existsSync(outsideFile)) {
+        rmSync(outsideFile, { force: true });
+      }
+    }
   });
 
   test('preserves file when flush fails', async () => {

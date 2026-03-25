@@ -1,13 +1,18 @@
 import { spawn } from 'node:child_process';
 import {
+  closeSync,
+  constants,
   existsSync,
+  fstatSync,
   mkdirSync,
+  openSync,
   readFileSync,
+  realpathSync,
   unlinkSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { getConfigDir } from './config';
 import { isInteractive } from './tty';
 import { detectInstallMethodName } from './update-check';
@@ -153,13 +158,28 @@ export async function flushPayload(payload: string): Promise<void> {
 
 export async function flushFromFile(filePath: string): Promise<void> {
   const resolved = join(filePath);
+  const tempDir = tmpdir();
+  const baseName = basename(resolved);
+
   if (
-    !resolved.startsWith(tmpdir()) ||
-    !/resend-telemetry-.*\.json$/.test(resolved)
+    dirname(resolved) !== tempDir ||
+    !/resend-telemetry-.*\.json$/.test(baseName) ||
+    realpathSync(dirname(resolved)) !== realpathSync(tempDir)
   ) {
     throw new Error('invalid telemetry flush path');
   }
-  const payload = readFileSync(resolved, 'utf-8');
+
+  const fd = openSync(resolved, constants.O_RDONLY | constants.O_NOFOLLOW);
+  let payload: string;
+  try {
+    if (!fstatSync(fd).isFile()) {
+      throw new Error('invalid telemetry flush path');
+    }
+    payload = readFileSync(fd, 'utf-8');
+  } finally {
+    closeSync(fd);
+  }
+
   await flushPayload(payload);
   unlinkSync(resolved);
 }
