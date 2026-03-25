@@ -15,9 +15,15 @@ import { isInteractive } from '../../lib/tty';
 
 export const sendCommand = new Command('send')
   .description('Send an email')
-  .option('--from <address>', 'Sender address (required)')
+  .option(
+    '--from <address>',
+    'Sender address (required unless using --template)',
+  )
   .option('--to <addresses...>', 'Recipient address(es) (required)')
-  .option('--subject <subject>', 'Email subject (required)')
+  .option(
+    '--subject <subject>',
+    'Email subject (required unless using --template)',
+  )
   .option('--html <html>', 'HTML body')
   .option(
     '--html-file <path>',
