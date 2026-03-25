@@ -63,7 +63,6 @@ export const updateTemplateCommand = new Command('update')
   )
   .action(async (idArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const id = await pickId(idArg, templatePickerConfig, globalOpts);
 
     if (
       opts.name == null &&
@@ -88,7 +87,9 @@ export const updateTemplateCommand = new Command('update')
       );
     }
 
-    if (opts.reactEmail && (opts.html || opts.htmlFile)) {
+    const id = await pickId(idArg, templatePickerConfig, globalOpts);
+
+    if (opts.reactEmail && (opts.html != null || opts.htmlFile != null)) {
       outputError(
         {
           message: 'Cannot use --react-email with --html or --html-file',
@@ -98,7 +99,7 @@ export const updateTemplateCommand = new Command('update')
       );
     }
 
-    if (opts.html && opts.htmlFile) {
+    if (opts.html != null && opts.htmlFile != null) {
       outputError(
         {
           message: '--html and --html-file are mutually exclusive.',
@@ -127,7 +128,7 @@ export const updateTemplateCommand = new Command('update')
     }
 
     if (opts.textFile) {
-      if (opts.text) {
+      if (opts.text != null) {
         process.stderr.write(
           'Warning: both --text and --text-file provided; using --text-file\n',
         );

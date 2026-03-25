@@ -111,6 +111,36 @@ describe('broadcasts update command', () => {
     expect(payload.name).toBe('New Label');
   });
 
+  test('passes explicit empty text to the SDK', async () => {
+    spies = setupOutputSpies();
+
+    const { updateBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/update'
+    );
+    await updateBroadcastCommand.parseAsync(
+      ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--text', ''],
+      { from: 'user' },
+    );
+
+    const payload = mockUpdate.mock.calls[0][1] as Record<string, unknown>;
+    expect(payload.text).toBe('');
+  });
+
+  test('passes explicit empty html to the SDK', async () => {
+    spies = setupOutputSpies();
+
+    const { updateBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/update'
+    );
+    await updateBroadcastCommand.parseAsync(
+      ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--html', ''],
+      { from: 'user' },
+    );
+
+    const payload = mockUpdate.mock.calls[0][1] as Record<string, unknown>;
+    expect(payload.html).toBe('');
+  });
+
   test('outputs JSON id when non-interactive', async () => {
     spies = setupOutputSpies();
 

@@ -65,14 +65,14 @@ Variable interpolation:
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
     if (
-      !opts.from &&
-      !opts.subject &&
-      !opts.html &&
-      !opts.htmlFile &&
-      !opts.text &&
-      !opts.textFile &&
-      !opts.reactEmail &&
-      !opts.name
+      opts.from == null &&
+      opts.subject == null &&
+      opts.html == null &&
+      opts.htmlFile == null &&
+      opts.text == null &&
+      opts.textFile == null &&
+      opts.reactEmail == null &&
+      opts.name == null
     ) {
       outputError(
         {
@@ -95,7 +95,7 @@ Variable interpolation:
       );
     }
 
-    if (opts.reactEmail && (opts.html || opts.htmlFile)) {
+    if (opts.reactEmail && (opts.html != null || opts.htmlFile != null)) {
       outputError(
         {
           message: 'Cannot use --react-email with --html or --html-file',
@@ -111,7 +111,7 @@ Variable interpolation:
     let text = opts.text;
 
     if (opts.htmlFile) {
-      if (opts.html) {
+      if (opts.html != null) {
         process.stderr.write(
           'Warning: both --html and --html-file provided; using --html-file\n',
         );
@@ -120,7 +120,7 @@ Variable interpolation:
     }
 
     if (opts.textFile) {
-      if (opts.text) {
+      if (opts.text != null) {
         process.stderr.write(
           'Warning: both --text and --text-file provided; using --text-file\n',
         );
@@ -141,11 +141,11 @@ Variable interpolation:
         },
         sdkCall: (resend) =>
           resend.broadcasts.update(id, {
-            ...(opts.from && { from: opts.from }),
-            ...(opts.subject && { subject: opts.subject }),
-            ...(html && { html }),
-            ...(text && { text }),
-            ...(opts.name && { name: opts.name }),
+            ...(opts.from != null && { from: opts.from }),
+            ...(opts.subject != null && { subject: opts.subject }),
+            ...(html != null && { html }),
+            ...(text != null && { text }),
+            ...(opts.name != null && { name: opts.name }),
           }),
         errorCode: 'update_error',
         successMsg: `\nBroadcast updated: ${id}`,
