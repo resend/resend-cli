@@ -3,6 +3,7 @@ import {
   mkdirSync,
   readFileSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -381,5 +382,25 @@ describe('flushFromFile', () => {
       'invalid telemetry flush path',
     );
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  test('rejects symlinks that point outside the temp directory', async () => {
+    if (process.platform === 'win32') {
+      return;
+    }
+
+    const outsideFile = join(testConfigDir, 'outside.json');
+    mkdirSync(testConfigDir, { recursive: true });
+    writeFileSync(outsideFile, JSON.stringify({ event: 'test' }));
+
+    const symlinkPath = join(
+      tmpdir(),
+      `resend-telemetry-${process.pid}-2.json`,
+    );
+    symlinkSync(outsideFile, symlinkPath);
+
+    await expect(flushFromFile(symlinkPath)).rejects.toThrow();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(existsSync(symlinkPath)).toBe(true);
   });
 });
