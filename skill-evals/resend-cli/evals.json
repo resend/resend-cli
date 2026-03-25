@@ -4,14 +4,14 @@
     {
       "id": 1,
       "prompt": "Send a welcome email using template tpl_abc123 with variables name=Alice and plan=pro to alice@example.com",
-      "expected_output": "Uses `resend emails send --to alice@example.com --template tpl_abc123 --var name=Alice --var plan=pro` without --from or --subject since the template provides those",
+      "expected_output": "Uses `resend emails send --to alice@example.com --template tpl_abc123 --var name=Alice --var plan=pro`; --from and --subject are optional since the template may provide those",
       "files": [],
       "expectations": [
         "Uses `emails send` (not `templates send` or other subcommand)",
         "Includes `--template tpl_abc123` flag",
         "Includes `--var name=Alice` and `--var plan=pro` (or equivalent key=value pairs)",
         "Includes `--to alice@example.com`",
-        "Does NOT include `--from` or `--subject` (template provides these)"
+        "Does NOT require `--from` or `--subject` (templates may include these, making them optional when sending)"
       ]
     },
     {
