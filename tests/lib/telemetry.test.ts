@@ -229,6 +229,7 @@ describe('trackCommand', () => {
     });
     delete process.env.CI;
     delete process.env.GITHUB_ACTIONS;
+    delete process.env.TERM;
 
     trackCommand('emails list', {});
     expect(parsePayload().properties.interactive).toBe(true);
@@ -282,6 +283,7 @@ describe('trackCommand', () => {
     });
     delete process.env.CI;
     delete process.env.GITHUB_ACTIONS;
+    delete process.env.TERM;
 
     trackCommand('emails send', {});
     const notice1 = stderrSpy.mock.calls.length;
@@ -367,5 +369,17 @@ describe('flushFromFile', () => {
     const [, options] = fetchSpy.mock.calls[0] as [string, RequestInit];
     expect(options.body).toBe(payload);
     expect(existsSync(tmpFile)).toBe(false);
+  });
+
+  test('rejects paths outside the temp directory', async () => {
+    const siblingPath = join(
+      `${tmpdir()}-outside`,
+      `resend-telemetry-${process.pid}-1.json`,
+    );
+
+    await expect(flushFromFile(siblingPath)).rejects.toThrow(
+      'invalid telemetry flush path',
+    );
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 });

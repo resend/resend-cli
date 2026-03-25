@@ -187,6 +187,22 @@ describe('batch command', () => {
     expect(output).not.toContain('invalid_json');
   });
 
+  test('errors with invalid_format when an entry is not an object', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const file = await writeTmpJson([null]);
+    const { batchCommand } = await import('../../../src/commands/emails/batch');
+    await expectExit1(() =>
+      batchCommand.parseAsync(['--file', file], { from: 'user' }),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_format');
+    expect(output).toContain('Email at index 0 must be a JSON object.');
+  });
+
   test('rejects entries with attachments', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});

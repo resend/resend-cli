@@ -7,7 +7,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { isAbsolute, join, relative } from 'node:path';
 import { getConfigDir } from './config';
 import { isInteractive } from './tty';
 import { detectInstallMethodName } from './update-check';
@@ -150,8 +150,10 @@ export async function flushPayload(payload: string): Promise<void> {
 
 export async function flushFromFile(filePath: string): Promise<void> {
   const resolved = join(filePath);
+  const relativeToTmp = relative(tmpdir(), resolved);
   if (
-    !resolved.startsWith(tmpdir()) ||
+    isAbsolute(relativeToTmp) ||
+    relativeToTmp.startsWith('..') ||
     !/resend-telemetry-.*\.json$/.test(resolved)
   ) {
     throw new Error('invalid telemetry flush path');

@@ -99,7 +99,17 @@ export const batchCommand = new Command('batch')
     }
 
     for (let i = 0; i < emails.length; i++) {
-      const email = emails[i] as Record<string, unknown>;
+      const email = emails[i];
+      if (email === null || typeof email !== 'object' || Array.isArray(email)) {
+        outputError(
+          {
+            message: `Email at index ${i} must be a JSON object.`,
+            code: 'invalid_format',
+          },
+          { json: globalOpts.json },
+        );
+      }
+
       if ('attachments' in email) {
         outputError(
           {
