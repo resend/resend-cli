@@ -14,12 +14,12 @@ export const getContactCommand = new Command('get')
   .addHelpText(
     'after',
     buildHelpText({
-      output: `  {\n    "object": "contact",\n    "id": "<uuid>",\n    "email": "user@example.com",\n    "first_name": "Jane",\n    "last_name": "Smith",\n    "created_at": "2026-01-01T00:00:00.000Z",\n    "unsubscribed": false,\n    "properties": {}\n  }`,
+      output: `  {\n    "object": "contact",\n    "id": "e169aa45-1ecf-4183-9955-b1499d5701d3",\n    "email": "steve.wozniak@gmail.com",\n    "first_name": "Steve",\n    "last_name": "Wozniak",\n    "created_at": "2026-01-01T00:00:00.000Z",\n    "unsubscribed": false,\n    "properties": {}\n  }`,
       errorCodes: ['auth_error', 'fetch_error'],
       examples: [
-        'resend contacts get 479e3145-dd38-4932-8c0c-e58b548c9e76',
-        'resend contacts get user@example.com',
-        'resend contacts get 479e3145-dd38-4932-8c0c-e58b548c9e76 --json',
+        'resend contacts get e169aa45-1ecf-4183-9955-b1499d5701d3',
+        'resend contacts get steve.wozniak@gmail.com',
+        'resend contacts get e169aa45-1ecf-4183-9955-b1499d5701d3 --json',
       ],
     }),
   )

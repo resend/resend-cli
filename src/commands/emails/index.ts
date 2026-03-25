@@ -14,17 +14,12 @@ export const emailsCommand = new Command('emails')
     'after',
     buildHelpText({
       examples: [
-        'resend emails list',
-        'resend emails send --from you@domain.com --to user@example.com --subject "Hello" --text "Hi"',
+        'resend emails send --from onboarding@resend.com --to delivered@resend.com --subject "Hello" --text "Hi"',
         'resend emails get <email-id>',
         'resend emails batch --file ./emails.json',
         'resend emails cancel <email-id>',
-        'resend emails update <email-id> --scheduled-at 2024-08-05T11:52:01.858Z',
         'resend emails receiving list',
-        'resend emails receiving get <email-id>',
-        'resend emails receiving attachments <email-id>',
-        'resend emails receiving attachment <email-id> <attachment-id>',
-        'resend emails receiving forward <email-id> --to user@example.com --from you@domain.com',
+        'resend emails receiving forward <email-id> --to delivered@resend.com --from onboarding@resend.com',
       ],
     }),
   )

@@ -20,8 +20,8 @@ Non-interactive: --segment-id is required.`,
       output: `  {"id":"<segment-membership-id>"}`,
       errorCodes: ['auth_error', 'missing_segment_id', 'add_segment_error'],
       examples: [
-        'resend contacts add-segment 479e3145-dd38-4932-8c0c-e58b548c9e76 --segment-id 7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
-        'resend contacts add-segment user@example.com --segment-id 7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d --json',
+        'resend contacts add-segment e169aa45-1ecf-4183-9955-b1499d5701d3 --segment-id 78261eea-8f8b-4381-83c6-79fa7120f1cf',
+        'resend contacts add-segment steve.wozniak@gmail.com --segment-id 78261eea-8f8b-4381-83c6-79fa7120f1cf --json',
       ],
     }),
   )

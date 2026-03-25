@@ -25,8 +25,8 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
       output: `  {"object":"contact","id":"<id>","deleted":true}`,
       errorCodes: ['auth_error', 'confirmation_required', 'delete_error'],
       examples: [
-        'resend contacts delete 479e3145-dd38-4932-8c0c-e58b548c9e76 --yes',
-        'resend contacts delete user@example.com --yes --json',
+        'resend contacts delete 520784e2-887d-4c25-b53c-4ad46ad38100 --yes',
+        'resend contacts delete acme@example.com --yes --json',
       ],
     }),
   )

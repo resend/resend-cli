@@ -34,7 +34,7 @@ export const batchCommand = new Command('batch')
     'after',
     buildHelpText({
       context:
-        'Non-interactive: --file\nLimit: 100 emails per request (API hard limit — warned if exceeded)\nUnsupported per-email fields: attachments, scheduled_at\n\nFile format (--file path):\n  [\n    {"from":"you@domain.com","to":["user@example.com"],"subject":"Hello","text":"Hi"},\n    {"from":"you@domain.com","to":["other@example.com"],"subject":"Hello","html":"<b>Hi</b>"}\n  ]',
+        'Non-interactive: --file\nLimit: 100 emails per request (API hard limit — warned if exceeded)\nUnsupported per-email fields: attachments, scheduled_at\n\nFile format (--file path):\n  [\n    {"from":"onboarding@resend.com","to":["delivered@resend.com"],"subject":"Hello","text":"Hi"},\n    {"from":"onboarding@resend.com","to":["delivered@resend.com"],"subject":"Hello","html":"<b>Hi</b>"}\n  ]',
       output: '  [{"id":"<email-id>"},{"id":"<email-id>"}]',
       errorCodes: [
         'auth_error',
@@ -49,11 +49,8 @@ export const batchCommand = new Command('batch')
       ],
       examples: [
         'resend emails batch --file ./emails.json',
-        'resend emails batch --file ./emails.json --json',
-        'resend emails batch --file ./emails.json --idempotency-key my-batch-2026-02-18',
         'resend emails batch --file ./emails.json --batch-validation permissive',
-        'echo \'[{"from":"you@domain.com","to":["user@example.com"],"subject":"Hi","text":"Hello"}]\' | resend emails batch --file -',
-        'RESEND_API_KEY=re_123 resend emails batch --file ./emails.json --json',
+        'echo \'[{"from":"onboarding@resend.com","to":["delivered@resend.com"],"subject":"Hi","text":"Hello"}]\' | resend emails batch --file -',
       ],
     }),
   )

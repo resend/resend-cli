@@ -41,8 +41,8 @@ Topics not included in the array are left unchanged.`,
         'update_topics_error',
       ],
       examples: [
-        `resend contacts update-topics 479e3145-dd38-4932-8c0c-e58b548c9e76 --topics '[{"id":"topic-uuid","subscription":"opt_in"}]'`,
-        `resend contacts update-topics user@example.com --topics '[{"id":"t1","subscription":"opt_out"},{"id":"t2","subscription":"opt_in"}]' --json`,
+        `resend contacts update-topics e169aa45-1ecf-4183-9955-b1499d5701d3 --topics '[{"id":"b6d24b8e-af0b-4c3c-be0c-359bbd97381e","subscription":"opt_in"}]'`,
+        `resend contacts update-topics steve.wozniak@gmail.com --topics '[{"id":"b6d24b8e-af0b-4c3c-be0c-359bbd97381e","subscription":"opt_out"},{"id":"07d84122-7224-4881-9c31-1c048e204602","subscription":"opt_in"}]' --json`,
       ],
     }),
   )

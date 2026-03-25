@@ -44,12 +44,9 @@ Unsubscribed: setting --unsubscribed is a team-wide opt-out from all broadcasts,
         'create_error',
       ],
       examples: [
-        'resend contacts create --email jane@example.com',
-        'resend contacts create --email jane@example.com --first-name Jane --last-name Smith',
-        'resend contacts create --email jane@example.com --unsubscribed',
-        `resend contacts create --email jane@example.com --properties '{"company":"Acme","plan":"pro"}'`,
-        'resend contacts create --email jane@example.com --segment-id 7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d --segment-id a2f4c6e8-1b3d-5f7a-9c2e-4d6f8a1b3c5e',
-        'resend contacts create --email jane@example.com --first-name Jane --json',
+        'resend contacts create --email steve.wozniak@gmail.com',
+        'resend contacts create --email steve.wozniak@gmail.com --first-name Steve --last-name Wozniak',
+        `resend contacts create --email steve.wozniak@gmail.com --properties '{"company":"Acme","plan":"pro"}'`,
       ],
     }),
   )
@@ -58,7 +55,7 @@ Unsubscribed: setting --unsubscribed is a team-wide opt-out from all broadcasts,
 
     const email = await requireText(
       opts.email,
-      { message: 'Email address', placeholder: 'user@example.com' },
+      { message: 'Email address', placeholder: 'steve.wozniak@gmail.com' },
       { message: 'Missing --email flag.', code: 'missing_email' },
       globalOpts,
     );

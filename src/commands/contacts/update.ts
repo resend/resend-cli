@@ -43,10 +43,10 @@ Properties: --properties merges the given JSON object with existing properties.
       output: `  {"object":"contact","id":"<id>"}`,
       errorCodes: ['auth_error', 'invalid_properties', 'update_error'],
       examples: [
-        'resend contacts update 479e3145-dd38-4932-8c0c-e58b548c9e76 --unsubscribed',
-        'resend contacts update user@example.com --no-unsubscribed',
-        `resend contacts update 479e3145-dd38-4932-8c0c-e58b548c9e76 --properties '{"plan":"pro"}'`,
-        'resend contacts update user@example.com --unsubscribed --json',
+        'resend contacts update e169aa45-1ecf-4183-9955-b1499d5701d3 --unsubscribed',
+        'resend contacts update acme@example.com --no-unsubscribed',
+        `resend contacts update e169aa45-1ecf-4183-9955-b1499d5701d3 --properties '{"plan":"pro"}'`,
+        'resend contacts update acme@example.com --unsubscribed --json',
       ],
     }),
   )

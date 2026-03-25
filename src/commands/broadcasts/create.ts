@@ -78,11 +78,9 @@ Scheduling:
         'create_error',
       ],
       examples: [
-        'resend broadcasts create --from hello@domain.com --subject "Weekly Update" --segment-id 7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d --html "<p>Hello {{{FIRST_NAME|there}}}</p>"',
-        'resend broadcasts create --from hello@domain.com --subject "Launch" --segment-id 7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d --html-file ./email.html --send',
-        'resend broadcasts create --from hello@domain.com --subject "Launch" --segment-id 7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d --text "Hello!" --send --scheduled-at "tomorrow at 9am ET"',
-        'resend broadcasts create --from hello@domain.com --subject "News" --segment-id 7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d --html "<p>Hi</p>" --json',
-        'echo "<p>Hello</p>" | resend broadcasts create --from hello@domain.com --subject "Update" --segment-id 7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d --html-file -',
+        'resend broadcasts create --from onboarding@resend.com --subject "Weekly Update" --segment-id 7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d --html "<p>Hello {{{FIRST_NAME|there}}}</p>"',
+        'resend broadcasts create --from onboarding@resend.com --subject "Launch" --segment-id 7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d --html-file ./email.html --send',
+        'resend broadcasts create --from onboarding@resend.com --subject "Launch" --segment-id 7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d --text "Hello!" --send --scheduled-at "tomorrow at 9am ET"',
       ],
     }),
   )
@@ -132,7 +130,7 @@ Scheduling:
       }
       const result = await p.text({
         message: 'From address',
-        placeholder: 'e.g. hello@domain.com',
+        placeholder: 'e.g. onboarding@resend.com',
         validate: (v) => (!v ? 'Required' : undefined),
       });
       if (p.isCancel(result)) {

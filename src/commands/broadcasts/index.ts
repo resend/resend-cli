@@ -27,7 +27,7 @@ Scheduling:
   --scheduled-at accepts ISO 8601 or natural language e.g. "in 1 hour", "tomorrow at 9am ET".`,
       examples: [
         'resend broadcasts list',
-        'resend broadcasts create --from hello@domain.com --subject "Launch" --segment-id 7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d --html "<p>Hi {{{FIRST_NAME|there}}}</p>"',
+        'resend broadcasts create --from onboarding@resend.com --subject "Launch" --segment-id 7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d --html "<p>Hi {{{FIRST_NAME|there}}}</p>"',
         'resend broadcasts send d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
         'resend broadcasts send d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6 --scheduled-at "in 1 hour"',
         'resend broadcasts get d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',

@@ -22,7 +22,7 @@ export const receivingCommand = new Command('receiving')
         'resend emails receiving get <email-id>',
         'resend emails receiving attachments <email-id>',
         'resend emails receiving attachment <email-id> <attachment-id>',
-        'resend emails receiving forward <email-id> --to user@example.com --from you@domain.com',
+        'resend emails receiving forward <email-id> --to delivered@resend.com --from onboarding@resend.com',
       ],
     }),
   )
