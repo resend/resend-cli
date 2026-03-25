@@ -9,6 +9,7 @@ import { readFile } from '../../lib/files';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
 import { cancelAndExit } from '../../lib/prompts';
+import { buildReactEmailHtml } from '../../lib/react-email';
 import { isInteractive } from '../../lib/tty';
 
 export const createBroadcastCommand = new Command('create')
@@ -29,6 +30,10 @@ export const createBroadcastCommand = new Command('create')
     '--text-file <path>',
     'Path to a plain-text file for the body (use "-" for stdin)',
   )
+  .option(
+    '--react-email <path>',
+    'Path to a React Email template (.tsx) to bundle, render, and use as HTML body',
+  )
   .option('--name <name>', 'Internal label for the broadcast (optional)')
   .option('--reply-to <address>', 'Reply-to address (optional)')
   .option(
@@ -48,7 +53,7 @@ export const createBroadcastCommand = new Command('create')
     'after',
     buildHelpText({
       context: `Non-interactive: --from, --subject, and --segment-id are required.
-Body: provide at least one of --html, --html-file, --text, or --text-file.
+Body: provide at least one of --html, --html-file, --text, --text-file, or --react-email.
 
 Variable interpolation:
   HTML bodies support triple-brace syntax for contact properties.
@@ -68,6 +73,8 @@ Scheduling:
         'file_read_error',
         'invalid_options',
         'stdin_read_error',
+        'react_email_build_error',
+        'react_email_render_error',
         'create_error',
       ],
       examples: [
@@ -87,6 +94,16 @@ Scheduling:
         {
           message:
             'Cannot read both --html-file and --text-file from stdin. Pipe to one and pass the other as a file path.',
+          code: 'invalid_options',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
+    if (opts.reactEmail && (opts.html || opts.htmlFile)) {
+      outputError(
+        {
+          message: 'Cannot use --react-email with --html or --html-file',
           code: 'invalid_options',
         },
         { json: globalOpts.json },
@@ -181,12 +198,16 @@ Scheduling:
       text = readFile(opts.textFile, globalOpts);
     }
 
+    if (opts.reactEmail) {
+      html = await buildReactEmailHtml(opts.reactEmail, globalOpts);
+    }
+
     if (!html && !text) {
       if (!isInteractive() || globalOpts.json) {
         outputError(
           {
             message:
-              'Missing body. Provide --html, --html-file, --text, or --text-file.',
+              'Missing body. Provide --html, --html-file, --text, --text-file, or --react-email.',
             code: 'missing_body',
           },
           { json: globalOpts.json },

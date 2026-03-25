@@ -5,6 +5,7 @@ import { readFile } from '../../lib/files';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
 import { pickId } from '../../lib/prompts';
+import { buildReactEmailHtml } from '../../lib/react-email';
 import { broadcastPickerConfig } from './utils';
 
 export const updateBroadcastCommand = new Command('update')
@@ -27,6 +28,10 @@ export const updateBroadcastCommand = new Command('update')
     '--text-file <path>',
     'Path to a plain-text file to replace the body (use "-" for stdin)',
   )
+  .option(
+    '--react-email <path>',
+    'Path to a React Email template (.tsx) to bundle, render, and use as HTML body',
+  )
   .option('--name <name>', 'Update internal label')
   .addHelpText(
     'after',
@@ -44,6 +49,8 @@ Variable interpolation:
         'file_read_error',
         'invalid_options',
         'stdin_read_error',
+        'react_email_build_error',
+        'react_email_render_error',
         'update_error',
       ],
       examples: [
@@ -64,12 +71,13 @@ Variable interpolation:
       !opts.htmlFile &&
       !opts.text &&
       !opts.textFile &&
+      !opts.reactEmail &&
       !opts.name
     ) {
       outputError(
         {
           message:
-            'Provide at least one option to update: --from, --subject, --html, --html-file, --text, --text-file, or --name.',
+            'Provide at least one option to update: --from, --subject, --html, --html-file, --text, --text-file, --react-email, or --name.',
           code: 'no_changes',
         },
         { json: globalOpts.json },
@@ -81,6 +89,16 @@ Variable interpolation:
         {
           message:
             'Cannot read both --html-file and --text-file from stdin. Pipe to one and pass the other as a file path.',
+          code: 'invalid_options',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
+    if (opts.reactEmail && (opts.html || opts.htmlFile)) {
+      outputError(
+        {
+          message: 'Cannot use --react-email with --html or --html-file',
           code: 'invalid_options',
         },
         { json: globalOpts.json },
@@ -108,6 +126,10 @@ Variable interpolation:
         );
       }
       text = readFile(opts.textFile, globalOpts);
+    }
+
+    if (opts.reactEmail) {
+      html = await buildReactEmailHtml(opts.reactEmail, globalOpts);
     }
 
     await runWrite(

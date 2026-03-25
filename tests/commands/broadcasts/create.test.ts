@@ -29,6 +29,14 @@ vi.mock('resend', () => ({
   },
 }));
 
+const mockBuildReactEmailHtml = vi.fn(
+  async () => '<html><body>Rendered</body></html>',
+);
+
+vi.mock('../../../src/lib/react-email', () => ({
+  buildReactEmailHtml: (...args: unknown[]) => mockBuildReactEmailHtml(...args),
+}));
+
 describe('broadcasts create command', () => {
   const restoreEnv = captureTestEnv();
   let spies: ReturnType<typeof setupOutputSpies> | undefined;
@@ -41,6 +49,7 @@ describe('broadcasts create command', () => {
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
     mockCreate.mockClear();
+    mockBuildReactEmailHtml.mockClear();
   });
 
   afterEach(() => {
@@ -600,6 +609,64 @@ describe('broadcasts create command', () => {
     expect(readFileSpy).toHaveBeenCalledWith('-', expect.anything());
     const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.text).toBe('stdin text content');
+  });
+
+  test('creates broadcast with --react-email flag', async () => {
+    spies = setupOutputSpies();
+
+    const { createBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/create'
+    );
+    await createBroadcastCommand.parseAsync(
+      [
+        '--from',
+        'hello@domain.com',
+        '--subject',
+        'Weekly Update',
+        '--segment-id',
+        '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
+        '--react-email',
+        './emails/newsletter.tsx',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockBuildReactEmailHtml).toHaveBeenCalledWith(
+      './emails/newsletter.tsx',
+      expect.anything(),
+    );
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.html).toBe('<html><body>Rendered</body></html>');
+  });
+
+  test('errors with invalid_options when --react-email and --html used together', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { createBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/create'
+    );
+    await expectExit1(() =>
+      createBroadcastCommand.parseAsync(
+        [
+          '--from',
+          'hello@domain.com',
+          '--subject',
+          'News',
+          '--segment-id',
+          '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
+          '--react-email',
+          './emails/newsletter.tsx',
+          '--html',
+          '<p>Hi</p>',
+        ],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_options');
   });
 
   test('errors with file_read_error when --html-file path is unreadable', async () => {

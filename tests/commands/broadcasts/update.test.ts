@@ -29,6 +29,14 @@ vi.mock('resend', () => ({
   },
 }));
 
+const mockBuildReactEmailHtml = vi.fn(
+  async () => '<html><body>Rendered</body></html>',
+);
+
+vi.mock('../../../src/lib/react-email', () => ({
+  buildReactEmailHtml: (...args: unknown[]) => mockBuildReactEmailHtml(...args),
+}));
+
 describe('broadcasts update command', () => {
   const restoreEnv = captureTestEnv();
   let spies: ReturnType<typeof setupOutputSpies> | undefined;
@@ -40,6 +48,7 @@ describe('broadcasts update command', () => {
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
     mockUpdate.mockClear();
+    mockBuildReactEmailHtml.mockClear();
   });
 
   afterEach(() => {
@@ -330,6 +339,54 @@ describe('broadcasts update command', () => {
           '-',
           '--text-file',
           '-',
+        ],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_options');
+  });
+
+  test('updates broadcast html with --react-email flag', async () => {
+    spies = setupOutputSpies();
+
+    const { updateBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/update'
+    );
+    await updateBroadcastCommand.parseAsync(
+      [
+        'd1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+        '--react-email',
+        './emails/newsletter.tsx',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockBuildReactEmailHtml).toHaveBeenCalledWith(
+      './emails/newsletter.tsx',
+      expect.anything(),
+    );
+    const payload = mockUpdate.mock.calls[0][1] as Record<string, unknown>;
+    expect(payload.html).toBe('<html><body>Rendered</body></html>');
+  });
+
+  test('errors with invalid_options when --react-email and --html used together', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { updateBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/update'
+    );
+    await expectExit1(() =>
+      updateBroadcastCommand.parseAsync(
+        [
+          'd1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+          '--react-email',
+          './emails/newsletter.tsx',
+          '--html',
+          '<p>Hi</p>',
         ],
         { from: 'user' },
       ),

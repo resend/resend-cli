@@ -1,0 +1,66 @@
+{
+  "skill_name": "resend-cli",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Send a welcome email using template tpl_abc123 with variables name=Alice and plan=pro to alice@example.com",
+      "expected_output": "Uses `resend emails send --to alice@example.com --template tpl_abc123 --var name=Alice --var plan=pro`; --from and --subject are optional since the template may provide those",
+      "files": [],
+      "expectations": [
+        "Uses `emails send` (not `templates send` or other subcommand)",
+        "Includes `--template tpl_abc123` flag",
+        "Includes `--var name=Alice` and `--var plan=pro` (or equivalent key=value pairs)",
+        "Includes `--to alice@example.com`",
+        "Does NOT require `--from` or `--subject` (templates may include these, making them optional when sending)"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Create a broadcast from newsletter.txt to segment seg_xyz, schedule it for tomorrow at 3pm ET",
+      "expected_output": "Uses `resend broadcasts create --from ... --subject ... --segment-id seg_xyz --text-file newsletter.txt --send --scheduled-at \"tomorrow at 3pm ET\"`",
+      "files": [],
+      "expectations": [
+        "Uses `broadcasts create` subcommand",
+        "Includes `--text-file newsletter.txt` (not --text with file contents, not --html-file)",
+        "Includes `--segment-id seg_xyz`",
+        "Includes `--send` flag (required for scheduling)",
+        "Includes `--scheduled-at` with natural language or ISO 8601 datetime"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "List my API keys and tell me which ones haven't been used recently",
+      "expected_output": "Runs `resend api-keys list` and interprets the last_used_at field to identify stale keys",
+      "files": [],
+      "expectations": [
+        "Uses `api-keys list` subcommand",
+        "Mentions or references the `last_used_at` field to identify unused keys",
+        "Does NOT fabricate a flag like `--sort-by` or `--unused` that doesn't exist"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Open the broadcast bcast_123 in the dashboard",
+      "expected_output": "Runs `resend broadcasts open bcast_123`",
+      "files": [],
+      "expectations": [
+        "Uses `broadcasts open bcast_123` (not `open` or `resend open`)",
+        "Does NOT fall back to manually constructing a URL or using `open` with a URL",
+        "Does NOT use `broadcasts get` as a substitute"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Create a template called 'Order Confirmation' from the HTML in stdin, with variables ORDER_ID:string and TOTAL:number:0",
+      "expected_output": "Uses `resend templates create --name \"Order Confirmation\" --html-file - --var ORDER_ID:string --var TOTAL:number:0`",
+      "files": [],
+      "expectations": [
+        "Uses `templates create` subcommand",
+        "Includes `--name \"Order Confirmation\"` (or equivalent quoting)",
+        "Uses `--html-file -` or `--html-file \"-\"` for stdin input",
+        "Includes `--var ORDER_ID:string` and `--var TOTAL:number:0`",
+        "Does NOT use `--html` with inline content as a substitute for stdin"
+      ]
+    }
+  ]
+}

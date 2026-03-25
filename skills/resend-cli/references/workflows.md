@@ -42,13 +42,28 @@ resend emails send \
   --cc manager@example.com \
   --reply-to support@yourdomain.com
 
-# Scheduled email
+# React Email template (.tsx) — bundles, renders to HTML, and sends
+resend emails send \
+  --from "you@yourdomain.com" \
+  --to recipient@example.com \
+  --subject "Welcome" \
+  --react-email ./emails/welcome.tsx
+
+# React Email with plain-text fallback
+resend emails send \
+  --from "you@yourdomain.com" \
+  --to recipient@example.com \
+  --subject "Welcome" \
+  --react-email ./emails/welcome.tsx \
+  --text "Welcome to our platform!"
+
+# Scheduled email (ISO 8601 or natural language)
 resend emails send \
   --from "you@yourdomain.com" \
   --to recipient@example.com \
   --subject "Reminder" \
   --text "Don't forget!" \
-  --scheduled-at "<future-ISO-8601-datetime>"
+  --scheduled-at "tomorrow at 9am ET"
 
 # Check status
 resend emails get <email-id>
@@ -118,6 +133,14 @@ resend broadcasts create \
   --html "<h1>Hello {{{FIRST_NAME|there}}}</h1><p>News content...</p>" \
   --send
 
+# Create broadcast from a React Email template
+resend broadcasts create \
+  --from "news@yourdomain.com" \
+  --subject "Monthly Update" \
+  --segment-id <segment-id> \
+  --react-email ./emails/newsletter.tsx \
+  --text "Plain-text fallback for email clients that don't support HTML"
+
 # Or create as draft first, then send later
 resend broadcasts create \
   --from "news@yourdomain.com" \
@@ -128,8 +151,8 @@ resend broadcasts create \
 
 resend broadcasts send <broadcast-id>
 
-# Schedule for later
-resend broadcasts send <broadcast-id> --scheduled-at "<future-ISO-8601-datetime>"
+# Schedule for later (ISO 8601 or natural language)
+resend broadcasts send <broadcast-id> --scheduled-at "in 2 hours"
 ```
 
 ---
@@ -218,11 +241,25 @@ resend templates create \
 # Publish the template
 resend templates publish welcome-email
 
+# Send an email using a template
+resend emails send \
+  --to user@example.com \
+  --template <template-id> \
+  --var NAME=Jane --var PLAN=pro
+
 # Duplicate for A/B testing
 resend templates duplicate welcome-email
 
 # Update the copy
 resend templates update <new-id> --name "Welcome Email v2" --subject "Hey {{{NAME}}}!"
+
+# Create a template from a React Email component
+resend templates create \
+  --name "Onboarding" \
+  --react-email ./emails/onboarding.tsx
+
+# Update a template with a new React Email version
+resend templates update <id> --react-email ./emails/onboarding-v2.tsx
 ```
 
 ---

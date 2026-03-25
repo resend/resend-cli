@@ -6,6 +6,7 @@ import { readFile } from '../../lib/files';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError, outputResult } from '../../lib/output';
 import { requireText } from '../../lib/prompts';
+import { buildReactEmailHtml } from '../../lib/react-email';
 import { withSpinner } from '../../lib/spinner';
 import { isInteractive } from '../../lib/tty';
 
@@ -14,6 +15,10 @@ export const batchCommand = new Command('batch')
   .option(
     '--file <path>',
     'Path to a JSON file containing an array of email objects (use "-" for stdin; required in non-interactive mode)',
+  )
+  .option(
+    '--react-email <path>',
+    'Path to a React Email template (.tsx) — rendered HTML is set on every email in the batch',
   )
   .option(
     '--idempotency-key <key>',
@@ -38,6 +43,8 @@ export const batchCommand = new Command('batch')
         'stdin_read_error',
         'invalid_json',
         'invalid_format',
+        'react_email_build_error',
+        'react_email_render_error',
         'batch_error',
       ],
       examples: [
@@ -96,6 +103,13 @@ export const batchCommand = new Command('batch')
       console.warn(
         `Warning: ${emails.length} emails exceeds the 100-email limit. The API may reject this request.`,
       );
+    }
+
+    if (opts.reactEmail) {
+      const reactHtml = await buildReactEmailHtml(opts.reactEmail, globalOpts);
+      for (const email of emails) {
+        (email as Record<string, unknown>).html = reactHtml;
+      }
     }
 
     for (let i = 0; i < emails.length; i++) {

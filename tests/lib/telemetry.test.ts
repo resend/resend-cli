@@ -341,6 +341,11 @@ describe('flushPayload', () => {
     fetchSpy.mockRejectedValue(new Error('network error'));
     await expect(flushPayload('{}')).rejects.toThrow('network error');
   });
+
+  test('throws on non-ok HTTP response', async () => {
+    fetchSpy.mockResolvedValue({ ok: false, status: 400 } as Response);
+    await expect(flushPayload('{}')).rejects.toThrow('telemetry flush failed');
+  });
 });
 
 describe('flushFromFile', () => {
@@ -360,7 +365,7 @@ describe('flushFromFile', () => {
     }
   });
 
-  test('reads file, deletes it, and sends payload', async () => {
+  test('reads file, sends payload, then deletes it', async () => {
     const payload = JSON.stringify({ event: 'test' });
     writeFileSync(tmpFile, payload);
 
@@ -411,5 +416,14 @@ describe('flushFromFile', () => {
         rmSync(outsideFile, { force: true });
       }
     }
+  });
+
+  test('preserves file when flush fails', async () => {
+    fetchSpy.mockResolvedValue({ ok: false, status: 500 } as Response);
+    const payload = JSON.stringify({ event: 'test' });
+    writeFileSync(tmpFile, payload);
+
+    await expect(flushFromFile(tmpFile)).rejects.toThrow();
+    expect(existsSync(tmpFile)).toBe(true);
   });
 });

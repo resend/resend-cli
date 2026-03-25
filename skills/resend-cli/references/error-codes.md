@@ -19,7 +19,9 @@ All errors exit with code `1` and output JSON to **stderr**:
 
 | Code | Cause | Resolution |
 |------|-------|------------|
-| `missing_body` | None of `--text`, `--html`, or `--html-file` provided | Provide at least one body flag |
+| `missing_body` | None of `--text`, `--html`, `--html-file`, or `--react-email` provided | Provide at least one body flag |
+| `react_email_build_error` | Failed to bundle a React Email `.tsx` template with esbuild | Check the template compiles; ensure `react` and `@react-email/render` (or `@react-email/components`) are installed in the project |
+| `react_email_render_error` | Bundled template failed during `render()` | Check the component exports a default function and renders valid React Email markup |
 | `file_read_error` | Could not read file from `--html-file` path | Check file path exists and is readable |
 | `send_error` | Resend API rejected the send request | Check from address is on a verified domain; check recipient is valid |
 
