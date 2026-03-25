@@ -399,8 +399,17 @@ describe('flushFromFile', () => {
     );
     symlinkSync(outsideFile, symlinkPath);
 
-    await expect(flushFromFile(symlinkPath)).rejects.toThrow();
-    expect(fetchSpy).not.toHaveBeenCalled();
-    expect(existsSync(symlinkPath)).toBe(true);
+    try {
+      await expect(flushFromFile(symlinkPath)).rejects.toThrow();
+      expect(fetchSpy).not.toHaveBeenCalled();
+      expect(existsSync(symlinkPath)).toBe(true);
+    } finally {
+      if (existsSync(symlinkPath)) {
+        rmSync(symlinkPath, { force: true });
+      }
+      if (existsSync(outsideFile)) {
+        rmSync(outsideFile, { force: true });
+      }
+    }
   });
 });
