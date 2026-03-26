@@ -7,7 +7,65 @@ import {
   test,
   vi,
 } from 'vitest';
-import { printPaginationHint } from '../../src/lib/pagination';
+import type { GlobalOpts } from '../../src/lib/client';
+import {
+  buildPaginationOpts,
+  printPaginationHint,
+} from '../../src/lib/pagination';
+import { captureTestEnv, mockExitThrow, setNonInteractive } from '../helpers';
+
+describe('buildPaginationOpts', () => {
+  const restoreEnv = captureTestEnv();
+  let exitSpy: MockInstance | undefined;
+  let logSpy: MockInstance | undefined;
+
+  afterEach(() => {
+    restoreEnv();
+    exitSpy?.mockRestore();
+    logSpy?.mockRestore();
+    exitSpy = undefined;
+    logSpy = undefined;
+  });
+
+  const globalOpts = {} as GlobalOpts;
+
+  test('returns limit only when no cursors are provided', () => {
+    expect(buildPaginationOpts(10, undefined, undefined, globalOpts)).toEqual({
+      limit: 10,
+    });
+  });
+
+  test('returns after cursor when provided', () => {
+    expect(
+      buildPaginationOpts(10, 'cursor_after', undefined, globalOpts),
+    ).toEqual({
+      limit: 10,
+      after: 'cursor_after',
+    });
+  });
+
+  test('returns before cursor when provided', () => {
+    expect(
+      buildPaginationOpts(10, undefined, 'cursor_before', globalOpts),
+    ).toEqual({
+      limit: 10,
+      before: 'cursor_before',
+    });
+  });
+
+  test('errors when both after and before cursors are provided', () => {
+    setNonInteractive();
+    logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    expect(() =>
+      buildPaginationOpts(10, 'cursor_after', 'cursor_before', globalOpts),
+    ).toThrow();
+
+    const output = logSpy.mock.calls.map((call) => call[0]).join(' ');
+    expect(output).toContain('invalid_pagination');
+  });
+});
 
 describe('printPaginationHint', () => {
   let logSpy: MockInstance;

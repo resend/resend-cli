@@ -49,7 +49,12 @@ export const listContactPropertiesCommand = new Command('list')
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const limit = parseLimitOpt(opts.limit, globalOpts);
-    const paginationOpts = buildPaginationOpts(limit, opts.after, opts.before);
+    const paginationOpts = buildPaginationOpts(
+      limit,
+      opts.after,
+      opts.before,
+      globalOpts,
+    );
     await runList(
       {
         spinner: {
