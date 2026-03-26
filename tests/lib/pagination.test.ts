@@ -27,19 +27,27 @@ describe('buildPaginationOpts', () => {
     logSpy = undefined;
   });
 
+  const globalOpts = {} as GlobalOpts;
+
   test('returns limit only when no cursors are provided', () => {
-    expect(buildPaginationOpts(10)).toEqual({ limit: 10 });
+    expect(buildPaginationOpts(10, undefined, undefined, globalOpts)).toEqual({
+      limit: 10,
+    });
   });
 
   test('returns after cursor when provided', () => {
-    expect(buildPaginationOpts(10, 'cursor_after')).toEqual({
+    expect(
+      buildPaginationOpts(10, 'cursor_after', undefined, globalOpts),
+    ).toEqual({
       limit: 10,
       after: 'cursor_after',
     });
   });
 
   test('returns before cursor when provided', () => {
-    expect(buildPaginationOpts(10, undefined, 'cursor_before')).toEqual({
+    expect(
+      buildPaginationOpts(10, undefined, 'cursor_before', globalOpts),
+    ).toEqual({
       limit: 10,
       before: 'cursor_before',
     });
@@ -51,12 +59,7 @@ describe('buildPaginationOpts', () => {
     exitSpy = mockExitThrow();
 
     expect(() =>
-      buildPaginationOpts(
-        10,
-        'cursor_after',
-        'cursor_before',
-        {} as GlobalOpts,
-      ),
+      buildPaginationOpts(10, 'cursor_after', 'cursor_before', globalOpts),
     ).toThrow();
 
     const output = logSpy.mock.calls.map((call) => call[0]).join(' ');

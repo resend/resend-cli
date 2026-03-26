@@ -18,9 +18,9 @@ export function parseLimitOpt(raw: string, globalOpts: GlobalOpts): number {
 
 export function buildPaginationOpts(
   limit: number,
-  after?: string,
-  before?: string,
-  globalOpts?: GlobalOpts,
+  after: string | undefined,
+  before: string | undefined,
+  globalOpts: GlobalOpts,
 ) {
   if (after !== undefined && before !== undefined) {
     outputError(
@@ -29,7 +29,7 @@ export function buildPaginationOpts(
           'Cannot use --after and --before together. Pass only one cursor.',
         code: 'invalid_pagination',
       },
-      { json: globalOpts?.json },
+      { json: globalOpts.json },
     );
   }
   return after ? { limit, after } : before ? { limit, before } : { limit };

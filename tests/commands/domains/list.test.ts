@@ -16,49 +16,31 @@ import {
   setupOutputSpies,
 } from '../../helpers';
 
-const mockList = vi.fn(
-  async (
-    _opts?: Record<string, unknown>,
-  ): Promise<{
-    data: {
-      object: string;
-      data: Array<{
-        id: string;
-        name: string;
-        status: string;
-        region: string;
-        created_at: string;
-        capabilities: { sending: string; receiving: string };
-      }>;
-      has_more: boolean;
-    } | null;
-    error: { message: string; name: string } | null;
-  }> => ({
-    data: {
-      object: 'list',
-      data: [
-        {
-          id: 'domain-1',
-          name: 'example.com',
-          status: 'verified',
-          region: 'us-east-1',
-          created_at: '2026-01-01T00:00:00.000Z',
-          capabilities: { sending: 'enabled', receiving: 'disabled' },
-        },
-        {
-          id: 'domain-2',
-          name: 'test.com',
-          status: 'pending',
-          region: 'eu-west-1',
-          created_at: '2026-01-02T00:00:00.000Z',
-          capabilities: { sending: 'enabled', receiving: 'disabled' },
-        },
-      ],
-      has_more: false,
-    },
-    error: null,
-  }),
-);
+const mockList = vi.fn(async () => ({
+  data: {
+    object: 'list',
+    data: [
+      {
+        id: 'domain-1',
+        name: 'example.com',
+        status: 'verified',
+        region: 'us-east-1',
+        created_at: '2026-01-01T00:00:00.000Z',
+        capabilities: { sending: 'enabled', receiving: 'disabled' },
+      },
+      {
+        id: 'domain-2',
+        name: 'test.com',
+        status: 'pending',
+        region: 'eu-west-1',
+        created_at: '2026-01-02T00:00:00.000Z',
+        capabilities: { sending: 'enabled', receiving: 'disabled' },
+      },
+    ],
+    has_more: false,
+  },
+  error: null,
+}));
 
 vi.mock('resend', () => ({
   Resend: class MockResend {
