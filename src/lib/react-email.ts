@@ -20,6 +20,17 @@ export async function buildReactEmailHtml(
   templatePath: string,
   globalOpts: GlobalOpts,
 ): Promise<string> {
+  if ('pkg' in process) {
+    return outputError(
+      {
+        message:
+          '--react-email is only available when installed via npm. Run: npx resend@latest',
+        code: 'react_email_build_error',
+      },
+      { json: globalOpts.json },
+    );
+  }
+
   const resolved = resolve(templatePath);
   if (!existsSync(resolved)) {
     return outputError(

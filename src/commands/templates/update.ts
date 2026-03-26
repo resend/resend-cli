@@ -25,7 +25,7 @@ export const updateTemplateCommand = new Command('update')
   )
   .option(
     '--react-email <path>',
-    'Path to a React Email template (.tsx) to bundle, render, and use as HTML body',
+    'Path to a React Email template (.tsx) to bundle, render, and use as HTML body (npm install only)',
   )
   .option('--from <address>', 'Update sender address')
   .option('--reply-to <address>', 'Update reply-to address')

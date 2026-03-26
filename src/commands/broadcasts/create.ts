@@ -32,7 +32,7 @@ export const createBroadcastCommand = new Command('create')
   )
   .option(
     '--react-email <path>',
-    'Path to a React Email template (.tsx) to bundle, render, and use as HTML body',
+    'Path to a React Email template (.tsx) to bundle, render, and use as HTML body (npm install only)',
   )
   .option('--name <name>', 'Internal label for the broadcast (optional)')
   .option('--reply-to <address>', 'Reply-to address (optional)')

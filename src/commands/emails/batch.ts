@@ -18,7 +18,7 @@ export const batchCommand = new Command('batch')
   )
   .option(
     '--react-email <path>',
-    'Path to a React Email template (.tsx) — rendered HTML is set on every email in the batch',
+    'Path to a React Email template (.tsx) — rendered HTML is set on every email in the batch (npm install only)',
   )
   .option(
     '--idempotency-key <key>',
