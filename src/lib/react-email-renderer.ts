@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module';
 
 export async function renderReactEmail(cjsPath: string): Promise<string> {
-  const require = createRequire(import.meta.url);
+  const require = createRequire(cjsPath);
   delete require.cache[cjsPath];
   const emailModule = require(cjsPath) as {
     default: (...args: unknown[]) => unknown;
