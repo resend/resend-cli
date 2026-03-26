@@ -112,7 +112,7 @@ describe('generateBashCompletion', () => {
   test('outputs valid bash completion script', () => {
     const output = generateBashCompletion(getTestTree());
     expect(output).toContain('_myapp_completions');
-    expect(output).toContain('complete -F _myapp_completions myapp');
+    expect(output).toContain('complete -o default -F _myapp_completions myapp');
   });
 
   test('includes top-level commands', () => {
@@ -157,6 +157,12 @@ describe('generateBashCompletion', () => {
     expect(output).toContain('--profile|-p|--from|--to|--priority)');
     expect(output).toContain('i=$((i + 1)) ;;');
   });
+
+  test('falls back to file completion for value flags without choices', () => {
+    const output = generateBashCompletion(getTestTree());
+    expect(output).toContain('--from|--to) return ;;');
+    expect(output).toContain('--profile|-p) return ;;');
+  });
 });
 
 describe('generateZshCompletion', () => {
@@ -177,6 +183,22 @@ describe('generateZshCompletion', () => {
   test('excludes hidden commands', () => {
     const output = generateZshCompletion(getTestTree());
     expect(output).not.toContain('secret');
+  });
+
+  test('falls back to _files for value flags without choices', () => {
+    const output = generateZshCompletion(getTestTree());
+    expect(output).toContain('--from|--to) _files; return ;;');
+    expect(output).toContain('--profile|-p) _files; return ;;');
+  });
+
+  test('falls back to _files for leaf commands without subcommands', () => {
+    const output = generateZshCompletion(getTestTree());
+    const lines = output.split('\n');
+    const start = lines.findIndex((l) => l.includes('"emails send")'));
+    const end = lines.findIndex((l, i) => i > start && /^\s+"/.test(l));
+    const block = lines.slice(start, end).join('\n');
+    expect(block).toContain('_files');
+    expect(block).not.toContain("_describe 'command'");
   });
 });
 
@@ -230,5 +252,10 @@ describe('generatePowerShellCompletion', () => {
   test('skips option values when building cmdPath', () => {
     const output = generatePowerShellCompletion(getTestTree());
     expect(output).toContain('$valueFlags -contains $words[$i]');
+  });
+
+  test('falls back to default completion for value flags without choices', () => {
+    const output = generatePowerShellCompletion(getTestTree());
+    expect(output).toContain('{ $_ -in @("--from", "--to") } { return }');
   });
 });

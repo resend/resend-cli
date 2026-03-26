@@ -167,12 +167,21 @@ export function generateBashCompletion(tree: CommandNode): string {
     }
 
     lines.push(`    "${key}")`);
-    if (hasChoices) {
+    const freeValueOpts = entry.options.filter(
+      (o) => o.takesValue && !o.choices,
+    );
+    if (hasChoices || freeValueOpts.length > 0) {
       lines.push('      case "$prev" in');
       for (const opt of choiceOpts) {
         lines.push(
           `        ${opt.long}) COMPREPLY=($(compgen -W "${opt.choices?.join(' ')}" -- "$cur")); return ;;`,
         );
+      }
+      if (freeValueOpts.length > 0) {
+        const pattern = freeValueOpts
+          .flatMap((o) => [o.long, o.short].filter(Boolean))
+          .join('|');
+        lines.push(`        ${pattern}) return ;;`);
       }
       lines.push('      esac');
     }
@@ -192,7 +201,7 @@ export function generateBashCompletion(tree: CommandNode): string {
   lines.push('  esac');
   lines.push('}');
   lines.push('');
-  lines.push(`complete -F _${name}_completions ${name}`);
+  lines.push(`complete -o default -F _${name}_completions ${name}`);
 
   return lines.join('\n');
 }
@@ -241,17 +250,22 @@ export function generateZshCompletion(tree: CommandNode): string {
     const opts = entry.options.filter((o) => o.long);
     const hasSubs = entry.subcommands.length > 0;
 
-    if (choiceOpts.length === 0 && opts.length === 0 && !hasSubs) {
-      continue;
-    }
-
     lines.push(`    "${key}")`);
-    if (choiceOpts.length > 0) {
+    const freeValueOpts = entry.options.filter(
+      (o) => o.takesValue && !o.choices,
+    );
+    if (choiceOpts.length > 0 || freeValueOpts.length > 0) {
       lines.push('      case "$prev" in');
       for (const opt of choiceOpts) {
         lines.push(
           `        ${opt.long}) compadd -- ${opt.choices?.join(' ')}; return ;;`,
         );
+      }
+      if (freeValueOpts.length > 0) {
+        const pattern = freeValueOpts
+          .flatMap((o) => [o.long, o.short].filter(Boolean))
+          .join('|');
+        lines.push(`        ${pattern}) _files; return ;;`);
       }
       lines.push('      esac');
     }
@@ -270,6 +284,8 @@ export function generateZshCompletion(tree: CommandNode): string {
         .map((s) => `"${s.name}:${escapeZsh(s.description)}"`)
         .join(' ');
       lines.push(`      local -a cmds=(${descs}); _describe 'command' cmds`);
+    } else {
+      lines.push('      _files');
     }
     lines.push('      ;;');
   }
@@ -413,13 +429,23 @@ export function generatePowerShellCompletion(tree: CommandNode): string {
     }
 
     lines.push(`    "${key}" {`);
-    if (hasChoices) {
+    const freeValueOpts = entry.options.filter(
+      (o) => o.takesValue && !o.choices,
+    );
+    if (hasChoices || freeValueOpts.length > 0) {
       lines.push('      switch ($prev) {');
       for (const opt of choiceOpts) {
         const choicesList = opt.choices?.map((c) => `"${c}"`).join(', ');
         lines.push(
           `        "${opt.long}" { @(${choicesList}) | Where-Object { $_ -like "$cur*" } | ForEach-Object { [System.Management.Automation.CompletionResult]::new($_) }; return }`,
         );
+      }
+      if (freeValueOpts.length > 0) {
+        const list = freeValueOpts
+          .flatMap((o) => [o.long, o.short].filter(Boolean))
+          .map((f) => `"${f}"`)
+          .join(', ');
+        lines.push(`        { $_ -in @(${list}) } { return }`);
       }
       lines.push('      }');
     }
