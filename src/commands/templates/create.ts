@@ -63,7 +63,7 @@ Non-interactive: --name and a body (--html, --html-file, or --react-email) are r
       ],
       examples: [
         'resend templates create --name "Welcome" --html "<h1>Hello</h1>" --subject "Welcome!"',
-        'resend templates create --name "Newsletter" --html-file ./template.html --from hello@domain.com',
+        'resend templates create --name "Newsletter" --html-file ./template.html --from acme@example.com',
         'resend templates create --name "Onboarding" --html "<p>Hi</p>" --alias onboarding --json',
         'resend templates create --name "Order" --html "<p>{{{PRODUCT}}}: {{{PRICE}}}</p>" --var PRODUCT:string:item --var PRICE:number:25',
       ],

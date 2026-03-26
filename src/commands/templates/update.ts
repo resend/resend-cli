@@ -56,7 +56,7 @@ export const updateTemplateCommand = new Command('update')
       examples: [
         'resend templates update 78261eea-8f8b-4381-83c6-79fa7120f1cf --name "Updated Name"',
         'resend templates update 78261eea-8f8b-4381-83c6-79fa7120f1cf --html-file ./new-template.html',
-        'resend templates update 78261eea-8f8b-4381-83c6-79fa7120f1cf --subject "New Subject" --from "new@domain.com" --json',
+        'resend templates update 78261eea-8f8b-4381-83c6-79fa7120f1cf --subject "New Subject" --from "acme@example.com" --json',
         'resend templates update 78261eea-8f8b-4381-83c6-79fa7120f1cf --var PRODUCT:string:item --var PRICE:number:25',
       ],
     }),

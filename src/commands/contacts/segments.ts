@@ -16,9 +16,9 @@ export const listContactSegmentsCommand = new Command('segments')
       output: `  {"object":"list","data":[{"id":"<segment-uuid>","name":"Newsletter Subscribers","created_at":"..."}],"has_more":false}`,
       errorCodes: ['auth_error', 'list_error'],
       examples: [
-        'resend contacts segments 479e3145-dd38-4932-8c0c-e58b548c9e76',
-        'resend contacts segments user@example.com',
-        'resend contacts segments 479e3145-dd38-4932-8c0c-e58b548c9e76 --json',
+        'resend contacts segments e169aa45-1ecf-4183-9955-b1499d5701d3',
+        'resend contacts segments steve.wozniak@gmail.com',
+        'resend contacts segments e169aa45-1ecf-4183-9955-b1499d5701d3 --json',
       ],
     }),
   )

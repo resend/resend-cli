@@ -24,9 +24,9 @@ Use "resend contacts update-topics <id>" to change subscription statuses.`,
       output: `  {"object":"list","data":[{"id":"...","name":"Product Updates","description":"...","subscription":"opt_in"}],"has_more":false}`,
       errorCodes: ['auth_error', 'list_error'],
       examples: [
-        'resend contacts topics 479e3145-dd38-4932-8c0c-e58b548c9e76',
-        'resend contacts topics user@example.com',
-        'resend contacts topics 479e3145-dd38-4932-8c0c-e58b548c9e76 --json',
+        'resend contacts topics e169aa45-1ecf-4183-9955-b1499d5701d3',
+        'resend contacts topics steve.wozniak@gmail.com',
+        'resend contacts topics e169aa45-1ecf-4183-9955-b1499d5701d3 --json',
       ],
     }),
   )
