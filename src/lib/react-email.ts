@@ -24,7 +24,7 @@ export async function buildReactEmailHtml(
     return outputError(
       {
         message:
-          '--react-email is only available when installed via npm. Run: npx resend@latest',
+          '--react-email requires a Node.js install (npm i -g resend-cli or npx resend)',
         code: 'react_email_build_error',
       },
       { json: globalOpts.json },
