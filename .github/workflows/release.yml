@@ -245,4 +245,5 @@ jobs:
         run: |
           gh workflow run publish-release.yml \
             --repo resend/homebrew-cli \
-            --field version="${GITHUB_REF_NAME}"
+            --field version="${GITHUB_REF_NAME}" \
+            --field reviewer="${GITHUB_ACTOR}"
