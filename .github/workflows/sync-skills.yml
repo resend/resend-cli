@@ -26,7 +26,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           repository: resend/resend-skills
-          token: ${{ secrets.SYNC_SKILLS_TOKEN }}
+          token: ${{ secrets.SYNC_SKILLS_TO_RESEND_SKILLS }}
           path: target
 
       - name: Compare skills
@@ -65,7 +65,7 @@ jobs:
       - name: Copy skills and open PR
         if: steps.diff.outputs.changed == 'true'
         env:
-          GH_TOKEN: ${{ secrets.SYNC_SKILLS_TOKEN }}
+          GH_TOKEN: ${{ secrets.SYNC_SKILLS_TO_RESEND_SKILLS }}
         run: |
           cd target
 
