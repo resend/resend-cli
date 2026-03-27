@@ -56,7 +56,7 @@
     ]
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.8",
+    "@biomejs/biome": "2.4.9",
     "@types/node": "24.12.0",
     "tsx": "4.21.0",
     "typescript": "5.9.3",
