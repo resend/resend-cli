@@ -44,8 +44,14 @@ jobs:
             for item in SKILL.md references scripts assets; do
               src="$skill_dir/$item"
               dst="$target_dir/$item"
+              # Detect additions and modifications
               if [ -e "$src" ] && ! diff -rq "$src" "$dst" > /dev/null 2>&1; then
                 echo "Changed: $skill_name/$item"
+                changed=true
+              fi
+              # Detect deletions (exists in target but not in source)
+              if [ -e "$dst" ] && [ ! -e "$src" ]; then
+                echo "Deleted: $skill_name/$item"
                 changed=true
               fi
             done
