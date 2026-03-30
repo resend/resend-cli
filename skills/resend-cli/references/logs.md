@@ -30,4 +30,6 @@ Retrieve a single API request log with full request and response bodies.
 
 ## logs open
 
-Open the logs page in the Resend dashboard in your default browser.
+Open a log or the logs list in the Resend dashboard in your default browser.
+
+**Argument:** `[id]` — Log ID. Omit to open the logs list.

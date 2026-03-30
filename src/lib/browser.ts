@@ -60,6 +60,7 @@ export async function openInBrowserOrLog(
 export const RESEND_URLS = {
   emails: `${RESEND_BASE}/emails`,
   logs: `${RESEND_BASE}/logs`,
+  log: (id: string) => `${RESEND_BASE}/logs/${id}`,
   templates: `${RESEND_BASE}/templates`,
   template: (id: string) => `${RESEND_BASE}/templates/${id}`,
   broadcasts: `${RESEND_BASE}/broadcasts`,
