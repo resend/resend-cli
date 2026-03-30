@@ -3,10 +3,10 @@ name: resend-cli
 description: >
   Operate the Resend platform from the terminal — send emails (including React Email
   .tsx templates via --react-email), manage domains, contacts, broadcasts, templates,
-  webhooks, and API keys via the `resend` CLI. Use when the user wants to run Resend
-  commands in the shell, scripts, or CI/CD pipelines, or send/preview React Email
-  templates. Always load this skill before running `resend` commands — it contains
-  the non-interactive flag contract and gotchas that prevent silent failures.
+  webhooks, API keys, and logs via the `resend` CLI. Use when the user wants to run
+  Resend commands in the shell, scripts, or CI/CD pipelines, or send/preview React
+  Email templates. Always load this skill before running `resend` commands — it
+  contains the non-interactive flag contract and gotchas that prevent silent failures.
 license: MIT
 metadata:
   author: resend
@@ -27,6 +27,7 @@ references:
   - references/segments.md
   - references/templates.md
   - references/topics.md
+  - references/logs.md
   - references/webhooks.md
   - references/auth.md
   - references/workflows.md
@@ -70,6 +71,7 @@ Auth resolves: `--api-key` flag > `RESEND_API_KEY` env > config file (`resend lo
 | `emails` | send, get, list, batch, cancel, update |
 | `emails receiving` | list, get, attachments, forward, listen |
 | `domains` | create, verify, update, delete, list |
+| `logs` | list, get, open |
 | `api-keys` | create, list, delete |
 | `broadcasts` | create, send, update, delete, list |
 | `contacts` | create, update, delete, segments, topics |
@@ -94,6 +96,7 @@ Read the matching reference file for detailed flags and output shapes.
 | 5 | **Expecting `domains list` to include DNS records** | List returns summaries only — use `domains get <id>` for the full `records[]` array |
 | 6 | **Sending a dashboard-created broadcast via CLI** | Only API-created broadcasts can be sent with `broadcasts send` — dashboard broadcasts must be sent from the dashboard |
 | 7 | **Passing `--events` to `webhooks update` expecting additive behavior** | `--events` replaces the entire subscription list — always pass the complete set |
+| 8 | **Expecting `logs list` to include request/response bodies** | List returns summary fields only — use `logs get <id>` for full `request_body` and `response_body` |
 
 ## Common Patterns
 
@@ -139,6 +142,7 @@ resend doctor -q
 - **Managing contacts, segments, or topics** → [references/contacts.md](references/contacts.md), [references/segments.md](references/segments.md), [references/topics.md](references/topics.md)
 - **Defining contact properties** → [references/contact-properties.md](references/contact-properties.md)
 - **Working with templates** → [references/templates.md](references/templates.md)
+- **Viewing API request logs** → [references/logs.md](references/logs.md)
 - **Setting up webhooks or listening for events** → [references/webhooks.md](references/webhooks.md)
 - **Auth, profiles, or health checks** → [references/auth.md](references/auth.md)
 - **Multi-step recipes** (setup, CI/CD, broadcast workflow) → [references/workflows.md](references/workflows.md)
