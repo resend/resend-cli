@@ -12,6 +12,7 @@ import { contactsCommand } from './commands/contacts/index';
 import { doctorCommand } from './commands/doctor';
 import { domainsCommand } from './commands/domains/index';
 import { emailsCommand } from './commands/emails/index';
+import { logsCommand } from './commands/logs/index';
 import { openCommand } from './commands/open';
 import { segmentsCommand } from './commands/segments/index';
 import { teamsDeprecatedCommand } from './commands/teams-deprecated';
@@ -131,6 +132,7 @@ ${pc.gray('Examples:')}
   .addCommand(segmentsCommand)
   .addCommand(topicsCommand)
   .addCommand(domainsCommand)
+  .addCommand(logsCommand)
   .addCommand(apiKeysCommand)
   .addCommand(webhooksCommand)
   .addCommand(authCommand)
