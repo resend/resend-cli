@@ -47,7 +47,7 @@
     "commander": "14.0.3",
     "esbuild": "0.27.4",
     "picocolors": "1.1.1",
-    "resend": "6.9.4"
+    "resend": "6.10.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
