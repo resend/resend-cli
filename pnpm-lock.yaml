@@ -24,7 +24,7 @@ importers:
         specifier: 1.1.1
         version: 1.1.1
       resend:
-        specifier: ^6.10.0
+        specifier: 6.10.0
         version: 6.10.0
     devDependencies:
       '@biomejs/biome':
