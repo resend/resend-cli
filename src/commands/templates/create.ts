@@ -162,11 +162,7 @@ Non-interactive: --name and a body (--html, --html-file, or --react-email) are r
 
     await runCreate(
       {
-        spinner: {
-          loading: 'Creating template...',
-          success: 'Template created',
-          fail: 'Failed to create template',
-        },
+        loading: 'Creating template...',
         sdkCall: (resend) =>
           Promise.resolve(
             resend.templates.create({
@@ -181,7 +177,7 @@ Non-interactive: --name and a body (--html, --html-file, or --react-email) are r
             }),
           ),
         onInteractive: (d) => {
-          console.log(`\nTemplate created: ${d.id}`);
+          console.log(`Template created: ${d.id}`);
         },
       },
       globalOpts,

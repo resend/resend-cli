@@ -44,11 +44,7 @@ The response includes has_more: true when additional pages exist.`,
     );
     await runList(
       {
-        spinner: {
-          loading: 'Fetching webhooks...',
-          success: 'Webhooks fetched',
-          fail: 'Failed to list webhooks',
-        },
+        loading: 'Fetching webhooks...',
         sdkCall: (resend) => resend.webhooks.list(paginationOpts),
         onInteractive: (list) => {
           console.log(renderWebhooksTable(list.data));

@@ -24,14 +24,10 @@ export const cancelCommand = new Command('cancel')
     const id = await pickId(idArg, emailPickerConfig, globalOpts);
     await runWrite(
       {
-        spinner: {
-          loading: 'Cancelling email...',
-          success: 'Email cancelled',
-          fail: 'Failed to cancel email',
-        },
+        loading: 'Cancelling email...',
         sdkCall: (resend) => resend.emails.cancel(id),
         errorCode: 'cancel_error',
-        successMsg: `\nEmail cancelled: ${id}`,
+        successMsg: `Email cancelled: ${id}`,
       },
       globalOpts,
     );

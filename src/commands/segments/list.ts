@@ -47,11 +47,7 @@ or "resend contacts add-segment".`,
     );
     await runList(
       {
-        spinner: {
-          loading: 'Fetching segments...',
-          success: 'Segments fetched',
-          fail: 'Failed to list segments',
-        },
+        loading: 'Fetching segments...',
         sdkCall: (resend) => resend.segments.list(paginationOpts),
         onInteractive: (list) => {
           console.log(renderSegmentsTable(list.data));

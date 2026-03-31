@@ -37,13 +37,9 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
       !!opts.yes,
       {
         confirmMessage: `Delete contact property "${id}"?\nThis will remove this property from ALL contacts permanently.`,
-        spinner: {
-          loading: 'Deleting contact property...',
-          success: 'Contact property deleted',
-          fail: 'Failed to delete contact property',
-        },
+        loading: 'Deleting contact property...',
         object: 'contact_property',
-        successMsg: 'Contact property deleted.',
+        successMsg: 'Contact property deleted',
         sdkCall: (resend) => resend.contactProperties.remove(id),
       },
       globalOpts,

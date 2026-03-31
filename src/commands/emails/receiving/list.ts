@@ -48,11 +48,7 @@ export const listReceivingCommand = new Command('list')
 
     await runList(
       {
-        spinner: {
-          loading: 'Fetching received emails...',
-          success: 'Received emails fetched',
-          fail: 'Failed to list received emails',
-        },
+        loading: 'Fetching received emails...',
         sdkCall: (resend) => resend.emails.receiving.list(paginationOpts),
         onInteractive: (list) => {
           console.log(renderReceivingEmailsTable(list.data));

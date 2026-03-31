@@ -111,21 +111,17 @@ Non-interactive: --endpoint and --events are required.`,
 
     await runCreate(
       {
-        spinner: {
-          loading: 'Creating webhook...',
-          success: 'Webhook created',
-          fail: 'Failed to create webhook',
-        },
+        loading: 'Creating webhook...',
         sdkCall: (resend) =>
           resend.webhooks.create({
             endpoint,
             events: selectedEvents,
           }),
         onInteractive: (d) => {
-          console.log(`\nWebhook created`);
+          console.log(`Webhook created`);
           console.log(`ID:             ${d.id}`);
           console.log(`Signing Secret: ${d.signing_secret}`);
-          console.log(`\nSave the signing secret — it is only shown once.`);
+          console.log(`Save the signing secret — it is only shown once.`);
         },
       },
       globalOpts,

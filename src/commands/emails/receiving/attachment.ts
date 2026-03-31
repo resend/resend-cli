@@ -29,11 +29,7 @@ export const getAttachmentCommand = new Command('attachment')
     const resend = await requireClient(globalOpts);
 
     const data = await withSpinner(
-      {
-        loading: 'Fetching attachment...',
-        success: 'Attachment fetched',
-        fail: 'Failed to fetch attachment',
-      },
+      'Fetching attachment...',
       () =>
         resend.emails.receiving.attachments.get({ emailId, id: attachmentId }),
       'fetch_error',
@@ -42,7 +38,7 @@ export const getAttachmentCommand = new Command('attachment')
 
     if (!globalOpts.json && isInteractive()) {
       const d = data;
-      console.log(`\n${d.filename ?? '(unnamed)'}`);
+      console.log(`${d.filename ?? '(unnamed)'}`);
       console.log(`ID:           ${d.id}`);
       console.log(`Content-Type: ${d.content_type}`);
       console.log(`Size:         ${d.size} bytes`);

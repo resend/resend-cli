@@ -97,11 +97,7 @@ Permissions:
 
     await runCreate(
       {
-        spinner: {
-          loading: 'Creating API key...',
-          success: 'API key created',
-          fail: 'Failed to create API key',
-        },
+        loading: 'Creating API key...',
         sdkCall: (resend) =>
           resend.apiKeys.create({
             name,
@@ -109,7 +105,7 @@ Permissions:
             ...(domainId && { domain_id: domainId }),
           }),
         onInteractive: (d) => {
-          console.log(`\n  ${pc.gray('Name:')}    ${name}`);
+          console.log(`  ${pc.gray('Name:')}    ${name}`);
           console.log(`  ${pc.gray('ID:')}      ${d.id}`);
           console.log(`  ${pc.gray('Token:')}   ${d.token}`);
           console.log(

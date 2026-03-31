@@ -43,11 +43,7 @@ To change the default subscription, delete the topic and recreate it.`,
 
     await runWrite(
       {
-        spinner: {
-          loading: 'Updating topic...',
-          success: 'Topic updated',
-          fail: 'Failed to update topic',
-        },
+        loading: 'Updating topic...',
         sdkCall: (resend) =>
           resend.topics.update({
             id,

@@ -39,11 +39,7 @@ export const listLogsCommand = new Command('list')
     );
     await runList(
       {
-        spinner: {
-          loading: 'Fetching logs...',
-          success: 'Logs fetched',
-          fail: 'Failed to list logs',
-        },
+        loading: 'Fetching logs...',
         sdkCall: (resend) => resend.logs.list(paginationOpts),
         onInteractive: (list) => {
           console.log(renderLogsTable(list.data));

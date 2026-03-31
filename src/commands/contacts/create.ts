@@ -92,11 +92,7 @@ Unsubscribed: setting --unsubscribed is a team-wide opt-out from all broadcasts,
 
     await runCreate(
       {
-        spinner: {
-          loading: 'Creating contact...',
-          success: 'Contact created',
-          fail: 'Failed to create contact',
-        },
+        loading: 'Creating contact...',
         sdkCall: (resend) =>
           resend.contacts.create({
             email,
@@ -109,7 +105,7 @@ Unsubscribed: setting --unsubscribed is a team-wide opt-out from all broadcasts,
             }),
           }),
         onInteractive: (data) => {
-          console.log(`\nContact created: ${data.id}`);
+          console.log(`Contact created: ${data.id}`);
         },
       },
       globalOpts,

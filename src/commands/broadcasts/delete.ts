@@ -35,13 +35,9 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
       !!opts.yes,
       {
         confirmMessage: `Delete broadcast ${id}?\nIf scheduled, delivery will be cancelled.`,
-        spinner: {
-          loading: 'Deleting broadcast...',
-          success: 'Broadcast deleted',
-          fail: 'Failed to delete broadcast',
-        },
+        loading: 'Deleting broadcast...',
         object: 'broadcast',
-        successMsg: 'Broadcast deleted.',
+        successMsg: 'Broadcast deleted',
         sdkCall: (resend) => resend.broadcasts.remove(id),
       },
       globalOpts,

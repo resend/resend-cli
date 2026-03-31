@@ -52,11 +52,7 @@ export const createDomainCommand = new Command('create')
 
     await runCreate(
       {
-        spinner: {
-          loading: 'Creating domain...',
-          success: 'Domain created',
-          fail: 'Failed to create domain',
-        },
+        loading: 'Creating domain...',
         sdkCall: (resend) =>
           resend.domains.create({
             name,
@@ -70,7 +66,7 @@ export const createDomainCommand = new Command('create')
             }),
           }),
         onInteractive: (d) => {
-          console.log(`\nDomain created: ${d.name} (id: ${d.id})`);
+          console.log(`Domain created: ${d.name} (id: ${d.id})`);
           console.log('\nDNS Records to configure:');
           console.log(renderDnsRecordsTable(d.records, d.name));
           console.log(

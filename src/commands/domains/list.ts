@@ -42,11 +42,7 @@ export const listDomainsCommand = new Command('list')
     );
     await runList(
       {
-        spinner: {
-          loading: 'Fetching domains...',
-          success: 'Domains fetched',
-          fail: 'Failed to list domains',
-        },
+        loading: 'Fetching domains...',
         sdkCall: (resend) => resend.domains.list(paginationOpts),
         onInteractive: (list) => {
           console.log(renderDomainsTable(list.data));

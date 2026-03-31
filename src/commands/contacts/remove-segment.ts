@@ -46,11 +46,7 @@ The <segmentId> argument must be a segment UUID (not an email).`,
 
     await runWrite(
       {
-        spinner: {
-          loading: 'Removing contact from segment...',
-          success: 'Contact removed from segment',
-          fail: 'Failed to remove contact from segment',
-        },
+        loading: 'Removing contact from segment...',
         sdkCall: (resend) => resend.contacts.segments.remove(payload),
         errorCode: 'remove_segment_error',
         successMsg: `Contact removed from segment: ${segmentId}`,

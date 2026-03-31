@@ -75,11 +75,7 @@ Use "all" as a shorthand for all 17 event types.
 
     await runWrite(
       {
-        spinner: {
-          loading: 'Updating webhook...',
-          success: 'Webhook updated',
-          fail: 'Failed to update webhook',
-        },
+        loading: 'Updating webhook...',
         sdkCall: (resend) =>
           resend.webhooks.update(id, {
             ...(opts.endpoint && { endpoint: opts.endpoint }),

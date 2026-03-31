@@ -27,11 +27,7 @@ Poll the status with: resend domains get <id>`,
 
     await runWrite(
       {
-        spinner: {
-          loading: 'Verifying domain...',
-          success: 'Verification started',
-          fail: 'Failed to verify domain',
-        },
+        loading: 'Verifying domain...',
         sdkCall: (resend) => resend.domains.verify(id),
         errorCode: 'verify_error',
         successMsg: `Domain verification started. Check status with resend domains get ${id}.`,

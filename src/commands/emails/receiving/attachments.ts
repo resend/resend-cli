@@ -59,11 +59,7 @@ export const listAttachmentsCommand = new Command('attachments')
 
     await runList(
       {
-        spinner: {
-          loading: 'Fetching attachments...',
-          success: 'Attachments fetched',
-          fail: 'Failed to list attachments',
-        },
+        loading: 'Fetching attachments...',
         sdkCall: (resend) =>
           resend.emails.receiving.attachments.list({
             emailId,

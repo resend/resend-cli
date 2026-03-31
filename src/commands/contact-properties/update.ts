@@ -73,11 +73,7 @@ The fallback value is used in broadcast template interpolation when a contact ha
 
     await runWrite(
       {
-        spinner: {
-          loading: 'Updating contact property...',
-          success: 'Contact property updated',
-          fail: 'Failed to update contact property',
-        },
+        loading: 'Updating contact property...',
         sdkCall: (resend) =>
           resend.contactProperties.update({
             id,

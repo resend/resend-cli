@@ -34,14 +34,10 @@ Non-interactive: --name is required.`,
 
     await runCreate(
       {
-        spinner: {
-          loading: 'Creating segment...',
-          success: 'Segment created',
-          fail: 'Failed to create segment',
-        },
+        loading: 'Creating segment...',
         sdkCall: (resend) => resend.segments.create({ name }),
         onInteractive: (data) => {
-          console.log(`\nSegment created: ${data.id}`);
+          console.log(`Segment created: ${data.id}`);
           console.log(`Name: ${data.name}`);
         },
       },

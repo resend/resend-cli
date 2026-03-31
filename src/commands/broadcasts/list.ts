@@ -49,11 +49,7 @@ To retrieve full details (html, from, subject), use: resend broadcasts get <id>`
     );
     await runList(
       {
-        spinner: {
-          loading: 'Fetching broadcasts...',
-          success: 'Broadcasts fetched',
-          fail: 'Failed to list broadcasts',
-        },
+        loading: 'Fetching broadcasts...',
         sdkCall: (resend) => resend.broadcasts.list(paginationOpts),
         onInteractive: (list) => {
           console.log(renderBroadcastsTable(list.data));

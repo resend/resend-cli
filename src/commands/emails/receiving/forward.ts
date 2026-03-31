@@ -28,11 +28,7 @@ export const forwardCommand = new Command('forward')
     const id = await pickId(idArg, receivedEmailPickerConfig, globalOpts);
     await runCreate(
       {
-        spinner: {
-          loading: 'Forwarding email...',
-          success: 'Email forwarded',
-          fail: 'Failed to forward email',
-        },
+        loading: 'Forwarding email...',
         sdkCall: (resend) =>
           resend.emails.receiving.forward({
             emailId: id,
@@ -40,7 +36,7 @@ export const forwardCommand = new Command('forward')
             from: opts.from,
           }),
         onInteractive: (data) => {
-          console.log(`\nEmail forwarded: ${data.id}`);
+          console.log(`Email forwarded: ${data.id}`);
         },
       },
       globalOpts,

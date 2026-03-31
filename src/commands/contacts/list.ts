@@ -46,11 +46,7 @@ Pagination: use --after or --before with a contact ID as the cursor.
     );
     await runList(
       {
-        spinner: {
-          loading: 'Fetching contacts...',
-          success: 'Contacts fetched',
-          fail: 'Failed to list contacts',
-        },
+        loading: 'Fetching contacts...',
         sdkCall: (resend) => resend.contacts.list(paginationOpts),
         onInteractive: (list) => {
           console.log(renderContactsTable(list.data));

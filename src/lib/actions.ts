@@ -10,7 +10,6 @@ import { isInteractive } from './tty';
 type SdkCall<T> = (
   resend: Resend,
 ) => Promise<{ data: T | null; error: { message: string } | null }>;
-type SpinnerMessages = { loading: string; success: string; fail: string };
 
 /**
  * Shared pattern for all get commands:
@@ -18,7 +17,7 @@ type SpinnerMessages = { loading: string; success: string; fail: string };
  */
 export async function runGet<T>(
   config: {
-    spinner: SpinnerMessages;
+    loading: string;
     sdkCall: SdkCall<T>;
     onInteractive: (data: T) => void;
     permission?: ApiKeyPermission;
@@ -30,7 +29,7 @@ export async function runGet<T>(
     : undefined;
   const resend = await requireClient(globalOpts, clientOpts);
   const data = await withSpinner(
-    config.spinner,
+    config.loading,
     () => config.sdkCall(resend),
     'fetch_error',
     globalOpts,
@@ -51,7 +50,7 @@ export async function runDelete(
   skipConfirm: boolean,
   config: {
     confirmMessage: string;
-    spinner: SpinnerMessages;
+    loading: string;
     object: string;
     successMsg: string;
     sdkCall: SdkCall<unknown>;
@@ -67,7 +66,7 @@ export async function runDelete(
     await confirmDelete(id, config.confirmMessage, globalOpts);
   }
   await withSpinner(
-    config.spinner,
+    config.loading,
     () => config.sdkCall(resend),
     'delete_error',
     globalOpts,
@@ -88,7 +87,7 @@ export async function runDelete(
  */
 export async function runCreate<T>(
   config: {
-    spinner: SpinnerMessages;
+    loading: string;
     sdkCall: SdkCall<T>;
     onInteractive: (data: T) => void;
     permission?: ApiKeyPermission;
@@ -100,7 +99,7 @@ export async function runCreate<T>(
     : undefined;
   const resend = await requireClient(globalOpts, clientOpts);
   const data = await withSpinner(
-    config.spinner,
+    config.loading,
     () => config.sdkCall(resend),
     'create_error',
     globalOpts,
@@ -119,7 +118,7 @@ export async function runCreate<T>(
  */
 export async function runWrite<T>(
   config: {
-    spinner: SpinnerMessages;
+    loading: string;
     sdkCall: SdkCall<T>;
     errorCode: string;
     successMsg: string;
@@ -132,7 +131,7 @@ export async function runWrite<T>(
     : undefined;
   const resend = await requireClient(globalOpts, clientOpts);
   const data = await withSpinner(
-    config.spinner,
+    config.loading,
     () => config.sdkCall(resend),
     config.errorCode,
     globalOpts,
@@ -153,7 +152,7 @@ export async function runWrite<T>(
  */
 export async function runList<T>(
   config: {
-    spinner: SpinnerMessages;
+    loading: string;
     sdkCall: SdkCall<T>;
     onInteractive: (result: T) => void;
     permission?: ApiKeyPermission;
@@ -165,7 +164,7 @@ export async function runList<T>(
     : undefined;
   const resend = await requireClient(globalOpts, clientOpts);
   const result = await withSpinner(
-    config.spinner,
+    config.loading,
     () => config.sdkCall(resend),
     'list_error',
     globalOpts,

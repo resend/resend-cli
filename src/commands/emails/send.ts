@@ -357,11 +357,7 @@ export const sendCommand = new Command('send')
     }
 
     const data = await withSpinner(
-      {
-        loading: opts.scheduledAt ? 'Scheduling email...' : 'Sending email...',
-        success: opts.scheduledAt ? 'Email scheduled' : 'Email sent',
-        fail: 'Failed to send email',
-      },
+      opts.scheduledAt ? 'Scheduling email...' : 'Sending email...',
       () =>
         resend.emails.send(
           payload,
@@ -374,9 +370,9 @@ export const sendCommand = new Command('send')
     );
     if (!globalOpts.json && isInteractive()) {
       if (opts.scheduledAt) {
-        console.log(`\nEmail scheduled: ${data.id}`);
+        console.log(`Email scheduled: ${data.id}`);
       } else {
-        console.log(`\nEmail sent: ${data.id}`);
+        console.log(`Email sent: ${data.id}`);
       }
     } else {
       outputResult(data, { json: globalOpts.json });

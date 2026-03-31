@@ -28,17 +28,13 @@ export const getContactCommand = new Command('get')
     const id = await pickId(idArg, contactPickerConfig, globalOpts);
     await runGet(
       {
-        spinner: {
-          loading: 'Fetching contact...',
-          success: 'Contact fetched',
-          fail: 'Failed to fetch contact',
-        },
+        loading: 'Fetching contact...',
         sdkCall: (resend) => resend.contacts.get(id),
         onInteractive: (data) => {
           const name = [data.first_name, data.last_name]
             .filter(Boolean)
             .join(' ');
-          console.log(`\n${data.email}${name ? ` (${name})` : ''}`);
+          console.log(`${data.email}${name ? ` (${name})` : ''}`);
           console.log(`ID: ${data.id}`);
           console.log(`Created: ${data.created_at}`);
           console.log(`Unsubscribed: ${data.unsubscribed ? 'yes' : 'no'}`);

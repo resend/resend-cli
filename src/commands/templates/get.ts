@@ -26,14 +26,10 @@ export const getTemplateCommand = new Command('get')
     const id = await pickId(idArg, templatePickerConfig, globalOpts);
     await runGet(
       {
-        spinner: {
-          loading: 'Fetching template...',
-          success: 'Template fetched',
-          fail: 'Failed to fetch template',
-        },
+        loading: 'Fetching template...',
         sdkCall: (resend) => resend.templates.get(id),
         onInteractive: (data) => {
-          console.log(`\n${data.name}`);
+          console.log(`${data.name}`);
           console.log(`ID: ${data.id}`);
           console.log(`Status: ${data.status}`);
           if (data.alias) {

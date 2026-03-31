@@ -29,14 +29,10 @@ export const getReceivingCommand = new Command('get')
     const id = await pickId(idArg, receivedEmailPickerConfig, globalOpts);
     await runGet(
       {
-        spinner: {
-          loading: 'Fetching received email...',
-          success: 'Received email fetched',
-          fail: 'Failed to fetch received email',
-        },
+        loading: 'Fetching received email...',
         sdkCall: (resend) => resend.emails.receiving.get(id),
         onInteractive: (data) => {
-          console.log(`\nFrom:    ${data.from}`);
+          console.log(`From:    ${data.from}`);
           console.log(`To:      ${data.to.join(', ')}`);
           console.log(`Subject: ${data.subject}`);
           console.log(`Date:    ${data.created_at}`);
@@ -48,7 +44,7 @@ export const getReceivingCommand = new Command('get')
               data.text.length > 200
                 ? `${data.text.slice(0, 197)}...`
                 : data.text;
-            console.log(`\n${snippet}`);
+            console.log(`${snippet}`);
           } else if (data.html) {
             console.log(
               '\n(HTML body only — use --json to view or pipe to a browser)',

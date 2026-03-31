@@ -47,11 +47,7 @@ Non-interactive: --segment-id is required.`,
 
     await runWrite(
       {
-        spinner: {
-          loading: 'Adding contact to segment...',
-          success: 'Contact added to segment',
-          fail: 'Failed to add contact to segment',
-        },
+        loading: 'Adding contact to segment...',
         sdkCall: (resend) => resend.contacts.segments.add(payload),
         errorCode: 'add_segment_error',
         successMsg: `Contact added to segment: ${segmentId}`,

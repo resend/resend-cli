@@ -22,11 +22,7 @@ export const listApiKeysCommand = new Command('list')
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     await runList(
       {
-        spinner: {
-          loading: 'Fetching API keys...',
-          success: 'API keys fetched',
-          fail: 'Failed to list API keys',
-        },
+        loading: 'Fetching API keys...',
         sdkCall: (resend) => resend.apiKeys.list(),
         onInteractive: (list) => console.log(renderApiKeysTable(list.data)),
       },

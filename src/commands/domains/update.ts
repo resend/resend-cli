@@ -64,11 +64,7 @@ export const updateDomainCommand = new Command('update')
 
     await runWrite(
       {
-        spinner: {
-          loading: 'Updating domain...',
-          success: 'Domain updated',
-          fail: 'Failed to update domain',
-        },
+        loading: 'Updating domain...',
         sdkCall: (resend) => resend.domains.update(payload),
         errorCode: 'update_error',
         successMsg: `Domain updated: ${id}`,

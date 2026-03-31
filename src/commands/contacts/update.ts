@@ -69,11 +69,7 @@ Properties: --properties merges the given JSON object with existing properties.
 
     await runWrite(
       {
-        spinner: {
-          loading: 'Updating contact...',
-          success: 'Contact updated',
-          fail: 'Failed to update contact',
-        },
+        loading: 'Updating contact...',
         sdkCall: (resend) => resend.contacts.update(payload),
         errorCode: 'update_error',
         successMsg: `Contact updated: ${id}`,

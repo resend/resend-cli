@@ -73,11 +73,7 @@ export const listEmailsCommand = new Command('list')
     );
     await runList(
       {
-        spinner: {
-          loading: 'Fetching sent emails...',
-          success: 'Sent emails fetched',
-          fail: 'Failed to list emails',
-        },
+        loading: 'Fetching sent emails...',
         sdkCall: (resend) => resend.emails.list(paginationOpts),
         onInteractive: (list) => {
           console.log(renderSentEmailsTable(list.data));

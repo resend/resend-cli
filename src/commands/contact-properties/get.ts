@@ -31,14 +31,10 @@ export const getContactPropertyCommand = new Command('get')
     const id = await pickId(idArg, contactPropertyPickerConfig, globalOpts);
     await runGet(
       {
-        spinner: {
-          loading: 'Fetching contact property...',
-          success: 'Contact property fetched',
-          fail: 'Failed to fetch contact property',
-        },
+        loading: 'Fetching contact property...',
         sdkCall: (resend) => resend.contactProperties.get(id),
         onInteractive: (data) => {
-          console.log(`\n${data.key} (${data.type})`);
+          console.log(`${data.key} (${data.type})`);
           console.log(`ID: ${data.id}`);
           console.log(`Created: ${data.createdAt}`);
           console.log(`Fallback value: ${data.fallbackValue ?? '(none)'}`);

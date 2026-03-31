@@ -37,13 +37,9 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
       !!opts.yes,
       {
         confirmMessage: `Delete template ${id}?\nThis action is permanent and cannot be undone.`,
-        spinner: {
-          loading: 'Deleting template...',
-          success: 'Template deleted',
-          fail: 'Failed to delete template',
-        },
+        loading: 'Deleting template...',
         object: 'template',
-        successMsg: 'Template deleted.',
+        successMsg: 'Template deleted',
         sdkCall: (resend) => resend.templates.remove(id),
       },
       globalOpts,

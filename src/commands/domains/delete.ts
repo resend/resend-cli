@@ -31,13 +31,9 @@ export const deleteDomainCommand = new Command('delete')
       !!opts.yes,
       {
         confirmMessage: `Delete domain ${id}?\nThis cannot be undone.`,
-        spinner: {
-          loading: 'Deleting domain...',
-          success: 'Domain deleted',
-          fail: 'Failed to delete domain',
-        },
+        loading: 'Deleting domain...',
         object: 'domain',
-        successMsg: 'Domain deleted.',
+        successMsg: 'Domain deleted',
         sdkCall: (resend) => resend.domains.remove(id),
       },
       globalOpts,

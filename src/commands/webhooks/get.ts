@@ -26,14 +26,10 @@ To rotate secrets, delete the webhook and recreate it.`,
     const id = await pickId(idArg, webhookPickerConfig, globalOpts);
     await runGet(
       {
-        spinner: {
-          loading: 'Fetching webhook...',
-          success: 'Webhook fetched',
-          fail: 'Failed to fetch webhook',
-        },
+        loading: 'Fetching webhook...',
         sdkCall: (resend) => resend.webhooks.get(id),
         onInteractive: (d) => {
-          console.log(`\n${d.endpoint}`);
+          console.log(`${d.endpoint}`);
           console.log(`ID:      ${d.id}`);
           console.log(`Status:  ${d.status}`);
           console.log(`Events:  ${(d.events ?? []).join(', ') || '(none)'}`);

@@ -27,14 +27,10 @@ All fields (HTML, subject, variables, etc.) are copied to the new template.`,
     const id = await pickId(idArg, templatePickerConfig, globalOpts);
     await runCreate(
       {
-        spinner: {
-          loading: 'Duplicating template...',
-          success: 'Template duplicated',
-          fail: 'Failed to duplicate template',
-        },
+        loading: 'Duplicating template...',
         sdkCall: (resend) => Promise.resolve(resend.templates.duplicate(id)),
         onInteractive: (d) => {
-          console.log(`\nTemplate duplicated: ${d.id}`);
+          console.log(`Template duplicated: ${d.id}`);
         },
       },
       globalOpts,

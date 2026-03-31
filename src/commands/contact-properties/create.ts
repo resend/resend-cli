@@ -103,14 +103,10 @@ built-in contact fields and may cause unexpected behavior in broadcasts.`,
 
     await runCreate(
       {
-        spinner: {
-          loading: 'Creating contact property...',
-          success: 'Contact property created',
-          fail: 'Failed to create contact property',
-        },
+        loading: 'Creating contact property...',
         sdkCall: (resend) => resend.contactProperties.create(payload),
         onInteractive: (data) => {
-          console.log(`\nContact property created: ${data.id}`);
+          console.log(`Contact property created: ${data.id}`);
         },
       },
       globalOpts,

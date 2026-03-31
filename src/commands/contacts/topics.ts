@@ -37,11 +37,7 @@ Use "resend contacts update-topics <id>" to change subscription statuses.`,
     // union), so contactIdentifier's result is directly assignable without a cast.
     await runList(
       {
-        spinner: {
-          loading: 'Fetching topic subscriptions...',
-          success: 'Topic subscriptions fetched',
-          fail: 'Failed to list topic subscriptions',
-        },
+        loading: 'Fetching topic subscriptions...',
         sdkCall: (resend) => resend.contacts.topics.list(contactIdentifier(id)),
         onInteractive: (list) =>
           console.log(renderContactTopicsTable(list.data)),

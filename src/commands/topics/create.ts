@@ -53,11 +53,7 @@ Non-interactive: --name is required.`,
 
     await runCreate(
       {
-        spinner: {
-          loading: 'Creating topic...',
-          success: 'Topic created',
-          fail: 'Failed to create topic',
-        },
+        loading: 'Creating topic...',
         sdkCall: (resend) =>
           resend.topics.create({
             name,
@@ -65,7 +61,7 @@ Non-interactive: --name is required.`,
             ...(opts.description && { description: opts.description }),
           }),
         onInteractive: (data) => {
-          console.log(`\nTopic created: ${data.id}`);
+          console.log(`Topic created: ${data.id}`);
         },
       },
       globalOpts,

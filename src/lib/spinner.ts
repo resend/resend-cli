@@ -50,19 +50,21 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
- * Wraps an SDK call with a spinner, unified error handling, and automatic stop/fail.
- * Eliminates the repeated try/catch + spinner boilerplate across all command files.
+ * Wraps an SDK call with a loading spinner and unified error handling.
+ *
+ * The spinner is purely a loading indicator — it clears itself when the call
+ * completes. Callers are responsible for printing success output.
  *
  * Automatically retries on rate_limit_exceeded errors (HTTP 429) up to 3 times,
  * using the retry-after header when available or exponential backoff (1s, 2s, 4s).
  */
 export async function withSpinner<T>(
-  messages: { loading: string; success: string; fail: string },
+  loading: string,
   call: () => Promise<SdkResponse<T>>,
   errorCode: string,
   globalOpts: GlobalOpts,
 ): Promise<T> {
-  const spinner = createSpinner(messages.loading, globalOpts.quiet);
+  const spinner = createSpinner(loading, globalOpts.quiet);
   try {
     for (let attempt = 0; ; attempt++) {
       const { data, error, headers } = await call();
@@ -72,27 +74,27 @@ export async function withSpinner<T>(
             parseRetryDelay(headers) ?? DEFAULT_RETRY_DELAYS[attempt];
           spinner.update(`Rate limited, retrying in ${delay}s...`);
           await sleep(delay * 1000);
-          spinner.update(messages.loading);
+          spinner.update(loading);
           continue;
         }
-        spinner.fail(messages.fail);
+        spinner.stop();
         outputError(
           { message: error.message, code: errorCode },
           { json: globalOpts.json },
         );
       }
       if (data === null) {
-        spinner.fail(messages.fail);
+        spinner.stop();
         outputError(
           { message: 'Unexpected empty response', code: errorCode },
           { json: globalOpts.json },
         );
       }
-      spinner.stop(messages.success);
+      spinner.stop();
       return data;
     }
   } catch (err) {
-    spinner.fail(messages.fail);
+    spinner.stop();
     return outputError(
       { message: errorMessage(err, 'Unknown error'), code: errorCode },
       { json: globalOpts.json },
@@ -104,7 +106,7 @@ export function createSpinner(message: string, quiet?: boolean) {
   if (quiet || !isInteractive()) {
     return {
       update(_msg: string) {},
-      stop(_msg: string) {},
+      stop(_msg?: string) {},
       clear() {},
       warn(_msg: string) {},
       fail(_msg: string) {},
@@ -124,9 +126,13 @@ export function createSpinner(message: string, quiet?: boolean) {
     update(msg: string) {
       text = msg;
     },
-    stop(msg: string) {
+    stop(msg?: string) {
       clearInterval(timer);
-      process.stderr.write(`\r\x1B[2K  ${pc.green(TICK)} ${msg}\n`);
+      if (msg) {
+        process.stderr.write(`\r\x1B[2K  ${pc.green(TICK)} ${msg}\n`);
+      } else {
+        process.stderr.write('\r\x1B[2K');
+      }
     },
     clear() {
       clearInterval(timer);

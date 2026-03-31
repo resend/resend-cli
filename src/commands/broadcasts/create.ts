@@ -225,15 +225,7 @@ Scheduling:
 
     await runCreate(
       {
-        spinner: {
-          loading: 'Creating broadcast...',
-          success: opts.send
-            ? opts.scheduledAt
-              ? 'Broadcast scheduled'
-              : 'Broadcast sent'
-            : 'Broadcast created',
-          fail: 'Failed to create broadcast',
-        },
+        loading: 'Creating broadcast...',
         sdkCall: (resend) =>
           resend.broadcasts.create({
             from,
@@ -252,14 +244,14 @@ Scheduling:
         onInteractive: (d) => {
           if (opts.send) {
             if (opts.scheduledAt) {
-              console.log(`\nBroadcast scheduled: ${d.id}`);
+              console.log(`Broadcast scheduled: ${d.id}`);
             } else {
-              console.log(`\nBroadcast sent: ${d.id}`);
+              console.log(`Broadcast sent: ${d.id}`);
             }
           } else {
-            console.log(`\nBroadcast created: ${d.id}`);
+            console.log(`Broadcast created: ${d.id}`);
             console.log('Status: draft');
-            console.log(`\nSend it with: resend broadcasts send ${d.id}`);
+            console.log(`Send it with: resend broadcasts send ${d.id}`);
           }
         },
       },

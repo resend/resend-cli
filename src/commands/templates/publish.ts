@@ -27,14 +27,10 @@ Publishing an already-published template re-publishes it with the latest draft c
     const id = await pickId(idArg, templatePickerConfig, globalOpts);
     await runWrite(
       {
-        spinner: {
-          loading: 'Publishing template...',
-          success: 'Template published',
-          fail: 'Failed to publish template',
-        },
+        loading: 'Publishing template...',
         sdkCall: (resend) => resend.templates.publish(id),
         errorCode: 'publish_error',
-        successMsg: `\nTemplate published: ${id}`,
+        successMsg: `Template published: ${id}`,
       },
       globalOpts,
     );

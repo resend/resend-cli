@@ -77,11 +77,7 @@ Topics not included in the array are left unchanged.`,
     // contactIdentifier's result is directly assignable: UpdateContactTopicsBaseOptions
     // uses optional { id?, email? } (not a discriminated union).
     const data = await withSpinner(
-      {
-        loading: 'Updating topic subscriptions...',
-        success: 'Topic subscriptions updated',
-        fail: 'Failed to update topic subscriptions',
-      },
+      'Updating topic subscriptions...',
       () => resend.contacts.topics.update({ ...contactIdentifier(id), topics }),
       'update_topics_error',
       globalOpts,

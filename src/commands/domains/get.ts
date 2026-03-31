@@ -31,14 +31,10 @@ export const getDomainCommand = new Command('get')
     const id = await pickId(idArg, domainPickerConfig, globalOpts);
     await runGet(
       {
-        spinner: {
-          loading: 'Fetching domain...',
-          success: 'Domain fetched',
-          fail: 'Failed to fetch domain',
-        },
+        loading: 'Fetching domain...',
         sdkCall: (resend) => resend.domains.get(id),
         onInteractive: (d) => {
-          console.log(`\n${d.name} — ${statusIndicator(d.status)}`);
+          console.log(`${d.name} — ${statusIndicator(d.status)}`);
           console.log(`ID: ${d.id}`);
           console.log(`Region: ${d.region}`);
           console.log(`Created: ${d.created_at}`);

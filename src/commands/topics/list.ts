@@ -21,11 +21,7 @@ contacts is handled via "resend contacts topics <contactId>".`,
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     await runList(
       {
-        spinner: {
-          loading: 'Fetching topics...',
-          success: 'Topics fetched',
-          fail: 'Failed to list topics',
-        },
+        loading: 'Fetching topics...',
         sdkCall: (resend) => resend.topics.list(),
         onInteractive: (list) => console.log(renderTopicsTable(list.data)),
       },

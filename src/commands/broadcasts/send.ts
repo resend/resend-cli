@@ -36,25 +36,17 @@ Scheduling:
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const id = await pickId(idArg, sendBroadcastPickerConfig, globalOpts);
 
-    const successMsg = opts.scheduledAt
-      ? `\nBroadcast scheduled: ${id}`
-      : `\nBroadcast sent: ${id}`;
-
     await runWrite(
       {
-        spinner: {
-          loading: opts.scheduledAt
-            ? 'Scheduling broadcast...'
-            : 'Sending broadcast...',
-          success: opts.scheduledAt ? 'Broadcast scheduled' : 'Broadcast sent',
-          fail: 'Failed to send broadcast',
-        },
+        loading: opts.scheduledAt
+          ? 'Scheduling broadcast...'
+          : 'Sending broadcast...',
         sdkCall: (resend) =>
           resend.broadcasts.send(id, {
             ...(opts.scheduledAt && { scheduledAt: opts.scheduledAt }),
           }),
         errorCode: 'send_error',
-        successMsg,
+        successMsg: opts.scheduledAt ? 'Broadcast scheduled' : 'Broadcast sent',
         permission: 'sending_access',
       },
       globalOpts,

@@ -142,11 +142,7 @@ export const batchCommand = new Command('batch')
     }
 
     const batchData = await withSpinner(
-      {
-        loading: 'Sending batch...',
-        success: 'Batch sent',
-        fail: 'Failed to send batch',
-      },
+      'Sending batch...',
       () => {
         const options = {
           ...(opts.idempotencyKey && { idempotencyKey: opts.idempotencyKey }),

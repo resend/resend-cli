@@ -145,11 +145,7 @@ export const updateTemplateCommand = new Command('update')
 
     await runWrite(
       {
-        spinner: {
-          loading: 'Updating template...',
-          success: 'Template updated',
-          fail: 'Failed to update template',
-        },
+        loading: 'Updating template...',
         sdkCall: (resend) =>
           resend.templates.update(id, {
             ...(opts.name != null && { name: opts.name }),
@@ -162,7 +158,7 @@ export const updateTemplateCommand = new Command('update')
             ...(opts.var != null && { variables: parseVariables(opts.var) }),
           }),
         errorCode: 'update_error',
-        successMsg: `\nTemplate updated: ${id}`,
+        successMsg: `Template updated: ${id}`,
       },
       globalOpts,
     );

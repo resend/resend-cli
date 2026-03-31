@@ -24,14 +24,10 @@ export const getSegmentCommand = new Command('get')
     const id = await pickId(idArg, segmentPickerConfig, globalOpts);
     await runGet(
       {
-        spinner: {
-          loading: 'Fetching segment...',
-          success: 'Segment fetched',
-          fail: 'Failed to fetch segment',
-        },
+        loading: 'Fetching segment...',
         sdkCall: (resend) => resend.segments.get(id),
         onInteractive: (data) => {
-          console.log(`\n${data.name}`);
+          console.log(`${data.name}`);
           console.log(`ID: ${data.id}`);
           console.log(`Created: ${data.created_at}`);
         },

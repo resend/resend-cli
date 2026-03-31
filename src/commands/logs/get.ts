@@ -26,14 +26,10 @@ export const getLogCommand = new Command('get')
     const id = await pickId(idArg, logPickerConfig, globalOpts);
     await runGet(
       {
-        spinner: {
-          loading: 'Fetching log...',
-          success: 'Log fetched',
-          fail: 'Failed to fetch log',
-        },
+        loading: 'Fetching log...',
         sdkCall: (resend) => resend.logs.get(id),
         onInteractive: (d) => {
-          console.log(`\n${d.method} ${d.endpoint} — ${d.response_status}`);
+          console.log(`${d.method} ${d.endpoint} — ${d.response_status}`);
           console.log(`ID:         ${d.id}`);
           console.log(`Created:    ${d.created_at}`);
           console.log(`User-Agent: ${d.user_agent ?? '(none)'}`);

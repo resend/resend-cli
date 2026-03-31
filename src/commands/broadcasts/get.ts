@@ -28,14 +28,10 @@ Use this command to retrieve the full broadcast payload.`,
     const id = await pickId(idArg, broadcastPickerConfig, globalOpts);
     await runGet(
       {
-        spinner: {
-          loading: 'Fetching broadcast...',
-          success: 'Broadcast fetched',
-          fail: 'Failed to fetch broadcast',
-        },
+        loading: 'Fetching broadcast...',
         sdkCall: (resend) => resend.broadcasts.get(id),
         onInteractive: (b) => {
-          console.log(`\nBroadcast: ${b.id}`);
+          console.log(`Broadcast: ${b.id}`);
           console.log(`  Status:      ${broadcastStatusIndicator(b.status)}`);
           console.log(`  Name:        ${b.name ?? '(untitled)'}`);
           console.log(`  From:        ${b.from ?? '—'}`);

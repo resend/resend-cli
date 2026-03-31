@@ -57,11 +57,7 @@ export const listContactPropertiesCommand = new Command('list')
     );
     await runList(
       {
-        spinner: {
-          loading: 'Fetching contact properties...',
-          success: 'Contact properties fetched',
-          fail: 'Failed to list contact properties',
-        },
+        loading: 'Fetching contact properties...',
         sdkCall: (resend) => resend.contactProperties.list(paginationOpts),
         onInteractive: (list) => {
           console.log(renderContactPropertiesTable(list.data));

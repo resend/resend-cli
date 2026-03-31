@@ -25,14 +25,10 @@ export const getEmailCommand = new Command('get')
     const id = await pickId(idArg, emailPickerConfig, globalOpts);
     await runGet(
       {
-        spinner: {
-          loading: 'Fetching email...',
-          success: 'Email fetched',
-          fail: 'Failed to fetch email',
-        },
+        loading: 'Fetching email...',
         sdkCall: (resend) => resend.emails.get(id),
         onInteractive: (data) => {
-          console.log(`\nFrom:    ${data.from}`);
+          console.log(`From:    ${data.from}`);
           console.log(`To:      ${data.to.join(', ')}`);
           console.log(`Subject: ${data.subject}`);
           console.log(`Status:  ${data.last_event}`);

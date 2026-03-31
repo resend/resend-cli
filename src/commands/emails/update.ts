@@ -29,15 +29,11 @@ export const updateCommand = new Command('update')
     const id = await pickId(idArg, emailPickerConfig, globalOpts);
     await runWrite(
       {
-        spinner: {
-          loading: 'Updating email...',
-          success: 'Email updated',
-          fail: 'Failed to update email',
-        },
+        loading: 'Updating email...',
         sdkCall: (resend) =>
           resend.emails.update({ id, scheduledAt: opts.scheduledAt }),
         errorCode: 'update_error',
-        successMsg: `\nEmail updated: ${id}`,
+        successMsg: `Email updated: ${id}`,
       },
       globalOpts,
     );

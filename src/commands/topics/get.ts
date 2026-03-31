@@ -24,14 +24,10 @@ export const getTopicCommand = new Command('get')
     const id = await pickId(idArg, topicPickerConfig, globalOpts);
     await runGet(
       {
-        spinner: {
-          loading: 'Fetching topic...',
-          success: 'Topic fetched',
-          fail: 'Failed to fetch topic',
-        },
+        loading: 'Fetching topic...',
         sdkCall: (resend) => resend.topics.get(id),
         onInteractive: (data) => {
-          console.log(`\n${data.name}`);
+          console.log(`${data.name}`);
           console.log(`ID: ${data.id}`);
           if (data.description) {
             console.log(`Description: ${data.description}`);

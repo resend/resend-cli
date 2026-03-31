@@ -27,11 +27,7 @@ export const listContactSegmentsCommand = new Command('segments')
     const id = await pickId(idArg, contactPickerConfig, globalOpts);
     await runList(
       {
-        spinner: {
-          loading: 'Fetching segments...',
-          success: 'Segments fetched',
-          fail: 'Failed to list segments',
-        },
+        loading: 'Fetching segments...',
         sdkCall: (resend) =>
           resend.contacts.segments.list(segmentContactIdentifier(id)),
         onInteractive: (list) => console.log(renderSegmentsTable(list.data)),

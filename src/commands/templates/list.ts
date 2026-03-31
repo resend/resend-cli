@@ -45,11 +45,7 @@ export const listTemplatesCommand = new Command('list')
     );
     await runList(
       {
-        spinner: {
-          loading: 'Fetching templates...',
-          success: 'Templates fetched',
-          fail: 'Failed to list templates',
-        },
+        loading: 'Fetching templates...',
         sdkCall: (resend) => resend.templates.list(paginationOpts),
         onInteractive: (list) => {
           console.log(renderTemplatesTable(list.data));

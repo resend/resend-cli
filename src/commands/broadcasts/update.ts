@@ -137,11 +137,7 @@ Variable interpolation:
 
     await runWrite(
       {
-        spinner: {
-          loading: 'Updating broadcast...',
-          success: 'Broadcast updated',
-          fail: 'Failed to update broadcast',
-        },
+        loading: 'Updating broadcast...',
         sdkCall: (resend) =>
           resend.broadcasts.update(id, {
             ...(opts.from != null && { from: opts.from }),
@@ -151,7 +147,7 @@ Variable interpolation:
             ...(opts.name != null && { name: opts.name }),
           }),
         errorCode: 'update_error',
-        successMsg: `\nBroadcast updated: ${id}`,
+        successMsg: `Broadcast updated: ${id}`,
       },
       globalOpts,
     );

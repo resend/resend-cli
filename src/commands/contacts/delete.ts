@@ -38,13 +38,9 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
       !!opts.yes,
       {
         confirmMessage: `Delete contact ${id}?\nThis cannot be undone.`,
-        spinner: {
-          loading: 'Deleting contact...',
-          success: 'Contact deleted',
-          fail: 'Failed to delete contact',
-        },
+        loading: 'Deleting contact...',
         object: 'contact',
-        successMsg: 'Contact deleted.',
+        successMsg: 'Contact deleted',
         sdkCall: (resend) => resend.contacts.remove(id),
       },
       globalOpts,
