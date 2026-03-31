@@ -8,9 +8,11 @@ import { fetchVerifiedDomains, promptForFromAddress } from '../../lib/domains';
 import { readFile } from '../../lib/files';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
-import { cancelAndExit } from '../../lib/prompts';
+import { cancelAndExit, pickId } from '../../lib/prompts';
 import { buildReactEmailHtml } from '../../lib/react-email';
 import { isInteractive } from '../../lib/tty';
+import { segmentPickerConfig } from '../segments/utils';
+import { topicPickerConfig } from '../topics/utils';
 
 export const createBroadcastCommand = new Command('create')
   .description('Create a broadcast draft (or send immediately with --send)')
@@ -164,15 +166,7 @@ Scheduling:
           { json: globalOpts.json },
         );
       }
-      const result = await p.text({
-        message: 'Segment ID',
-        placeholder: '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
-        validate: (v) => (!v ? 'Required' : undefined),
-      });
-      if (p.isCancel(result)) {
-        cancelAndExit('Cancelled.');
-      }
-      segmentId = result;
+      segmentId = await pickId(undefined, segmentPickerConfig, globalOpts);
     }
 
     let html = opts.html;
@@ -222,6 +216,13 @@ Scheduling:
       text = result;
     }
 
+    let topicId = opts.topicId;
+    if (!topicId) {
+      topicId = await pickId(undefined, topicPickerConfig, globalOpts, {
+        optional: true,
+      });
+    }
+
     await runCreate(
       {
         spinner: {
@@ -243,7 +244,7 @@ Scheduling:
             ...(opts.name && { name: opts.name }),
             ...(opts.replyTo && { replyTo: opts.replyTo }),
             ...(opts.previewText && { previewText: opts.previewText }),
-            ...(opts.topicId && { topicId: opts.topicId }),
+            ...(topicId && { topicId }),
             ...(opts.send && { send: true as const }),
             ...(opts.send &&
               opts.scheduledAt && { scheduledAt: opts.scheduledAt }),
