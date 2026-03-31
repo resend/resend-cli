@@ -217,7 +217,7 @@ Scheduling:
     }
 
     let topicId = opts.topicId;
-    if (!topicId) {
+    if (!topicId && isInteractive() && !globalOpts.json) {
       topicId = await pickId(undefined, topicPickerConfig, globalOpts, {
         optional: true,
       });
