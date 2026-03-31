@@ -41,6 +41,16 @@ irm https://resend.com/install.ps1 | iex
 
 Or download the `.exe` directly from the [GitHub releases page](https://github.com/resend/resend-cli/releases/latest).
 
+## Agent skills
+
+This CLI ships with an [agent skill](skills/resend-cli/SKILL.md) that teaches AI coding agents (Cursor, Claude Code, Windsurf, etc.) how to use the Resend CLI effectively — including non-interactive flags, output formats, and common pitfalls.
+
+To install skills for Resend's full platform (API, CLI, React Email, email best practices) from the [central skills repository](https://github.com/resend/resend-skills):
+
+```sh
+npx skills add resend/resend-skills
+```
+
 ## Local development
 
 Use this when you want to change the CLI and run your build locally.
