@@ -207,7 +207,7 @@ Scheduling:
       }
       const result = await p.text({
         message: 'Body (plain text)',
-        placeholder: 'Hello {{{FIRST_NAME|there}}}!',
+        placeholder: 'e.g. Hello {{{FIRST_NAME|there}}}!',
         validate: (v) => (!v ? 'Required' : undefined),
       });
       if (p.isCancel(result)) {
