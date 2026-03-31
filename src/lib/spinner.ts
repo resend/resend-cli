@@ -105,6 +105,7 @@ export function createSpinner(message: string, quiet?: boolean) {
     return {
       update(_msg: string) {},
       stop(_msg: string) {},
+      clear() {},
       warn(_msg: string) {},
       fail(_msg: string) {},
     };
@@ -126,6 +127,10 @@ export function createSpinner(message: string, quiet?: boolean) {
     stop(msg: string) {
       clearInterval(timer);
       process.stderr.write(`\r\x1B[2K  ${pc.green(TICK)} ${msg}\n`);
+    },
+    clear() {
+      clearInterval(timer);
+      process.stderr.write('\r\x1B[2K');
     },
     warn(msg: string) {
       clearInterval(timer);

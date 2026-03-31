@@ -310,11 +310,6 @@ export async function pickId<T extends { id: string }>(
       );
     }
 
-    spinner.stop(
-      allFetched.length === 0
-        ? `${config.resourcePlural} fetched`
-        : `More ${config.resourcePlural} fetched`,
-    );
     allFetched.push(...result.data.data);
     const hasMore = result.data.has_more ?? false;
 
@@ -322,10 +317,18 @@ export async function pickId<T extends { id: string }>(
       ? allFetched.filter(config.filter)
       : allFetched;
 
+    if (displayItems.length === 0 && !hasMore && optional) {
+      spinner.clear();
+      return undefined;
+    }
+
+    spinner.stop(
+      allFetched.length === displayItems.length
+        ? `${config.resourcePlural} fetched`
+        : `More ${config.resourcePlural} fetched`,
+    );
+
     if (displayItems.length === 0 && !hasMore) {
-      if (optional) {
-        return undefined;
-      }
       p.log.warn(`No ${config.resourcePlural} found.`);
       outputError(
         {
