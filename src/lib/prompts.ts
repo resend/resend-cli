@@ -300,6 +300,10 @@ export async function pickId<T extends { id: string }>(
     });
 
     if (result.error || !result.data) {
+      if (optional) {
+        spinner.clear();
+        return undefined;
+      }
       spinner.fail(`Failed to fetch ${config.resourcePlural}`);
       outputError(
         {
@@ -339,7 +343,7 @@ export async function pickId<T extends { id: string }>(
       );
     }
 
-    if (displayItems.length === 0 && hasMore) {
+    if (displayItems.length === 0 && hasMore && !optional) {
       continue;
     }
 
