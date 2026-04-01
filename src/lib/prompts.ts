@@ -233,6 +233,7 @@ export async function promptForMissing<
 
 const PICKER_PAGE_SIZE = 20;
 const FETCH_MORE = '__fetch_more__';
+const NONE = '__none__';
 
 export type PickerConfig<T extends { id: string }> = {
   resource: string;
@@ -252,12 +253,29 @@ export async function pickId<T extends { id: string }>(
   id: string | undefined,
   config: PickerConfig<T>,
   globalOpts: GlobalOpts,
-): Promise<string> {
+): Promise<string>;
+export async function pickId<T extends { id: string }>(
+  id: string | undefined,
+  config: PickerConfig<T>,
+  globalOpts: GlobalOpts,
+  opts: { optional: true },
+): Promise<string | undefined>;
+export async function pickId<T extends { id: string }>(
+  id: string | undefined,
+  config: PickerConfig<T>,
+  globalOpts: GlobalOpts,
+  opts?: { optional?: boolean },
+): Promise<string | undefined> {
   if (id) {
     return id;
   }
 
+  const optional = opts?.optional ?? false;
+
   if (!isInteractive() || globalOpts.json) {
+    if (optional) {
+      return undefined;
+    }
     outputError(
       { message: 'Missing required argument: id', code: 'missing_id' },
       { json: globalOpts.json },
@@ -282,6 +300,10 @@ export async function pickId<T extends { id: string }>(
     });
 
     if (result.error || !result.data) {
+      if (optional) {
+        spinner.clear();
+        return undefined;
+      }
       spinner.fail(`Failed to fetch ${config.resourcePlural}`);
       outputError(
         {
@@ -292,17 +314,23 @@ export async function pickId<T extends { id: string }>(
       );
     }
 
-    spinner.stop(
-      allFetched.length === 0
-        ? `${config.resourcePlural} fetched`
-        : `More ${config.resourcePlural} fetched`,
-    );
     allFetched.push(...result.data.data);
     const hasMore = result.data.has_more ?? false;
 
     const displayItems = config.filter
       ? allFetched.filter(config.filter)
       : allFetched;
+
+    if (displayItems.length === 0 && !hasMore && optional) {
+      spinner.clear();
+      return undefined;
+    }
+
+    spinner.stop(
+      allFetched.length === displayItems.length
+        ? `${config.resourcePlural} fetched`
+        : `More ${config.resourcePlural} fetched`,
+    );
 
     if (displayItems.length === 0 && !hasMore) {
       p.log.warn(`No ${config.resourcePlural} found.`);
@@ -315,7 +343,7 @@ export async function pickId<T extends { id: string }>(
       );
     }
 
-    if (displayItems.length === 0 && hasMore) {
+    if (displayItems.length === 0 && hasMore && !optional) {
       continue;
     }
 
@@ -324,6 +352,10 @@ export async function pickId<T extends { id: string }>(
         value: item.id,
         ...config.display(item),
       }));
+
+    if (optional) {
+      options.unshift({ value: NONE, label: 'None' });
+    }
 
     if (hasMore) {
       options.push({ value: FETCH_MORE, label: 'Fetch more...' });
@@ -336,6 +368,10 @@ export async function pickId<T extends { id: string }>(
 
     if (p.isCancel(selected)) {
       cancelAndExit('Cancelled.');
+    }
+
+    if (selected === NONE) {
+      return undefined;
     }
 
     if (selected !== FETCH_MORE) {

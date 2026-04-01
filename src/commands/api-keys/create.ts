@@ -5,8 +5,9 @@ import { runCreate } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
-import { cancelAndExit } from '../../lib/prompts';
+import { cancelAndExit, pickId } from '../../lib/prompts';
 import { isInteractive } from '../../lib/tty';
+import { domainPickerConfig } from '../domains/utils';
 
 export const createApiKeyCommand = new Command('create')
   .description(
@@ -87,6 +88,13 @@ Permissions:
       permission = permissionResult;
     }
 
+    let domainId = opts.domainId;
+    if (!domainId && permission === 'sending_access') {
+      domainId = await pickId(undefined, domainPickerConfig, globalOpts, {
+        optional: true,
+      });
+    }
+
     await runCreate(
       {
         spinner: {
@@ -98,7 +106,7 @@ Permissions:
           resend.apiKeys.create({
             name,
             ...(permission && { permission }),
-            ...(opts.domainId && { domain_id: opts.domainId }),
+            ...(domainId && { domain_id: domainId }),
           }),
         onInteractive: (d) => {
           console.log(`\n  ${pc.gray('Name:')}    ${name}`);

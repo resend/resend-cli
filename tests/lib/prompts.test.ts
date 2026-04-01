@@ -160,6 +160,33 @@ describe('pickId', () => {
     const parsed = JSON.parse(spyOutput());
     expect(parsed.error.code).toBe('missing_id');
   });
+
+  test('returns undefined in non-interactive mode when optional', async () => {
+    setTTY(undefined);
+
+    const { pickId } = await import('../../src/lib/prompts');
+    const result = await pickId(undefined, {} as never, {}, { optional: true });
+    expect(result).toBeUndefined();
+  });
+
+  test('returns undefined when --json is set and optional', async () => {
+    setTTY(true);
+
+    const { pickId } = await import('../../src/lib/prompts');
+    const result = await pickId(
+      undefined,
+      {} as never,
+      { json: true },
+      { optional: true },
+    );
+    expect(result).toBeUndefined();
+  });
+
+  test('returns id immediately when provided and optional', async () => {
+    const { pickId } = await import('../../src/lib/prompts');
+    const result = await pickId('test-id', {} as never, {}, { optional: true });
+    expect(result).toBe('test-id');
+  });
 });
 
 describe('confirmDelete', () => {
