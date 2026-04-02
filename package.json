@@ -37,9 +37,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "vitest run --config vitest.config.e2e.ts",
-    "sync-skill-version": "node scripts/sync-skill-version.mjs",
-    "version": "pnpm run sync-skill-version && git add skills/resend-cli/SKILL.md",
-    "prepack": "pnpm run sync-skill-version && pnpm build && node scripts/verify-bundle.mjs"
+    "prepack": "pnpm build && node scripts/verify-bundle.mjs"
   },
   "dependencies": {
     "@clack/prompts": "1.1.0",
