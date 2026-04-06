@@ -46,6 +46,7 @@ const program = new Command()
       process.stderr.write(str.replace(/^error:/, () => pc.red('error:')));
     },
   })
+  .helpCommand(true)
   .version(
     `${PACKAGE_NAME} v${VERSION}`,
     '-v, --version',
