@@ -43,7 +43,7 @@ Or download the `.exe` directly from the [GitHub releases page](https://github.c
 
 ## Agent skills
 
-This CLI ships with an [agent skill](skills/resend-cli/SKILL.md) that teaches AI coding agents (Cursor, Claude Code, Windsurf, etc.) how to use the Resend CLI effectively — including non-interactive flags, output formats, and common pitfalls.
+This CLI ships with an [agent skill](skills/resend-cli/SKILL.md) that teaches AI coding agents (Cursor, Claude Code, Windsurf, etc.) how to use the Resend CLI effectively, including non-interactive flags, output formats, and common pitfalls.
 
 To install skills for Resend's full platform (API, CLI, React Email, email best practices) from the [central skills repository](https://github.com/resend/resend-skills):
 
@@ -82,6 +82,23 @@ Use this when you want to change the CLI and run your build locally.
 
    Output: `./dist/cli.cjs`
 
+## Quickstart
+
+```bash
+# Authenticate
+resend login
+
+# Send an email
+resend emails send \
+  --from "you@yourdomain.com" \
+  --to delivered@resend.dev \
+  --subject "Hello from Resend CLI" \
+  --text "Sent from my terminal."
+
+# Check your environment
+resend doctor
+```
+
 ### Running the CLI locally
 
 Use the dev script:
@@ -114,34 +131,17 @@ pnpm build:bin
 
 Output: `./dist/resend`
 
-## Quick start
-
-```bash
-# Authenticate
-resend login
-
-# Send an email
-resend emails send \
-  --from "you@yourdomain.com" \
-  --to recipient@example.com \
-  --subject "Hello from Resend CLI" \
-  --text "Sent from my terminal."
-
-# Check your environment
-resend doctor
-```
-
 ---
 
 ## Authentication
 
 The CLI resolves your API key using the following priority chain:
 
-| Priority | Source | How to set |
-|----------|--------|------------|
-| 1 (highest) | `--api-key` flag | `resend --api-key re_xxx emails send ...` |
-| 2 | `RESEND_API_KEY` env var | `export RESEND_API_KEY=re_xxx` |
-| 3 (lowest) | Config file | `resend login` |
+| Priority    | Source                   | How to set                                |
+| ----------- | ------------------------ | ----------------------------------------- |
+| 1 (highest) | `--api-key` flag         | `resend --api-key re_xxx emails send ...` |
+| 2           | `RESEND_API_KEY` env var | `export RESEND_API_KEY=re_xxx`            |
+| 3 (lowest)  | Config file              | `resend login`                            |
 
 If no key is found from any source, the CLI errors with code `auth_error`.
 
@@ -161,10 +161,10 @@ resend login
 
 When run in a terminal, the command checks for an existing key:
 
-- **No key found** — Offers to open the [Resend API keys dashboard](https://resend.com/api-keys) in your browser so you can create one, then prompts for the key.
-- **Existing key found** — Shows the key source (`env`, `config`) and prompts for a new key to replace it.
+- **No key found**: Offers to open the [Resend API keys dashboard](https://resend.com/api-keys) in your browser so you can create one, then prompts for the key.
+- **Existing key found**: Shows the key source (`env`, `config`) and prompts for a new key to replace it.
 
-The key is entered via a masked password input and must start with `re_`.
+Enter the key via a masked password input. Your key must start with `re_`.
 
 #### Non-interactive mode (CI, pipes, scripts)
 
@@ -178,8 +178,8 @@ Omitting `--key` in non-interactive mode exits with error code `missing_key`.
 
 #### Options
 
-| Flag | Description |
-|------|-------------|
+| Flag          | Description                                         |
+| ------------- | --------------------------------------------------- |
 | `--key <key>` | API key to store (required in non-interactive mode) |
 
 #### Output
@@ -194,15 +194,15 @@ resend login --key re_xxx --json
 
 #### Error codes
 
-| Code | Cause |
-|------|-------|
-| `missing_key` | No `--key` provided in non-interactive mode |
-| `invalid_key_format` | Key does not start with `re_` |
-| `validation_failed` | Resend API rejected the key |
+| Code                 | Cause                                       |
+| -------------------- | ------------------------------------------- |
+| `missing_key`        | No `--key` provided in non-interactive mode |
+| `invalid_key_format` | Key does not start with `re_`               |
+| `validation_failed`  | Resend API rejected the key                 |
 
 #### Switch between teams and accounts
 
-If you work across multiple Resend teams or accounts, the CLI handles that too.
+If you work across multiple Resend teams or accounts, the CLI handles that, too.
 
 Switch between profiles without logging in and out:
 
@@ -220,29 +220,31 @@ resend domains list --profile production
 
 ### `resend emails send`
 
-Send an email via the Resend API. Provide all options via flags for scripting, or let the CLI prompt interactively for missing fields.
+Send an email via the Resend API.
+
+Provide all options via flags for scripting, or let the CLI prompt interactively for missing fields.
 
 ```bash
 resend emails send \
   --from "Name <sender@yourdomain.com>" \
-  --to recipient@example.com \
+  --to delivered@resend.dev \
   --subject "Subject line" \
   --text "Plain text body"
 ```
 
 #### Options
 
-| Flag | Required | Description |
-|------|----------|-------------|
-| `--from <address>` | Yes | Sender email address (must be from a verified domain) |
-| `--to <addresses...>` | Yes | One or more recipient email addresses (space-separated) |
-| `--subject <subject>` | Yes | Email subject line |
-| `--text <text>` | One of text/html/html-file | Plain text body |
-| `--html <html>` | One of text/html/html-file | HTML body as a string |
-| `--html-file <path>` | One of text/html/html-file | Path to an HTML file to use as body |
-| `--cc <addresses...>` | No | CC recipients (space-separated) |
-| `--bcc <addresses...>` | No | BCC recipients (space-separated) |
-| `--reply-to <address>` | No | Reply-to email address |
+| Flag                   | Required                   | Description                                             |
+| ---------------------- | -------------------------- | ------------------------------------------------------- |
+| `--from <address>`     | Yes                        | Sender email address (must be from a verified domain)   |
+| `--to <addresses...>`  | Yes                        | One or more recipient email addresses (space-separated) |
+| `--subject <subject>`  | Yes                        | Email subject line                                      |
+| `--text <text>`        | One of text/html/html-file | Plain text body                                         |
+| `--html <html>`        | One of text/html/html-file | HTML body as a string                                   |
+| `--html-file <path>`   | One of text/html/html-file | Path to an HTML file to use as body                     |
+| `--cc <addresses...>`  | No                         | CC recipients (space-separated)                         |
+| `--bcc <addresses...>` | No                         | BCC recipients (space-separated)                        |
+| `--reply-to <address>` | No                         | Reply-to email address                                  |
 
 #### Interactive mode
 
@@ -274,7 +276,7 @@ A body (`--text`, `--html`, or `--html-file`) is also required — omitting all 
 ```bash
 resend emails send \
   --from "you@yourdomain.com" \
-  --to alice@example.com bob@example.com \
+  --to delivered@resend.dev bounced@resend.dev \
   --subject "Team update" \
   --text "Hello everyone"
 ```
@@ -284,7 +286,7 @@ resend emails send \
 ```bash
 resend emails send \
   --from "you@yourdomain.com" \
-  --to recipient@example.com \
+  --to delivered@resend.dev \
   --subject "Newsletter" \
   --html-file ./newsletter.html
 ```
@@ -294,11 +296,11 @@ resend emails send \
 ```bash
 resend emails send \
   --from "you@yourdomain.com" \
-  --to recipient@example.com \
+  --to delivered@resend.dev \
   --subject "Meeting notes" \
   --text "See attached." \
   --cc manager@example.com \
-  --bcc archive@example.com \
+  --bcc delivered+1@resend.dev \
   --reply-to noreply@example.com
 ```
 
@@ -307,7 +309,7 @@ resend emails send \
 ```bash
 resend --api-key re_other_key emails send \
   --from "you@yourdomain.com" \
-  --to recipient@example.com \
+  --to delivered@resend.dev \
   --subject "Test" \
   --text "Using a different key"
 ```
@@ -322,12 +324,12 @@ Returns the email ID on success:
 
 #### Error codes
 
-| Code | Cause |
-|------|-------|
-| `auth_error` | No API key found or client creation failed |
-| `missing_body` | No `--text`, `--html`, or `--html-file` provided |
-| `file_read_error` | Could not read the file passed to `--html-file` |
-| `send_error` | Resend API returned an error |
+| Code              | Cause                                            |
+| ----------------- | ------------------------------------------------ |
+| `auth_error`      | No API key found or client creation failed       |
+| `missing_body`    | No `--text`, `--html`, or `--html-file` provided |
+| `file_read_error` | Could not read the file passed to `--html-file`  |
+| `send_error`      | Resend API returned an error                     |
 
 ---
 
@@ -341,12 +343,12 @@ resend doctor
 
 #### Checks performed
 
-| Check | Pass | Warn | Fail |
-|-------|------|------|------|
-| **CLI Version** | Running latest | Update available or registry unreachable | — |
-| **API Key** | Key found (shows masked key + source) | — | No key found |
-| **Domains** | Verified domains exist | No domains or all pending verification | API key invalid |
-| **AI Agents** | Lists detected agents (or none) | — | — |
+| Check           | Pass                                    | Warn                                     | Fail            |
+| --------------- | --------------------------------------- | ---------------------------------------- | --------------- |
+| **CLI Version** | Running latest                          | Update available or registry unreachable | —               |
+| **API Key**     | Key found (shows masked key and source) | —                                        | No key found    |
+| **Domains**     | Verified domains exist                  | No domains or all pending verification   | API key invalid |
+| **AI Agents**   | Lists detected agents (or none)         | —                                        | —               |
 
 The API key is always masked in output (e.g. `re_...xxxx`).
 
@@ -374,7 +376,11 @@ resend doctor --json
   "ok": true,
   "checks": [
     { "name": "CLI Version", "status": "pass", "message": "v0.1.0 (latest)" },
-    { "name": "API Key", "status": "pass", "message": "re_...xxxx (source: env)" },
+    {
+      "name": "API Key",
+      "status": "pass",
+      "message": "re_...xxxx (source: env)"
+    },
     { "name": "Domains", "status": "pass", "message": "2 verified, 0 pending" },
     { "name": "AI Agents", "status": "pass", "message": "Detected: Cursor" }
   ]
@@ -385,12 +391,12 @@ Each check has a `status` of `pass`, `warn`, or `fail`. The top-level `ok` is `f
 
 #### Detected AI agents
 
-| Agent | Detection method |
-|-------|-----------------|
-| OpenClaw | `~/clawd/skills` directory exists |
-| Cursor | `~/.cursor` directory exists |
-| Claude Desktop | Platform-specific config file exists |
-| VS Code | `.vscode/mcp.json` in current directory |
+| Agent          | Detection method                        |
+| -------------- | --------------------------------------- |
+| OpenClaw       | `~/clawd/skills` directory exists       |
+| Cursor         | `~/.cursor` directory exists            |
+| Claude Desktop | Platform-specific config file exists    |
+| VS Code        | `.vscode/mcp.json` in current directory |
 
 #### Exit code
 
@@ -406,14 +412,14 @@ These flags work on every command and are passed before the subcommand:
 resend [global options] <command> [command options]
 ```
 
-| Flag | Description |
-|------|-------------|
-| `--api-key <key>` | Override API key for this invocation (takes highest priority) |
-| `-p, --profile <name>` | Profile to use (overrides `RESEND_PROFILE` env var) |
-| `--json` | Force JSON output even in interactive terminals |
-| `-q, --quiet` | Suppress spinners and status output (implies `--json`) |
-| `--version` | Print version and exit |
-| `--help` | Show help text |
+| Flag                   | Description                                                   |
+| ---------------------- | ------------------------------------------------------------- |
+| `--api-key <key>`      | Override API key for this invocation (takes highest priority) |
+| `-p, --profile <name>` | Profile to use (overrides `RESEND_PROFILE` env var)           |
+| `--json`               | Force JSON output even in interactive terminals               |
+| `-q, --quiet`          | Suppress spinners and status output (implies `--json`)        |
+| `--version`            | Print version and exit                                        |
+| `--help`               | Show help text                                                |
 
 ---
 
@@ -421,10 +427,10 @@ resend [global options] <command> [command options]
 
 The CLI has two output modes:
 
-| Mode | When | Stdout | Stderr |
-|------|------|--------|--------|
-| **Interactive** | Terminal (TTY) | Formatted text | Spinners, prompts |
-| **Machine** | Piped, CI, or `--json` | JSON | Nothing |
+| Mode            | When                   | Stdout         | Stderr            |
+| --------------- | ---------------------- | -------------- | ----------------- |
+| **Interactive** | Terminal (TTY)         | Formatted text | Spinners, prompts |
+| **Machine**     | Piped, CI, or `--json` | JSON           | Nothing           |
 
 Switching is automatic — pipe to another command and JSON output activates:
 
@@ -457,7 +463,7 @@ steps:
   - run: |
       resend emails send \
         --from "deploy@yourdomain.com" \
-        --to "team@yourdomain.com" \
+        --to "delivered@resend.com" \
         --subject "Deploy complete" \
         --text "Version ${{ github.sha }} deployed."
 ```
@@ -475,11 +481,11 @@ Agents calling the CLI as a subprocess automatically get JSON output (non-TTY de
 
 ## Configuration
 
-| Item | Path | Notes |
-|------|------|-------|
-| Config directory | `~/.config/resend/` | Respects `$XDG_CONFIG_HOME` on Linux, `%APPDATA%` on Windows |
-| Credentials | `~/.config/resend/credentials.json` | `0600` permissions (owner read/write) |
-| Install directory | `~/.resend/bin/` | Respects `$RESEND_INSTALL` |
+| Item              | Path                                | Notes                                                        |
+| ----------------- | ----------------------------------- | ------------------------------------------------------------ |
+| Config directory  | `~/.config/resend/`                 | Respects `$XDG_CONFIG_HOME` on Linux, `%APPDATA%` on Windows |
+| Credentials       | `~/.config/resend/credentials.json` | `0600` permissions (owner read/write)                        |
+| Install directory | `~/.resend/bin/`                    | Respects `$RESEND_INSTALL`                                   |
 
 ## License
 
