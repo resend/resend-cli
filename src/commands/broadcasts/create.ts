@@ -7,7 +7,7 @@ import { requireClient } from '../../lib/client';
 import { fetchVerifiedDomains, promptForFromAddress } from '../../lib/domains';
 import { readFile } from '../../lib/files';
 import { buildHelpText } from '../../lib/help-text';
-import { outputError } from '../../lib/output';
+import { outputError, outputResult } from '../../lib/output';
 import { cancelAndExit, pickId } from '../../lib/prompts';
 import { buildReactEmailHtml } from '../../lib/react-email';
 import { isInteractive } from '../../lib/tty';
@@ -51,11 +51,17 @@ export const createBroadcastCommand = new Command('create')
     '--scheduled-at <datetime>',
     'Schedule delivery — ISO 8601 or natural language e.g. "in 1 hour", "tomorrow at 9am ET" (only valid with --send)',
   )
+  .option(
+    '--dry-run',
+    'Validate input and print the create request JSON without calling the API',
+  )
   .addHelpText(
     'after',
     buildHelpText({
       context: `Non-interactive: --from, --subject, and --segment-id are required.
 Body: provide at least one of --html, --html-file, --text, --text-file, or --react-email.
+
+Use --dry-run to print the request JSON without creating a broadcast.
 
 Variable interpolation:
   HTML bodies support triple-brace syntax for contact properties.
@@ -223,24 +229,32 @@ Scheduling:
       });
     }
 
+    const createPayload = {
+      from,
+      subject,
+      segmentId,
+      ...(html && { html }),
+      ...(text && { text }),
+      ...(opts.name && { name: opts.name }),
+      ...(opts.replyTo && { replyTo: opts.replyTo }),
+      ...(opts.previewText && { previewText: opts.previewText }),
+      ...(topicId && { topicId }),
+      ...(opts.send && { send: true as const }),
+      ...(opts.send && opts.scheduledAt && { scheduledAt: opts.scheduledAt }),
+    } as CreateBroadcastOptions;
+
+    if (opts.dryRun) {
+      outputResult(
+        { dry_run: true, request: createPayload },
+        { json: globalOpts.json },
+      );
+      return;
+    }
+
     await runCreate(
       {
         loading: 'Creating broadcast...',
-        sdkCall: (resend) =>
-          resend.broadcasts.create({
-            from,
-            subject,
-            segmentId,
-            ...(html && { html }),
-            ...(text && { text }),
-            ...(opts.name && { name: opts.name }),
-            ...(opts.replyTo && { replyTo: opts.replyTo }),
-            ...(opts.previewText && { previewText: opts.previewText }),
-            ...(topicId && { topicId }),
-            ...(opts.send && { send: true as const }),
-            ...(opts.send &&
-              opts.scheduledAt && { scheduledAt: opts.scheduledAt }),
-          } as CreateBroadcastOptions),
+        sdkCall: (resend) => resend.broadcasts.create(createPayload),
         onInteractive: (d) => {
           if (opts.send) {
             if (opts.scheduledAt) {
