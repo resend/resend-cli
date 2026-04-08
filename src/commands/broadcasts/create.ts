@@ -53,7 +53,7 @@ export const createBroadcastCommand = new Command('create')
   )
   .option(
     '--dry-run',
-    'Validate input and print the create request JSON without calling the API',
+    'Validate input and print the create request JSON without calling the API (interactive: type segment/topic IDs; lists are not fetched)',
   )
   .addHelpText(
     'after',
@@ -116,13 +116,12 @@ Scheduling:
       );
     }
 
-    const resend = await requireClient(globalOpts);
-
     let from = opts.from;
     let subject = opts.subject;
     let segmentId = opts.segmentId;
 
-    if (!from && isInteractive() && !globalOpts.json) {
+    if (!from && isInteractive() && !globalOpts.json && !opts.dryRun) {
+      const resend = await requireClient(globalOpts);
       const domains = await fetchVerifiedDomains(resend);
       if (domains.length > 0) {
         from = await promptForFromAddress(domains);
@@ -172,7 +171,19 @@ Scheduling:
           { json: globalOpts.json },
         );
       }
-      segmentId = await pickId(undefined, segmentPickerConfig, globalOpts);
+      if (opts.dryRun) {
+        const result = await p.text({
+          message: 'Segment ID',
+          placeholder: 'e.g. 7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
+          validate: (v) => (!v ? 'Required' : undefined),
+        });
+        if (p.isCancel(result)) {
+          cancelAndExit('Cancelled.');
+        }
+        segmentId = result;
+      } else {
+        segmentId = await pickId(undefined, segmentPickerConfig, globalOpts);
+      }
     }
 
     let html = opts.html;
@@ -224,9 +235,20 @@ Scheduling:
 
     let topicId = opts.topicId;
     if (!topicId && isInteractive() && !globalOpts.json) {
-      topicId = await pickId(undefined, topicPickerConfig, globalOpts, {
-        optional: true,
-      });
+      if (opts.dryRun) {
+        const result = await p.text({
+          message: 'Topic ID (optional)',
+          placeholder: 'Press Enter to skip',
+        });
+        if (p.isCancel(result)) {
+          cancelAndExit('Cancelled.');
+        }
+        topicId = result.trim() || undefined;
+      } else {
+        topicId = await pickId(undefined, topicPickerConfig, globalOpts, {
+          optional: true,
+        });
+      }
     }
 
     const createPayload = {

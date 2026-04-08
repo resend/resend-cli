@@ -118,10 +118,37 @@ describe('send command', () => {
     );
 
     expect(mockSend).not.toHaveBeenCalled();
+    expect(mockDomainsList).not.toHaveBeenCalled();
     const out = JSON.parse(spies.logSpy.mock.calls[0][0] as string);
     expect(out.dry_run).toBe(true);
     expect(out.request.from).toBe('a@test.com');
     expect(out.request.to).toEqual(['b@test.com']);
+  });
+
+  test('dry-run does not require API key or call domains API', async () => {
+    spies = setupOutputSpies();
+    delete process.env.RESEND_API_KEY;
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await sendCommand.parseAsync(
+      [
+        '--from',
+        'a@test.com',
+        '--to',
+        'b@test.com',
+        '--subject',
+        'Test',
+        '--text',
+        'Hello',
+        '--dry-run',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockSend).not.toHaveBeenCalled();
+    expect(mockDomainsList).not.toHaveBeenCalled();
+    const out = JSON.parse(spies.logSpy.mock.calls[0][0] as string);
+    expect(out.dry_run).toBe(true);
   });
 
   test('outputs JSON with email ID on success', async () => {

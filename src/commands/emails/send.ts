@@ -76,7 +76,7 @@ export const sendCommand = new Command('send')
   )
   .option(
     '--dry-run',
-    'Validate input and print the request JSON without calling the API',
+    'Validate input and print the request JSON without calling the API (interactive: verified-domain list is not fetched)',
   )
   .option('--template <id>', 'Template ID to use')
   .option(
@@ -132,10 +132,6 @@ export const sendCommand = new Command('send')
         { json: globalOpts.json },
       );
     }
-
-    const resend = await requireClient(globalOpts, {
-      permission: 'sending_access',
-    });
 
     const hasTemplate = !!opts.template;
 
@@ -210,8 +206,17 @@ export const sendCommand = new Command('send')
       : undefined;
 
     let fromAddress = opts.from;
-    if (!fromAddress && !hasTemplate && isInteractive() && !globalOpts.json) {
-      const domains = await fetchVerifiedDomains(resend);
+    if (
+      !opts.dryRun &&
+      !fromAddress &&
+      !hasTemplate &&
+      isInteractive() &&
+      !globalOpts.json
+    ) {
+      const clientForDomains = await requireClient(globalOpts, {
+        permission: 'sending_access',
+      });
+      const domains = await fetchVerifiedDomains(clientForDomains);
       if (domains.length > 0) {
         fromAddress = await promptForFromAddress(domains);
       }
@@ -386,6 +391,10 @@ export const sendCommand = new Command('send')
       );
       return;
     }
+
+    const resend = await requireClient(globalOpts, {
+      permission: 'sending_access',
+    });
 
     const data = await withSpinner(
       opts.scheduledAt ? 'Scheduling email...' : 'Sending email...',

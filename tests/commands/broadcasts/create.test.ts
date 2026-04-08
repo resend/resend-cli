@@ -125,6 +125,33 @@ describe('broadcasts create command', () => {
     expect(out.request.segmentId).toBe('7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d');
   });
 
+  test('dry-run does not require API key', async () => {
+    spies = setupOutputSpies();
+    delete process.env.RESEND_API_KEY;
+
+    const { createBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/create'
+    );
+    await createBroadcastCommand.parseAsync(
+      [
+        '--from',
+        'hello@domain.com',
+        '--subject',
+        'Weekly Update',
+        '--segment-id',
+        '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
+        '--html',
+        '<p>Hi</p>',
+        '--dry-run',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockCreate).not.toHaveBeenCalled();
+    const out = JSON.parse(spies.logSpy.mock.calls[0][0] as string);
+    expect(out.dry_run).toBe(true);
+  });
+
   test('outputs JSON id when non-interactive', async () => {
     spies = setupOutputSpies();
 
