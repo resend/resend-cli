@@ -476,6 +476,11 @@ Agents calling the CLI as a subprocess automatically get JSON output (non-TTY de
 - **Output:** JSON to stdout, nothing to stderr
 - **Exit code:** `0` success, `1` error
 - **Errors:** Always include `message` and `code` fields
+- **Discovery:** `resend commands` prints the full command tree as JSON (subcommands, options, descriptions).
+
+### `resend commands`
+
+Prints the CLI command tree as JSON for scripting and AI agents. In an interactive terminal, pass global `--json` if you need machine output; when stdout is piped, JSON is used automatically.
 
 ---
 

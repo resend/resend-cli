@@ -116,7 +116,7 @@ Auth resolves: `--api-key` flag > `RESEND_API_KEY` env > config file (`resend lo
 | `topics` | create, update, delete, list |
 | `webhooks` | create, update, listen, delete, list |
 | `auth` | login, logout, switch, rename, remove |
-| `whoami` / `doctor` / `update` / `open` | Utility commands |
+| `whoami` / `doctor` / `update` / `open` / `commands` | Utility commands |
 
 Read the matching reference file for detailed flags and output shapes.
 
