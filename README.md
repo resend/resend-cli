@@ -427,10 +427,10 @@ resend [global options] <command> [command options]
 
 The CLI has two output modes:
 
-| Mode            | When                   | Stdout         | Stderr            |
-| --------------- | ---------------------- | -------------- | ----------------- |
-| **Interactive** | Terminal (TTY)         | Formatted text | Spinners, prompts |
-| **Machine**     | Piped, CI, or `--json` | JSON           | Nothing           |
+| Mode            | When                   | Stdout              | Stderr                                   |
+| --------------- | ---------------------- | ------------------- | ---------------------------------------- |
+| **Interactive** | Terminal (TTY)         | Formatted text      | Spinners, prompts, human-readable errors |
+| **Machine**     | Piped, CI, or `--json` | Success JSON only   | JSON errors; optional warnings (e.g. flags) |
 
 Switching is automatic — pipe to another command and JSON output activates:
 
@@ -441,7 +441,7 @@ resend emails send --from ... --to ... --subject ... --text ... | jq '.id'
 
 ### Error output
 
-Errors always exit with code `1` and output structured JSON to stdout:
+Errors always exit with code `1` and output structured JSON to **stderr** (stdout stays reserved for success payloads when scripting):
 
 ```json
 { "error": { "message": "No API key found", "code": "auth_error" } }
@@ -473,7 +473,7 @@ steps:
 Agents calling the CLI as a subprocess automatically get JSON output (non-TTY detection). The contract:
 
 - **Input:** All required flags must be provided (no interactive prompts)
-- **Output:** JSON to stdout, nothing to stderr
+- **Output:** Success JSON on stdout; error JSON on stderr (use `2>` or combined capture if you need both)
 - **Exit code:** `0` success, `1` error
 - **Errors:** Always include `message` and `code` fields
 

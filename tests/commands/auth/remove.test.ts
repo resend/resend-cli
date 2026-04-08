@@ -82,7 +82,7 @@ describe('auth remove command', () => {
 
   test('errors when name omitted in non-interactive mode', async () => {
     spies = setupOutputSpies();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
     storeApiKey('re_default');
 
@@ -104,7 +104,7 @@ describe('auth remove command', () => {
       value: true,
       writable: true,
     });
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
     storeApiKey('re_default');
 
@@ -119,7 +119,7 @@ describe('auth remove command', () => {
 
   test('errors when profile does not exist', async () => {
     spies = setupOutputSpies();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
     storeApiKey('re_default');
 

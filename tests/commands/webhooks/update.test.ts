@@ -131,7 +131,7 @@ describe('webhooks update command', () => {
 
   test('errors with no_changes when no flags are provided', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { updateWebhookCommand } = await import(
@@ -147,7 +147,7 @@ describe('webhooks update command', () => {
 
   test('does not call SDK when no_changes error is raised', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { updateWebhookCommand } = await import(
@@ -164,7 +164,7 @@ describe('webhooks update command', () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { updateWebhookCommand } = await import(
@@ -185,7 +185,7 @@ describe('webhooks update command', () => {
     mockUpdate.mockResolvedValueOnce(
       mockSdkError('Webhook not found', 'not_found'),
     );
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);
