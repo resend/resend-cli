@@ -1,7 +1,4 @@
-import type {
-  ListAttachmentsResponseSuccess,
-  ListReceivingEmail,
-} from 'resend';
+import type { ListReceivingEmail } from 'resend';
 import type { PickerConfig } from '../../../lib/prompts';
 import { renderTable } from '../../../lib/table';
 
@@ -30,21 +27,5 @@ export function renderReceivingEmailsTable(
     ['From', 'To', 'Subject', 'Created At', 'ID'],
     rows,
     '(no received emails)',
-  );
-}
-
-export function renderAttachmentsTable(
-  attachments: ListAttachmentsResponseSuccess['data'],
-): string {
-  const rows = attachments.map((a) => [
-    a.filename ?? '(unnamed)',
-    a.content_type,
-    String(a.size),
-    a.id,
-  ]);
-  return renderTable(
-    ['Filename', 'Content-Type', 'Size (bytes)', 'ID'],
-    rows,
-    '(no attachments)',
   );
 }
