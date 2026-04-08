@@ -441,11 +441,15 @@ resend emails send --from ... --to ... --subject ... --text ... | jq '.id'
 
 ### Error output
 
-Errors always exit with code `1` and output structured JSON to **stderr** (stdout stays reserved for success payloads when scripting):
+Errors always exit with code `1`. The format on **stderr** depends on output mode (same rules as the table above):
+
+- **Machine** (piped stdout, CI, `--json`, or `-q`): structured JSON so **stdout** stays success-only for scripting (`jq`, etc.):
 
 ```json
 { "error": { "message": "No API key found", "code": "auth_error" } }
 ```
+
+- **Interactive** (TTY without `--json` / `-q`): a human-readable line such as `Error: No API key found` (still on stderr).
 
 ---
 
