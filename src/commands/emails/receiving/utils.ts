@@ -13,6 +13,22 @@ export const receivedEmailPickerConfig: PickerConfig<{
   display: (e) => ({ label: e.subject || '(no subject)', hint: e.id }),
 };
 
+export function receivedAttachmentPickerConfig(
+  emailId: string,
+): PickerConfig<{ id: string; filename?: string }> {
+  return {
+    resource: 'attachment',
+    resourcePlural: 'attachments',
+    fetchItems: (resend, { limit, after }) =>
+      resend.emails.receiving.attachments.list({
+        emailId,
+        limit,
+        ...(after && { after }),
+      }),
+    display: (a) => ({ label: a.filename ?? '(unnamed)', hint: a.id }),
+  };
+}
+
 export function renderReceivingEmailsTable(
   emails: ListReceivingEmail[],
 ): string {
