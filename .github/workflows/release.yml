@@ -187,6 +187,17 @@ jobs:
                     dist/resend-windows-x64.zip; do
             [ -s "$f" ] || { echo "Missing or empty: $f"; exit 1; }
           done
+      - name: Generate SHA-256 checksums
+        run: |
+          cd dist
+          sha256sum \
+            resend-darwin-arm64.tar.gz \
+            resend-darwin-x64.tar.gz \
+            resend-linux-x64.tar.gz \
+            resend-linux-arm64.tar.gz \
+            resend-windows-x64.zip \
+            > CHECKSUMS.txt
+          cat CHECKSUMS.txt
       - name: Detect pre-release
         id: meta
         run: |
@@ -231,6 +242,7 @@ jobs:
             dist/resend-linux-x64.tar.gz
             dist/resend-linux-arm64.tar.gz
             dist/resend-windows-x64.zip
+            dist/CHECKSUMS.txt
   notify-tap:
     if: github.event_name != 'workflow_dispatch' && needs.release.outputs.prerelease == 'false'
     name: Trigger Homebrew Tap Update
