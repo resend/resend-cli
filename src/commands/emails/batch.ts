@@ -102,13 +102,6 @@ export const batchCommand = new Command('batch')
       );
     }
 
-    if (opts.reactEmail) {
-      const reactHtml = await buildReactEmailHtml(opts.reactEmail, globalOpts);
-      for (const email of emails) {
-        (email as Record<string, unknown>).html = reactHtml;
-      }
-    }
-
     for (let i = 0; i < emails.length; i++) {
       const email = emails[i];
       if (email === null || typeof email !== 'object' || Array.isArray(email)) {
@@ -138,6 +131,13 @@ export const batchCommand = new Command('batch')
           },
           { json: globalOpts.json },
         );
+      }
+    }
+
+    if (opts.reactEmail) {
+      const reactHtml = await buildReactEmailHtml(opts.reactEmail, globalOpts);
+      for (const email of emails) {
+        (email as Record<string, unknown>).html = reactHtml;
       }
     }
 
