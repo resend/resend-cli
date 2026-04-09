@@ -1,0 +1,14 @@
+const TIMEOUT_ERROR_NAME = 'TimeoutError';
+
+export const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> => {
+  const timeout = new Promise<never>((_, reject) => {
+    const id = setTimeout(() => {
+      clearTimeout(id);
+      const error = new Error(`Operation timed out after ${ms}ms`);
+      error.name = TIMEOUT_ERROR_NAME;
+      reject(error);
+    }, ms);
+  });
+
+  return Promise.race([promise, timeout]);
+};
