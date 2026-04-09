@@ -6,8 +6,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -46,21 +46,36 @@ describe('whoami command', () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  test('exits 1 when not authenticated (non-interactive)', async () => {
+  it('exits 1 with structured error when not authenticated (non-interactive)', async () => {
     spies = setupOutputSpies();
     exitSpy = mockExitThrow();
 
     const { whoamiCommand } = await import('../../src/commands/whoami');
     await expectExit1(() => whoamiCommand.parseAsync([], { from: 'user' }));
 
-    const output = spies.logSpy.mock.calls[0]?.[0] as string | undefined;
-    if (output) {
-      const parsed = JSON.parse(output);
-      expect(parsed.authenticated).toBe(false);
-    }
+    const output = String(spies.logSpy.mock.calls[0]?.[0] ?? '');
+    const parsed = JSON.parse(output);
+    expect(parsed.error).toBeDefined();
+    expect(parsed.error.code).toBe('not_authenticated');
+    expect(parsed.error.message).toContain('Not authenticated');
   });
 
-  test('shows authenticated JSON when key exists in config', async () => {
+  it('exits 1 with profile_not_found error for missing profile (non-interactive)', async () => {
+    process.env.RESEND_PROFILE = 'nonexistent';
+    spies = setupOutputSpies();
+    exitSpy = mockExitThrow();
+
+    const { whoamiCommand } = await import('../../src/commands/whoami');
+    await expectExit1(() => whoamiCommand.parseAsync([], { from: 'user' }));
+
+    const output = String(spies.logSpy.mock.calls[0]?.[0] ?? '');
+    const parsed = JSON.parse(output);
+    expect(parsed.error).toBeDefined();
+    expect(parsed.error.code).toBe('profile_not_found');
+    expect(parsed.error.message).toContain('not found');
+  });
+
+  it('shows authenticated JSON when key exists in config', async () => {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     writeFileSync(
@@ -85,7 +100,7 @@ describe('whoami command', () => {
     expect(parsed.config_path).toBe(join(tmpDir, 'resend', 'credentials.json'));
   });
 
-  test('shows env source when RESEND_API_KEY is set', async () => {
+  it('shows env source when RESEND_API_KEY is set', async () => {
     process.env.RESEND_API_KEY = 're_env_key_5678';
 
     spies = setupOutputSpies();
@@ -100,7 +115,7 @@ describe('whoami command', () => {
     expect(parsed.config_path).toBe(join(tmpDir, 'resend', 'credentials.json'));
   });
 
-  test('shows authenticated for keychain user (async resolve)', async () => {
+  it('shows authenticated for keychain user (async resolve)', async () => {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     writeFileSync(
@@ -141,7 +156,7 @@ describe('whoami command', () => {
     expect(parsed.config_path).toBe(join(tmpDir, 'resend', 'credentials.json'));
   });
 
-  test('shows permission in JSON output when stored', async () => {
+  it('shows permission in JSON output when stored', async () => {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     writeFileSync(
@@ -168,7 +183,7 @@ describe('whoami command', () => {
     expect(parsed.permission).toBe('sending_access');
   });
 
-  test('omits permission from JSON when not stored', async () => {
+  it('omits permission from JSON when not stored', async () => {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     writeFileSync(
