@@ -22,12 +22,14 @@ const mockList = vi.fn(async () => ({
     has_more: false,
     data: [
       {
-        id: '3d4a472d-bc6d-4dd2-aa9d-d3d11b549e55',
-        created_at: '2024-11-01T18:10:00.000Z',
-        endpoint: '/emails',
-        method: 'POST',
-        response_status: 200,
-        user_agent: 'resend-node:4.0.0',
+        id: 'attach_abc123',
+        filename: 'invoice.pdf',
+        size: 51200,
+        content_type: 'application/pdf',
+        content_disposition: 'attachment' as const,
+        content_id: null,
+        download_url: 'https://storage.example.com/signed/invoice.pdf',
+        expires_at: '2026-02-18T13:00:00.000Z',
       },
     ],
   },
@@ -37,11 +39,11 @@ const mockList = vi.fn(async () => ({
 vi.mock('resend', () => ({
   Resend: class MockResend {
     constructor(public key: string) {}
-    logs = { list: mockList };
+    emails = { attachments: { list: mockList } };
   },
 }));
 
-describe('logs list command', () => {
+describe('emails attachments command', () => {
   const restoreEnv = captureTestEnv();
   let spies: ReturnType<typeof setupOutputSpies> | undefined;
   let errorSpy: MockInstance | undefined;
@@ -64,51 +66,48 @@ describe('logs list command', () => {
     exitSpy = undefined;
   });
 
-  test('calls SDK list method with default pagination', async () => {
+  test('calls SDK list with emailId and default pagination', async () => {
     spies = setupOutputSpies();
 
-    const { listLogsCommand } = await import('../../../src/commands/logs/list');
-    await listLogsCommand.parseAsync([], { from: 'user' });
+    const { listAttachmentsCommand } = await import(
+      '../../../src/commands/emails/attachments'
+    );
+    await listAttachmentsCommand.parseAsync(['email123'], { from: 'user' });
 
     expect(mockList).toHaveBeenCalledTimes(1);
     const args = mockList.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.emailId).toBe('email123');
     expect(args.limit).toBe(10);
   });
 
   test('passes --limit to pagination options', async () => {
     spies = setupOutputSpies();
 
-    const { listLogsCommand } = await import('../../../src/commands/logs/list');
-    await listLogsCommand.parseAsync(['--limit', '5'], { from: 'user' });
+    const { listAttachmentsCommand } = await import(
+      '../../../src/commands/emails/attachments'
+    );
+    await listAttachmentsCommand.parseAsync(['email123', '--limit', '5'], {
+      from: 'user',
+    });
 
     const args = mockList.mock.calls[0][0] as Record<string, unknown>;
     expect(args.limit).toBe(5);
   });
 
-  test('passes --after cursor to pagination options', async () => {
+  test('outputs JSON list with attachment data when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { listLogsCommand } = await import('../../../src/commands/logs/list');
-    await listLogsCommand.parseAsync(
-      ['--after', '3d4a472d-bc6d-4dd2-aa9d-d3d11b549e55'],
-      { from: 'user' },
+    const { listAttachmentsCommand } = await import(
+      '../../../src/commands/emails/attachments'
     );
-
-    const args = mockList.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.after).toBe('3d4a472d-bc6d-4dd2-aa9d-d3d11b549e55');
-  });
-
-  test('outputs JSON list with log data when non-interactive', async () => {
-    spies = setupOutputSpies();
-
-    const { listLogsCommand } = await import('../../../src/commands/logs/list');
-    await listLogsCommand.parseAsync([], { from: 'user' });
+    await listAttachmentsCommand.parseAsync(['email123'], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
     expect(Array.isArray(parsed.data)).toBe(true);
-    expect(parsed.data[0].id).toBe('3d4a472d-bc6d-4dd2-aa9d-d3d11b549e55');
-    expect(parsed.data[0].endpoint).toBe('/emails');
+    expect(parsed.data[0].id).toBe('attach_abc123');
+    expect(parsed.data[0].filename).toBe('invoice.pdf');
+    expect(parsed.data[0].content_type).toBe('application/pdf');
     expect(parsed.has_more).toBe(false);
   });
 
@@ -117,9 +116,13 @@ describe('logs list command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listLogsCommand } = await import('../../../src/commands/logs/list');
+    const { listAttachmentsCommand } = await import(
+      '../../../src/commands/emails/attachments'
+    );
     await expectExit1(() =>
-      listLogsCommand.parseAsync(['--limit', '200'], { from: 'user' }),
+      listAttachmentsCommand.parseAsync(['email123', '--limit', '200'], {
+        from: 'user',
+      }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -133,8 +136,12 @@ describe('logs list command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listLogsCommand } = await import('../../../src/commands/logs/list');
-    await expectExit1(() => listLogsCommand.parseAsync([], { from: 'user' }));
+    const { listAttachmentsCommand } = await import(
+      '../../../src/commands/emails/attachments'
+    );
+    await expectExit1(() =>
+      listAttachmentsCommand.parseAsync(['email123'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -142,17 +149,19 @@ describe('logs list command', () => {
 
   test('errors with list_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockList.mockResolvedValueOnce(
-      mockSdkError('Server error', 'server_error'),
-    );
+    mockList.mockResolvedValueOnce(mockSdkError('Not found', 'not_found'));
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { listLogsCommand } = await import('../../../src/commands/logs/list');
-    await expectExit1(() => listLogsCommand.parseAsync([], { from: 'user' }));
+    const { listAttachmentsCommand } = await import(
+      '../../../src/commands/emails/attachments'
+    );
+    await expectExit1(() =>
+      listAttachmentsCommand.parseAsync(['nonexistent'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('list_error');

@@ -1,5 +1,7 @@
 import { Command } from '@commander-js/extra-typings';
 import { buildHelpText } from '../../lib/help-text';
+import { getAttachmentCommand } from './attachment';
+import { listAttachmentsCommand } from './attachments';
 import { batchCommand } from './batch';
 import { cancelCommand } from './cancel';
 import { getEmailCommand } from './get';
@@ -18,6 +20,8 @@ export const emailsCommand = new Command('emails')
         'resend emails get <email-id>',
         'resend emails batch --file ./emails.json',
         'resend emails cancel <email-id>',
+        'resend emails attachments <email-id>',
+        'resend emails attachment <email-id> <attachment-id>',
         'resend emails receiving list',
         'resend emails receiving forward <email-id> --to delivered@resend.com --from onboarding@resend.com',
       ],
@@ -29,4 +33,6 @@ export const emailsCommand = new Command('emails')
   .addCommand(batchCommand)
   .addCommand(cancelCommand)
   .addCommand(updateCommand)
+  .addCommand(listAttachmentsCommand)
+  .addCommand(getAttachmentCommand)
   .addCommand(receivingCommand);
