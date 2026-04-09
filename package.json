@@ -45,7 +45,7 @@
     "commander": "14.0.3",
     "esbuild": "0.28.0",
     "picocolors": "1.1.1",
-    "resend": "6.10.0-preview-workflows.3"
+    "resend": "6.10.0-preview-workflows.4"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

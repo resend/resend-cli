@@ -3,10 +3,11 @@ name: resend-cli
 description: >
   Operate the Resend platform from the terminal — send emails (including React Email
   .tsx templates via --react-email), manage domains, contacts, broadcasts, templates,
-  webhooks, API keys, and logs via the `resend` CLI. Use when the user wants to run
-  Resend commands in the shell, scripts, or CI/CD pipelines, or send/preview React
-  Email templates. Always load this skill before running `resend` commands — it
-  contains the non-interactive flag contract and gotchas that prevent silent failures.
+  webhooks, API keys, logs, automations, and events via the `resend` CLI. Use when the
+  user wants to run Resend commands in the shell, scripts, or CI/CD pipelines, or
+  send/preview React Email templates. Always load this skill before running `resend`
+  commands — it contains the non-interactive flag contract and gotchas that prevent
+  silent failures.
 license: MIT
 metadata:
   author: resend
@@ -21,6 +22,7 @@ references:
   - references/emails.md
   - references/domains.md
   - references/api-keys.md
+  - references/automations.md
   - references/broadcasts.md
   - references/contacts.md
   - references/contact-properties.md
@@ -108,6 +110,8 @@ Auth resolves: `--api-key` flag > `RESEND_API_KEY` env > config file (`resend lo
 | `domains` | create, verify, update, delete, list |
 | `logs` | list, get, open |
 | `api-keys` | create, list, delete |
+| `automations` | create, get, list, update, delete, open, runs |
+| `events` | create, get, list, update, delete, send, open |
 | `broadcasts` | create, send, update, delete, list |
 | `contacts` | create, update, delete, segments, topics |
 | `contact-properties` | create, update, delete, list |
@@ -180,6 +184,7 @@ resend doctor -q
 - **Defining contact properties** → [references/contact-properties.md](references/contact-properties.md)
 - **Working with templates** → [references/templates.md](references/templates.md)
 - **Viewing API request logs** → [references/logs.md](references/logs.md)
+- **Creating automations or sending events** → [references/automations.md](references/automations.md)
 - **Setting up webhooks or listening for events** → [references/webhooks.md](references/webhooks.md)
 - **Auth, profiles, or health checks** → [references/auth.md](references/auth.md)
 - **Multi-step recipes** (setup, CI/CD, broadcast workflow) → [references/workflows.md](references/workflows.md)

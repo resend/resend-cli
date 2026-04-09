@@ -4,6 +4,7 @@ import { createEventCommand } from './create';
 import { deleteEventCommand } from './delete';
 import { getEventCommand } from './get';
 import { listEventsCommand } from './list';
+import { openEventsCommand } from './open';
 import { sendEventCommand } from './send';
 import { updateEventCommand } from './update';
 
@@ -40,4 +41,5 @@ Lifecycle:
   .addCommand(listEventsCommand, { isDefault: true })
   .addCommand(updateEventCommand)
   .addCommand(deleteEventCommand)
+  .addCommand(openEventsCommand)
   .addCommand(sendEventCommand);
