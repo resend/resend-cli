@@ -3,6 +3,7 @@ import { runGet } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { pickId } from '../../lib/prompts';
+import { safeTerminalText } from '../../lib/safe-terminal-text';
 import { emailPickerConfig } from './utils';
 
 export const getEmailCommand = new Command('get')
@@ -28,13 +29,13 @@ export const getEmailCommand = new Command('get')
         loading: 'Fetching email...',
         sdkCall: (resend) => resend.emails.get(id),
         onInteractive: (data) => {
-          console.log(`From:    ${data.from}`);
-          console.log(`To:      ${data.to.join(', ')}`);
-          console.log(`Subject: ${data.subject}`);
-          console.log(`Status:  ${data.last_event}`);
-          console.log(`Date:    ${data.created_at}`);
+          console.log(`From:    ${safeTerminalText(data.from)}`);
+          console.log(`To:      ${data.to.map(safeTerminalText).join(', ')}`);
+          console.log(`Subject: ${safeTerminalText(data.subject)}`);
+          console.log(`Status:  ${safeTerminalText(data.last_event)}`);
+          console.log(`Date:    ${safeTerminalText(data.created_at)}`);
           if (data.scheduled_at) {
-            console.log(`Scheduled: ${data.scheduled_at}`);
+            console.log(`Scheduled: ${safeTerminalText(data.scheduled_at)}`);
           }
         },
       },

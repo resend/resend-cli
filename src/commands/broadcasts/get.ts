@@ -3,6 +3,7 @@ import { runGet } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { pickId } from '../../lib/prompts';
+import { safeTerminalText } from '../../lib/safe-terminal-text';
 import { broadcastPickerConfig, broadcastStatusIndicator } from './utils';
 
 export const getBroadcastCommand = new Command('get')
@@ -31,24 +32,28 @@ Use this command to retrieve the full broadcast payload.`,
         loading: 'Fetching broadcast...',
         sdkCall: (resend) => resend.broadcasts.get(id),
         onInteractive: (b) => {
-          console.log(`Broadcast: ${b.id}`);
+          console.log(`Broadcast: ${safeTerminalText(b.id)}`);
           console.log(`  Status:      ${broadcastStatusIndicator(b.status)}`);
-          console.log(`  Name:        ${b.name ?? '(untitled)'}`);
-          console.log(`  From:        ${b.from ?? '—'}`);
-          console.log(`  Subject:     ${b.subject ?? '—'}`);
-          console.log(`  Segment:     ${b.segment_id ?? '—'}`);
+          console.log(
+            `  Name:        ${safeTerminalText(b.name ?? '(untitled)')}`,
+          );
+          console.log(`  From:        ${safeTerminalText(b.from ?? '—')}`);
+          console.log(`  Subject:     ${safeTerminalText(b.subject ?? '—')}`);
+          console.log(
+            `  Segment:     ${safeTerminalText(b.segment_id ?? '—')}`,
+          );
           if (b.preview_text) {
-            console.log(`  Preview:     ${b.preview_text}`);
+            console.log(`  Preview:     ${safeTerminalText(b.preview_text)}`);
           }
           if (b.topic_id) {
-            console.log(`  Topic:       ${b.topic_id}`);
+            console.log(`  Topic:       ${safeTerminalText(b.topic_id)}`);
           }
-          console.log(`  Created:     ${b.created_at}`);
+          console.log(`  Created:     ${safeTerminalText(b.created_at)}`);
           if (b.scheduled_at) {
-            console.log(`  Scheduled:   ${b.scheduled_at}`);
+            console.log(`  Scheduled:   ${safeTerminalText(b.scheduled_at)}`);
           }
           if (b.sent_at) {
-            console.log(`  Sent:        ${b.sent_at}`);
+            console.log(`  Sent:        ${safeTerminalText(b.sent_at)}`);
           }
         },
       },
