@@ -190,21 +190,36 @@ export const sendCommand = new Command('send')
       : undefined;
 
     let fromAddress = opts.from;
+    let domainFetchFailed = false;
     if (!fromAddress && !hasTemplate && isInteractive() && !globalOpts.json) {
       const domains = await fetchVerifiedDomains(resend);
-      if (domains.length > 0) {
+      if (domains === null) {
+        domainFetchFailed = true;
+        process.stderr.write(
+          'Warning: Could not fetch verified domains. Please provide a sender address explicitly.\n',
+        );
+      } else if (domains.length > 0) {
         fromAddress = await promptForFromAddress(domains);
       }
     }
 
+    const fromPromptSpec = domainFetchFailed
+      ? {
+          flag: 'from',
+          message: 'From address',
+          placeholder: 'you@yourdomain.com',
+          required: !hasTemplate,
+        }
+      : {
+          flag: 'from',
+          message: 'From address',
+          placeholder: 'onboarding@resend.dev',
+          defaultValue: 'onboarding@resend.dev',
+          required: !hasTemplate,
+        };
+
     const promptFields = [
-      {
-        flag: 'from',
-        message: 'From address',
-        placeholder: 'onboarding@resend.dev',
-        defaultValue: 'onboarding@resend.dev',
-        required: !hasTemplate,
-      },
+      fromPromptSpec,
       {
         flag: 'to',
         message: 'To address',
