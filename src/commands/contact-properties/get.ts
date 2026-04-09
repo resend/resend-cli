@@ -3,6 +3,7 @@ import { runGet } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { pickId } from '../../lib/prompts';
+import { safeTerminalText } from '../../lib/safe-terminal-text';
 import { contactPropertyPickerConfig } from './utils';
 
 export const getContactPropertyCommand = new Command('get')
@@ -34,10 +35,14 @@ export const getContactPropertyCommand = new Command('get')
         loading: 'Fetching contact property...',
         sdkCall: (resend) => resend.contactProperties.get(id),
         onInteractive: (data) => {
-          console.log(`${data.key} (${data.type})`);
-          console.log(`ID: ${data.id}`);
-          console.log(`Created: ${data.createdAt}`);
-          console.log(`Fallback value: ${data.fallbackValue ?? '(none)'}`);
+          console.log(
+            `${safeTerminalText(data.key)} (${safeTerminalText(data.type)})`,
+          );
+          console.log(`ID: ${safeTerminalText(data.id)}`);
+          console.log(`Created: ${safeTerminalText(data.createdAt)}`);
+          console.log(
+            `Fallback value: ${safeTerminalText(data.fallbackValue ?? '(none)')}`,
+          );
         },
       },
       globalOpts,

@@ -3,6 +3,7 @@ import { runGet } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { pickId } from '../../lib/prompts';
+import { safeTerminalText } from '../../lib/safe-terminal-text';
 import { segmentPickerConfig } from './utils';
 
 export const getSegmentCommand = new Command('get')
@@ -27,9 +28,9 @@ export const getSegmentCommand = new Command('get')
         loading: 'Fetching segment...',
         sdkCall: (resend) => resend.segments.get(id),
         onInteractive: (data) => {
-          console.log(`${data.name}`);
-          console.log(`ID: ${data.id}`);
-          console.log(`Created: ${data.created_at}`);
+          console.log(`${safeTerminalText(data.name)}`);
+          console.log(`ID: ${safeTerminalText(data.id)}`);
+          console.log(`Created: ${safeTerminalText(data.created_at)}`);
         },
       },
       globalOpts,

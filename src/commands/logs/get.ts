@@ -3,6 +3,7 @@ import { runGet } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { pickId } from '../../lib/prompts';
+import { safeTerminalText } from '../../lib/safe-terminal-text';
 import { logPickerConfig } from './utils';
 
 export const getLogCommand = new Command('get')
@@ -29,10 +30,14 @@ export const getLogCommand = new Command('get')
         loading: 'Fetching log...',
         sdkCall: (resend) => resend.logs.get(id),
         onInteractive: (d) => {
-          console.log(`${d.method} ${d.endpoint} — ${d.response_status}`);
-          console.log(`ID:         ${d.id}`);
-          console.log(`Created:    ${d.created_at}`);
-          console.log(`User-Agent: ${d.user_agent ?? '(none)'}`);
+          console.log(
+            `${safeTerminalText(d.method)} ${safeTerminalText(d.endpoint)} — ${safeTerminalText(d.response_status)}`,
+          );
+          console.log(`ID:         ${safeTerminalText(d.id)}`);
+          console.log(`Created:    ${safeTerminalText(d.created_at)}`);
+          console.log(
+            `User-Agent: ${safeTerminalText(d.user_agent ?? '(none)')}`,
+          );
           if (d.request_body) {
             console.log(
               `\nRequest Body:\n${JSON.stringify(d.request_body, null, 2)}`,

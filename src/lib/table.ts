@@ -1,3 +1,4 @@
+import { safeTerminalText } from './safe-terminal-text';
 import { isUnicodeSupported } from './tty';
 
 // All box-drawing characters generated via String.fromCodePoint() — never literal
@@ -62,8 +63,9 @@ export function renderTable(
   if (rows.length === 0) {
     return emptyMessage;
   }
+  const sanitizedRows = rows.map((r) => r.map(safeTerminalText));
   const widths = headers.map((h, i) =>
-    Math.max(h.length, ...rows.map((r) => r[i].length)),
+    Math.max(h.length, ...sanitizedRows.map((r) => r[i].length)),
   );
 
   const termWidth = getTerminalWidth();
@@ -71,7 +73,7 @@ export function renderTable(
     const totalWidth =
       widths.reduce((s, w) => s + w, 0) + 3 * widths.length + 1;
     if (totalWidth > termWidth) {
-      return renderCards(headers, rows, termWidth);
+      return renderCards(headers, sanitizedRows, termWidth);
     }
   }
 
@@ -87,5 +89,5 @@ export function renderTable(
     cells.map((c, i) => c.padEnd(widths[i])).join(` ${BOX.v} `) +
     ' ' +
     BOX.v;
-  return [top, row(headers), mid, ...rows.map(row), bot].join('\n');
+  return [top, row(headers), mid, ...sanitizedRows.map(row), bot].join('\n');
 }
