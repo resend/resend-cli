@@ -9,6 +9,7 @@ import {
   expect,
   type MockInstance,
   test,
+  vi,
 } from 'vitest';
 import {
   captureTestEnv,
@@ -124,15 +125,17 @@ describe('requireClient permission check', () => {
       }),
     );
 
-    const spies = setupOutputSpies();
+    setupOutputSpies();
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { requireClient } = await import('../../src/lib/client');
     await expectExit1(() => requireClient({ json: true }));
 
-    const output = spies.logSpy.mock.calls[0][0] as string;
+    const output = errSpy.mock.calls[0][0] as string;
     expect(output).toContain('insufficient_permissions');
     expect(output).toContain('full access');
+    errSpy.mockRestore();
   });
 
   test('allows sending_access key for sending_access command', async () => {
