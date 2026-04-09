@@ -284,7 +284,7 @@ describe('contact-properties update command', () => {
 
   it('errors with invalid_fallback_value when number-type gets a non-numeric fallback', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);
