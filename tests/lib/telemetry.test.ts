@@ -107,6 +107,7 @@ describe('trackCommand', () => {
     process.env.XDG_CONFIG_HOME = testConfigDir;
     delete process.env.DO_NOT_TRACK;
     delete process.env.RESEND_TELEMETRY_DISABLED;
+    process.env.RESEND_TELEMETRY_OPT_IN = '1';
 
     unrefMock = vi.fn();
     const cp = await import('node:child_process');
@@ -264,6 +265,70 @@ describe('trackCommand', () => {
     process.env.RESEND_TELEMETRY_DISABLED = '1';
     trackCommand('emails send', {});
     expect(spawnMock).not.toHaveBeenCalled();
+  });
+
+  test('skips telemetry in non-interactive mode without opt-in', () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: undefined,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: undefined,
+      writable: true,
+    });
+    delete process.env.RESEND_TELEMETRY_OPT_IN;
+
+    trackCommand('emails send', {});
+    expect(spawnMock).not.toHaveBeenCalled();
+  });
+
+  test('skips telemetry in CI without opt-in', () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    process.env.CI = 'true';
+    delete process.env.RESEND_TELEMETRY_OPT_IN;
+
+    trackCommand('emails send', {});
+    expect(spawnMock).not.toHaveBeenCalled();
+  });
+
+  test('sends telemetry in non-interactive mode with RESEND_TELEMETRY_OPT_IN=1', () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: undefined,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: undefined,
+      writable: true,
+    });
+    process.env.RESEND_TELEMETRY_OPT_IN = '1';
+
+    trackCommand('emails send', {});
+    expect(spawnMock).toHaveBeenCalledOnce();
+  });
+
+  test('sends telemetry in interactive mode without opt-in', () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    delete process.env.CI;
+    delete process.env.GITHUB_ACTIONS;
+    delete process.env.TERM;
+    delete process.env.RESEND_TELEMETRY_OPT_IN;
+
+    trackCommand('emails send', {});
+    expect(spawnMock).toHaveBeenCalledOnce();
   });
 
   test('handles spawn failures gracefully', () => {

@@ -87,6 +87,11 @@ export function trackCommand(
 
   try {
     const interactive = isInteractive() && !opts.json;
+
+    if (!interactive && process.env.RESEND_TELEMETRY_OPT_IN !== '1') {
+      return;
+    }
+
     showFirstRunNotice(interactive);
 
     const distinctId = getOrCreateAnonymousId();
