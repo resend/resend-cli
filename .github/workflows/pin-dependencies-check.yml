@@ -6,7 +6,7 @@ on:
   pull_request:
 jobs:
   pin-dependencies-check:
-    runs-on: blacksmith-4vcpu-ubuntu-2204
+    runs-on: ubuntu-latest
     container:
       image: node:24
     steps:

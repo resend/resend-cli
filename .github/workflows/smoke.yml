@@ -8,7 +8,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   smoke:
-    runs-on: blacksmith-2vcpu-ubuntu-2204
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v5
