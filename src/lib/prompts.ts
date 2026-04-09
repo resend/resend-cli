@@ -249,25 +249,27 @@ export type PickerConfig<T extends { id: string }> = {
   filter?: (item: T) => boolean;
 };
 
-export async function pickId<T extends { id: string }>(
+export type PickedItem = { readonly id: string; readonly label: string };
+
+export async function pickItem<T extends { id: string }>(
   id: string | undefined,
   config: PickerConfig<T>,
   globalOpts: GlobalOpts,
-): Promise<string>;
-export async function pickId<T extends { id: string }>(
+): Promise<PickedItem>;
+export async function pickItem<T extends { id: string }>(
   id: string | undefined,
   config: PickerConfig<T>,
   globalOpts: GlobalOpts,
   opts: { optional: true },
-): Promise<string | undefined>;
-export async function pickId<T extends { id: string }>(
+): Promise<PickedItem | undefined>;
+export async function pickItem<T extends { id: string }>(
   id: string | undefined,
   config: PickerConfig<T>,
   globalOpts: GlobalOpts,
   opts?: { optional?: boolean },
-): Promise<string | undefined> {
+): Promise<PickedItem | undefined> {
   if (id) {
-    return id;
+    return { id, label: id };
   }
 
   const optional = opts?.optional ?? false;
@@ -347,10 +349,16 @@ export async function pickId<T extends { id: string }>(
       continue;
     }
 
+    const itemOptions = displayItems.map((item) => ({
+      item,
+      ...config.display(item),
+    }));
+
     const options: { value: string; label: string; hint?: string }[] =
-      displayItems.map((item) => ({
+      itemOptions.map(({ item, label, hint }) => ({
         value: item.id,
-        ...config.display(item),
+        label,
+        hint,
       }));
 
     if (optional) {
@@ -375,7 +383,29 @@ export async function pickId<T extends { id: string }>(
     }
 
     if (selected !== FETCH_MORE) {
-      return selected;
+      const match = itemOptions.find(({ item }) => item.id === selected);
+      return { id: selected, label: match?.label ?? selected };
     }
   }
+}
+
+export async function pickId<T extends { id: string }>(
+  id: string | undefined,
+  config: PickerConfig<T>,
+  globalOpts: GlobalOpts,
+): Promise<string>;
+export async function pickId<T extends { id: string }>(
+  id: string | undefined,
+  config: PickerConfig<T>,
+  globalOpts: GlobalOpts,
+  opts: { optional: true },
+): Promise<string | undefined>;
+export async function pickId<T extends { id: string }>(
+  id: string | undefined,
+  config: PickerConfig<T>,
+  globalOpts: GlobalOpts,
+  opts?: { optional?: boolean },
+): Promise<string | undefined> {
+  const result = await pickItem(id, config, globalOpts, opts as never);
+  return result?.id;
 }
