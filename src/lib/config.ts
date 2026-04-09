@@ -13,6 +13,7 @@ import {
   getCredentialBackend,
   SERVICE_NAME,
 } from './credential-store';
+import { errorMessage } from './output';
 
 export type ApiKeyPermission = 'full_access' | 'sending_access';
 
@@ -328,15 +329,19 @@ export async function resolveApiKeyAsync(
     creds?.active_profile ||
     'default';
 
-  // If storage is 'secure_storage', try credential backend first
   if (creds?.storage === 'secure_storage') {
     const backend = await getCredentialBackend();
-    const key = await backend.get(SERVICE_NAME, profile);
-    if (key) {
-      const permission = creds.profiles[profile]?.permission;
-      return { key, source: 'secure_storage', profile, permission };
+    try {
+      const key = await backend.get(SERVICE_NAME, profile);
+      if (key) {
+        const permission = creds.profiles[profile]?.permission;
+        return { key, source: 'secure_storage', profile, permission };
+      }
+    } catch (err) {
+      throw new Error(
+        `Credential backend unavailable: ${errorMessage(err, 'unknown error')}`,
+      );
     }
-    // Fall through: profile may not be migrated yet (api_key still in file)
   }
 
   // File-based storage (or unmigrated profile in mixed state)

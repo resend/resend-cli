@@ -72,15 +72,24 @@ export class WindowsBackend implements CredentialBackend {
         $c = $v.Retrieve('${psEscape(service)}', '${psEscape(account)}')
         $c.RetrievePassword()
         Write-Output $c.Password
-      } catch {
+      } catch [System.Exception] {
+        if ($_.Exception.Message -match 'Element not found') {
+          exit 44
+        }
+        Write-Error $_.Exception.Message
         exit 1
       }
     `;
-    const { stdout, code } = await runPowershell(script);
-    if (code !== 0 || !stdout.trim()) {
+    const { stdout, stderr, code } = await runPowershell(script);
+    if (code === 44) {
       return null;
     }
-    return stdout.trim();
+    if (code !== 0) {
+      throw new Error(
+        `Failed to read from Windows Credential Manager (exit code ${code}): ${stderr.trim()}`,
+      );
+    }
+    return stdout.trim() || null;
   }
 
   async set(service: string, account: string, secret: string): Promise<void> {
