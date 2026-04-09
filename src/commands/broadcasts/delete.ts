@@ -2,7 +2,7 @@ import { Command } from '@commander-js/extra-typings';
 import { runDelete } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
-import { pickId } from '../../lib/prompts';
+import { pickItem } from '../../lib/prompts';
 import { broadcastPickerConfig } from './utils';
 
 export const deleteBroadcastCommand = new Command('delete')
@@ -29,16 +29,16 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
   )
   .action(async (idArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const id = await pickId(idArg, broadcastPickerConfig, globalOpts);
+    const picked = await pickItem(idArg, broadcastPickerConfig, globalOpts);
     await runDelete(
-      id,
+      picked.id,
       !!opts.yes,
       {
-        confirmMessage: `Delete broadcast ${id}?\nIf scheduled, delivery will be cancelled.`,
+        confirmMessage: `Delete broadcast "${picked.label}"?\nID: ${picked.id}\nIf scheduled, delivery will be cancelled.`,
         loading: 'Deleting broadcast...',
         object: 'broadcast',
         successMsg: 'Broadcast deleted',
-        sdkCall: (resend) => resend.broadcasts.remove(id),
+        sdkCall: (resend) => resend.broadcasts.remove(picked.id),
       },
       globalOpts,
     );
