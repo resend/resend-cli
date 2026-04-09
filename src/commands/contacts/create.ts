@@ -4,6 +4,7 @@ import { runCreate } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { cancelAndExit, requireText } from '../../lib/prompts';
+import { safeTerminalText } from '../../lib/safe-terminal-text';
 import { isInteractive } from '../../lib/tty';
 import { parsePropertiesJson } from './utils';
 
@@ -105,7 +106,7 @@ Unsubscribed: setting --unsubscribed is a team-wide opt-out from all broadcasts,
             }),
           }),
         onInteractive: (data) => {
-          console.log(`Contact created: ${data.id}`);
+          console.log(`Contact created: ${safeTerminalText(data.id)}`);
         },
       },
       globalOpts,

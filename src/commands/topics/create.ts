@@ -3,6 +3,7 @@ import { runCreate } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { requireText } from '../../lib/prompts';
+import { safeTerminalText } from '../../lib/safe-terminal-text';
 
 export const createTopicCommand = new Command('create')
   .description('Create a new topic for subscription management')
@@ -61,7 +62,7 @@ Non-interactive: --name is required.`,
             ...(opts.description && { description: opts.description }),
           }),
         onInteractive: (data) => {
-          console.log(`Topic created: ${data.id}`);
+          console.log(`Topic created: ${safeTerminalText(data.id)}`);
         },
       },
       globalOpts,
