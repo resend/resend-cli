@@ -13,24 +13,37 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Install via install.sh
-        run: curl -fsSL https://raw.githubusercontent.com/resend/resend-cli/${{ github.event.workflow_run.head_sha }}/install.sh | bash
-      - name: Verify binary
+        run: curl -fsSL https://raw.githubusercontent.com/resend/resend-cli/${{ github.event.workflow_run.head_sha }}/install.sh | bash -s -- "${{ github.event.workflow_run.head_branch }}"
+      - name: Verify binary version matches release tag
         run: |
-          "$HOME/.resend/bin/resend" --version
+          expected="${{ github.event.workflow_run.head_branch }}"
+          expected="${expected#v}"
+          actual=$("$HOME/.resend/bin/resend" --version)
           "$HOME/.resend/bin/resend" --help
+          if [ "$actual" != "$expected" ]; then
+            echo "::error::Version mismatch: expected ${expected}, got ${actual}"
+            exit 1
+          fi
   verify-install-windows:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: windows-latest
     steps:
       - name: Install via install.ps1
         shell: pwsh
-        run: irm https://raw.githubusercontent.com/resend/resend-cli/${{ github.event.workflow_run.head_sha }}/install.ps1 | iex
-      - name: Verify binary
+        run: |
+          $env:RESEND_VERSION = '${{ github.event.workflow_run.head_branch }}'
+          irm https://raw.githubusercontent.com/resend/resend-cli/${{ github.event.workflow_run.head_sha }}/install.ps1 | iex
+      - name: Verify binary version matches release tag
         shell: pwsh
         run: |
+          $expected = '${{ github.event.workflow_run.head_branch }}'.TrimStart('v')
           $exe = "$env:USERPROFILE\.resend\bin\resend.exe"
-          & $exe --version
+          $actual = (& $exe --version).Trim()
           & $exe --help
+          if ($actual -ne $expected) {
+            Write-Error "Version mismatch: expected $expected, got $actual"
+            exit 1
+          }
   verify-npx:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
