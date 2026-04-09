@@ -184,7 +184,7 @@ program
       });
     }
 
-    return checkForUpdates().catch(() => {});
+    checkForUpdates();
   })
   .catch((err) => {
     outputError({
