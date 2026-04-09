@@ -176,7 +176,7 @@ describe('broadcasts update command', () => {
 
   test('errors with no_changes when no flags are provided', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { updateBroadcastCommand } = await import(
@@ -195,7 +195,7 @@ describe('broadcasts update command', () => {
 
   test('does not call SDK when no_changes error is raised', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { updateBroadcastCommand } = await import(
@@ -215,7 +215,7 @@ describe('broadcasts update command', () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { updateBroadcastCommand } = await import(
@@ -239,7 +239,7 @@ describe('broadcasts update command', () => {
     mockUpdate.mockResolvedValueOnce(
       mockSdkError('Cannot update sent broadcast', 'validation_error'),
     );
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);
@@ -393,7 +393,7 @@ describe('broadcasts update command', () => {
 
   test('errors with invalid_options when --html-file - and --text-file - both read stdin', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { updateBroadcastCommand } = await import(
@@ -457,7 +457,7 @@ describe('broadcasts update command', () => {
 
   test('errors with invalid_options when --react-email and --html used together', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { updateBroadcastCommand } = await import(
@@ -482,7 +482,7 @@ describe('broadcasts update command', () => {
 
   test('errors with file_read_error when --html-file path is unreadable', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);
