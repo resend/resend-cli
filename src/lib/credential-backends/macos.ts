@@ -1,17 +1,67 @@
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import type { CredentialBackend } from '../credential-store';
 
-function run(
+const run = (
   cmd: string,
-  args: string[],
-): Promise<{ stdout: string; stderr: string; code: number | null }> {
-  return new Promise((resolve) => {
-    execFile(cmd, args, { timeout: 5000 }, (err, stdout, stderr) => {
+  args: readonly string[],
+): Promise<{ stdout: string; stderr: string; code: number | null }> =>
+  new Promise((resolve) => {
+    execFile(cmd, [...args], { timeout: 5000 }, (err, stdout, stderr) => {
       const code = err && 'code' in err ? (err.code as number | null) : 0;
       resolve({ stdout: stdout ?? '', stderr: stderr ?? '', code });
     });
   });
-}
+
+const runWithStdin = (
+  cmd: string,
+  args: readonly string[],
+  stdinData: string,
+): Promise<{ stdout: string; stderr: string; code: number | null }> =>
+  new Promise((resolve) => {
+    const child = spawn(cmd, [...args], {
+      stdio: ['pipe', 'pipe', 'pipe'],
+      timeout: 5000,
+    });
+    let stdout = '';
+    let stderr = '';
+    child.stdout?.on('data', (data: Buffer) => {
+      stdout += data.toString();
+    });
+    child.stderr?.on('data', (data: Buffer) => {
+      stderr += data.toString();
+    });
+    child.on('close', (code) => {
+      resolve({ stdout, stderr, code });
+    });
+    child.on('error', () => {
+      resolve({ stdout: '', stderr: 'Failed to spawn process', code: 1 });
+    });
+    child.stdin?.on('error', () => {});
+    child.stdin?.write(stdinData);
+    child.stdin?.end();
+  });
+
+const buildKeychainSetScript = (
+  service: string,
+  account: string,
+  secret: string,
+): string =>
+  [
+    'ObjC.import("Security");',
+    `var passwordData = $(${JSON.stringify(secret)}).dataUsingEncoding($.NSUTF8StringEncoding);`,
+    'var query = $.NSMutableDictionary.alloc.init;',
+    'query.setObjectForKey($.kSecClassGenericPassword, $.kSecClass);',
+    `query.setObjectForKey($(${JSON.stringify(service)}), $.kSecAttrService);`,
+    `query.setObjectForKey($(${JSON.stringify(account)}), $.kSecAttrAccount);`,
+    'var updateAttrs = $.NSMutableDictionary.alloc.init;',
+    'updateAttrs.setObjectForKey(passwordData, $.kSecValueData);',
+    'var status = $.SecItemUpdate(query, updateAttrs);',
+    'if (status === -25300) {',
+    '  query.setObjectForKey(passwordData, $.kSecValueData);',
+    '  status = $.SecItemAdd(query, null);',
+    '}',
+    'if (status !== 0) { throw new Error("Keychain error: " + status); }',
+  ].join('\n');
 
 export class MacOSBackend implements CredentialBackend {
   name = 'macOS Keychain';
@@ -38,24 +88,12 @@ export class MacOSBackend implements CredentialBackend {
   }
 
   async set(service: string, account: string, secret: string): Promise<void> {
-    // Note: The macOS `security` command does not support reading passwords from
-    // stdin — `-w` without a value triggers an interactive TTY prompt, and `-X`
-    // (hex) is still a CLI arg visible in `ps`. There is no safe way to pass the
-    // secret without it appearing briefly in the process list during the execFile
-    // call (~5s timeout). This is the same approach used by tools like `gh`
-    // (GitHub CLI) and `1password-cli` when interacting with the macOS keychain
-    // via the `security` command.
-    // -U updates if exists, creates if not
-    const { code, stderr } = await run('/usr/bin/security', [
-      'add-generic-password',
-      '-s',
-      service,
-      '-a',
-      account,
-      '-w',
-      secret,
-      '-U',
-    ]);
+    const script = buildKeychainSetScript(service, account, secret);
+    const { code, stderr } = await runWithStdin(
+      '/usr/bin/osascript',
+      ['-l', 'JavaScript'],
+      script,
+    );
     if (code !== 0) {
       throw new Error(
         `Failed to store credential in macOS Keychain: ${stderr.trim()}`,

@@ -339,27 +339,9 @@ export async function resolveApiKeyAsync(
     // Fall through: profile may not be migrated yet (api_key still in file)
   }
 
-  // File-based storage (or unmigrated profile in mixed state)
   if (creds) {
     const entry = creds.profiles[profile];
     if (entry?.api_key) {
-      // Auto-migrate: move plaintext key to secure storage if available
-      const backend = await getCredentialBackend();
-      if (backend.isSecure) {
-        try {
-          await backend.set(SERVICE_NAME, profile, entry.api_key);
-          creds.profiles[profile] = {
-            ...(entry.permission && { permission: entry.permission }),
-          };
-          creds.storage = 'secure_storage';
-          writeCredentials(creds);
-          process.stderr.write(
-            `Notice: API key for profile "${profile}" has been moved to ${backend.name}\n`,
-          );
-        } catch {
-          // Non-fatal — plaintext key still works
-        }
-      }
       return {
         key: entry.api_key,
         source: 'config',
