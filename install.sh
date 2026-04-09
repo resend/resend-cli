@@ -167,17 +167,32 @@ curl --fail --location --progress-bar --output "$tmpfile" "$url" ||
 
   URL: ${url}"
 
-tar -xzf "$tmpfile" -C "$bin_dir" ||
+stage_dir=$(mktemp -d "${install_dir}/.stage.XXXXXX") ||
+  error "Failed to create staging directory"
+trap 'rm -rf "$tmpdir" "$stage_dir"' EXIT INT TERM
+
+tar -xzf "$tmpfile" -C "$stage_dir" ||
   error "Failed to extract archive. The download may be corrupted — try again."
 
-chmod +x "$exe" || error "Failed to make binary executable"
+staged_exe="${stage_dir}/resend"
 
-# Strip macOS Gatekeeper quarantine flag (set automatically on curl downloads)
-# Without this, macOS will block the binary: "cannot be opened because Apple
-# cannot check it for malicious software"
-if [[ $(uname -s) == "Darwin" ]]; then
-  xattr -d com.apple.quarantine "$exe" 2>/dev/null || true
+if [[ ! -f "$staged_exe" ]]; then
+  error "Archive did not contain a 'resend' binary."
 fi
+
+chmod +x "$staged_exe" || error "Failed to make binary executable"
+
+if [[ $(uname -s) == "Darwin" ]]; then
+  xattr -d com.apple.quarantine "$staged_exe" 2>/dev/null || true
+fi
+
+"$staged_exe" --version >/dev/null 2>&1 ||
+  error "Staged binary failed validation (--version check). The download may be corrupted — try again."
+
+mv -f "$staged_exe" "$exe" ||
+  error "Failed to move binary into install directory"
+
+rm -rf "$stage_dir"
 
 # ─── Verify installation ────────────────────────────────────────────────────
 

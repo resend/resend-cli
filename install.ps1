@@ -85,18 +85,40 @@ try {
     throw "Installation failed."
   }
 
+  $stageDir = Join-Path $installDir ".stage-$([System.Guid]::NewGuid())"
+  New-Item -ItemType Directory -Path $stageDir -Force | Out-Null
+
   try {
-    Expand-Archive -Path $tmpZip -DestinationPath $binDir -Force
+    Expand-Archive -Path $tmpZip -DestinationPath $stageDir -Force
   } catch {
+    Remove-Item -Recurse -Force $stageDir -ErrorAction SilentlyContinue
     Write-Fail "Failed to extract archive: $_"
     throw "Installation failed."
   }
+
+  $stagedExe = Join-Path $stageDir 'resend.exe'
+  if (-not (Test-Path $stagedExe)) {
+    Remove-Item -Recurse -Force $stageDir -ErrorAction SilentlyContinue
+    Write-Fail "Archive did not contain resend.exe. The download may be corrupted -- try again."
+    throw "Installation failed."
+  }
+
+  try {
+    $null = & $stagedExe --version 2>$null
+  } catch {
+    Remove-Item -Recurse -Force $stageDir -ErrorAction SilentlyContinue
+    Write-Fail "Staged binary failed validation (--version check). The download may be corrupted -- try again."
+    throw "Installation failed."
+  }
+
+  Move-Item -Path $stagedExe -Destination $exe -Force
+  Remove-Item -Recurse -Force $stageDir -ErrorAction SilentlyContinue
 } finally {
   Remove-Item -Recurse -Force $tmpDir -ErrorAction SilentlyContinue
 }
 
 if (-not (Test-Path $exe)) {
-  Write-Fail "Binary not found after extraction. The download may be corrupted -- try again."
+  Write-Fail "Binary not found after installation. The download may be corrupted -- try again."
   throw "Installation failed."
 }
 
