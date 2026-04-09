@@ -2,21 +2,47 @@ import * as p from '@clack/prompts';
 import type { Resend } from 'resend';
 import { cancelAndExit } from './prompts';
 
-export async function fetchVerifiedDomains(resend: Resend): Promise<string[]> {
-  try {
-    const { data, error } = await resend.domains.list();
-    if (error || !data) {
-      return [];
-    }
-    return data.data
-      .filter(
-        (d) => d.status === 'verified' && d.capabilities.sending === 'enabled',
-      )
-      .map((d) => d.name);
-  } catch {
-    return [];
+const isVerifiedSendingDomain = (d: {
+  status: string;
+  capabilities: { sending: string };
+}) => d.status === 'verified' && d.capabilities.sending === 'enabled';
+
+const collectVerifiedDomains = async (
+  resend: Resend,
+  accumulated: readonly string[],
+  after?: string,
+): Promise<string[] | null> => {
+  const { data, error } = await resend.domains.list(
+    after ? { after } : undefined,
+  );
+
+  if (error || !data) {
+    return null;
   }
-}
+
+  const names = data.data.filter(isVerifiedSendingDomain).map((d) => d.name);
+  const all = [...accumulated, ...names];
+
+  if (!(data.has_more ?? false) || data.data.length === 0) {
+    return all;
+  }
+
+  return collectVerifiedDomains(
+    resend,
+    all,
+    data.data[data.data.length - 1].id,
+  );
+};
+
+export const fetchVerifiedDomains = async (
+  resend: Resend,
+): Promise<string[] | null> => {
+  try {
+    return await collectVerifiedDomains(resend, []);
+  } catch {
+    return null;
+  }
+};
 
 const FROM_PREFIXES = ['noreply', 'hello'];
 
