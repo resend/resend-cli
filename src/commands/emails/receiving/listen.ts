@@ -8,6 +8,7 @@ import { buildHelpText } from '../../../lib/help-text';
 import { errorMessage, outputError } from '../../../lib/output';
 import { createSpinner } from '../../../lib/spinner';
 import { isInteractive } from '../../../lib/tty';
+import { createBoundedSet } from '../../../utils/bounded-set';
 
 const PAGE_SIZE = 100;
 
@@ -78,7 +79,7 @@ Ctrl+C exits cleanly.`,
       globalOpts.quiet || jsonMode,
     );
 
-    const seenIds = new Set<string>();
+    const seenIds = createBoundedSet<string>();
     let consecutiveErrors = 0;
 
     try {
