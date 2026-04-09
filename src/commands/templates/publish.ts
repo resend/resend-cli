@@ -31,6 +31,7 @@ Publishing an already-published template re-publishes it with the latest draft c
         sdkCall: (resend) => resend.templates.publish(id),
         errorCode: 'publish_error',
         successMsg: `Template published: ${id}`,
+        retryTransient: true,
       },
       globalOpts,
     );
