@@ -33,21 +33,19 @@ jobs:
           ./dist/resend --help
       - name: Verify telemetry spawn (Node bundle)
         run: |
-          rm -f /tmp/resend-telemetry-*.json
+          rm -f "$HOME/.config/resend/telemetry-id"
           node dist/cli.cjs --api-key re_fake whoami || true
-          sleep 1
-          if ! ls /tmp/resend-telemetry-*.json 1>/dev/null 2>&1; then
-            echo "::error::Telemetry temp file was never created — trackCommand did not fire"
+          if [ ! -f "$HOME/.config/resend/telemetry-id" ]; then
+            echo "::error::telemetry-id was never created — trackCommand did not fire"
             exit 1
           fi
-          echo "Telemetry spawn OK — temp file created"
+          echo "Telemetry spawn OK — telemetry-id created by Node bundle"
       - name: Verify telemetry spawn (pkg binary)
         run: |
-          rm -f /tmp/resend-telemetry-*.json
+          rm -f "$HOME/.config/resend/telemetry-id"
           ./dist/resend --api-key re_fake whoami || true
-          sleep 1
-          if ! ls /tmp/resend-telemetry-*.json 1>/dev/null 2>&1; then
-            echo "::error::Telemetry temp file was never created — trackCommand did not fire"
+          if [ ! -f "$HOME/.config/resend/telemetry-id" ]; then
+            echo "::error::telemetry-id was never created — trackCommand did not fire"
             exit 1
           fi
-          echo "Telemetry spawn OK — temp file created"
+          echo "Telemetry spawn OK — telemetry-id created by pkg binary"
