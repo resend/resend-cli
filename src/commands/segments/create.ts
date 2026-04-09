@@ -3,6 +3,7 @@ import { runCreate } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { requireText } from '../../lib/prompts';
+import { safeTerminalText } from '../../lib/safe-terminal-text';
 
 export const createSegmentCommand = new Command('create')
   .description('Create a new segment')
@@ -37,8 +38,8 @@ Non-interactive: --name is required.`,
         loading: 'Creating segment...',
         sdkCall: (resend) => resend.segments.create({ name }),
         onInteractive: (data) => {
-          console.log(`Segment created: ${data.id}`);
-          console.log(`Name: ${data.name}`);
+          console.log(`Segment created: ${safeTerminalText(data.id)}`);
+          console.log(`Name: ${safeTerminalText(data.name)}`);
         },
       },
       globalOpts,
