@@ -12,6 +12,7 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
   test,
   vi,
@@ -178,6 +179,34 @@ describe('checkForUpdates', () => {
     mockFetch('canary-20260311');
     await checkForUpdates();
     expect(stderrOutput).toBe('');
+  });
+
+  it('skips check when json option is true (TTY + --json)', async () => {
+    mockFetch(`v${NEWER_VERSION}`);
+    await checkForUpdates({ json: true });
+    expect(stderrOutput).toBe('');
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('skips check when json option is true from cached state (TTY + --quiet)', async () => {
+    writeFileSync(
+      statePath,
+      JSON.stringify({ lastChecked: Date.now(), latestVersion: NEWER_VERSION }),
+    );
+    await checkForUpdates({ json: true });
+    expect(stderrOutput).toBe('');
+  });
+
+  it('still prints notice on TTY without json option', async () => {
+    mockFetch(`v${NEWER_VERSION}`);
+    await checkForUpdates();
+    expect(stderrOutput).toContain('Update available');
+  });
+
+  it('still prints notice when json option is explicitly false', async () => {
+    mockFetch(`v${NEWER_VERSION}`);
+    await checkForUpdates({ json: false });
+    expect(stderrOutput).toContain('Update available');
   });
 });
 
