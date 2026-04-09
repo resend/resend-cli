@@ -11,10 +11,6 @@ type SdkCall<T> = (
   resend: Resend,
 ) => Promise<{ data: T | null; error: { message: string } | null }>;
 
-/**
- * Shared pattern for all get commands:
- *   requireClient → withSpinner(fetch_error) → if/else output
- */
 export async function runGet<T>(
   config: {
     loading: string;
@@ -29,7 +25,7 @@ export async function runGet<T>(
     : undefined;
   const resend = await requireClient(globalOpts, clientOpts);
   const data = await withSpinner(
-    config.loading,
+    { loading: config.loading, retryTransient: true },
     () => config.sdkCall(resend),
     'fetch_error',
     globalOpts,
@@ -41,10 +37,6 @@ export async function runGet<T>(
   }
 }
 
-/**
- * Shared pattern for all delete commands:
- *   requireClient → confirmDelete (if needed) → withSpinner → if/else output
- */
 export async function runDelete(
   id: string,
   skipConfirm: boolean,
@@ -66,7 +58,7 @@ export async function runDelete(
     await confirmDelete(id, config.confirmMessage, globalOpts);
   }
   await withSpinner(
-    config.loading,
+    { loading: config.loading },
     () => config.sdkCall(resend),
     'delete_error',
     globalOpts,
@@ -81,10 +73,6 @@ export async function runDelete(
   }
 }
 
-/**
- * Shared pattern for create commands:
- *   requireClient → withSpinner('create_error') → if/else output
- */
 export async function runCreate<T>(
   config: {
     loading: string;
@@ -99,7 +87,7 @@ export async function runCreate<T>(
     : undefined;
   const resend = await requireClient(globalOpts, clientOpts);
   const data = await withSpinner(
-    config.loading,
+    { loading: config.loading },
     () => config.sdkCall(resend),
     'create_error',
     globalOpts,
@@ -111,17 +99,13 @@ export async function runCreate<T>(
   }
 }
 
-/**
- * Shared pattern for write commands (update/verify/remove-segment) where
- * interactive output is a single status message:
- *   requireClient → withSpinner(errorCode) → if/else output
- */
 export async function runWrite<T>(
   config: {
     loading: string;
     sdkCall: SdkCall<T>;
     errorCode: string;
     successMsg: string;
+    retryTransient?: boolean;
     permission?: ApiKeyPermission;
   },
   globalOpts: GlobalOpts,
@@ -131,7 +115,7 @@ export async function runWrite<T>(
     : undefined;
   const resend = await requireClient(globalOpts, clientOpts);
   const data = await withSpinner(
-    config.loading,
+    { loading: config.loading, retryTransient: config.retryTransient },
     () => config.sdkCall(resend),
     config.errorCode,
     globalOpts,
@@ -143,13 +127,6 @@ export async function runWrite<T>(
   }
 }
 
-/**
- * Shared pattern for all list commands:
- *   requireClient → withSpinner → if/else output
- *
- * Callers pass pagination opts (if any) via the sdkCall closure.
- * The onInteractive callback handles table rendering and pagination hints.
- */
 export async function runList<T>(
   config: {
     loading: string;
@@ -164,7 +141,7 @@ export async function runList<T>(
     : undefined;
   const resend = await requireClient(globalOpts, clientOpts);
   const result = await withSpinner(
-    config.loading,
+    { loading: config.loading, retryTransient: true },
     () => config.sdkCall(resend),
     'list_error',
     globalOpts,

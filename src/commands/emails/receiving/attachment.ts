@@ -29,7 +29,7 @@ export const getAttachmentCommand = new Command('attachment')
     const resend = await requireClient(globalOpts);
 
     const data = await withSpinner(
-      'Fetching attachment...',
+      { loading: 'Fetching attachment...', retryTransient: true },
       () =>
         resend.emails.receiving.attachments.get({ emailId, id: attachmentId }),
       'fetch_error',
