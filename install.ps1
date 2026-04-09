@@ -39,6 +39,7 @@ if ($env:PROCESSOR_ARCHITECTURE -notin @('AMD64', 'EM64T')) {
 
 $repo = 'https://github.com/resend/resend-cli'
 $target = 'windows-x64'
+$archiveName = "resend-$target.zip"
 
 if ($Version) {
   $Version = $Version.TrimStart('v')
@@ -46,9 +47,11 @@ if ($Version) {
     Write-Fail "Invalid version format: $Version`n`n  Expected: semantic version like 0.1.0 or 1.2.3-beta.1`n  Usage:    `$env:RESEND_VERSION = 'v0.1.0'; irm https://resend.com/install.ps1 | iex"
     throw "Installation failed."
   }
-  $url = "$repo/releases/download/v$Version/resend-$target.zip"
+  $url = "$repo/releases/download/v$Version/$archiveName"
+  $checksumsUrl = "$repo/releases/download/v$Version/CHECKSUMS.txt"
 } else {
-  $url = "$repo/releases/latest/download/resend-$target.zip"
+  $url = "$repo/releases/latest/download/$archiveName"
+  $checksumsUrl = "$repo/releases/latest/download/CHECKSUMS.txt"
 }
 
 # --- Install directory -------------------------------------------------------
@@ -73,24 +76,55 @@ $tmpDir = Join-Path ([System.IO.Path]::GetTempPath()) "resend-$([System.Guid]::N
 New-Item -ItemType Directory -Path $tmpDir -Force | Out-Null
 $tmpZip = Join-Path $tmpDir 'resend.zip'
 
-try {
   try {
-    # Force TLS 1.2 for Windows PowerShell 5.1 (no-op on PowerShell 7+ where it is the default)
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    $ProgressPreference = 'SilentlyContinue'  # Invoke-WebRequest is ~10x faster without progress bar
-    Invoke-WebRequest -Uri $url -OutFile $tmpZip -UseBasicParsing
-  } catch {
-    if ($Version) { $ver = $Version } else { $ver = 'latest' }
-    Write-Fail "Download failed.`n`n  Possible causes:`n    - No internet connection`n    - The version does not exist: $ver`n    - GitHub is unreachable`n`n  URL: $url"
-    throw "Installation failed."
-  }
+    try {
+      [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+      $ProgressPreference = 'SilentlyContinue'
+      Invoke-WebRequest -Uri $url -OutFile $tmpZip -UseBasicParsing
+    } catch {
+      if ($Version) { $ver = $Version } else { $ver = 'latest' }
+      Write-Fail "Download failed.`n`n  Possible causes:`n    - No internet connection`n    - The version does not exist: $ver`n    - GitHub is unreachable`n`n  URL: $url"
+      throw "Installation failed."
+    }
 
-  try {
-    Expand-Archive -Path $tmpZip -DestinationPath $binDir -Force
-  } catch {
-    Write-Fail "Failed to extract archive: $_"
-    throw "Installation failed."
-  }
+    Write-Info "Verifying checksum..."
+
+    $tmpChecksums = Join-Path $tmpDir 'CHECKSUMS.txt'
+    $checksumAvailable = $true
+    try {
+      Invoke-WebRequest -Uri $checksumsUrl -OutFile $tmpChecksums -UseBasicParsing
+    } catch {
+      $checksumAvailable = $false
+      Write-Host "  warn: CHECKSUMS.txt not found -- skipping verification." -ForegroundColor Yellow
+      Write-Info "This release may predate checksum publishing."
+      Write-Info "Future releases will include a CHECKSUMS.txt manifest."
+    }
+
+    if ($checksumAvailable) {
+      $checksumLine = Get-Content $tmpChecksums | Where-Object { $_ -match $archiveName } | Select-Object -First 1
+      if (-not $checksumLine) {
+        Write-Fail "Checksum for $archiveName not found in CHECKSUMS.txt"
+        throw "Installation failed."
+      }
+      $expectedChecksum = ($checksumLine -split '\s+')[0]
+
+      $actualChecksum = (Get-FileHash -Path $tmpZip -Algorithm SHA256).Hash.ToLower()
+
+      if ($actualChecksum -ne $expectedChecksum) {
+        Write-Fail "Checksum verification failed.`n`n  Expected: $expectedChecksum`n  Actual:   $actualChecksum`n`n  The downloaded archive may have been tampered with. Do not use it."
+        throw "Installation failed."
+      }
+
+      Write-Ok "Checksum verified"
+    }
+    Write-Host ""
+
+    try {
+      Expand-Archive -Path $tmpZip -DestinationPath $binDir -Force
+    } catch {
+      Write-Fail "Failed to extract archive: $_"
+      throw "Installation failed."
+    }
 } finally {
   Remove-Item -Recurse -Force $tmpDir -ErrorAction SilentlyContinue
 }

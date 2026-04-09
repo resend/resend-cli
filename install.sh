@@ -65,6 +65,14 @@ tildify() {
 command -v curl >/dev/null 2>&1 || error "curl is required but not found. Install it and try again."
 command -v tar  >/dev/null 2>&1 || error "tar is required but not found. Install it and try again."
 
+if command -v sha256sum >/dev/null 2>&1; then
+  sha256_cmd="sha256sum"
+elif command -v shasum >/dev/null 2>&1; then
+  sha256_cmd="shasum -a 256"
+else
+  error "sha256sum or shasum is required but not found. Install one and try again."
+fi
+
 # ─── OS / Architecture detection ────────────────────────────────────────────
 
 platform=$(uname -ms)
@@ -121,8 +129,9 @@ REPO="${GITHUB_BASE}/resend/resend-cli"
 VERSION=${1:-}
 
 # Validate version format if provided
+archive_name="resend-${target}.tar.gz"
+
 if [[ -n $VERSION ]]; then
-  # Strip leading 'v' if present, then re-add for the tag
   VERSION="${VERSION#v}"
   if ! [[ $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
     error "Invalid version format: ${VERSION}
@@ -130,9 +139,11 @@ if [[ -n $VERSION ]]; then
   Expected: semantic version like 0.1.0 or 1.2.3-beta.1
   Usage:    curl -fsSL https://resend.com/install.sh | bash -s v0.1.0"
   fi
-  url="${REPO}/releases/download/v${VERSION}/resend-${target}.tar.gz"
+  url="${REPO}/releases/download/v${VERSION}/${archive_name}"
+  checksums_url="${REPO}/releases/download/v${VERSION}/CHECKSUMS.txt"
 else
-  url="${REPO}/releases/latest/download/resend-${target}.tar.gz"
+  url="${REPO}/releases/latest/download/${archive_name}"
+  checksums_url="${REPO}/releases/latest/download/CHECKSUMS.txt"
 fi
 
 # ─── Install directory ──────────────────────────────────────────────────────
@@ -167,14 +178,42 @@ curl --fail --location --progress-bar --output "$tmpfile" "$url" ||
 
   URL: ${url}"
 
+checksums_file="${tmpdir}/CHECKSUMS.txt"
+
+info "  Verifying checksum..."
+
+if curl --fail --silent --location --output "$checksums_file" "$checksums_url" 2>/dev/null; then
+  expected_checksum=$(grep "${archive_name}" "$checksums_file" | awk '{print $1}')
+
+  if [[ -z $expected_checksum ]]; then
+    error "Checksum for ${archive_name} not found in CHECKSUMS.txt"
+  fi
+
+  actual_checksum=$($sha256_cmd "$tmpfile" | awk '{print $1}')
+
+  if [[ "$actual_checksum" != "$expected_checksum" ]]; then
+    error "Checksum verification failed.
+
+  Expected: ${expected_checksum}
+  Actual:   ${actual_checksum}
+
+  The downloaded archive may have been tampered with. Do not use it."
+  fi
+
+  info "  Checksum verified ✓"
+else
+  warn "CHECKSUMS.txt not found — skipping verification.
+
+  This release may predate checksum publishing.
+  Future releases will include a CHECKSUMS.txt manifest."
+fi
+echo ""
+
 tar -xzf "$tmpfile" -C "$bin_dir" ||
   error "Failed to extract archive. The download may be corrupted — try again."
 
 chmod +x "$exe" || error "Failed to make binary executable"
 
-# Strip macOS Gatekeeper quarantine flag (set automatically on curl downloads)
-# Without this, macOS will block the binary: "cannot be opened because Apple
-# cannot check it for malicious software"
 if [[ $(uname -s) == "Darwin" ]]; then
   xattr -d com.apple.quarantine "$exe" 2>/dev/null || true
 fi
