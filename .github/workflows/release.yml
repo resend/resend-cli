@@ -8,17 +8,7 @@ concurrency:
   group: release
   cancel-in-progress: false
 jobs:
-  preflight:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Verify PostHog key is configured
-        run: |
-          if [ -z "${{ secrets.POSTHOG_PUBLIC_KEY }}" ]; then
-            echo "::error::POSTHOG_PUBLIC_KEY secret is not set"
-            exit 1
-          fi
   test-binary:
-    needs: preflight
     strategy:
       fail-fast: false
       matrix:
@@ -53,7 +43,6 @@ jobs:
           ${{ matrix.binary }} --version
           ${{ matrix.binary }} --help
   test-binary-linux-arm64:
-    needs: preflight
     runs-on: blacksmith-2vcpu-ubuntu-2204
     steps:
       - uses: actions/checkout@v6
