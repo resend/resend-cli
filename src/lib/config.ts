@@ -3,6 +3,7 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  renameSync,
   unlinkSync,
   writeFileSync,
 } from 'node:fs';
@@ -89,10 +90,12 @@ export function writeCredentials(creds: CredentialsFile): string {
   mkdirSync(configDir, { recursive: true, mode: 0o700 });
 
   const configPath = getCredentialsPath();
-  writeFileSync(configPath, `${JSON.stringify(creds, null, 2)}\n`, {
+  const tmpPath = `${configPath}.tmp.${process.pid}`;
+  writeFileSync(tmpPath, `${JSON.stringify(creds, null, 2)}\n`, {
     mode: 0o600,
   });
-  chmodSync(configPath, 0o600);
+  chmodSync(tmpPath, 0o600);
+  renameSync(tmpPath, configPath);
 
   return configPath;
 }
@@ -387,18 +390,12 @@ export async function storeApiKeyAsync(
   const isFileBackend = !backend.isSecure;
 
   if (isFileBackend) {
-    // Do NOT clear a pre-existing `storage: 'secure_storage'` marker here.
-    // Other profiles may still have their keys in secure storage.
-    // resolveApiKeyAsync already falls through from secure storage to file-based
-    // lookup, so keeping the marker is safe and avoids orphaning those profiles.
     const configPath = storeApiKey(apiKey, profile, permission);
     return { configPath, backend };
   }
 
-  // Store in secure backend
   await backend.set(SERVICE_NAME, profile, apiKey);
 
-  // Update credentials file: mark storage as secure, keep profile entry (without api_key)
   const creds = readCredentials() || {
     active_profile: 'default',
     profiles: {},
@@ -410,8 +407,13 @@ export async function storeApiKeyAsync(
     creds.active_profile = profile;
   }
 
-  const configPath = writeCredentials(creds);
-  return { configPath, backend };
+  try {
+    const configPath = writeCredentials(creds);
+    return { configPath, backend };
+  } catch (err) {
+    await backend.delete(SERVICE_NAME, profile);
+    throw err;
+  }
 }
 
 export async function removeApiKeyAsync(profileName?: string): Promise<string> {
@@ -426,7 +428,16 @@ export async function removeApiKeyAsync(profileName?: string): Promise<string> {
   if (creds?.storage === 'secure_storage') {
     const backend = await getCredentialBackend();
     if (backend.isSecure) {
+      const existingKey = await backend.get(SERVICE_NAME, profile);
       await backend.delete(SERVICE_NAME, profile);
+      try {
+        return removeApiKey(profile);
+      } catch (err) {
+        if (existingKey) {
+          await backend.set(SERVICE_NAME, profile, existingKey);
+        }
+        throw err;
+      }
     }
   }
 
@@ -440,15 +451,30 @@ export async function removeAllApiKeysAsync(): Promise<string> {
   if (creds?.storage === 'secure_storage') {
     const backend = await getCredentialBackend();
     if (backend.isSecure) {
-      await Promise.all(
-        Object.keys(creds.profiles).map((profile) =>
-          backend.delete(SERVICE_NAME, profile),
-        ),
-      );
+      const savedKeys: Array<{ profile: string; key: string }> = [];
+      for (const profile of Object.keys(creds.profiles)) {
+        const key = await backend.get(SERVICE_NAME, profile);
+        if (key) {
+          savedKeys.push({ profile, key });
+        }
+        await backend.delete(SERVICE_NAME, profile);
+      }
+      try {
+        if (existsSync(configPath)) {
+          unlinkSync(configPath);
+        }
+        return configPath;
+      } catch (err) {
+        await Promise.all(
+          savedKeys.map(({ profile, key }) =>
+            backend.set(SERVICE_NAME, profile, key),
+          ),
+        );
+        throw err;
+      }
     }
   }
 
-  // Remove credentials file (may already be gone if only secure storage)
   if (existsSync(configPath)) {
     unlinkSync(configPath);
   }
@@ -467,7 +493,14 @@ export async function renameProfileAsync(
       const key = await backend.get(SERVICE_NAME, oldName);
       if (key) {
         await backend.set(SERVICE_NAME, newName, key);
+        try {
+          renameProfile(oldName, newName);
+        } catch (err) {
+          await backend.delete(SERVICE_NAME, newName);
+          throw err;
+        }
         await backend.delete(SERVICE_NAME, oldName);
+        return;
       }
     }
   }
