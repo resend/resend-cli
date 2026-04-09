@@ -13,6 +13,7 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
   test,
   vi,
@@ -418,12 +419,12 @@ describe('flushFromFile', () => {
     }
   });
 
-  test('preserves file when flush fails', async () => {
+  it('deletes file even when flush fails', async () => {
     fetchSpy.mockResolvedValue({ ok: false, status: 500 } as Response);
     const payload = JSON.stringify({ event: 'test' });
     writeFileSync(tmpFile, payload);
 
     await expect(flushFromFile(tmpFile)).rejects.toThrow();
-    expect(existsSync(tmpFile)).toBe(true);
+    expect(existsSync(tmpFile)).toBe(false);
   });
 });

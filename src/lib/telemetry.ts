@@ -180,6 +180,9 @@ export async function flushFromFile(filePath: string): Promise<void> {
     closeSync(fd);
   }
 
-  await flushPayload(payload);
-  unlinkSync(resolved);
+  try {
+    await flushPayload(payload);
+  } finally {
+    unlinkSync(resolved);
+  }
 }
