@@ -94,7 +94,7 @@ describe('emails update command', () => {
       tmpdir(),
       `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     );
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { updateCommand } = await import(
@@ -116,7 +116,7 @@ describe('emails update command', () => {
     mockUpdate.mockResolvedValueOnce(
       mockSdkError('Email not found', 'not_found'),
     );
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);

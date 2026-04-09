@@ -13,6 +13,22 @@ import { buildReactEmailHtml } from '../../lib/react-email';
 import { withSpinner } from '../../lib/spinner';
 import { isInteractive } from '../../lib/tty';
 
+function serializeEmailPayloadForDryRun(payload: CreateEmailOptions): unknown {
+  const { attachments, ...rest } = payload;
+  if (!attachments?.length) {
+    return rest;
+  }
+  return {
+    ...rest,
+    attachments: attachments.map((a) => ({
+      filename: a.filename,
+      byteLength: Buffer.isBuffer(a.content)
+        ? a.content.byteLength
+        : Buffer.byteLength(String(a.content), 'utf8'),
+    })),
+  };
+}
+
 export const sendCommand = new Command('send')
   .description('Send an email')
   .option(
@@ -58,6 +74,10 @@ export const sendCommand = new Command('send')
     '--idempotency-key <key>',
     'Deduplicate this send request using this key',
   )
+  .option(
+    '--dry-run',
+    'Validate input and print the request JSON without calling the API (interactive: verified-domain list is not fetched)',
+  )
   .option('--template <id>', 'Template ID to use')
   .option(
     '--var <key=value...>',
@@ -67,7 +87,7 @@ export const sendCommand = new Command('send')
     'after',
     buildHelpText({
       context:
-        'Required: --to and either --template, --react-email, or (--from, --subject, and one of --text | --text-file | --html | --html-file)',
+        'Required: --to and either --template, --react-email, or (--from, --subject, and one of --text | --text-file | --html | --html-file).\nUse --dry-run to print the request JSON without sending (attachments show filename and byteLength only).',
       output: '  {"id":"<email-id>"}',
       errorCodes: [
         'auth_error',
@@ -112,10 +132,6 @@ export const sendCommand = new Command('send')
         { json: globalOpts.json },
       );
     }
-
-    const resend = await requireClient(globalOpts, {
-      permission: 'sending_access',
-    });
 
     const hasTemplate = !!opts.template;
 
@@ -189,8 +205,17 @@ export const sendCommand = new Command('send')
       : undefined;
 
     let fromAddress = opts.from;
-    if (!fromAddress && !hasTemplate && isInteractive() && !globalOpts.json) {
-      const domains = await fetchVerifiedDomains(resend);
+    if (
+      !opts.dryRun &&
+      !fromAddress &&
+      !hasTemplate &&
+      isInteractive() &&
+      !globalOpts.json
+    ) {
+      const clientForDomains = await requireClient(globalOpts, {
+        permission: 'sending_access',
+      });
+      const domains = await fetchVerifiedDomains(clientForDomains);
       if (domains.length > 0) {
         fromAddress = await promptForFromAddress(domains);
       }
@@ -354,6 +379,21 @@ export const sendCommand = new Command('send')
         ...(tags && { tags }),
       } as CreateEmailOptions;
     }
+
+    if (opts.dryRun) {
+      outputResult(
+        {
+          dryRun: true,
+          request: serializeEmailPayloadForDryRun(payload),
+        },
+        { json: globalOpts.json },
+      );
+      return;
+    }
+
+    const resend = await requireClient(globalOpts, {
+      permission: 'sending_access',
+    });
 
     const data = await withSpinner(
       opts.scheduledAt ? 'Scheduling email...' : 'Sending email...',
