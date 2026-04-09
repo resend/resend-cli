@@ -98,6 +98,59 @@ describe('send command', () => {
     expect(callArgs.text).toBe('Hello');
   });
 
+  test('dry-run does not call API and prints request summary', async () => {
+    spies = setupOutputSpies();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await sendCommand.parseAsync(
+      [
+        '--from',
+        'a@test.com',
+        '--to',
+        'b@test.com',
+        '--subject',
+        'Test',
+        '--text',
+        'Hello',
+        '--dry-run',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockSend).not.toHaveBeenCalled();
+    expect(mockDomainsList).not.toHaveBeenCalled();
+    const out = JSON.parse(spies.logSpy.mock.calls[0][0] as string);
+    expect(out.dryRun).toBe(true);
+    expect(out.request.from).toBe('a@test.com');
+    expect(out.request.to).toEqual(['b@test.com']);
+  });
+
+  test('dry-run does not require API key or call domains API', async () => {
+    spies = setupOutputSpies();
+    delete process.env.RESEND_API_KEY;
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await sendCommand.parseAsync(
+      [
+        '--from',
+        'a@test.com',
+        '--to',
+        'b@test.com',
+        '--subject',
+        'Test',
+        '--text',
+        'Hello',
+        '--dry-run',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockSend).not.toHaveBeenCalled();
+    expect(mockDomainsList).not.toHaveBeenCalled();
+    const out = JSON.parse(spies.logSpy.mock.calls[0][0] as string);
+    expect(out.dryRun).toBe(true);
+  });
+
   test('outputs JSON with email ID on success', async () => {
     spies = setupOutputSpies();
 
@@ -174,7 +227,7 @@ describe('send command', () => {
       tmpdir(),
       `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     );
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -197,7 +250,7 @@ describe('send command', () => {
 
   test('errors listing missing flags in non-interactive mode', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -212,7 +265,7 @@ describe('send command', () => {
 
   test('errors when no body and non-interactive', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -374,7 +427,7 @@ describe('send command', () => {
 
   test('errors with file_read_error for missing attachment', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -430,7 +483,7 @@ describe('send command', () => {
 
   test('errors with invalid_header for malformed header', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -486,7 +539,7 @@ describe('send command', () => {
 
   test('errors with invalid_tag for malformed tag', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -546,7 +599,7 @@ describe('send command', () => {
       value: true,
       writable: true,
     });
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { Command } = await import('@commander-js/extra-typings');
@@ -777,7 +830,7 @@ describe('send command', () => {
 
   test('errors when --html-file - and --text-file - both read stdin', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -805,7 +858,7 @@ describe('send command', () => {
 
   test('errors with invalid_options when --subject is empty string', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -831,7 +884,7 @@ describe('send command', () => {
 
   test('errors with invalid_options when --from is empty string', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -926,7 +979,7 @@ describe('send command', () => {
 
   test('errors with invalid_var when --var used without --template', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -955,7 +1008,7 @@ describe('send command', () => {
 
   test('errors with invalid_var for malformed --var', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -972,7 +1025,7 @@ describe('send command', () => {
 
   test('errors with template_body_conflict when --template and --html used together', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -996,7 +1049,7 @@ describe('send command', () => {
 
   test('errors with template_body_conflict when --template and --html-file used together', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -1020,7 +1073,7 @@ describe('send command', () => {
 
   test('errors with template_body_conflict when --template and --text used together', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -1037,7 +1090,7 @@ describe('send command', () => {
 
   test('errors with template_body_conflict when --template and --text-file used together', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -1061,7 +1114,7 @@ describe('send command', () => {
 
   test('errors with template_attachment_conflict when --template and --attachment used together', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -1112,7 +1165,7 @@ describe('send command', () => {
 
   test('errors with invalid_options when --react-email and --html used together', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -1140,7 +1193,7 @@ describe('send command', () => {
 
   test('errors with invalid_options when --react-email and --html-file used together', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -1194,7 +1247,7 @@ describe('send command', () => {
 
   test('errors with invalid_options when --react-email and --template used together', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -1218,7 +1271,7 @@ describe('send command', () => {
 
   test('exits when buildReactEmailHtml fails', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);
