@@ -96,7 +96,7 @@ describe('broadcasts delete command', () => {
 
   test('errors with confirmation_required when --yes absent in non-interactive mode', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { deleteBroadcastCommand } = await import(
@@ -115,7 +115,7 @@ describe('broadcasts delete command', () => {
 
   test('does not call SDK when confirmation_required error is raised', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { deleteBroadcastCommand } = await import(
@@ -135,7 +135,7 @@ describe('broadcasts delete command', () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { deleteBroadcastCommand } = await import(
@@ -159,7 +159,7 @@ describe('broadcasts delete command', () => {
     mockRemove.mockResolvedValueOnce(
       mockSdkError('Cannot delete sent broadcast', 'validation_error'),
     );
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);

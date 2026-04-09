@@ -18,15 +18,15 @@ import {
 
 const mockGet = vi.fn(async () => ({
   data: {
-    object: 'log' as const,
-    id: '3d4a472d-bc6d-4dd2-aa9d-d3d11b549e55',
-    created_at: '2024-11-01T18:10:00.000Z',
-    endpoint: '/emails',
-    method: 'POST',
-    response_status: 200,
-    user_agent: 'resend-node:4.0.0',
-    request_body: { from: 'user@example.com', to: 'recipient@example.com' },
-    response_body: { id: 'email_123' },
+    object: 'attachment' as const,
+    id: 'attach_abc123',
+    filename: 'invoice.pdf',
+    size: 51200,
+    content_type: 'application/pdf',
+    content_disposition: 'attachment' as const,
+    content_id: undefined,
+    download_url: 'https://storage.example.com/signed/invoice.pdf',
+    expires_at: '2026-02-18T13:00:00.000Z',
   },
   error: null,
 }));
@@ -34,11 +34,11 @@ const mockGet = vi.fn(async () => ({
 vi.mock('resend', () => ({
   Resend: class MockResend {
     constructor(public key: string) {}
-    logs = { get: mockGet };
+    emails = { attachments: { get: mockGet } };
   },
 }));
 
-describe('logs get command', () => {
+describe('emails attachment command', () => {
   const restoreEnv = captureTestEnv();
   let spies: ReturnType<typeof setupOutputSpies> | undefined;
   let errorSpy: MockInstance | undefined;
@@ -61,34 +61,40 @@ describe('logs get command', () => {
     exitSpy = undefined;
   });
 
-  test('calls SDK get with the provided id', async () => {
+  test('calls SDK get with emailId and attachmentId', async () => {
     spies = setupOutputSpies();
 
-    const { getLogCommand } = await import('../../../src/commands/logs/get');
-    await getLogCommand.parseAsync(['3d4a472d-bc6d-4dd2-aa9d-d3d11b549e55'], {
+    const { getAttachmentCommand } = await import(
+      '../../../src/commands/emails/attachment'
+    );
+    await getAttachmentCommand.parseAsync(['email123', 'attach_abc123'], {
       from: 'user',
     });
 
     expect(mockGet).toHaveBeenCalledTimes(1);
-    expect(mockGet.mock.calls[0][0]).toBe(
-      '3d4a472d-bc6d-4dd2-aa9d-d3d11b549e55',
-    );
+    const args = mockGet.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.emailId).toBe('email123');
+    expect(args.id).toBe('attach_abc123');
   });
 
-  test('outputs JSON with log fields when non-interactive', async () => {
+  test('outputs JSON with attachment fields when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { getLogCommand } = await import('../../../src/commands/logs/get');
-    await getLogCommand.parseAsync(['3d4a472d-bc6d-4dd2-aa9d-d3d11b549e55'], {
+    const { getAttachmentCommand } = await import(
+      '../../../src/commands/emails/attachment'
+    );
+    await getAttachmentCommand.parseAsync(['email123', 'attach_abc123'], {
       from: 'user',
     });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
-    expect(parsed.id).toBe('3d4a472d-bc6d-4dd2-aa9d-d3d11b549e55');
-    expect(parsed.endpoint).toBe('/emails');
-    expect(parsed.method).toBe('POST');
-    expect(parsed.response_status).toBe(200);
+    expect(parsed.id).toBe('attach_abc123');
+    expect(parsed.filename).toBe('invoice.pdf');
+    expect(parsed.content_type).toBe('application/pdf');
+    expect(parsed.download_url).toBe(
+      'https://storage.example.com/signed/invoice.pdf',
+    );
   });
 
   test('errors with auth_error when no API key', async () => {
@@ -98,9 +104,11 @@ describe('logs get command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { getLogCommand } = await import('../../../src/commands/logs/get');
+    const { getAttachmentCommand } = await import(
+      '../../../src/commands/emails/attachment'
+    );
     await expectExit1(() =>
-      getLogCommand.parseAsync(['3d4a472d-bc6d-4dd2-aa9d-d3d11b549e55'], {
+      getAttachmentCommand.parseAsync(['email123', 'attach_abc123'], {
         from: 'user',
       }),
     );
@@ -118,9 +126,13 @@ describe('logs get command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { getLogCommand } = await import('../../../src/commands/logs/get');
+    const { getAttachmentCommand } = await import(
+      '../../../src/commands/emails/attachment'
+    );
     await expectExit1(() =>
-      getLogCommand.parseAsync(['nonexistent-id'], { from: 'user' }),
+      getAttachmentCommand.parseAsync(['email123', 'attach_nonexistent'], {
+        from: 'user',
+      }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
