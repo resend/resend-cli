@@ -548,64 +548,68 @@ describe('broadcasts create command', () => {
     expect(args.text).toBe('Plain text from file');
   });
 
-  test('warns to stderr when --html and --html-file both provided, html-file wins', async () => {
-    spies = setupOutputSpies();
-    readFileSpy = vi
-      .spyOn(files, 'readFile')
-      .mockReturnValue('<p>From file</p>');
+  test('errors with invalid_options when --html and --html-file both provided', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
 
     const { createBroadcastCommand } = await import(
       '../../../src/commands/broadcasts/create'
     );
-    await createBroadcastCommand.parseAsync(
-      [
-        '--from',
-        'hello@domain.com',
-        '--subject',
-        'News',
-        '--segment-id',
-        '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
-        '--html',
-        '<p>Inline</p>',
-        '--html-file',
-        '/fake/email.html',
-      ],
-      { from: 'user' },
+    await expectExit1(() =>
+      createBroadcastCommand.parseAsync(
+        [
+          '--from',
+          'hello@domain.com',
+          '--subject',
+          'News',
+          '--segment-id',
+          '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
+          '--html',
+          '<p>Inline</p>',
+          '--html-file',
+          '/fake/email.html',
+        ],
+        { from: 'user' },
+      ),
     );
 
-    const stderrOutput = spies.stderrSpy.mock.calls.map((c) => c[0]).join('');
-    expect(stderrOutput).toContain('--html-file');
-    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.html).toBe('<p>From file</p>');
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_options');
+    expect(output).toContain('mutually exclusive');
+    expect(mockCreate).not.toHaveBeenCalled();
   });
 
-  test('warns to stderr when --text and --text-file both provided, text-file wins', async () => {
-    spies = setupOutputSpies();
-    readFileSpy = vi.spyOn(files, 'readFile').mockReturnValue('From file');
+  test('errors with invalid_options when --text and --text-file both provided', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
 
     const { createBroadcastCommand } = await import(
       '../../../src/commands/broadcasts/create'
     );
-    await createBroadcastCommand.parseAsync(
-      [
-        '--from',
-        'hello@domain.com',
-        '--subject',
-        'News',
-        '--segment-id',
-        '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
-        '--text',
-        'Inline text',
-        '--text-file',
-        '/fake/body.txt',
-      ],
-      { from: 'user' },
+    await expectExit1(() =>
+      createBroadcastCommand.parseAsync(
+        [
+          '--from',
+          'hello@domain.com',
+          '--subject',
+          'News',
+          '--segment-id',
+          '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
+          '--text',
+          'Inline text',
+          '--text-file',
+          '/fake/body.txt',
+        ],
+        { from: 'user' },
+      ),
     );
 
-    const stderrOutput = spies.stderrSpy.mock.calls.map((c) => c[0]).join('');
-    expect(stderrOutput).toContain('--text-file');
-    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.text).toBe('From file');
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_options');
+    expect(output).toContain('mutually exclusive');
+    expect(mockCreate).not.toHaveBeenCalled();
   });
 
   test('errors with invalid_options when --html-file - and --text-file - both read stdin', async () => {
