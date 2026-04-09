@@ -182,31 +182,31 @@ checksums_file="${tmpdir}/CHECKSUMS.txt"
 
 info "  Verifying checksum..."
 
-curl --fail --silent --location --output "$checksums_file" "$checksums_url" ||
-  error "Failed to download checksums manifest.
+if curl --fail --silent --location --output "$checksums_file" "$checksums_url" 2>/dev/null; then
+  expected_checksum=$(grep "${archive_name}" "$checksums_file" | awk '{print $1}')
 
-  URL: ${checksums_url}
+  if [[ -z $expected_checksum ]]; then
+    error "Checksum for ${archive_name} not found in CHECKSUMS.txt"
+  fi
 
-  The release may not include a CHECKSUMS.txt file."
+  actual_checksum=$($sha256_cmd "$tmpfile" | awk '{print $1}')
 
-expected_checksum=$(grep "${archive_name}" "$checksums_file" | awk '{print $1}')
-
-if [[ -z $expected_checksum ]]; then
-  error "Checksum for ${archive_name} not found in CHECKSUMS.txt"
-fi
-
-actual_checksum=$($sha256_cmd "$tmpfile" | awk '{print $1}')
-
-if [[ "$actual_checksum" != "$expected_checksum" ]]; then
-  error "Checksum verification failed.
+  if [[ "$actual_checksum" != "$expected_checksum" ]]; then
+    error "Checksum verification failed.
 
   Expected: ${expected_checksum}
   Actual:   ${actual_checksum}
 
   The downloaded archive may have been tampered with. Do not use it."
-fi
+  fi
 
-info "  Checksum verified ✓"
+  info "  Checksum verified ✓"
+else
+  warn "CHECKSUMS.txt not found — skipping verification.
+
+  This release may predate checksum publishing.
+  Future releases will include a CHECKSUMS.txt manifest."
+fi
 echo ""
 
 tar -xzf "$tmpfile" -C "$bin_dir" ||

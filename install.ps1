@@ -90,28 +90,33 @@ $tmpZip = Join-Path $tmpDir 'resend.zip'
     Write-Info "Verifying checksum..."
 
     $tmpChecksums = Join-Path $tmpDir 'CHECKSUMS.txt'
+    $checksumAvailable = $true
     try {
       Invoke-WebRequest -Uri $checksumsUrl -OutFile $tmpChecksums -UseBasicParsing
     } catch {
-      Write-Fail "Failed to download checksums manifest.`n`n  URL: $checksumsUrl`n`n  The release may not include a CHECKSUMS.txt file."
-      throw "Installation failed."
+      $checksumAvailable = $false
+      Write-Host "  warn: CHECKSUMS.txt not found -- skipping verification." -ForegroundColor Yellow
+      Write-Info "This release may predate checksum publishing."
+      Write-Info "Future releases will include a CHECKSUMS.txt manifest."
     }
 
-    $checksumLine = Get-Content $tmpChecksums | Where-Object { $_ -match $archiveName } | Select-Object -First 1
-    if (-not $checksumLine) {
-      Write-Fail "Checksum for $archiveName not found in CHECKSUMS.txt"
-      throw "Installation failed."
+    if ($checksumAvailable) {
+      $checksumLine = Get-Content $tmpChecksums | Where-Object { $_ -match $archiveName } | Select-Object -First 1
+      if (-not $checksumLine) {
+        Write-Fail "Checksum for $archiveName not found in CHECKSUMS.txt"
+        throw "Installation failed."
+      }
+      $expectedChecksum = ($checksumLine -split '\s+')[0]
+
+      $actualChecksum = (Get-FileHash -Path $tmpZip -Algorithm SHA256).Hash.ToLower()
+
+      if ($actualChecksum -ne $expectedChecksum) {
+        Write-Fail "Checksum verification failed.`n`n  Expected: $expectedChecksum`n  Actual:   $actualChecksum`n`n  The downloaded archive may have been tampered with. Do not use it."
+        throw "Installation failed."
+      }
+
+      Write-Ok "Checksum verified"
     }
-    $expectedChecksum = ($checksumLine -split '\s+')[0]
-
-    $actualChecksum = (Get-FileHash -Path $tmpZip -Algorithm SHA256).Hash.ToLower()
-
-    if ($actualChecksum -ne $expectedChecksum) {
-      Write-Fail "Checksum verification failed.`n`n  Expected: $expectedChecksum`n  Actual:   $actualChecksum`n`n  The downloaded archive may have been tampered with. Do not use it."
-      throw "Installation failed."
-    }
-
-    Write-Ok "Checksum verified"
     Write-Host ""
 
     try {
