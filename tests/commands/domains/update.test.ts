@@ -144,6 +144,35 @@ describe('domains update command', () => {
     expect(args.clickTracking).toBe(false);
   });
 
+  test('passes trackingSubdomain when --tracking-subdomain is set', async () => {
+    spies = setupOutputSpies();
+
+    const { updateDomainCommand } = await import(
+      '../../../src/commands/domains/update'
+    );
+    await updateDomainCommand.parseAsync(
+      ['test-domain-id', '--tracking-subdomain', 'track'],
+      { from: 'user' },
+    );
+
+    const args = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.trackingSubdomain).toBe('track');
+  });
+
+  test('does not error when only --tracking-subdomain is provided', async () => {
+    spies = setupOutputSpies();
+
+    const { updateDomainCommand } = await import(
+      '../../../src/commands/domains/update'
+    );
+    await updateDomainCommand.parseAsync(
+      ['test-domain-id', '--tracking-subdomain', 'track'],
+      { from: 'user' },
+    );
+
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
+  });
+
   test('errors with no_changes when no update flags are provided', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});

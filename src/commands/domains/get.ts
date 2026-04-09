@@ -38,6 +38,19 @@ export const getDomainCommand = new Command('get')
           console.log(`ID: ${d.id}`);
           console.log(`Region: ${d.region}`);
           console.log(`Created: ${d.created_at}`);
+          if (d.open_tracking !== undefined) {
+            console.log(
+              `Open tracking: ${d.open_tracking ? 'enabled' : 'disabled'}`,
+            );
+          }
+          if (d.click_tracking !== undefined) {
+            console.log(
+              `Click tracking: ${d.click_tracking ? 'enabled' : 'disabled'}`,
+            );
+          }
+          if (d.tracking_subdomain) {
+            console.log(`Tracking subdomain: ${d.tracking_subdomain}`);
+          }
           if (d.records.length > 0) {
             console.log('\nDNS Records:');
             console.log(renderDnsRecordsTable(d.records, d.name));

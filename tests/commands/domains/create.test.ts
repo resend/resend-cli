@@ -100,6 +100,21 @@ describe('domains create command', () => {
     expect(args.tls).toBe('enforced');
   });
 
+  test('passes trackingSubdomain when --tracking-subdomain is set', async () => {
+    spies = setupOutputSpies();
+
+    const { createDomainCommand } = await import(
+      '../../../src/commands/domains/create'
+    );
+    await createDomainCommand.parseAsync(
+      ['--name', 'example.com', '--tracking-subdomain', 'track'],
+      { from: 'user' },
+    );
+
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.trackingSubdomain).toBe('track');
+  });
+
   test('passes receiving capability when --receiving flag is set', async () => {
     spies = setupOutputSpies();
 

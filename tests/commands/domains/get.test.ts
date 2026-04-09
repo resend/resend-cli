@@ -96,6 +96,37 @@ describe('domains get command', () => {
     expect(parsed.records).toHaveLength(1);
   });
 
+  test('includes tracking fields in JSON output', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: {
+        object: 'domain',
+        id: 'test-domain-id',
+        name: 'example.com',
+        status: 'verified',
+        created_at: '2026-01-01T00:00:00.000Z',
+        region: 'us-east-1',
+        open_tracking: true,
+        click_tracking: true,
+        tracking_subdomain: 'track',
+        records: [],
+        capabilities: { sending: 'enabled', receiving: 'disabled' },
+      },
+      error: null,
+    });
+    spies = setupOutputSpies();
+
+    const { getDomainCommand } = await import(
+      '../../../src/commands/domains/get'
+    );
+    await getDomainCommand.parseAsync(['test-domain-id'], { from: 'user' });
+
+    const output = spies.logSpy.mock.calls[0][0] as string;
+    const parsed = JSON.parse(output);
+    expect(parsed.open_tracking).toBe(true);
+    expect(parsed.click_tracking).toBe(true);
+    expect(parsed.tracking_subdomain).toBe('track');
+  });
+
   test('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
