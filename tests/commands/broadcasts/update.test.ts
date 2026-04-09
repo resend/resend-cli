@@ -439,20 +439,41 @@ describe('broadcasts update command', () => {
     expect(payload.html).toBe('<html><body>Rendered</body></html>');
   });
 
-  test('treats empty --react-email as a provided build input', async () => {
-    spies = setupOutputSpies();
+  test('errors with react_email_build_error when --react-email is empty', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    mockBuildReactEmailHtml.mockReset();
+    const { outputError } = await import('../../../src/lib/output');
+    mockBuildReactEmailHtml.mockImplementation(
+      async (path: unknown, globalOpts: { json?: boolean }) => {
+        if (typeof path === 'string' && path.trim() === '') {
+          outputError(
+            {
+              message: '--react-email path cannot be empty',
+              code: 'react_email_build_error',
+            },
+            { json: globalOpts.json },
+          );
+        }
+        return '<html><body>Rendered</body></html>';
+      },
+    );
 
     const { updateBroadcastCommand } = await import(
       '../../../src/commands/broadcasts/update'
     );
-    await updateBroadcastCommand.parseAsync(
-      ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--react-email', ''],
-      { from: 'user' },
+    await expectExit1(() =>
+      updateBroadcastCommand.parseAsync(
+        ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--react-email', ''],
+        { from: 'user' },
+      ),
     );
 
-    expect(mockBuildReactEmailHtml).toHaveBeenCalledWith('', expect.anything());
-    const payload = mockUpdate.mock.calls[0][1] as Record<string, unknown>;
-    expect(payload.html).toBe('<html><body>Rendered</body></html>');
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('react_email_build_error');
+    expect(mockUpdate).not.toHaveBeenCalled();
   });
 
   test('errors with invalid_options when --react-email and --html used together', async () => {
