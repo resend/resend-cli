@@ -120,7 +120,7 @@ describe('send command', () => {
     expect(mockSend).not.toHaveBeenCalled();
     expect(mockDomainsList).not.toHaveBeenCalled();
     const out = JSON.parse(spies.logSpy.mock.calls[0][0] as string);
-    expect(out.dry_run).toBe(true);
+    expect(out.dryRun).toBe(true);
     expect(out.request.from).toBe('a@test.com');
     expect(out.request.to).toEqual(['b@test.com']);
   });
@@ -148,7 +148,7 @@ describe('send command', () => {
     expect(mockSend).not.toHaveBeenCalled();
     expect(mockDomainsList).not.toHaveBeenCalled();
     const out = JSON.parse(spies.logSpy.mock.calls[0][0] as string);
-    expect(out.dry_run).toBe(true);
+    expect(out.dryRun).toBe(true);
   });
 
   test('outputs JSON with email ID on success', async () => {

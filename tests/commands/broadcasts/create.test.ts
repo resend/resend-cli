@@ -120,7 +120,7 @@ describe('broadcasts create command', () => {
 
     expect(mockCreate).not.toHaveBeenCalled();
     const out = JSON.parse(spies.logSpy.mock.calls[0][0] as string);
-    expect(out.dry_run).toBe(true);
+    expect(out.dryRun).toBe(true);
     expect(out.request.from).toBe('hello@domain.com');
     expect(out.request.segmentId).toBe('7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d');
   });
@@ -149,7 +149,7 @@ describe('broadcasts create command', () => {
 
     expect(mockCreate).not.toHaveBeenCalled();
     const out = JSON.parse(spies.logSpy.mock.calls[0][0] as string);
-    expect(out.dry_run).toBe(true);
+    expect(out.dryRun).toBe(true);
   });
 
   test('outputs JSON id when non-interactive', async () => {

@@ -384,7 +384,7 @@ export const sendCommand = new Command('send')
     if (opts.dryRun) {
       outputResult(
         {
-          dry_run: true,
+          dryRun: true,
           request: serializeEmailPayloadForDryRun(payload),
         },
         { json: globalOpts.json },

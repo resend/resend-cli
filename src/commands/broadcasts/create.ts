@@ -267,7 +267,7 @@ Scheduling:
 
     if (opts.dryRun) {
       outputResult(
-        { dry_run: true, request: createPayload },
+        { dryRun: true, request: createPayload },
         { json: globalOpts.json },
       );
       return;
