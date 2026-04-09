@@ -21,7 +21,7 @@ export const whoamiCommand = new Command('whoami')
       context: `Local only — no network calls.
 Shows which profile is active and where the API key comes from.`,
       output: `  {"authenticated":true,"profile":"production","api_key":"re_...abcd","source":"config","config_path":"/Users/you/.config/resend/credentials.json"}
-  {"authenticated":false}`,
+  {"error":{"message":"Not authenticated.\\nRun \`resend login\` to get started.","code":"not_authenticated"}}`,
       examples: [
         'resend whoami',
         'resend whoami --json',
@@ -42,7 +42,6 @@ Shows which profile is active and where the API key comes from.`,
       const profileExists = profiles.some((p) => p.name === requestedProfile);
       const explicitProfile = profileFlag || process.env.RESEND_PROFILE;
 
-      // If a specific profile was requested but doesn't exist, show a targeted error
       const message =
         explicitProfile && !profileExists
           ? `Profile "${requestedProfile}" not found.\nAvailable profiles: ${profiles.map((p) => p.name).join(', ') || '(none)'}`
@@ -52,20 +51,7 @@ Shows which profile is active and where the API key comes from.`,
           ? 'profile_not_found'
           : 'not_authenticated';
 
-      if (globalOpts.json || !isInteractive()) {
-        outputResult(
-          {
-            authenticated: false,
-            ...(explicitProfile && !profileExists
-              ? { profile: requestedProfile }
-              : {}),
-          },
-          { json: globalOpts.json, exitCode: 1 },
-        );
-        // outputResult with exitCode calls process.exit, but TS doesn't know
-        return;
-      }
-      outputError({ message, code }, { json: false });
+      outputError({ message, code }, { json: globalOpts.json });
       return;
     }
 

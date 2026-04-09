@@ -45,18 +45,35 @@ describe('whoami command', () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it('exits 1 when not authenticated (non-interactive)', async () => {
+  it('exits 1 with structured error when not authenticated (non-interactive)', async () => {
     spies = setupOutputSpies();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { whoamiCommand } = await import('../../src/commands/whoami');
     await expectExit1(() => whoamiCommand.parseAsync([], { from: 'user' }));
 
-    const output = spies.logSpy.mock.calls[0]?.[0] as string | undefined;
-    if (output) {
-      const parsed = JSON.parse(output);
-      expect(parsed.authenticated).toBe(false);
-    }
+    const output = String(errorSpy.mock.calls[0]?.[0] ?? '');
+    const parsed = JSON.parse(output);
+    expect(parsed.error).toBeDefined();
+    expect(parsed.error.code).toBe('not_authenticated');
+    expect(parsed.error.message).toContain('Not authenticated');
+  });
+
+  it('exits 1 with profile_not_found error for missing profile (non-interactive)', async () => {
+    process.env.RESEND_PROFILE = 'nonexistent';
+    spies = setupOutputSpies();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { whoamiCommand } = await import('../../src/commands/whoami');
+    await expectExit1(() => whoamiCommand.parseAsync([], { from: 'user' }));
+
+    const output = String(errorSpy.mock.calls[0]?.[0] ?? '');
+    const parsed = JSON.parse(output);
+    expect(parsed.error).toBeDefined();
+    expect(parsed.error.code).toBe('profile_not_found');
+    expect(parsed.error.message).toContain('not found');
   });
 
   it('shows authenticated JSON when key exists in config', async () => {
