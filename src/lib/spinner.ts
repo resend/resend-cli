@@ -1,5 +1,6 @@
 import pc from 'picocolors';
 import type { GlobalOpts } from './client';
+import { isTransientError } from './is-transient-error';
 import { errorMessage, outputError } from './output';
 import { isInteractive, isUnicodeSupported } from './tty';
 
@@ -49,30 +50,39 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/**
- * Wraps an SDK call with a loading spinner and unified error handling.
- *
- * The spinner is purely a loading indicator — it clears itself when the call
- * completes. Callers are responsible for printing success output.
- *
- * Automatically retries on rate_limit_exceeded errors (HTTP 429) up to 3 times,
- * using the retry-after header when available or exponential backoff (1s, 2s, 4s).
- */
+type SpinnerMessages = {
+  readonly loading: string;
+  readonly retryTransient?: boolean;
+};
+
+const isRetryable = (
+  error: { message: string; name?: string },
+  retryTransient: boolean,
+): boolean =>
+  error.name === 'rate_limit_exceeded' ||
+  (retryTransient && isTransientError(error.name));
+
+const retryMessage = (error: { name?: string }, delay: number): string =>
+  error.name === 'rate_limit_exceeded'
+    ? `Rate limited, retrying in ${delay}s...`
+    : `Server error, retrying in ${delay}s...`;
+
 export async function withSpinner<T>(
-  loading: string,
+  messages: SpinnerMessages,
   call: () => Promise<SdkResponse<T>>,
   errorCode: string,
   globalOpts: GlobalOpts,
 ): Promise<T> {
+  const { loading, retryTransient = false } = messages;
   const spinner = createSpinner(loading, globalOpts.quiet);
   try {
     for (let attempt = 0; ; attempt++) {
       const { data, error, headers } = await call();
       if (error) {
-        if (attempt < MAX_RETRIES && error.name === 'rate_limit_exceeded') {
+        if (attempt < MAX_RETRIES && isRetryable(error, retryTransient)) {
           const delay =
             parseRetryDelay(headers) ?? DEFAULT_RETRY_DELAYS[attempt];
-          spinner.update(`Rate limited, retrying in ${delay}s...`);
+          spinner.update(retryMessage(error, delay));
           await sleep(delay * 1000);
           spinner.update(loading);
           continue;

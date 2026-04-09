@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import { withSpinner } from '../../src/lib/spinner';
@@ -23,8 +23,6 @@ describe('withSpinner retry on rate_limit_exceeded', () => {
 
   const msgs = {
     loading: 'Loading...',
-    success: 'Done',
-    fail: 'Failed',
   };
   const globalOpts = { json: true };
 
@@ -44,7 +42,7 @@ describe('withSpinner retry on rate_limit_exceeded', () => {
     stderrSpy.mockRestore();
   });
 
-  test('retries on rate_limit_exceeded and succeeds', async () => {
+  it('retries on rate_limit_exceeded and succeeds', async () => {
     let calls = 0;
     const call = async () => {
       calls++;
@@ -66,7 +64,7 @@ describe('withSpinner retry on rate_limit_exceeded', () => {
     expect(calls).toBe(2);
   });
 
-  test('exhausts retries and errors after max attempts', async () => {
+  it('exhausts retries and errors after max attempts', async () => {
     let calls = 0;
     const call = async () => {
       calls++;
@@ -89,11 +87,10 @@ describe('withSpinner retry on rate_limit_exceeded', () => {
       expect((err as ExitError).code).toBe(1);
     }
     expect(threw).toBe(true);
-    // 1 initial + 3 retries = 4 total calls
     expect(calls).toBe(4);
   });
 
-  test('does not retry non-retryable errors', async () => {
+  it('does not retry non-retryable errors', async () => {
     let calls = 0;
     const call = async () => {
       calls++;
@@ -115,7 +112,7 @@ describe('withSpinner retry on rate_limit_exceeded', () => {
     expect(calls).toBe(1);
   });
 
-  test('does not retry daily_quota_exceeded', async () => {
+  it('does not retry daily_quota_exceeded', async () => {
     let calls = 0;
     const call = async () => {
       calls++;
@@ -140,7 +137,7 @@ describe('withSpinner retry on rate_limit_exceeded', () => {
     expect(calls).toBe(1);
   });
 
-  test('uses retry-after header for delay', async () => {
+  it('uses retry-after header for delay', async () => {
     let calls = 0;
     const start = Date.now();
     const call = async () => {
@@ -160,11 +157,10 @@ describe('withSpinner retry on rate_limit_exceeded', () => {
 
     const result = await withSpinner(msgs, call, 'test_error', globalOpts);
     expect(result).toEqual({ ok: true });
-    // retry-after: 0 means near-instant retry
     expect(Date.now() - start).toBeLessThan(500);
   });
 
-  test('falls back to default delay without retry-after', async () => {
+  it('falls back to default delay without retry-after', async () => {
     let calls = 0;
     const call = async () => {
       calls++;
@@ -184,8 +180,197 @@ describe('withSpinner retry on rate_limit_exceeded', () => {
     const start = Date.now();
     const result = await withSpinner(msgs, call, 'test_error', globalOpts);
     expect(result).toEqual({ ok: true });
-    // Default first retry delay is 1s
     expect(Date.now() - start).toBeGreaterThanOrEqual(900);
+  });
+});
+
+describe('withSpinner retry on transient 5xx errors', () => {
+  const restoreEnv = captureTestEnv();
+  let exitSpy: MockInstance;
+  let errorSpy: MockInstance;
+  let stderrSpy: MockInstance;
+
+  const globalOpts = { json: true };
+
+  beforeEach(() => {
+    setNonInteractive();
+    exitSpy = mockExitThrow();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
+  });
+
+  afterEach(() => {
+    restoreEnv();
+    exitSpy.mockRestore();
+    errorSpy.mockRestore();
+    stderrSpy.mockRestore();
+  });
+
+  it('retries internal_server_error when retryTransient is true', async () => {
+    let calls = 0;
+    const call = async () => {
+      calls++;
+      if (calls === 1) {
+        return {
+          data: null,
+          error: {
+            message: 'Internal server error',
+            name: 'internal_server_error',
+          },
+          headers: null,
+        };
+      }
+      return { data: { id: 'ok' }, error: null, headers: null };
+    };
+
+    const result = await withSpinner(
+      { loading: 'Loading...', retryTransient: true },
+      call,
+      'test_error',
+      globalOpts,
+    );
+    expect(result).toEqual({ id: 'ok' });
+    expect(calls).toBe(2);
+  });
+
+  it('retries service_unavailable when retryTransient is true', async () => {
+    let calls = 0;
+    const call = async () => {
+      calls++;
+      if (calls === 1) {
+        return {
+          data: null,
+          error: {
+            message: 'Service unavailable',
+            name: 'service_unavailable',
+          },
+          headers: null,
+        };
+      }
+      return { data: { id: 'ok' }, error: null, headers: null };
+    };
+
+    const result = await withSpinner(
+      { loading: 'Loading...', retryTransient: true },
+      call,
+      'test_error',
+      globalOpts,
+    );
+    expect(result).toEqual({ id: 'ok' });
+    expect(calls).toBe(2);
+  });
+
+  it('retries gateway_timeout when retryTransient is true', async () => {
+    let calls = 0;
+    const call = async () => {
+      calls++;
+      if (calls === 1) {
+        return {
+          data: null,
+          error: { message: 'Gateway timeout', name: 'gateway_timeout' },
+          headers: null,
+        };
+      }
+      return { data: { id: 'ok' }, error: null, headers: null };
+    };
+
+    const result = await withSpinner(
+      { loading: 'Loading...', retryTransient: true },
+      call,
+      'test_error',
+      globalOpts,
+    );
+    expect(result).toEqual({ id: 'ok' });
+    expect(calls).toBe(2);
+  });
+
+  it('does not retry transient errors when retryTransient is false', async () => {
+    let calls = 0;
+    const call = async () => {
+      calls++;
+      return {
+        data: null,
+        error: {
+          message: 'Internal server error',
+          name: 'internal_server_error',
+        },
+        headers: null,
+      };
+    };
+
+    let threw = false;
+    try {
+      await withSpinner(
+        { loading: 'Loading...' },
+        call,
+        'test_error',
+        globalOpts,
+      );
+    } catch (err) {
+      threw = true;
+      expect(err).toBeInstanceOf(ExitError);
+    }
+    expect(threw).toBe(true);
+    expect(calls).toBe(1);
+  });
+
+  it('exhausts transient retries and errors after max attempts', async () => {
+    let calls = 0;
+    const call = async () => {
+      calls++;
+      return {
+        data: null,
+        error: {
+          message: 'Internal server error',
+          name: 'internal_server_error',
+        },
+        headers: { 'retry-after': '0' },
+      };
+    };
+
+    let threw = false;
+    try {
+      await withSpinner(
+        { loading: 'Loading...', retryTransient: true },
+        call,
+        'test_error',
+        globalOpts,
+      );
+    } catch (err) {
+      threw = true;
+      expect(err).toBeInstanceOf(ExitError);
+    }
+    expect(threw).toBe(true);
+    expect(calls).toBe(4);
+  });
+
+  it('still retries rate_limit_exceeded even without retryTransient', async () => {
+    let calls = 0;
+    const call = async () => {
+      calls++;
+      if (calls === 1) {
+        return {
+          data: null,
+          error: {
+            message: 'Rate limit exceeded',
+            name: 'rate_limit_exceeded',
+          },
+          headers: { 'retry-after': '0' },
+        };
+      }
+      return { data: { id: 'ok' }, error: null, headers: null };
+    };
+
+    const result = await withSpinner(
+      { loading: 'Loading...' },
+      call,
+      'test_error',
+      globalOpts,
+    );
+    expect(result).toEqual({ id: 'ok' });
+    expect(calls).toBe(2);
   });
 });
 
@@ -211,7 +396,7 @@ describe('createSpinner', () => {
     delete process.env.CI;
   });
 
-  test('returns no-op spinner in non-interactive mode', async () => {
+  it('returns no-op spinner in non-interactive mode', async () => {
     Object.defineProperty(process.stdin, 'isTTY', {
       value: undefined,
       writable: true,
@@ -224,14 +409,13 @@ describe('createSpinner', () => {
     const { createSpinner } = await import('../../src/lib/spinner');
     const spinner = createSpinner('test message');
 
-    // Should not throw when calling any method
     expect(() => spinner.stop('done')).not.toThrow();
     expect(() => spinner.fail('error')).not.toThrow();
     expect(() => spinner.warn('warning')).not.toThrow();
     expect(() => spinner.update('updating')).not.toThrow();
   });
 
-  test('returns functional spinner in interactive mode', async () => {
+  it('returns functional spinner in interactive mode', async () => {
     Object.defineProperty(process.stdin, 'isTTY', {
       value: true,
       writable: true,
@@ -256,12 +440,11 @@ describe('createSpinner', () => {
     expect(spinner).toHaveProperty('warn');
     expect(spinner).toHaveProperty('update');
 
-    // Stop to clean up the interval
     spinner.stop('done');
     expect(stderrSpy).toHaveBeenCalled();
   });
 
-  test('stop writes checkmark to stderr', async () => {
+  it('stop writes checkmark to stderr', async () => {
     Object.defineProperty(process.stdin, 'isTTY', {
       value: true,
       writable: true,
@@ -289,7 +472,7 @@ describe('createSpinner', () => {
     expect(lastCall).toContain('completed');
   });
 
-  test('fail writes cross mark to stderr', async () => {
+  it('fail writes cross mark to stderr', async () => {
     Object.defineProperty(process.stdin, 'isTTY', {
       value: true,
       writable: true,
@@ -317,7 +500,7 @@ describe('createSpinner', () => {
     expect(lastCall).toContain('error occurred');
   });
 
-  test('warn writes warning icon to stderr', async () => {
+  it('warn writes warning icon to stderr', async () => {
     Object.defineProperty(process.stdin, 'isTTY', {
       value: true,
       writable: true,
