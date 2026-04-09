@@ -2,6 +2,7 @@ import pc from 'picocolors';
 import type { GlobalOpts } from './client';
 import { errorMessage, outputError } from './output';
 import { isInteractive, isUnicodeSupported } from './tty';
+import { REQUEST_TIMEOUT_MS, withTimeout } from './with-timeout';
 
 // Status symbols generated via String.fromCodePoint() — never literal Unicode in
 // source — to prevent UTF-8 → Latin-1 corruption when the npm package is bundled.
@@ -67,7 +68,10 @@ export async function withSpinner<T>(
   const spinner = createSpinner(loading, globalOpts.quiet);
   try {
     for (let attempt = 0; ; attempt++) {
-      const { data, error, headers } = await call();
+      const { data, error, headers } = await withTimeout(
+        call(),
+        REQUEST_TIMEOUT_MS,
+      );
       if (error) {
         if (attempt < MAX_RETRIES && error.name === 'rate_limit_exceeded') {
           const delay =

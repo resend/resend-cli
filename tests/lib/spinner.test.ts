@@ -8,6 +8,7 @@ import {
   vi,
 } from 'vitest';
 import { withSpinner } from '../../src/lib/spinner';
+import * as timeoutModule from '../../src/lib/with-timeout';
 import {
   captureTestEnv,
   ExitError,
@@ -186,6 +187,31 @@ describe('withSpinner retry on rate_limit_exceeded', () => {
     expect(result).toEqual({ ok: true });
     // Default first retry delay is 1s
     expect(Date.now() - start).toBeGreaterThanOrEqual(900);
+  });
+
+  test('exits with error when request times out', async () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.spyOn(timeoutModule, 'withTimeout').mockRejectedValue(
+      new Error('Request timed out after 30s'),
+    );
+
+    let threw = false;
+    try {
+      await withSpinner(
+        msgs,
+        async () => ({ data: null, error: null, headers: null }),
+        'test_error',
+        globalOpts,
+      );
+    } catch (err) {
+      threw = true;
+      expect(err).toBeInstanceOf(ExitError);
+      expect((err as ExitError).code).toBe(1);
+    }
+    expect(threw).toBe(true);
+    const logOutput = logSpy.mock.calls.flat().join(' ');
+    expect(logOutput).toContain('timed out');
+    logSpy.mockRestore();
   });
 });
 
