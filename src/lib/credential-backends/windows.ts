@@ -1,12 +1,19 @@
 import { execFile, spawn } from 'node:child_process';
 import type { CredentialBackend } from '../credential-store';
 
+const resolvePowershellPath = (): string => {
+  const systemRoot = process.env.SystemRoot ?? 'C:\\Windows';
+  return `${systemRoot}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe`;
+};
+
+const POWERSHELL_PATH = resolvePowershellPath();
+
 function runPowershell(
   script: string,
 ): Promise<{ stdout: string; stderr: string; code: number | null }> {
   return new Promise((resolve) => {
     execFile(
-      'powershell.exe',
+      POWERSHELL_PATH,
       ['-NoProfile', '-NonInteractive', '-Command', script],
       { timeout: 10000 },
       (err, stdout, stderr) => {
@@ -23,38 +30,36 @@ function runPowershellWithStdin(
 ): Promise<{ stdout: string; stderr: string; code: number | null }> {
   return new Promise((resolve) => {
     const child = spawn(
-      'powershell.exe',
+      POWERSHELL_PATH,
       ['-NoProfile', '-NonInteractive', '-Command', script],
       { stdio: ['pipe', 'pipe', 'pipe'], timeout: 10000 },
     );
-    let stdout = '';
-    let stderr = '';
+    const stdoutChunks: string[] = [];
+    const stderrChunks: string[] = [];
     child.stdout?.on('data', (data: Buffer) => {
-      stdout += data.toString();
+      stdoutChunks.push(data.toString());
     });
     child.stderr?.on('data', (data: Buffer) => {
-      stderr += data.toString();
+      stderrChunks.push(data.toString());
     });
     child.on('close', (code) => {
-      resolve({ stdout, stderr, code });
+      resolve({
+        stdout: stdoutChunks.join(''),
+        stderr: stderrChunks.join(''),
+        code,
+      });
     });
     child.on('error', () => {
       resolve({ stdout: '', stderr: 'Failed to spawn process', code: 1 });
     });
-    child.stdin?.on('error', () => {}); // Prevent EPIPE crash
+    child.stdin?.on('error', () => {});
     child.stdin?.write(stdin);
     child.stdin?.end();
   });
 }
 
-// Escape single quotes for PowerShell string literals
-function psEscape(s: string): string {
-  return s.replace(/'/g, "''");
-}
+const psEscape = (s: string): string => s.replace(/'/g, "''");
 
-// Snippet that ensures the WinRT PasswordVault type is loaded.
-// On some environments (e.g. GitHub Actions) the type isn't available by
-// default and must be explicitly loaded via its assembly-qualified name.
 const LOAD_VAULT = `
   try { $null = [Windows.Security.Credentials.PasswordVault] } catch {
     [void][Windows.Security.Credentials.PasswordVault,Windows.Security.Credentials,ContentType=WindowsRuntime]
@@ -84,7 +89,6 @@ export class WindowsBackend implements CredentialBackend {
   }
 
   async set(service: string, account: string, secret: string): Promise<void> {
-    // Remove existing credential first (PasswordVault throws on duplicate)
     const removeScript = `${LOAD_VAULT}
       $v = New-Object Windows.Security.Credentials.PasswordVault
       try {
@@ -94,7 +98,6 @@ export class WindowsBackend implements CredentialBackend {
     `;
     await runPowershell(removeScript);
 
-    // Read secret from stdin to avoid exposing it in process args
     const addScript = `${LOAD_VAULT}
       $secret = [Console]::In.ReadLine()
       $v = New-Object Windows.Security.Credentials.PasswordVault
@@ -127,10 +130,11 @@ export class WindowsBackend implements CredentialBackend {
     if (process.platform !== 'win32') {
       return false;
     }
-    // Test that PowerShell and PasswordVault are accessible
     const { code } = await runPowershell(
       `${LOAD_VAULT} $null = New-Object Windows.Security.Credentials.PasswordVault`,
     );
     return code === 0;
   }
 }
+
+export { POWERSHELL_PATH as _powershellPath };
