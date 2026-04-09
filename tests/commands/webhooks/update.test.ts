@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -51,7 +51,7 @@ describe('webhooks update command', () => {
     exitSpy = undefined;
   });
 
-  test('updates endpoint with --endpoint flag', async () => {
+  it('updates endpoint with --endpoint flag', async () => {
     spies = setupOutputSpies();
 
     const { updateWebhookCommand } = await import(
@@ -68,7 +68,7 @@ describe('webhooks update command', () => {
     expect(payload.endpoint).toBe('https://new-app.example.com/hooks');
   });
 
-  test('updates events with --events flag', async () => {
+  it('updates events with --events flag', async () => {
     spies = setupOutputSpies();
 
     const { updateWebhookCommand } = await import(
@@ -83,7 +83,7 @@ describe('webhooks update command', () => {
     expect(payload.events).toEqual(['email.sent', 'email.bounced']);
   });
 
-  test('expands "all" shorthand in --events to 17 events', async () => {
+  it('expands "all" shorthand in --events to 17 events', async () => {
     spies = setupOutputSpies();
 
     const { updateWebhookCommand } = await import(
@@ -97,7 +97,7 @@ describe('webhooks update command', () => {
     expect(payload.events).toHaveLength(17);
   });
 
-  test('updates status with --status flag', async () => {
+  it('updates status with --status flag', async () => {
     spies = setupOutputSpies();
 
     const { updateWebhookCommand } = await import(
@@ -112,7 +112,7 @@ describe('webhooks update command', () => {
     expect(payload.status).toBe('disabled');
   });
 
-  test('outputs JSON result when non-interactive', async () => {
+  it('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { updateWebhookCommand } = await import(
@@ -129,7 +129,7 @@ describe('webhooks update command', () => {
     expect(parsed.id).toBe('wh_abc123');
   });
 
-  test('errors with no_changes when no flags are provided', async () => {
+  it('errors with no_changes when no flags are provided', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -145,7 +145,7 @@ describe('webhooks update command', () => {
     expect(output).toContain('no_changes');
   });
 
-  test('does not call SDK when no_changes error is raised', async () => {
+  it('does not call SDK when no_changes error is raised', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -160,7 +160,63 @@ describe('webhooks update command', () => {
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('rejects --events with only empty values and does not call SDK', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const consoleErrorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
+    stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
+    exitSpy = mockExitThrow();
+
+    const { updateWebhookCommand } = await import(
+      '../../../src/commands/webhooks/update'
+    );
+    await expectExit1(() =>
+      updateWebhookCommand.parseAsync(['wh_abc123', '--events', ','], {
+        from: 'user',
+      }),
+    );
+
+    const allOutput = [
+      ...errorSpy.mock.calls.map((c) => c[0]),
+      ...consoleErrorSpy.mock.calls.map((c) => c[0]),
+    ].join(' ');
+    expect(allOutput).toContain('Missing --events values');
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it('rejects --events that normalize to empty array and does not call SDK', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const consoleErrorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
+    stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
+    exitSpy = mockExitThrow();
+
+    const { updateWebhookCommand } = await import(
+      '../../../src/commands/webhooks/update'
+    );
+    await expectExit1(() =>
+      updateWebhookCommand.parseAsync(['wh_abc123', '--events', ' , , '], {
+        from: 'user',
+      }),
+    );
+
+    const allOutput = [
+      ...errorSpy.mock.calls.map((c) => c[0]),
+      ...consoleErrorSpy.mock.calls.map((c) => c[0]),
+    ].join(' ');
+    expect(allOutput).toContain('Missing --events values');
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -180,7 +236,7 @@ describe('webhooks update command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with update_error when SDK returns an error', async () => {
+  it('errors with update_error when SDK returns an error', async () => {
     setNonInteractive();
     mockUpdate.mockResolvedValueOnce(
       mockSdkError('Webhook not found', 'not_found'),
