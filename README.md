@@ -41,6 +41,23 @@ irm https://resend.com/install.ps1 | iex
 
 Or download the `.exe` directly from the [GitHub releases page](https://github.com/resend/resend-cli/releases/latest).
 
+## Quickstart
+
+```bash
+# Authenticate
+resend login
+
+# Send an email
+resend emails send \
+  --from "you@yourdomain.com" \
+  --to delivered@resend.dev \
+  --subject "Hello from Resend CLI" \
+  --text "Sent from my terminal."
+
+# Check your environment
+resend doctor
+```
+
 ## Agent skills
 
 This CLI ships with an [agent skill](skills/resend-cli/SKILL.md) that teaches AI coding agents (Cursor, Claude Code, Windsurf, etc.) how to use the Resend CLI effectively, including non-interactive flags, output formats, and common pitfalls.
@@ -82,24 +99,7 @@ Use this when you want to change the CLI and run your build locally.
 
    Output: `./dist/cli.cjs`
 
-## Quickstart
-
-```bash
-# Authenticate
-resend login
-
-# Send an email
-resend emails send \
-  --from "you@yourdomain.com" \
-  --to delivered@resend.dev \
-  --subject "Hello from Resend CLI" \
-  --text "Sent from my terminal."
-
-# Check your environment
-resend doctor
-```
-
-### Running the CLI locally
+## Running the CLI locally
 
 Use the dev script:
 
@@ -401,6 +401,166 @@ Each check has a `status` of `pass`, `warn`, or `fail`. The top-level `ok` is `f
 #### Exit code
 
 Exits `0` when all checks pass or warn. Exits `1` if any check fails.
+
+---
+
+### Webhooks
+
+With the Resend CLI, you can manage webhook endpoints so your app receives real-time event notifications.
+
+Payloads are signed with [Svix](https://docs.svix.com/receiving/verifying-payloads/how) headers (`svix-id`, `svix-timestamp`, `svix-signature`). Verify them in your app with the Resend SDK.
+
+For example: `resend.webhooks.verify({ payload, headers, webhookSecret })`
+
+There are many events that you can listen for in your application.
+
+For example, you can:
+
+- Set up a POST endpoint to unsubscribe users when an email bounces or they mark your email as spam.
+- Notify yourself when you get a new subscriber using the `contact.created` event.
+- Use an `email.received` webhook to set up an inbox for your agent and notify it when a new email is received.
+
+#### Event types
+
+| Category | Events                                                                                                                                                                                                   |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Email    | `email.sent`, `email.delivered`, `email.delivery_delayed`, `email.bounced`, `email.complained`, `email.opened`, `email.clicked`, `email.failed`, `email.scheduled`, `email.suppressed`, `email.received` |
+| Contact  | `contact.created`, `contact.updated`, `contact.deleted`                                                                                                                                                  |
+| Domain   | `domain.created`, `domain.updated`, `domain.deleted`                                                                                                                                                     |
+
+Use `all` with `--events` to subscribe to every event.
+
+#### Subcommands
+
+- `list`
+- `create`
+- `get`
+- `update`
+- `delete`
+- `listen`
+
+#### Aliases
+
+- `webhooks ls` → `list`
+- `webhooks rm` → `delete`
+
+---
+
+#### **`resend webhooks list`**
+
+Lists existing webhooks.
+
+Running `resend webhooks` with no subcommand runs `list`.
+
+| Flag                | Description                                               |
+| ------------------- | --------------------------------------------------------- |
+| `--limit <n>`       | Max webhooks to return (`1`–`100`, default `10`)          |
+| `--after <cursor>`  | Return webhooks after this cursor (webhook ID; next page) |
+| `--before <cursor>` | Return webhooks before this cursor (previous page)        |
+
+Only one of `--after` or `--before` may be used. The API response includes `has_more` when more pages exist.
+
+```bash
+resend webhooks list
+resend webhooks list --limit 25
+resend webhooks list --after wh_abc123 --json
+```
+
+#### **`resend webhooks create`**
+
+Registers a new endpoint.
+
+The endpoint must use **HTTPS**. The **`signing_secret`** in the response is shown **once**. Store it immediately to verify incoming payloads.
+
+In interactive mode, the CLI can prompt for endpoint and events. In non-interactive mode (pipes, CI, `--json`), **`--endpoint` and `--events` are required.**
+
+| Flag                   | Description                                       |
+| ---------------------- | ------------------------------------------------- |
+| `--endpoint <url>`     | HTTPS URL that receives webhook POSTs             |
+| `--events <events...>` | Event names (comma- or space-separated), or `all` |
+
+```bash
+resend webhooks create --endpoint https://app.example.com/hooks/resend --events all
+resend webhooks create --endpoint https://app.example.com/hooks/resend --events email.sent email.bounced
+resend webhooks create --endpoint https://app.example.com/hooks/resend --events email.sent,email.delivered
+```
+
+#### **`resend webhooks get`**
+
+Fetches one webhook by ID.
+
+Omit the ID in a terminal to pick from a list.
+
+```bash
+resend webhooks get wh_abc123
+resend webhooks get wh_abc123 --json
+```
+
+The signing secret is not returned from `get`. To rotate secrets, delete the webhook and create a new one.
+
+#### **`resend webhooks update`**
+
+Updates the webhook:
+
+- endpoint URL
+- the full event list
+- delivery status
+
+**At least one** of `--endpoint`, `--events`, or `--status` is required.
+
+| Flag                   | Description              |
+| ---------------------- | ------------------------ |
+| `--endpoint <url>`     | New HTTPS URL            |
+| `--events <events...>` | New event list, or `all` |
+| `--status <status>`    | `enabled` or `disabled`  |
+
+Disabled status pauses delivery without deleting the webhook.
+
+```bash
+resend webhooks update wh_abc123 --status disabled
+resend webhooks update wh_abc123 --endpoint https://new-app.example.com/hooks/resend
+resend webhooks update wh_abc123 --events email.sent email.bounced
+```
+
+#### **`resend webhooks delete`**
+
+Deletes a webhook and stops deliveries.
+
+In non-interactive mode, **`--yes` is required** to confirm.
+
+```bash
+resend webhooks delete wh_abc123 --yes
+```
+
+To pause delivery temporarily, prefer `resend webhooks update <id> --status disabled`.
+
+#### **`resend webhooks listen`**
+
+Built-in local development helper. It:
+
+- Starts a small HTTP server
+- Registers a temporary Resend webhook pointing at your public tunnel URL
+- Prints events in the terminal
+- Deletes the webhook on exit
+
+Your tunnel must forward to the same port as `--port`, e.g. `ngrok http 4318`.
+
+| Flag                   | Description                                                  |
+| ---------------------- | ------------------------------------------------------------ |
+| `--url <url>`          | Public URL (tunnel) that reaches this machine — **required** |
+| `--port <port>`        | Local server port (default `4318`)                           |
+| `--events <events...>` | Events to subscribe to (default: all)                        |
+| `--forward-to <url>`   | Also POST each payload to this URL (Svix headers preserved)  |
+
+```bash
+# Terminal 1: tunnel to the listen port
+ngrok http 4318
+
+# Terminal 2: use the HTTPS URL ngrok gives you
+resend webhooks listen --url https://xxxx.ngrok-free.app
+resend webhooks listen --url https://xxxx.ngrok-free.app --forward-to localhost:3000/api/webhooks/resend
+resend webhooks listen --url https://xxxx.ngrok-free.app --port 8080 --events email.sent email.bounced
+```
 
 ---
 
