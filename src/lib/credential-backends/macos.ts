@@ -1,23 +1,24 @@
 import { execFile, spawn } from 'node:child_process';
 import type { CredentialBackend } from '../credential-store';
 
-const run = (
+function run(
   cmd: string,
   args: readonly string[],
-): Promise<{ stdout: string; stderr: string; code: number | null }> =>
-  new Promise((resolve) => {
+): Promise<{ stdout: string; stderr: string; code: number | null }> {
+  return new Promise((resolve) => {
     execFile(cmd, [...args], { timeout: 5000 }, (err, stdout, stderr) => {
       const code = err && 'code' in err ? (err.code as number | null) : 0;
       resolve({ stdout: stdout ?? '', stderr: stderr ?? '', code });
     });
   });
+}
 
-const runWithStdin = (
+function runWithStdin(
   cmd: string,
   args: readonly string[],
   stdinData: string,
-): Promise<{ stdout: string; stderr: string; code: number | null }> =>
-  new Promise((resolve) => {
+): Promise<{ stdout: string; stderr: string; code: number | null }> {
+  return new Promise((resolve) => {
     const child = spawn(cmd, [...args], {
       stdio: ['pipe', 'pipe', 'pipe'],
       timeout: 5000,
@@ -40,13 +41,14 @@ const runWithStdin = (
     child.stdin?.write(stdinData);
     child.stdin?.end();
   });
+}
 
-const buildKeychainSetScript = (
+function buildKeychainSetScript(
   service: string,
   account: string,
   secret: string,
-): string =>
-  [
+): string {
+  return [
     'ObjC.import("Security");',
     `var passwordData = $(${JSON.stringify(secret)}).dataUsingEncoding($.NSUTF8StringEncoding);`,
     'var query = $.NSMutableDictionary.alloc.init;',
@@ -62,6 +64,7 @@ const buildKeychainSetScript = (
     '}',
     'if (status !== 0) { throw new Error("Keychain error: " + status); }',
   ].join('\n');
+}
 
 export class MacOSBackend implements CredentialBackend {
   name = 'macOS Keychain';
