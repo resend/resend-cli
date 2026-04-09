@@ -41,7 +41,6 @@ export function outputError(
   const exitCode = opts.exitCode ?? 1;
 
   if (shouldOutputJson(opts.json)) {
-    // Machine-readable errors go to stderr so stdout stays success-only for pipes (`jq`, etc.).
     console.error(
       JSON.stringify(
         { error: { message: error.message, code: error.code ?? 'unknown' } },
