@@ -126,7 +126,7 @@ Read the matching reference file for detailed flags and output shapes.
 |---|---------|-----|
 | 1 | **Forgetting `--yes` on delete commands** | All `delete`/`rm` subcommands require `--yes` in non-interactive mode — otherwise the CLI exits with an error |
 | 2 | **Not saving webhook `signing_secret`** | `webhooks create` shows the secret once only — it cannot be retrieved later. Capture it from command output immediately |
-| 3 | **Omitting `--quiet` in CI** | Without `-q`, spinners and status text leak into stdout. Use `-q` to get clean JSON only |
+| 3 | **Omitting `--quiet` in CI** | Without `-q`, spinners and status text still go to stderr (not stdout). Use `-q` for JSON on stdout with no spinner noise on stderr |
 | 4 | **Using `--scheduled-at` with batch** | Batch sending does not support `scheduled_at` — use single `emails send` instead |
 | 5 | **Expecting `domains list` to include DNS records** | List returns summaries only — use `domains get <id>` for the full `records[]` array |
 | 6 | **Sending a dashboard-created broadcast via CLI** | Only API-created broadcasts can be sent with `broadcasts send` — dashboard broadcasts must be sent from the dashboard |

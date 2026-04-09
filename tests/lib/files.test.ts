@@ -46,7 +46,7 @@ describe('readFile', () => {
   });
 
   test('exits with file_read_error when file does not exist', async () => {
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { readFile } = await import('../../src/lib/files');
@@ -59,7 +59,7 @@ describe('readFile', () => {
   });
 
   test('outputs JSON error with file_read_error code when json option is true', async () => {
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { readFile } = await import('../../src/lib/files');

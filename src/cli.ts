@@ -10,6 +10,7 @@ import { listCommandsCommand } from './commands/commands';
 import { completionCommand } from './commands/completion';
 import { contactPropertiesCommand } from './commands/contact-properties/index';
 import { contactsCommand } from './commands/contacts/index';
+import { docsCommand } from './commands/docs';
 import { doctorCommand } from './commands/doctor';
 import { domainsCommand } from './commands/domains/index';
 import { emailsCommand } from './commands/emails/index';
@@ -142,6 +143,7 @@ ${pc.gray('Examples:')}
   .addCommand(whoamiCommand)
   .addCommand(doctorCommand)
   .addCommand(openCommand)
+  .addCommand(docsCommand)
   .addCommand(updateCommand)
   .addCommand(teamsDeprecatedCommand)
   .addCommand(listCommandsCommand)
