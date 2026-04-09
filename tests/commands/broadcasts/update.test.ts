@@ -441,7 +441,7 @@ describe('broadcasts update command', () => {
 
   test('errors with react_email_build_error when --react-email is empty', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     mockBuildReactEmailHtml.mockReset();
