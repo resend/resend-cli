@@ -35,6 +35,8 @@ The fallback value is used in broadcast template interpolation when a contact ha
         'auth_error',
         'no_changes',
         'conflicting_flags',
+        'fetch_error',
+        'invalid_fallback_value',
         'update_error',
       ],
       examples: [
