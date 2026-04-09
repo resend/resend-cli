@@ -116,6 +116,26 @@ Scheduling:
       );
     }
 
+    if (opts.html !== undefined && opts.htmlFile !== undefined) {
+      outputError(
+        {
+          message: '--html and --html-file are mutually exclusive.',
+          code: 'invalid_options',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
+    if (opts.text !== undefined && opts.textFile !== undefined) {
+      outputError(
+        {
+          message: '--text and --text-file are mutually exclusive.',
+          code: 'invalid_options',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
     let from = opts.from;
     let subject = opts.subject;
     let segmentId = opts.segmentId;
@@ -184,26 +204,6 @@ Scheduling:
       } else {
         segmentId = await pickId(undefined, segmentPickerConfig, globalOpts);
       }
-    }
-
-    if (opts.html && opts.htmlFile) {
-      outputError(
-        {
-          message: '--html and --html-file are mutually exclusive.',
-          code: 'invalid_options',
-        },
-        { json: globalOpts.json },
-      );
-    }
-
-    if (opts.text && opts.textFile) {
-      outputError(
-        {
-          message: '--text and --text-file are mutually exclusive.',
-          code: 'invalid_options',
-        },
-        { json: globalOpts.json },
-      );
     }
 
     const html = opts.reactEmail

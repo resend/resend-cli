@@ -108,8 +108,6 @@ Variable interpolation:
       );
     }
 
-    const id = await pickId(idArg, broadcastPickerConfig, globalOpts);
-
     if (opts.html != null && opts.htmlFile != null) {
       outputError(
         {
@@ -129,6 +127,8 @@ Variable interpolation:
         { json: globalOpts.json },
       );
     }
+
+    const id = await pickId(idArg, broadcastPickerConfig, globalOpts);
 
     const html =
       opts.reactEmail != null
