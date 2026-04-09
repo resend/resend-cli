@@ -3,6 +3,7 @@ import type {
   ListReceivingEmail,
 } from 'resend';
 import type { PickerConfig } from '../../../lib/prompts';
+import { sanitizeForTerminal } from '../../../lib/sanitize-for-terminal';
 import { renderTable } from '../../../lib/table';
 
 export const receivedEmailPickerConfig: PickerConfig<{
@@ -20,11 +21,13 @@ export function renderReceivingEmailsTable(
   emails: ListReceivingEmail[],
 ): string {
   const rows = emails.map((e) => {
-    const to = e.to.join(', ');
+    const from = sanitizeForTerminal(e.from);
+    const to = e.to.map(sanitizeForTerminal).join(', ');
     const toStr = to.length > 40 ? `${to.slice(0, 37)}...` : to;
+    const rawSubject = sanitizeForTerminal(e.subject);
     const subject =
-      e.subject.length > 50 ? `${e.subject.slice(0, 47)}...` : e.subject;
-    return [e.from, toStr, subject, e.created_at, e.id];
+      rawSubject.length > 50 ? `${rawSubject.slice(0, 47)}...` : rawSubject;
+    return [from, toStr, subject, e.created_at, e.id];
   });
   return renderTable(
     ['From', 'To', 'Subject', 'Created At', 'ID'],
@@ -37,7 +40,7 @@ export function renderAttachmentsTable(
   attachments: ListAttachmentsResponseSuccess['data'],
 ): string {
   const rows = attachments.map((a) => [
-    a.filename ?? '(unnamed)',
+    sanitizeForTerminal(a.filename ?? '(unnamed)'),
     a.content_type,
     String(a.size),
     a.id,
