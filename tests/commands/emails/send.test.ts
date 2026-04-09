@@ -1104,6 +1104,7 @@ describe('send command', () => {
     expect(mockBuildReactEmailHtml).toHaveBeenCalledWith(
       './emails/welcome.tsx',
       expect.anything(),
+      {},
     );
     expect(mockSend).toHaveBeenCalledTimes(1);
     const callArgs = mockSend.mock.calls[0][0] as Record<string, unknown>;
@@ -1240,6 +1241,64 @@ describe('send command', () => {
         { from: 'user' },
       ),
     );
+  });
+
+  test('forwards --react-email-props to buildReactEmailHtml', async () => {
+    spies = setupOutputSpies();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await sendCommand.parseAsync(
+      [
+        '--from',
+        'a@test.com',
+        '--to',
+        'b@test.com',
+        '--subject',
+        'Welcome',
+        '--react-email',
+        './emails/welcome.tsx',
+        '--react-email-props',
+        '{"name":"John","code":42}',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockBuildReactEmailHtml).toHaveBeenCalledWith(
+      './emails/welcome.tsx',
+      expect.anything(),
+      { name: 'John', code: 42 },
+    );
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    const callArgs = mockSend.mock.calls[0][0] as Record<string, unknown>;
+    expect(callArgs.html).toBe('<html><body>Rendered</body></html>');
+  });
+
+  test('errors with invalid_options when --react-email-props used without --react-email', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await expectExit1(() =>
+      sendCommand.parseAsync(
+        [
+          '--from',
+          'a@test.com',
+          '--to',
+          'b@test.com',
+          '--subject',
+          'Test',
+          '--text',
+          'Hi',
+          '--react-email-props',
+          '{"name":"John"}',
+        ],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_options');
   });
 
   test('degrades gracefully when domain fetch fails', async () => {

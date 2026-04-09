@@ -5,6 +5,7 @@ import type { GlobalOpts } from '../../lib/client';
 import { readFile } from '../../lib/files';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
+import { parseReactEmailProps } from '../../lib/parse-react-email-props';
 import { cancelAndExit } from '../../lib/prompts';
 import { buildReactEmailHtml } from '../../lib/react-email';
 import { isInteractive } from '../../lib/tty';
@@ -27,6 +28,14 @@ export const createTemplateCommand = new Command('create')
   .option(
     '--react-email <path>',
     'Path to a React Email template (.tsx) to bundle, render, and use as HTML body (npm install only)',
+  )
+  .option(
+    '--react-email-props <json>',
+    'JSON string of props to pass to the React Email component',
+  )
+  .option(
+    '--react-email-props-file <path>',
+    'Path to a JSON file of props to pass to the React Email component',
   )
   .option('--from <address>', 'Sender address')
   .option('--reply-to <address>', 'Reply-to address')
@@ -113,6 +122,20 @@ Non-interactive: --name and a body (--html, --html-file, or --react-email) are r
       );
     }
 
+    if (
+      (opts.reactEmailProps || opts.reactEmailPropsFile) &&
+      !opts.reactEmail
+    ) {
+      outputError(
+        {
+          message:
+            '--react-email-props and --react-email-props-file can only be used with --react-email',
+          code: 'invalid_options',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
     let html = opts.html;
     let text = opts.text;
 
@@ -135,7 +158,12 @@ Non-interactive: --name and a body (--html, --html-file, or --react-email) are r
     }
 
     if (opts.reactEmail) {
-      html = await buildReactEmailHtml(opts.reactEmail, globalOpts);
+      const reactProps = parseReactEmailProps(
+        opts.reactEmailProps,
+        opts.reactEmailPropsFile,
+        globalOpts,
+      );
+      html = await buildReactEmailHtml(opts.reactEmail, globalOpts, reactProps);
     }
 
     if (!html) {

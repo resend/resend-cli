@@ -4,6 +4,7 @@ import type { GlobalOpts } from '../../lib/client';
 import { readFile } from '../../lib/files';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
+import { parseReactEmailProps } from '../../lib/parse-react-email-props';
 import { pickId } from '../../lib/prompts';
 import { buildReactEmailHtml } from '../../lib/react-email';
 import { broadcastPickerConfig } from './utils';
@@ -31,6 +32,14 @@ export const updateBroadcastCommand = new Command('update')
   .option(
     '--react-email <path>',
     'Path to a React Email template (.tsx) to bundle, render, and use as HTML body (npm install only)',
+  )
+  .option(
+    '--react-email-props <json>',
+    'JSON string of props to pass to the React Email component',
+  )
+  .option(
+    '--react-email-props-file <path>',
+    'Path to a JSON file of props to pass to the React Email component',
   )
   .option('--name <name>', 'Update internal label')
   .addHelpText(
@@ -108,6 +117,20 @@ Variable interpolation:
       );
     }
 
+    if (
+      (opts.reactEmailProps != null || opts.reactEmailPropsFile != null) &&
+      opts.reactEmail == null
+    ) {
+      outputError(
+        {
+          message:
+            '--react-email-props and --react-email-props-file can only be used with --react-email',
+          code: 'invalid_options',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
     const id = await pickId(idArg, broadcastPickerConfig, globalOpts);
 
     let html = opts.html;
@@ -132,7 +155,12 @@ Variable interpolation:
     }
 
     if (opts.reactEmail != null) {
-      html = await buildReactEmailHtml(opts.reactEmail, globalOpts);
+      const reactProps = parseReactEmailProps(
+        opts.reactEmailProps,
+        opts.reactEmailPropsFile,
+        globalOpts,
+      );
+      html = await buildReactEmailHtml(opts.reactEmail, globalOpts, reactProps);
     }
 
     await runWrite(

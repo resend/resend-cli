@@ -5,6 +5,7 @@ import { requireClient } from '../../lib/client';
 import { readFile } from '../../lib/files';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError, outputResult } from '../../lib/output';
+import { parseReactEmailProps } from '../../lib/parse-react-email-props';
 import { requireText } from '../../lib/prompts';
 import { buildReactEmailHtml } from '../../lib/react-email';
 import { withSpinner } from '../../lib/spinner';
@@ -19,6 +20,14 @@ export const batchCommand = new Command('batch')
   .option(
     '--react-email <path>',
     'Path to a React Email template (.tsx) — rendered HTML is set on every email in the batch (npm install only)',
+  )
+  .option(
+    '--react-email-props <json>',
+    'JSON string of props to pass to the React Email component',
+  )
+  .option(
+    '--react-email-props-file <path>',
+    'Path to a JSON file of props to pass to the React Email component',
   )
   .option(
     '--idempotency-key <key>',
@@ -102,8 +111,31 @@ export const batchCommand = new Command('batch')
       );
     }
 
+    if (
+      (opts.reactEmailProps || opts.reactEmailPropsFile) &&
+      !opts.reactEmail
+    ) {
+      outputError(
+        {
+          message:
+            '--react-email-props and --react-email-props-file can only be used with --react-email',
+          code: 'invalid_options',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
     if (opts.reactEmail) {
-      const reactHtml = await buildReactEmailHtml(opts.reactEmail, globalOpts);
+      const reactProps = parseReactEmailProps(
+        opts.reactEmailProps,
+        opts.reactEmailPropsFile,
+        globalOpts,
+      );
+      const reactHtml = await buildReactEmailHtml(
+        opts.reactEmail,
+        globalOpts,
+        reactProps,
+      );
       for (const email of emails) {
         (email as Record<string, unknown>).html = reactHtml;
       }
