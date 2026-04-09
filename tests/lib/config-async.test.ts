@@ -167,6 +167,46 @@ describe('resolveApiKeyAsync', () => {
     const result = await resolveApiKeyAsync();
     expect(result).toBeNull();
   });
+
+  test('propagates credential backend errors instead of returning null', async () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'default',
+        storage: 'secure_storage',
+        profiles: { default: {} },
+      }),
+    );
+
+    const mockBackend = {
+      get: vi
+        .fn()
+        .mockRejectedValue(
+          new Error(
+            'Failed to read from Secret Service (exit code 5): dbus timeout',
+          ),
+        ),
+      set: vi.fn(),
+      delete: vi.fn(),
+      isAvailable: vi.fn().mockResolvedValue(true),
+      name: 'mock-backend',
+      isSecure: true,
+    };
+
+    vi.resetModules();
+    vi.doMock('../../src/lib/credential-store', () => ({
+      getCredentialBackend: vi.fn().mockResolvedValue(mockBackend),
+      SERVICE_NAME: 'resend-cli',
+      resetCredentialBackend: vi.fn(),
+    }));
+
+    const { resolveApiKeyAsync } = await import('../../src/lib/config');
+    await expect(resolveApiKeyAsync()).rejects.toThrow(
+      'Credential backend unavailable',
+    );
+  });
 });
 
 describe('storeApiKeyAsync', () => {

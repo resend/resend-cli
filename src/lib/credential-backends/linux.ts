@@ -50,17 +50,19 @@ export class LinuxBackend implements CredentialBackend {
   readonly isSecure = true;
 
   async get(service: string, account: string): Promise<string | null> {
-    const { stdout, code } = await run('secret-tool', [
+    const { stdout, stderr, code } = await run('secret-tool', [
       'lookup',
       'service',
       service,
       'account',
       account,
     ]);
-    if (code !== 0 || !stdout.trim()) {
-      return null;
+    if (code === 0 || code === 1) {
+      return stdout.trim() || null;
     }
-    return stdout.trim();
+    throw new Error(
+      `Failed to read from Secret Service (exit code ${code}): ${stderr.trim()}`,
+    );
   }
 
   async set(service: string, account: string, secret: string): Promise<void> {

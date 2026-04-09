@@ -73,27 +73,47 @@ async function checkCliVersion(): Promise<CheckResult> {
 }
 
 async function checkApiKeyPresence(flagValue?: string): Promise<CheckResult> {
-  const resolved = await resolveApiKeyAsync(flagValue);
-  if (!resolved) {
+  try {
+    const resolved = await resolveApiKeyAsync(flagValue);
+    if (!resolved) {
+      return {
+        name: 'API Key',
+        status: 'fail',
+        message: 'No API key found',
+        detail: 'Run: resend login',
+      };
+    }
+    const profileInfo = resolved.profile
+      ? `, profile: ${resolved.profile}`
+      : '';
+    return {
+      name: 'API Key',
+      status: 'pass',
+      message: `${maskKey(resolved.key)} (source: ${resolved.source}${profileInfo})`,
+    };
+  } catch (err) {
     return {
       name: 'API Key',
       status: 'fail',
-      message: 'No API key found',
-      detail: 'Run: resend login',
+      message: errorMessage(err, 'Credential backend error'),
+      detail: 'Check that your credential storage backend is available',
     };
   }
-  const profileInfo = resolved.profile ? `, profile: ${resolved.profile}` : '';
-  return {
-    name: 'API Key',
-    status: 'pass',
-    message: `${maskKey(resolved.key)} (source: ${resolved.source}${profileInfo})`,
-  };
 }
 
 async function checkApiValidationAndDomains(
   flagValue?: string,
 ): Promise<CheckResult> {
-  const resolved = await resolveApiKeyAsync(flagValue);
+  let resolved: Awaited<ReturnType<typeof resolveApiKeyAsync>>;
+  try {
+    resolved = await resolveApiKeyAsync(flagValue);
+  } catch {
+    return {
+      name: 'API Validation',
+      status: 'fail',
+      message: 'Skipped — credential backend unavailable',
+    };
+  }
   if (!resolved) {
     return {
       name: 'API Validation',
