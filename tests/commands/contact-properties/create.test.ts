@@ -143,7 +143,7 @@ describe('contact-properties create command', () => {
 
   test('errors with missing_key in non-interactive mode', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createContactPropertyCommand } = await import(
@@ -161,7 +161,7 @@ describe('contact-properties create command', () => {
 
   test('errors with missing_type in non-interactive mode', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createContactPropertyCommand } = await import(
@@ -179,7 +179,7 @@ describe('contact-properties create command', () => {
 
   test('errors with invalid_fallback_value when number-type gets a non-numeric fallback', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createContactPropertyCommand } = await import(
@@ -207,7 +207,7 @@ describe('contact-properties create command', () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createContactPropertyCommand } = await import(
@@ -229,7 +229,7 @@ describe('contact-properties create command', () => {
     mockCreate.mockResolvedValueOnce(
       mockSdkError('Key already exists', 'validation_error'),
     );
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);
