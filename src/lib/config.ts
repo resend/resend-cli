@@ -4,15 +4,17 @@ import {
   mkdirSync,
   readFileSync,
   unlinkSync,
-  writeFileSync,
 } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { CorruptedCredentialsError } from './corrupted-credentials-error';
 import {
   type CredentialBackend,
   getCredentialBackend,
   SERVICE_NAME,
 } from './credential-store';
+import { withFileLock } from './file-lock';
+import { writeFileAtomic } from './write-file-atomic';
 
 export type ApiKeyPermission = 'full_access' | 'sending_access';
 
@@ -51,37 +53,62 @@ export function getCredentialsPath(): string {
   return join(getConfigDir(), 'credentials.json');
 }
 
+export const getCredentialsLockPath = (): string =>
+  join(getConfigDir(), 'credentials.json.lock');
+
 export function readCredentials(): CredentialsFile | null {
-  try {
-    const data = JSON.parse(readFileSync(getCredentialsPath(), 'utf-8'));
-    // Support legacy format: { api_key: "re_xxx" }
-    if (data.api_key && !data.profiles && !data.teams) {
-      return {
-        active_profile: 'default',
-        profiles: { default: { api_key: data.api_key } },
-      };
-    }
-    // New format: { profiles, active_profile }
-    if (data.profiles) {
-      const storage =
-        data.storage === 'keychain' ? 'secure_storage' : data.storage;
-      return {
-        active_profile: data.active_profile ?? 'default',
-        ...(storage ? { storage } : {}),
-        profiles: data.profiles,
-      };
-    }
-    // Old format: { teams, active_team }
-    if (data.teams) {
-      return {
-        active_profile: data.active_team ?? 'default',
-        profiles: data.teams,
-      };
-    }
-    return null;
-  } catch {
+  const configPath = getCredentialsPath();
+
+  if (!existsSync(configPath)) {
     return null;
   }
+
+  const raw = readFileSync(configPath, 'utf-8');
+
+  if (raw.trim().length === 0) {
+    return null;
+  }
+
+  let data: Record<string, unknown>;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    throw new CorruptedCredentialsError(configPath);
+  }
+
+  if (
+    typeof data === 'object' &&
+    data !== null &&
+    'api_key' in data &&
+    !('profiles' in data) &&
+    !('teams' in data)
+  ) {
+    return {
+      active_profile: 'default',
+      profiles: {
+        default: { api_key: data.api_key as string },
+      },
+    };
+  }
+
+  if ('profiles' in data) {
+    const storage =
+      data.storage === 'keychain' ? 'secure_storage' : data.storage;
+    return {
+      active_profile: (data.active_profile as string) ?? 'default',
+      ...(storage ? { storage: storage as CredentialStorage } : {}),
+      profiles: data.profiles as Record<string, Profile>,
+    };
+  }
+
+  if ('teams' in data) {
+    return {
+      active_profile: (data.active_team as string) ?? 'default',
+      profiles: data.teams as Record<string, Profile>,
+    };
+  }
+
+  return null;
 }
 
 export function writeCredentials(creds: CredentialsFile): string {
@@ -89,9 +116,7 @@ export function writeCredentials(creds: CredentialsFile): string {
   mkdirSync(configDir, { recursive: true, mode: 0o700 });
 
   const configPath = getCredentialsPath();
-  writeFileSync(configPath, `${JSON.stringify(creds, null, 2)}\n`, {
-    mode: 0o600,
-  });
+  writeFileAtomic(configPath, `${JSON.stringify(creds, null, 2)}\n`, 0o600);
   chmodSync(configPath, 0o600);
 
   return configPath;
@@ -102,7 +127,6 @@ export function resolveProfileName(flagValue?: string): string {
     return flagValue;
   }
 
-  // Check RESEND_PROFILE first, fall back to deprecated RESEND_TEAM
   const envProfile = process.env.RESEND_PROFILE || process.env.RESEND_TEAM;
   if (envProfile) {
     return envProfile;
@@ -159,22 +183,31 @@ export function storeApiKey(
   if (validationError) {
     throw new Error(validationError);
   }
-  const creds = readCredentials() || {
-    active_profile: 'default',
-    profiles: {},
-  };
 
-  creds.profiles[profile] = {
-    api_key: apiKey,
-    ...(permission && { permission }),
-  };
+  return withFileLock(getCredentialsLockPath(), () => {
+    const creds = readCredentials() || {
+      active_profile: 'default',
+      profiles: {},
+    };
 
-  // If this is the first profile, set it as active
-  if (Object.keys(creds.profiles).length === 1) {
-    creds.active_profile = profile;
-  }
+    const updatedProfiles = {
+      ...creds.profiles,
+      [profile]: {
+        api_key: apiKey,
+        ...(permission && { permission }),
+      },
+    };
 
-  return writeCredentials(creds);
+    const updatedCreds: CredentialsFile = {
+      ...creds,
+      profiles: updatedProfiles,
+      ...(Object.keys(updatedProfiles).length === 1
+        ? { active_profile: profile }
+        : {}),
+    };
+
+    return writeCredentials(updatedCreds);
+  });
 }
 
 export function removeAllApiKeys(): string {
@@ -184,39 +217,38 @@ export function removeAllApiKeys(): string {
 }
 
 export function removeApiKey(profileName?: string): string {
-  const creds = readCredentials();
-  if (!creds) {
-    const configPath = getCredentialsPath();
-    if (!existsSync(configPath)) {
+  return withFileLock(getCredentialsLockPath(), () => {
+    const creds = readCredentials();
+    if (!creds) {
       throw new Error('No credentials file found.');
     }
-    // Try to delete legacy file
-    unlinkSync(configPath);
-    return configPath;
-  }
 
-  const profile = profileName || resolveProfileName();
-  if (!creds.profiles[profile]) {
-    throw new Error(
-      `Profile "${profile}" not found. Available profiles: ${Object.keys(creds.profiles).join(', ')}`,
-    );
-  }
-  delete creds.profiles[profile];
+    const profile = profileName || resolveProfileName();
+    if (!creds.profiles[profile]) {
+      throw new Error(
+        `Profile "${profile}" not found. Available profiles: ${Object.keys(creds.profiles).join(', ')}`,
+      );
+    }
 
-  // If we removed the active profile, switch to first available or "default"
-  if (creds.active_profile === profile) {
-    const remaining = Object.keys(creds.profiles);
-    creds.active_profile = remaining[0] || 'default';
-  }
+    const { [profile]: _, ...remainingProfiles } = creds.profiles;
 
-  // If no profiles left, delete the file
-  if (Object.keys(creds.profiles).length === 0) {
-    const configPath = getCredentialsPath();
-    unlinkSync(configPath);
-    return configPath;
-  }
+    if (Object.keys(remainingProfiles).length === 0) {
+      const configPath = getCredentialsPath();
+      unlinkSync(configPath);
+      return configPath;
+    }
 
-  return writeCredentials(creds);
+    const updatedActiveProfile =
+      creds.active_profile === profile
+        ? Object.keys(remainingProfiles)[0] || 'default'
+        : creds.active_profile;
+
+    return writeCredentials({
+      ...creds,
+      active_profile: updatedActiveProfile,
+      profiles: remainingProfiles,
+    });
+  });
 }
 
 export function setActiveProfile(profileName: string): void {
@@ -224,17 +256,19 @@ export function setActiveProfile(profileName: string): void {
   if (validationError) {
     throw new Error(validationError);
   }
-  const creds = readCredentials();
-  if (!creds) {
-    throw new Error('No credentials file found. Run: resend login');
-  }
-  if (!creds.profiles[profileName]) {
-    throw new Error(
-      `Profile "${profileName}" not found. Available profiles: ${Object.keys(creds.profiles).join(', ')}`,
-    );
-  }
-  creds.active_profile = profileName;
-  writeCredentials(creds);
+
+  withFileLock(getCredentialsLockPath(), () => {
+    const creds = readCredentials();
+    if (!creds) {
+      throw new Error('No credentials file found. Run: resend login');
+    }
+    if (!creds.profiles[profileName]) {
+      throw new Error(
+        `Profile "${profileName}" not found. Available profiles: ${Object.keys(creds.profiles).join(', ')}`,
+      );
+    }
+    writeCredentials({ ...creds, active_profile: profileName });
+  });
 }
 
 /** @deprecated Use `setActiveProfile` instead */
@@ -278,24 +312,30 @@ export function renameProfile(oldName: string, newName: string): void {
   if (validationError) {
     throw new Error(validationError);
   }
-  const creds = readCredentials();
-  if (!creds) {
-    throw new Error('No credentials file found. Run: resend login');
-  }
-  if (!creds.profiles[oldName]) {
-    throw new Error(
-      `Profile "${oldName}" not found. Available profiles: ${Object.keys(creds.profiles).join(', ')}`,
-    );
-  }
-  if (oldName !== newName && creds.profiles[newName]) {
-    throw new Error(`Profile "${newName}" already exists.`);
-  }
-  creds.profiles[newName] = creds.profiles[oldName];
-  delete creds.profiles[oldName];
-  if (creds.active_profile === oldName) {
-    creds.active_profile = newName;
-  }
-  writeCredentials(creds);
+
+  withFileLock(getCredentialsLockPath(), () => {
+    const creds = readCredentials();
+    if (!creds) {
+      throw new Error('No credentials file found. Run: resend login');
+    }
+    if (!creds.profiles[oldName]) {
+      throw new Error(
+        `Profile "${oldName}" not found. Available profiles: ${Object.keys(creds.profiles).join(', ')}`,
+      );
+    }
+    if (creds.profiles[newName]) {
+      throw new Error(`Profile "${newName}" already exists.`);
+    }
+
+    const { [oldName]: oldProfile, ...rest } = creds.profiles;
+
+    writeCredentials({
+      ...creds,
+      active_profile:
+        creds.active_profile === oldName ? newName : creds.active_profile,
+      profiles: { ...rest, [newName]: oldProfile },
+    });
+  });
 }
 
 export function maskKey(key: string): string {
@@ -304,8 +344,6 @@ export function maskKey(key: string): string {
   }
   return `${key.slice(0, 3)}...${key.slice(-4)}`;
 }
-
-// --- Async variants that route through the credential backend ---
 
 export async function resolveApiKeyAsync(
   flagValue?: string,
@@ -328,7 +366,6 @@ export async function resolveApiKeyAsync(
     creds?.active_profile ||
     'default';
 
-  // If storage is 'secure_storage', try credential backend first
   if (creds?.storage === 'secure_storage') {
     const backend = await getCredentialBackend();
     const key = await backend.get(SERVICE_NAME, profile);
@@ -336,14 +373,11 @@ export async function resolveApiKeyAsync(
       const permission = creds.profiles[profile]?.permission;
       return { key, source: 'secure_storage', profile, permission };
     }
-    // Fall through: profile may not be migrated yet (api_key still in file)
   }
 
-  // File-based storage (or unmigrated profile in mixed state)
   if (creds) {
     const entry = creds.profiles[profile];
     if (entry?.api_key) {
-      // Auto-migrate: move plaintext key to secure storage if available
       const backend = await getCredentialBackend();
       if (backend.isSecure) {
         try {
@@ -357,7 +391,7 @@ export async function resolveApiKeyAsync(
             `Notice: API key for profile "${profile}" has been moved to ${backend.name}\n`,
           );
         } catch {
-          // Non-fatal — plaintext key still works
+          /* non-fatal */
         }
       }
       return {
@@ -387,30 +421,33 @@ export async function storeApiKeyAsync(
   const isFileBackend = !backend.isSecure;
 
   if (isFileBackend) {
-    // Do NOT clear a pre-existing `storage: 'secure_storage'` marker here.
-    // Other profiles may still have their keys in secure storage.
-    // resolveApiKeyAsync already falls through from secure storage to file-based
-    // lookup, so keeping the marker is safe and avoids orphaning those profiles.
     const configPath = storeApiKey(apiKey, profile, permission);
     return { configPath, backend };
   }
 
-  // Store in secure backend
   await backend.set(SERVICE_NAME, profile, apiKey);
 
-  // Update credentials file: mark storage as secure, keep profile entry (without api_key)
-  const creds = readCredentials() || {
-    active_profile: 'default',
-    profiles: {},
-  };
-  creds.storage = 'secure_storage';
-  creds.profiles[profile] = { ...(permission && { permission }) };
+  const configPath = withFileLock(getCredentialsLockPath(), () => {
+    const creds = readCredentials() || {
+      active_profile: 'default',
+      profiles: {},
+    };
 
-  if (Object.keys(creds.profiles).length === 1) {
-    creds.active_profile = profile;
-  }
+    const updatedProfiles = {
+      ...creds.profiles,
+      [profile]: { ...(permission && { permission }) },
+    };
 
-  const configPath = writeCredentials(creds);
+    return writeCredentials({
+      ...creds,
+      storage: 'secure_storage',
+      profiles: updatedProfiles,
+      ...(Object.keys(updatedProfiles).length === 1
+        ? { active_profile: profile }
+        : {}),
+    });
+  });
+
   return { configPath, backend };
 }
 
@@ -448,7 +485,6 @@ export async function removeAllApiKeysAsync(): Promise<string> {
     }
   }
 
-  // Remove credentials file (may already be gone if only secure storage)
   if (existsSync(configPath)) {
     unlinkSync(configPath);
   }

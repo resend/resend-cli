@@ -1,4 +1,5 @@
 import {
+  existsSync,
   mkdirSync,
   readFileSync,
   rmSync,
@@ -7,10 +8,11 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, test } from 'vitest';
 import {
   getConfigDir,
   listProfiles,
+  readCredentials,
   removeApiKey,
   renameProfile,
   resolveApiKey,
@@ -20,6 +22,7 @@ import {
   validateProfileName,
   writeCredentials,
 } from '../../src/lib/config';
+import { CorruptedCredentialsError } from '../../src/lib/corrupted-credentials-error';
 import { captureTestEnv } from '../helpers';
 
 describe('getConfigDir', () => {
@@ -161,15 +164,14 @@ describe('resolveApiKey', () => {
     expect(result).toBeNull();
   });
 
-  test('returns null on malformed config JSON', () => {
+  test('throws CorruptedCredentialsError on malformed config JSON', () => {
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = tmpDir;
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     writeFileSync(join(configDir, 'credentials.json'), 'not json');
 
-    const result = resolveApiKey();
-    expect(result).toBeNull();
+    expect(() => resolveApiKey()).toThrow(CorruptedCredentialsError);
   });
 
   test('returns null when profile does not exist in config', () => {
@@ -535,6 +537,183 @@ describe('renameProfile', () => {
 
   test('throws when no credentials file', () => {
     expect(() => renameProfile('any', 'new')).toThrow('No credentials file');
+  });
+});
+
+describe('readCredentials', () => {
+  const restoreEnv = captureTestEnv();
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = join(
+      tmpdir(),
+      `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
+    mkdirSync(tmpDir, { recursive: true });
+    process.env.XDG_CONFIG_HOME = tmpDir;
+  });
+
+  afterEach(() => {
+    restoreEnv();
+    rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it('returns null when file does not exist', () => {
+    expect(readCredentials()).toBeNull();
+  });
+
+  it('returns null for empty file', () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(join(configDir, 'credentials.json'), '');
+    expect(readCredentials()).toBeNull();
+  });
+
+  it('throws CorruptedCredentialsError for malformed JSON', () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(join(configDir, 'credentials.json'), '{"truncated');
+    expect(() => readCredentials()).toThrow(CorruptedCredentialsError);
+  });
+
+  it('throws CorruptedCredentialsError for truncated file', () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      '{"active_profile":"default","profiles":{"prod":{"api_key":"re_x',
+    );
+    expect(() => readCredentials()).toThrow(CorruptedCredentialsError);
+  });
+
+  it('preserves corrupted file on disk after throwing', () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    const credPath = join(configDir, 'credentials.json');
+    const corrupted = '{"truncated';
+    writeFileSync(credPath, corrupted);
+
+    try {
+      readCredentials();
+    } catch {
+      /* expected */
+    }
+
+    expect(readFileSync(credPath, 'utf-8')).toBe(corrupted);
+  });
+});
+
+describe('writeCredentials (atomic)', () => {
+  const restoreEnv = captureTestEnv();
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = join(
+      tmpdir(),
+      `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
+    process.env.XDG_CONFIG_HOME = tmpDir;
+  });
+
+  afterEach(() => {
+    restoreEnv();
+    rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it('produces valid JSON after write', () => {
+    const configPath = writeCredentials({
+      active_profile: 'default',
+      profiles: { default: { api_key: 're_test' } },
+    });
+    const data = JSON.parse(readFileSync(configPath, 'utf-8'));
+    expect(data.profiles.default.api_key).toBe('re_test');
+  });
+
+  it('does not leave tmp files on success', () => {
+    writeCredentials({
+      active_profile: 'default',
+      profiles: { default: { api_key: 're_test' } },
+    });
+    const configDir = join(tmpDir, 'resend');
+    const files = require('node:fs').readdirSync(configDir) as string[];
+    const tmpFiles = files.filter((f: string) => f.includes('.tmp.'));
+    expect(tmpFiles).toEqual([]);
+  });
+});
+
+describe('storeApiKey with corrupted file', () => {
+  const restoreEnv = captureTestEnv();
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = join(
+      tmpdir(),
+      `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
+    process.env.XDG_CONFIG_HOME = tmpDir;
+  });
+
+  afterEach(() => {
+    restoreEnv();
+    rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it('throws instead of silently replacing profiles when file is corrupted', () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      '{"active_profile":"default","profiles":{"prod":{"api_key":"re_prod_key"}',
+    );
+
+    expect(() => storeApiKey('re_new_key', 'dev')).toThrow(
+      CorruptedCredentialsError,
+    );
+  });
+
+  it('preserves existing profiles on disk when corruption is detected', () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    const credPath = join(configDir, 'credentials.json');
+    const corrupted =
+      '{"active_profile":"default","profiles":{"prod":{"api_key":"re_prod_key"}';
+    writeFileSync(credPath, corrupted);
+
+    try {
+      storeApiKey('re_new_key', 'dev');
+    } catch {
+      /* expected */
+    }
+
+    expect(readFileSync(credPath, 'utf-8')).toBe(corrupted);
+  });
+});
+
+describe('removeApiKey with corrupted file', () => {
+  const restoreEnv = captureTestEnv();
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = join(
+      tmpdir(),
+      `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
+    process.env.XDG_CONFIG_HOME = tmpDir;
+  });
+
+  afterEach(() => {
+    restoreEnv();
+    rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it('throws instead of deleting file when credentials are corrupted', () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    const credPath = join(configDir, 'credentials.json');
+    writeFileSync(credPath, 'not valid json');
+
+    expect(() => removeApiKey('prod')).toThrow(CorruptedCredentialsError);
+    expect(existsSync(credPath)).toBe(true);
   });
 });
 
