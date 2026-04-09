@@ -895,7 +895,65 @@ describe('send command', () => {
     const callArgs = mockSend.mock.calls[0][0] as Record<string, unknown>;
     expect(callArgs.template).toEqual({
       id: 'tmpl_123',
-      variables: { name: 'John', count: 42 },
+      variables: { name: 'John', count: '42' },
+    });
+  });
+
+  test('preserves leading zeros in --var values', async () => {
+    spies = setupOutputSpies();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await sendCommand.parseAsync(
+      ['--template', 'tmpl_123', '--to', 'b@test.com', '--var', 'otp=012345'],
+      { from: 'user' },
+    );
+
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    const callArgs = mockSend.mock.calls[0][0] as Record<string, unknown>;
+    expect(callArgs.template).toEqual({
+      id: 'tmpl_123',
+      variables: { otp: '012345' },
+    });
+  });
+
+  test('preserves large numeric strings beyond MAX_SAFE_INTEGER in --var values', async () => {
+    spies = setupOutputSpies();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await sendCommand.parseAsync(
+      [
+        '--template',
+        'tmpl_123',
+        '--to',
+        'b@test.com',
+        '--var',
+        'account_id=9007199254740993',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    const callArgs = mockSend.mock.calls[0][0] as Record<string, unknown>;
+    expect(callArgs.template).toEqual({
+      id: 'tmpl_123',
+      variables: { account_id: '9007199254740993' },
+    });
+  });
+
+  test('preserves scientific notation strings in --var values', async () => {
+    spies = setupOutputSpies();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await sendCommand.parseAsync(
+      ['--template', 'tmpl_123', '--to', 'b@test.com', '--var', 'code=1e3'],
+      { from: 'user' },
+    );
+
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    const callArgs = mockSend.mock.calls[0][0] as Record<string, unknown>;
+    expect(callArgs.template).toEqual({
+      id: 'tmpl_123',
+      variables: { code: '1e3' },
     });
   });
 
