@@ -2,7 +2,6 @@ import { Command } from '@commander-js/extra-typings';
 import { buildHelpText } from '../../../lib/help-text';
 import { getAutomationRunCommand } from './get';
 import { listAutomationRunsCommand } from './list';
-import { automationRunStepsCommand } from './steps/index';
 
 export const automationRunsCommand = new Command('runs')
   .description('Manage automation runs')
@@ -17,11 +16,8 @@ Run status values: running | completed | failed | cancelled`,
         'resend automations runs <automation-id>',
         'resend automations runs list <automation-id> --limit 25',
         'resend automations runs get --automation-id <id> --run-id <id>',
-        'resend automations runs steps list --automation-id <id> --run-id <id>',
-        'resend automations runs steps get --automation-id <id> --run-id <id> --step-id <id>',
       ],
     }),
   )
   .addCommand(listAutomationRunsCommand, { isDefault: true })
-  .addCommand(getAutomationRunCommand)
-  .addCommand(automationRunStepsCommand);
+  .addCommand(getAutomationRunCommand);

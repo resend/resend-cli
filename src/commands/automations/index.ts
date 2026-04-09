@@ -5,6 +5,7 @@ import { deleteAutomationCommand } from './delete';
 import { getAutomationCommand } from './get';
 import { listAutomationsCommand } from './list';
 import { automationRunsCommand } from './runs/index';
+import { openAutomationCommand } from './open';
 import { updateAutomationCommand } from './update';
 
 export const automationsCommand = new Command('automations')
@@ -21,7 +22,7 @@ Lifecycle:
   1. resend automations create --name "Welcome" --file workflow.json
   2. resend automations update <id> --status enabled
   3. resend automations runs <id>                        (inspect runs)
-  4. resend automations runs steps --automation-id <id> --run-id <id>`,
+  4. resend automations open <id>                        (view in dashboard)`,
       examples: [
         'resend automations list',
         'resend automations create --name "Welcome Flow" --file workflow.json',
@@ -30,7 +31,7 @@ Lifecycle:
         'resend automations delete <id> --yes',
         'resend automations runs <automation-id>',
         'resend automations runs get --automation-id <id> --run-id <id>',
-        'resend automations runs steps --automation-id <id> --run-id <id>',
+        'resend automations open <id>',
       ],
     }),
   )
@@ -39,4 +40,5 @@ Lifecycle:
   .addCommand(listAutomationsCommand, { isDefault: true })
   .addCommand(updateAutomationCommand)
   .addCommand(deleteAutomationCommand)
+  .addCommand(openAutomationCommand)
   .addCommand(automationRunsCommand);
