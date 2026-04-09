@@ -1,10 +1,4 @@
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from 'node:fs';
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -12,29 +6,39 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
+
+vi.mock('node:child_process', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:child_process')>();
+  return { ...actual, spawn: vi.fn(() => ({ unref: vi.fn() })) };
+});
+
+import { spawn } from 'node:child_process';
 import {
+  buildRefreshScript,
   checkForUpdates,
   detectInstallMethod,
+  resolveNodePath,
+  spawnBackgroundRefresh,
 } from '../../src/lib/update-check';
 import { VERSION } from '../../src/lib/version';
 import { captureTestEnv } from '../helpers';
 
-// Use a version guaranteed to be "newer" than whatever VERSION is
 const NEWER_VERSION = '99.0.0';
 
 const testConfigDir = join(tmpdir(), `resend-update-check-test-${process.pid}`);
 const testResendDir = join(testConfigDir, 'resend');
 const statePath = join(testResendDir, 'update-state.json');
 
+const mockedSpawn = vi.mocked(spawn);
+
 describe('checkForUpdates', () => {
   const restoreEnv = captureTestEnv();
   let stderrOutput: string;
   let stderrSpy: MockInstance;
-  let fetchSpy: MockInstance;
 
   beforeEach(() => {
     mkdirSync(testResendDir, { recursive: true });
@@ -46,10 +50,10 @@ describe('checkForUpdates', () => {
         return true;
       });
 
-    // Point getConfigDir() at our temp dir via XDG_CONFIG_HOME
+    mockedSpawn.mockReturnValue({ unref: vi.fn() } as never);
+
     process.env.XDG_CONFIG_HOME = testConfigDir;
 
-    // Ensure TTY and no CI
     Object.defineProperty(process.stdout, 'isTTY', {
       value: true,
       writable: true,
@@ -61,123 +65,210 @@ describe('checkForUpdates', () => {
 
   afterEach(() => {
     stderrSpy.mockRestore();
-    if (fetchSpy) {
-      fetchSpy.mockRestore();
-    }
+    mockedSpawn.mockClear();
     restoreEnv();
     if (existsSync(testConfigDir)) {
       rmSync(testConfigDir, { recursive: true, force: true });
     }
   });
 
-  function mockFetch(tagName: string, extra: Record<string, unknown> = {}) {
-    fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
-      ok: true,
-      json: async () => ({ tag_name: tagName, ...extra }),
-    } as Response);
-  }
-
-  function mockFetchFailure() {
-    fetchSpy = vi
-      .spyOn(globalThis, 'fetch')
-      .mockRejectedValue(new Error('network error'));
-  }
-
-  test('skips check when RESEND_NO_UPDATE_NOTIFIER=1', async () => {
+  it('skips check when RESEND_NO_UPDATE_NOTIFIER=1', () => {
     process.env.RESEND_NO_UPDATE_NOTIFIER = '1';
-    await checkForUpdates();
+    checkForUpdates();
     expect(stderrOutput).toBe('');
+    expect(mockedSpawn).not.toHaveBeenCalled();
   });
 
-  test('skips check when CI=true', async () => {
+  it('skips check when CI=true', () => {
     process.env.CI = 'true';
-    await checkForUpdates();
+    checkForUpdates();
     expect(stderrOutput).toBe('');
+    expect(mockedSpawn).not.toHaveBeenCalled();
   });
 
-  test('skips check when not a TTY', async () => {
+  it('skips check when not a TTY', () => {
     Object.defineProperty(process.stdout, 'isTTY', {
       value: undefined,
       writable: true,
     });
-    await checkForUpdates();
+    checkForUpdates();
     expect(stderrOutput).toBe('');
+    expect(mockedSpawn).not.toHaveBeenCalled();
   });
 
-  test('prints notice when newer version available from fresh fetch', async () => {
-    mockFetch(`v${NEWER_VERSION}`);
-    await checkForUpdates();
+  it('prints notice from fresh cache when newer version available', () => {
+    writeFileSync(
+      statePath,
+      JSON.stringify({
+        lastChecked: Date.now(),
+        latestVersion: NEWER_VERSION,
+      }),
+    );
+
+    checkForUpdates();
 
     expect(stderrOutput).toContain('Update available');
     expect(stderrOutput).toContain(`v${VERSION}`);
     expect(stderrOutput).toContain(`v${NEWER_VERSION}`);
+    expect(mockedSpawn).not.toHaveBeenCalled();
   });
 
-  test('prints nothing when already on latest', async () => {
-    mockFetch(`v${VERSION}`);
-    await checkForUpdates();
-    expect(stderrOutput).toBe('');
-  });
-
-  test('uses cached state when fresh (no fetch)', async () => {
+  it('prints nothing from fresh cache when already on latest', () => {
     writeFileSync(
       statePath,
-      JSON.stringify({ lastChecked: Date.now(), latestVersion: NEWER_VERSION }),
+      JSON.stringify({ lastChecked: Date.now(), latestVersion: VERSION }),
     );
 
-    mockFetch(`v${NEWER_VERSION}`);
-    await checkForUpdates();
-
-    expect(fetchSpy).not.toHaveBeenCalled();
-    expect(stderrOutput).toContain(`v${NEWER_VERSION}`);
+    checkForUpdates();
+    expect(stderrOutput).toBe('');
+    expect(mockedSpawn).not.toHaveBeenCalled();
   });
 
-  test('refetches when cache is stale', async () => {
-    const staleTime = Date.now() - 25 * 60 * 60 * 1000; // 25 hours ago
+  it('spawns background refresh when cache is stale', () => {
+    const staleTime = Date.now() - 25 * 60 * 60 * 1000;
     writeFileSync(
       statePath,
       JSON.stringify({ lastChecked: staleTime, latestVersion: VERSION }),
     );
 
-    mockFetch(`v${NEWER_VERSION}`);
-    await checkForUpdates();
+    checkForUpdates();
 
-    expect(fetchSpy).toHaveBeenCalled();
-    expect(stderrOutput).toContain(`v${NEWER_VERSION}`);
-    // Verify cache was updated
-    const state = JSON.parse(readFileSync(statePath, 'utf-8'));
-    expect(state.latestVersion).toBe(NEWER_VERSION);
+    expect(mockedSpawn).toHaveBeenCalledWith(
+      expect.any(String),
+      ['-e', expect.any(String)],
+      { detached: true, stdio: 'ignore' },
+    );
   });
 
-  test('handles fetch failure gracefully', async () => {
-    mockFetchFailure();
-    await checkForUpdates();
+  it('spawns background refresh when cache is missing', () => {
+    checkForUpdates();
+    expect(mockedSpawn).toHaveBeenCalled();
+  });
+
+  it('shows stale notice and spawns refresh when cache is stale with newer version', () => {
+    const staleTime = Date.now() - 25 * 60 * 60 * 1000;
+    writeFileSync(
+      statePath,
+      JSON.stringify({
+        lastChecked: staleTime,
+        latestVersion: NEWER_VERSION,
+      }),
+    );
+
+    checkForUpdates();
+
+    expect(stderrOutput).toContain('Update available');
+    expect(mockedSpawn).toHaveBeenCalled();
+  });
+
+  it('does not show notice when cache is missing (no stale version)', () => {
+    checkForUpdates();
     expect(stderrOutput).toBe('');
+    expect(mockedSpawn).toHaveBeenCalled();
+  });
+});
+
+describe('buildRefreshScript', () => {
+  it('produces a script containing fetch and fs operations', () => {
+    const script = buildRefreshScript(
+      'https://api.github.com/repos/resend/resend-cli/releases/latest',
+      '/tmp/resend-test',
+      '/tmp/resend-test/update-state.json',
+      '1.0.0',
+    );
+
+    expect(script).toContain('fetch');
+    expect(script).toContain('mkdirSync');
+    expect(script).toContain('writeFileSync');
+    expect(script).toContain('"1.0.0"');
   });
 
-  test('writes state file after successful fetch', async () => {
-    mockFetch(`v${VERSION}`);
-    await checkForUpdates();
+  it('embeds the config directory and state path', () => {
+    const dir = '/home/user/.config/resend';
+    const path = `${dir}/update-state.json`;
+    const script = buildRefreshScript(
+      'https://example.com/releases',
+      dir,
+      path,
+      '2.0.0',
+    );
 
-    expect(existsSync(statePath)).toBe(true);
-    const state = JSON.parse(readFileSync(statePath, 'utf-8'));
-    expect(state.latestVersion).toBe(VERSION);
+    expect(script).toContain(JSON.stringify(dir));
+    expect(script).toContain(JSON.stringify(path));
   });
 
-  test('ignores prerelease versions', async () => {
-    fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
-      ok: true,
-      json: async () => ({ tag_name: 'v99.0.0', prerelease: true }),
-    } as Response);
+  it('writes fallback version on non-ok response', () => {
+    const script = buildRefreshScript(
+      'https://example.com/releases',
+      '/tmp/dir',
+      '/tmp/dir/state.json',
+      '3.0.0',
+    );
 
-    await checkForUpdates();
-    expect(stderrOutput).toBe('');
+    expect(script).toContain('!r.ok');
+    expect(script).toContain('"3.0.0"');
+  });
+});
+
+describe('resolveNodePath', () => {
+  it('returns execPath when it ends with node', () => {
+    const orig = process.execPath;
+    Object.defineProperty(process, 'execPath', { value: '/usr/bin/node' });
+    expect(resolveNodePath()).toBe('/usr/bin/node');
+    Object.defineProperty(process, 'execPath', { value: orig });
   });
 
-  test('ignores non-semver tag names', async () => {
-    mockFetch('canary-20260311');
-    await checkForUpdates();
-    expect(stderrOutput).toBe('');
+  it('returns execPath when it ends with node.exe', () => {
+    const orig = process.execPath;
+    Object.defineProperty(process, 'execPath', {
+      value: 'C:\\Program Files\\nodejs\\node.exe',
+    });
+    expect(resolveNodePath()).toBe('C:\\Program Files\\nodejs\\node.exe');
+    Object.defineProperty(process, 'execPath', { value: orig });
+  });
+
+  it('returns "node" when execPath is not a node binary', () => {
+    const orig = process.execPath;
+    Object.defineProperty(process, 'execPath', {
+      value: '/usr/local/bin/resend',
+    });
+    expect(resolveNodePath()).toBe('node');
+    Object.defineProperty(process, 'execPath', { value: orig });
+  });
+});
+
+describe('spawnBackgroundRefresh', () => {
+  beforeEach(() => {
+    mockedSpawn.mockClear();
+  });
+
+  it('does not throw when spawn throws', () => {
+    mockedSpawn.mockImplementation(() => {
+      throw new Error('spawn failed');
+    });
+
+    expect(() => spawnBackgroundRefresh()).not.toThrow();
+  });
+
+  it('calls spawn with detached and ignored stdio', () => {
+    mockedSpawn.mockReturnValue({ unref: vi.fn() } as never);
+
+    spawnBackgroundRefresh();
+
+    expect(mockedSpawn).toHaveBeenCalledWith(
+      expect.any(String),
+      ['-e', expect.any(String)],
+      { detached: true, stdio: 'ignore' },
+    );
+  });
+
+  it('unrefs the child process', () => {
+    const unrefFn = vi.fn();
+    mockedSpawn.mockReturnValue({ unref: unrefFn } as never);
+
+    spawnBackgroundRefresh();
+
+    expect(unrefFn).toHaveBeenCalled();
   });
 });
 
@@ -198,7 +289,7 @@ describe('detectInstallMethod', () => {
     restoreEnv();
   });
 
-  test('detects npm when script path contains node_modules', () => {
+  it('detects npm when script path contains node_modules', () => {
     Object.defineProperty(process, 'execPath', {
       value: '/opt/homebrew/bin/node',
     });
@@ -207,7 +298,7 @@ describe('detectInstallMethod', () => {
     expect(detectInstallMethod()).toBe('npm install -g resend-cli');
   });
 
-  test('detects npm when npm_execpath is set even with homebrew node', () => {
+  it('detects npm when npm_execpath is set even with homebrew node', () => {
     Object.defineProperty(process, 'execPath', {
       value: '/opt/homebrew/bin/node',
     });
@@ -218,7 +309,7 @@ describe('detectInstallMethod', () => {
     expect(detectInstallMethod()).toBe('npm install -g resend-cli');
   });
 
-  test('detects homebrew when no npm signals present', () => {
+  it('detects homebrew when no npm signals present', () => {
     Object.defineProperty(process, 'execPath', {
       value: '/opt/homebrew/Cellar/resend/1.4.0/bin/resend',
     });
@@ -227,7 +318,7 @@ describe('detectInstallMethod', () => {
     expect(detectInstallMethod()).toBe('brew update && brew upgrade resend');
   });
 
-  test('detects install script', () => {
+  it('detects install script', () => {
     Object.defineProperty(process, 'execPath', {
       value: '/Users/test/.resend/bin/resend',
     });
