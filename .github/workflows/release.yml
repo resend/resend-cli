@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   preflight:
-    runs-on: depot-ubuntu-24.04-4
+    runs-on: depot-ubuntu-24.04-8
     steps:
       - name: Verify PostHog key is configured
         run: |
@@ -54,7 +54,7 @@ jobs:
           ${{ matrix.binary }} --help
   test-binary-linux-arm64:
     needs: preflight
-    runs-on: depot-ubuntu-24.04-4
+    runs-on: depot-ubuntu-24.04-8
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5
@@ -122,7 +122,7 @@ jobs:
             dist/resend-darwin-x64.tar.gz
   build-linux-windows:
     needs: [test-binary, test-binary-linux-arm64]
-    runs-on: depot-ubuntu-24.04-4
+    runs-on: depot-ubuntu-24.04-8
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5
@@ -171,7 +171,7 @@ jobs:
     needs: [build-macos, build-linux-windows]
     permissions:
       contents: write
-    runs-on: depot-ubuntu-24.04-4
+    runs-on: depot-ubuntu-24.04-8
     outputs:
       prerelease: ${{ steps.meta.outputs.prerelease }}
     steps:
@@ -235,7 +235,7 @@ jobs:
     if: github.event_name != 'workflow_dispatch' && needs.release.outputs.prerelease == 'false'
     name: Trigger Homebrew Tap Update
     needs: release
-    runs-on: depot-ubuntu-24.04-4
+    runs-on: depot-ubuntu-24.04-8
     permissions:
       contents: read
     steps:
