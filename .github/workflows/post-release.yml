@@ -35,10 +35,18 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
       - uses: actions/setup-node@v6
         with:
           node-version: 24
       - name: Verify npx resend-cli
         run: |
-          npx resend-cli --version
-          npx resend-cli --help
+          EXPECTED_VERSION=$(node -p "require('./package.json').version")
+          ACTUAL_VERSION=$(npx --yes resend-cli@"$EXPECTED_VERSION" --version)
+          if [ "$ACTUAL_VERSION" != "$EXPECTED_VERSION" ]; then
+            echo "::error::Version mismatch: expected $EXPECTED_VERSION, got $ACTUAL_VERSION"
+            exit 1
+          fi
+          npx --yes resend-cli@"$EXPECTED_VERSION" --help >/dev/null
