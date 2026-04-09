@@ -550,7 +550,7 @@ describe('broadcasts create command', () => {
 
   test('errors with invalid_options when --html and --html-file both provided', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createBroadcastCommand } = await import(
@@ -582,7 +582,7 @@ describe('broadcasts create command', () => {
 
   test('errors with invalid_options when --text and --text-file both provided', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createBroadcastCommand } = await import(
