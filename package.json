@@ -54,7 +54,7 @@
     ]
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.8",
+    "@biomejs/biome": "2.4.11",
     "@types/node": "24.12.0",
     "@yao-pkg/pkg": "6.14.1",
     "tsx": "4.21.0",
