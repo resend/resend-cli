@@ -3,6 +3,7 @@ import { runGet } from '../../../lib/actions';
 import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { pickId } from '../../../lib/prompts';
+import { sanitizeForTerminal } from '../../../lib/sanitize-for-terminal';
 import { receivedEmailPickerConfig } from './utils';
 
 export const getReceivingCommand = new Command('get')
@@ -32,18 +33,21 @@ export const getReceivingCommand = new Command('get')
         loading: 'Fetching received email...',
         sdkCall: (resend) => resend.emails.receiving.get(id),
         onInteractive: (data) => {
-          console.log(`From:    ${data.from}`);
-          console.log(`To:      ${data.to.join(', ')}`);
-          console.log(`Subject: ${data.subject}`);
+          console.log(`From:    ${sanitizeForTerminal(data.from)}`);
+          console.log(
+            `To:      ${data.to.map(sanitizeForTerminal).join(', ')}`,
+          );
+          console.log(`Subject: ${sanitizeForTerminal(data.subject)}`);
           console.log(`Date:    ${data.created_at}`);
           if (data.attachments.length > 0) {
             console.log(`Files:   ${data.attachments.length} attachment(s)`);
           }
           if (data.text) {
+            const sanitized = sanitizeForTerminal(data.text);
             const snippet =
-              data.text.length > 200
-                ? `${data.text.slice(0, 197)}...`
-                : data.text;
+              sanitized.length > 200
+                ? `${sanitized.slice(0, 197)}...`
+                : sanitized;
             console.log(`${snippet}`);
           } else if (data.html) {
             console.log(

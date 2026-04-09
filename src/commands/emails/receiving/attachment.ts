@@ -3,6 +3,7 @@ import type { GlobalOpts } from '../../../lib/client';
 import { requireClient } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { outputResult } from '../../../lib/output';
+import { sanitizeForTerminal } from '../../../lib/sanitize-for-terminal';
 import { withSpinner } from '../../../lib/spinner';
 import { isInteractive } from '../../../lib/tty';
 
@@ -38,7 +39,7 @@ export const getAttachmentCommand = new Command('attachment')
 
     if (!globalOpts.json && isInteractive()) {
       const d = data;
-      console.log(`${d.filename ?? '(unnamed)'}`);
+      console.log(`${sanitizeForTerminal(d.filename ?? '(unnamed)')}`);
       console.log(`ID:           ${d.id}`);
       console.log(`Content-Type: ${d.content_type}`);
       console.log(`Size:         ${d.size} bytes`);
