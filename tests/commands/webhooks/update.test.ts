@@ -160,9 +160,15 @@ describe('webhooks update command', () => {
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 
-  it('errors with no_changes when --events contains only empty values', async () => {
+  it('rejects --events with only empty values and does not call SDK', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const consoleErrorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
+    stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
     const { updateWebhookCommand } = await import(
@@ -174,14 +180,23 @@ describe('webhooks update command', () => {
       }),
     );
 
-    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
-    expect(output).toContain('no_changes');
+    const allOutput = [
+      ...errorSpy.mock.calls.map((c) => c[0]),
+      ...consoleErrorSpy.mock.calls.map((c) => c[0]),
+    ].join(' ');
+    expect(allOutput).toContain('Missing --events values');
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 
-  it('errors with no_changes when --events normalizes to empty array', async () => {
+  it('rejects --events that normalize to empty array and does not call SDK', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const consoleErrorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
+    stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
     const { updateWebhookCommand } = await import(
@@ -193,8 +208,11 @@ describe('webhooks update command', () => {
       }),
     );
 
-    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
-    expect(output).toContain('no_changes');
+    const allOutput = [
+      ...errorSpy.mock.calls.map((c) => c[0]),
+      ...consoleErrorSpy.mock.calls.map((c) => c[0]),
+    ].join(' ');
+    expect(allOutput).toContain('Missing --events values');
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 
