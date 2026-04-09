@@ -140,7 +140,7 @@ describe('broadcasts list command', () => {
 
   test('errors with invalid_limit when --limit is out of range', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);
@@ -161,7 +161,7 @@ describe('broadcasts list command', () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { listBroadcastsCommand } = await import(
@@ -180,7 +180,7 @@ describe('broadcasts list command', () => {
     mockList.mockResolvedValueOnce(
       mockSdkError('Internal server error', 'server_error'),
     );
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);

@@ -102,7 +102,7 @@ describe('contact-properties get command', () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { getContactPropertyCommand } = await import(
@@ -124,7 +124,7 @@ describe('contact-properties get command', () => {
     mockGet.mockResolvedValueOnce(
       mockSdkError('Property not found', 'not_found'),
     );
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);
