@@ -301,7 +301,16 @@ export async function pickId<T extends { id: string }>(
 
     if (result.error || !result.data) {
       if (optional) {
-        spinner.clear();
+        spinner.warn(
+          `Failed to fetch ${config.resourcePlural}: ${result.error?.message ?? 'Unexpected empty response'}`,
+        );
+        const proceed = await p.confirm({
+          message: `Could not load ${config.resourcePlural}. Continue without ${config.resource} scope?`,
+          initialValue: false,
+        });
+        if (p.isCancel(proceed) || !proceed) {
+          cancelAndExit('Cancelled.');
+        }
         return undefined;
       }
       spinner.fail(`Failed to fetch ${config.resourcePlural}`);
