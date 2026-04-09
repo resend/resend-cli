@@ -14,9 +14,12 @@ import { outputError } from '../../lib/output';
 import { requireText } from '../../lib/prompts';
 import { createSpinner } from '../../lib/spinner';
 import { isInteractive } from '../../lib/tty';
+import { resolveUpstream } from './resolve-upstream';
 import { ALL_WEBHOOK_EVENTS, normalizeEvents } from './utils';
 
 const SVIX_HEADERS = ['svix-id', 'svix-timestamp', 'svix-signature'];
+
+const FORWARD_TIMEOUT_MS = 30_000;
 
 function timestamp(): string {
   return new Date().toLocaleTimeString('en-GB', { hour12: false });
@@ -95,6 +98,7 @@ async function forwardPayload(
     method: 'POST',
     headers: forwardHeaders,
     body: rawBody,
+    signal: AbortSignal.timeout(FORWARD_TIMEOUT_MS),
   });
   return { status: resp.status };
 }
@@ -223,6 +227,26 @@ For example, if using ngrok: ngrok http 4318`,
 
         const { type, resourceId, detail } = summarizeEvent(body);
 
+        let forwardResult:
+          | { readonly status: number }
+          | { readonly error: string }
+          | undefined;
+
+        if (opts.forwardTo) {
+          try {
+            const { status } = await forwardPayload(
+              opts.forwardTo,
+              rawBody,
+              svixHeaders,
+            );
+            forwardResult = { status };
+          } catch (err) {
+            forwardResult = {
+              error: err instanceof Error ? err.message : 'Unknown error',
+            };
+          }
+        }
+
         if (jsonMode) {
           const entry: Record<string, unknown> = {
             timestamp: new Date().toISOString(),
@@ -231,20 +255,11 @@ For example, if using ngrok: ngrok http 4318`,
             payload: body,
           };
 
-          if (opts.forwardTo) {
-            try {
-              const { status } = await forwardPayload(
-                opts.forwardTo,
-                rawBody,
-                svixHeaders,
-              );
-              entry.forwarded = { url: opts.forwardTo, status };
-            } catch (err) {
-              entry.forwarded = {
-                url: opts.forwardTo,
-                error: err instanceof Error ? err.message : 'Unknown error',
-              };
-            }
+          if (opts.forwardTo && forwardResult) {
+            entry.forwarded =
+              'error' in forwardResult
+                ? { url: opts.forwardTo, error: forwardResult.error }
+                : { url: opts.forwardTo, status: forwardResult.status };
           }
 
           console.log(JSON.stringify(entry));
@@ -256,29 +271,24 @@ For example, if using ngrok: ngrok http 4318`,
             `${ts} ${pc.bold(typePad)} ${pc.cyan(idPad)} ${detail}\n`,
           );
 
-          if (opts.forwardTo) {
+          if (opts.forwardTo && forwardResult) {
             const target = opts.forwardTo.startsWith('http')
               ? opts.forwardTo
               : `http://${opts.forwardTo}`;
-            try {
-              const { status } = await forwardPayload(
-                opts.forwardTo,
-                rawBody,
-                svixHeaders,
-              );
+            if ('error' in forwardResult) {
               process.stderr.write(
-                `${pc.dim('           -> POST')} ${target} ${pc.dim(`[${formatStatus(status)}]`)}\n`,
+                `${pc.dim('           -> POST')} ${target} ${pc.red(`[Error: ${forwardResult.error}]`)}\n`,
               );
-            } catch (err) {
-              const msg = err instanceof Error ? err.message : 'Unknown error';
+            } else {
               process.stderr.write(
-                `${pc.dim('           -> POST')} ${target} ${pc.red(`[Error: ${msg}]`)}\n`,
+                `${pc.dim('           -> POST')} ${target} ${pc.dim(`[${formatStatus(forwardResult.status)}]`)}\n`,
               );
             }
           }
         }
 
-        res.writeHead(200).end('OK');
+        const upstream = resolveUpstream(forwardResult);
+        res.writeHead(upstream.status).end(upstream.body);
       },
     );
 
