@@ -434,6 +434,7 @@ describe('broadcasts update command', () => {
     expect(mockBuildReactEmailHtml).toHaveBeenCalledWith(
       './emails/newsletter.tsx',
       expect.anything(),
+      {},
     );
     const payload = mockUpdate.mock.calls[0][1] as Record<string, unknown>;
     expect(payload.html).toBe('<html><body>Rendered</body></html>');
@@ -450,7 +451,11 @@ describe('broadcasts update command', () => {
       { from: 'user' },
     );
 
-    expect(mockBuildReactEmailHtml).toHaveBeenCalledWith('', expect.anything());
+    expect(mockBuildReactEmailHtml).toHaveBeenCalledWith(
+      '',
+      expect.anything(),
+      {},
+    );
     const payload = mockUpdate.mock.calls[0][1] as Record<string, unknown>;
     expect(payload.html).toBe('<html><body>Rendered</body></html>');
   });

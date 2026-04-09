@@ -4,6 +4,7 @@ import type { GlobalOpts } from '../../lib/client';
 import { readFile } from '../../lib/files';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
+import { parseReactEmailProps } from '../../lib/parse-react-email-props';
 import { pickId } from '../../lib/prompts';
 import { buildReactEmailHtml } from '../../lib/react-email';
 import { parseVariables, templatePickerConfig } from './utils';
@@ -26,6 +27,14 @@ export const updateTemplateCommand = new Command('update')
   .option(
     '--react-email <path>',
     'Path to a React Email template (.tsx) to bundle, render, and use as HTML body (npm install only)',
+  )
+  .option(
+    '--react-email-props <json>',
+    'JSON string of props to pass to the React Email component',
+  )
+  .option(
+    '--react-email-props-file <path>',
+    'Path to a JSON file of props to pass to the React Email component',
   )
   .option('--from <address>', 'Update sender address')
   .option('--reply-to <address>', 'Update reply-to address')
@@ -100,6 +109,20 @@ export const updateTemplateCommand = new Command('update')
       );
     }
 
+    if (
+      (opts.reactEmailProps != null || opts.reactEmailPropsFile != null) &&
+      opts.reactEmail == null
+    ) {
+      outputError(
+        {
+          message:
+            '--react-email-props and --react-email-props-file can only be used with --react-email',
+          code: 'invalid_options',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
     if (opts.html != null && opts.htmlFile != null) {
       outputError(
         {
@@ -140,7 +163,12 @@ export const updateTemplateCommand = new Command('update')
     }
 
     if (opts.reactEmail != null) {
-      html = await buildReactEmailHtml(opts.reactEmail, globalOpts);
+      const reactProps = parseReactEmailProps(
+        opts.reactEmailProps,
+        opts.reactEmailPropsFile,
+        globalOpts,
+      );
+      html = await buildReactEmailHtml(opts.reactEmail, globalOpts, reactProps);
     }
 
     await runWrite(

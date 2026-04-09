@@ -425,6 +425,7 @@ describe('batch command', () => {
     expect(mockBuildReactEmailHtml).toHaveBeenCalledWith(
       './emails/welcome.tsx',
       expect.anything(),
+      {},
     );
     expect(mockBatchSend).toHaveBeenCalledTimes(1);
     const emails = mockBatchSend.mock.calls[0][0] as Array<
@@ -433,6 +434,37 @@ describe('batch command', () => {
     for (const email of emails) {
       expect(email.html).toBe('<html><body>Rendered</body></html>');
     }
+  });
+
+  test('forwards --react-email-props to buildReactEmailHtml', async () => {
+    spies = setupOutputSpies();
+
+    const emailsWithoutHtml = [
+      {
+        from: 'you@domain.com',
+        to: ['user1@example.com'],
+        subject: 'Hello 1',
+      },
+    ];
+    const file = await writeTmpJson(emailsWithoutHtml);
+    const { batchCommand } = await import('../../../src/commands/emails/batch');
+    await batchCommand.parseAsync(
+      [
+        '--file',
+        file,
+        '--react-email',
+        './emails/welcome.tsx',
+        '--react-email-props',
+        '{"name":"Alice"}',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockBuildReactEmailHtml).toHaveBeenCalledWith(
+      './emails/welcome.tsx',
+      expect.anything(),
+      { name: 'Alice' },
+    );
   });
 
   test('errors with batch_error when SDK returns an error', async () => {
