@@ -1,7 +1,7 @@
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { captureTestEnv } from '../helpers';
 
 describe('resolveApiKeyAsync', () => {
@@ -27,20 +27,20 @@ describe('resolveApiKeyAsync', () => {
     vi.restoreAllMocks();
   });
 
-  test('returns flag value without touching backend', async () => {
+  it('returns flag value without touching backend', async () => {
     const { resolveApiKeyAsync } = await import('../../src/lib/config');
     const result = await resolveApiKeyAsync('re_flag_key');
     expect(result).toEqual({ key: 're_flag_key', source: 'flag' });
   });
 
-  test('returns env value without touching backend', async () => {
+  it('returns env value without touching backend', async () => {
     process.env.RESEND_API_KEY = 're_env_key';
     const { resolveApiKeyAsync } = await import('../../src/lib/config');
     const result = await resolveApiKeyAsync();
     expect(result).toEqual({ key: 're_env_key', source: 'env' });
   });
 
-  test('reads from file when storage is not keychain', async () => {
+  it('reads from file when storage is not keychain', async () => {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     writeFileSync(
@@ -60,7 +60,7 @@ describe('resolveApiKeyAsync', () => {
     });
   });
 
-  test('reads from credential backend when storage is keychain', async () => {
+  it('reads from credential backend when storage is keychain', async () => {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     writeFileSync(
@@ -98,7 +98,7 @@ describe('resolveApiKeyAsync', () => {
     expect(mockBackend.get).toHaveBeenCalledWith('resend-cli', 'default');
   });
 
-  test('falls back to file api_key when keychain has no entry but file does (mixed state)', async () => {
+  it('falls back to file api_key when keychain has no entry but file does (mixed state)', async () => {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     writeFileSync(
@@ -135,7 +135,7 @@ describe('resolveApiKeyAsync', () => {
     });
   });
 
-  test('returns null when keychain has no entry', async () => {
+  it('returns null when keychain has no entry', async () => {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     writeFileSync(
@@ -167,6 +167,40 @@ describe('resolveApiKeyAsync', () => {
     const result = await resolveApiKeyAsync();
     expect(result).toBeNull();
   });
+
+  it('returns null for a profile not in credentials.json even when secure storage has a stale entry', async () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'default',
+        storage: 'secure_storage',
+        profiles: { default: {} },
+      }),
+    );
+
+    const mockBackend = {
+      get: vi.fn().mockResolvedValue('re_stale_key'),
+      set: vi.fn(),
+      delete: vi.fn(),
+      isAvailable: vi.fn().mockResolvedValue(true),
+      name: 'mock-backend',
+      isSecure: true,
+    };
+
+    vi.resetModules();
+    vi.doMock('../../src/lib/credential-store', () => ({
+      getCredentialBackend: vi.fn().mockResolvedValue(mockBackend),
+      SERVICE_NAME: 'resend-cli',
+      resetCredentialBackend: vi.fn(),
+    }));
+
+    const { resolveApiKeyAsync } = await import('../../src/lib/config');
+    const result = await resolveApiKeyAsync(undefined, 'removed-profile');
+    expect(result).toBeNull();
+    expect(mockBackend.get).not.toHaveBeenCalled();
+  });
 });
 
 describe('storeApiKeyAsync', () => {
@@ -189,7 +223,7 @@ describe('storeApiKeyAsync', () => {
     vi.restoreAllMocks();
   });
 
-  test('stores key in file backend when keychain unavailable', async () => {
+  it('stores key in file backend when keychain unavailable', async () => {
     vi.resetModules();
     vi.doUnmock('../../src/lib/credential-store');
     const { storeApiKeyAsync } = await import('../../src/lib/config');
@@ -219,7 +253,7 @@ describe('removeApiKeyAsync', () => {
     vi.restoreAllMocks();
   });
 
-  test('calls backend.delete when backend is secure', async () => {
+  it('calls backend.delete when backend is secure', async () => {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     writeFileSync(
@@ -234,7 +268,7 @@ describe('removeApiKeyAsync', () => {
     const mockBackend = {
       get: vi.fn(),
       set: vi.fn(),
-      delete: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValue(true),
       isAvailable: vi.fn().mockResolvedValue(true),
       name: 'mock-backend',
       isSecure: true,
@@ -252,7 +286,7 @@ describe('removeApiKeyAsync', () => {
     expect(mockBackend.delete).toHaveBeenCalledWith('resend-cli', 'default');
   });
 
-  test('skips backend.delete when backend is not secure', async () => {
+  it('skips backend.delete when backend is not secure', async () => {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     writeFileSync(
@@ -289,6 +323,44 @@ describe('removeApiKeyAsync', () => {
     expect(creds?.profiles.default).toBeUndefined();
     expect(creds?.profiles.other).toBeDefined();
   });
+
+  it('throws when backend.delete returns false', async () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'default',
+        storage: 'secure_storage',
+        profiles: { default: {}, other: {} },
+      }),
+    );
+
+    const mockBackend = {
+      get: vi.fn(),
+      set: vi.fn(),
+      delete: vi.fn().mockResolvedValue(false),
+      isAvailable: vi.fn().mockResolvedValue(true),
+      name: 'mock-backend',
+      isSecure: true,
+    };
+
+    vi.resetModules();
+    vi.doMock('../../src/lib/credential-store', () => ({
+      getCredentialBackend: vi.fn().mockResolvedValue(mockBackend),
+      SERVICE_NAME: 'resend-cli',
+      resetCredentialBackend: vi.fn(),
+    }));
+
+    const { removeApiKeyAsync, readCredentials } = await import(
+      '../../src/lib/config'
+    );
+    await expect(removeApiKeyAsync('default')).rejects.toThrow(
+      'Failed to remove API key',
+    );
+    const creds = readCredentials();
+    expect(creds?.profiles.default).toBeDefined();
+  });
 });
 
 describe('removeAllApiKeysAsync', () => {
@@ -311,7 +383,7 @@ describe('removeAllApiKeysAsync', () => {
     vi.restoreAllMocks();
   });
 
-  test('deletes all profiles from keychain when secure', async () => {
+  it('deletes all profiles from keychain when secure', async () => {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     writeFileSync(
@@ -326,7 +398,7 @@ describe('removeAllApiKeysAsync', () => {
     const mockBackend = {
       get: vi.fn(),
       set: vi.fn(),
-      delete: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValue(true),
       isAvailable: vi.fn().mockResolvedValue(true),
       name: 'mock-backend',
       isSecure: true,
@@ -347,7 +419,7 @@ describe('removeAllApiKeysAsync', () => {
     expect(mockBackend.delete).toHaveBeenCalledWith('resend-cli', 'prod');
   });
 
-  test('skips keychain deletion when not secure', async () => {
+  it('skips keychain deletion when not secure', async () => {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     writeFileSync(
@@ -379,6 +451,47 @@ describe('removeAllApiKeysAsync', () => {
     await removeAllApiKeysAsync();
     expect(mockBackend.delete).not.toHaveBeenCalled();
   });
+
+  it('throws when any backend.delete returns false', async () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'default',
+        storage: 'secure_storage',
+        profiles: { default: {}, staging: {}, prod: {} },
+      }),
+    );
+
+    const mockBackend = {
+      get: vi.fn(),
+      set: vi.fn(),
+      delete: vi
+        .fn()
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(false)
+        .mockResolvedValueOnce(true),
+      isAvailable: vi.fn().mockResolvedValue(true),
+      name: 'mock-backend',
+      isSecure: true,
+    };
+
+    vi.resetModules();
+    vi.doMock('../../src/lib/credential-store', () => ({
+      getCredentialBackend: vi.fn().mockResolvedValue(mockBackend),
+      SERVICE_NAME: 'resend-cli',
+      resetCredentialBackend: vi.fn(),
+    }));
+
+    const { removeAllApiKeysAsync, getCredentialsPath } = await import(
+      '../../src/lib/config'
+    );
+    await expect(removeAllApiKeysAsync()).rejects.toThrow(
+      'Failed to remove API keys',
+    );
+    expect(existsSync(getCredentialsPath())).toBe(true);
+  });
 });
 
 describe('renameProfileAsync', () => {
@@ -401,7 +514,7 @@ describe('renameProfileAsync', () => {
     vi.restoreAllMocks();
   });
 
-  test('renames in keychain when secure', async () => {
+  it('renames in keychain when secure', async () => {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     writeFileSync(
@@ -416,7 +529,7 @@ describe('renameProfileAsync', () => {
     const mockBackend = {
       get: vi.fn().mockResolvedValue('re_secret_key'),
       set: vi.fn().mockResolvedValue(undefined),
-      delete: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValue(true),
       isAvailable: vi.fn().mockResolvedValue(true),
       name: 'mock-backend',
       isSecure: true,
@@ -446,7 +559,7 @@ describe('renameProfileAsync', () => {
     expect(creds?.active_profile).toBe('new-name');
   });
 
-  test('skips keychain when not secure', async () => {
+  it('skips keychain when not secure', async () => {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     writeFileSync(
@@ -484,5 +597,47 @@ describe('renameProfileAsync', () => {
     const creds = readCredentials();
     expect(creds?.profiles['new-name']).toEqual({ api_key: 're_file_key' });
     expect(creds?.profiles['old-name']).toBeUndefined();
+  });
+
+  it('rolls back new entry and throws when old-name delete fails', async () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'old-name',
+        storage: 'secure_storage',
+        profiles: { 'old-name': {} },
+      }),
+    );
+
+    const mockBackend = {
+      get: vi.fn().mockResolvedValue('re_secret_key'),
+      set: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(true),
+      isAvailable: vi.fn().mockResolvedValue(true),
+      name: 'mock-backend',
+      isSecure: true,
+    };
+
+    vi.resetModules();
+    vi.doMock('../../src/lib/credential-store', () => ({
+      getCredentialBackend: vi.fn().mockResolvedValue(mockBackend),
+      SERVICE_NAME: 'resend-cli',
+      resetCredentialBackend: vi.fn(),
+    }));
+
+    const { renameProfileAsync, readCredentials } = await import(
+      '../../src/lib/config'
+    );
+    await expect(renameProfileAsync('old-name', 'new-name')).rejects.toThrow(
+      'rolled back',
+    );
+    expect(mockBackend.delete).toHaveBeenCalledTimes(2);
+    expect(mockBackend.delete).toHaveBeenCalledWith('resend-cli', 'old-name');
+    expect(mockBackend.delete).toHaveBeenCalledWith('resend-cli', 'new-name');
+    const creds = readCredentials();
+    expect(creds?.profiles['old-name']).toBeDefined();
+    expect(creds?.profiles['new-name']).toBeUndefined();
   });
 });
