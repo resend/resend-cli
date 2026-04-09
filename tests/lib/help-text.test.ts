@@ -26,7 +26,7 @@ describe('buildHelpText', () => {
         'Output (--json or piped):\n' +
         '  {"id":"em_123"}' +
         '\n\n' +
-        'Errors (exit code 1):\n' +
+        'Errors (exit code 1, JSON on stderr when using --json or non-TTY):\n' +
         '  {"error":{"message":"<message>","code":"<code>"}}\n' +
         '  Codes: auth_error | send_error' +
         '\n\n' +

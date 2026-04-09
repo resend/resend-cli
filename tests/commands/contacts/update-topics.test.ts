@@ -140,7 +140,7 @@ describe('contacts update-topics command', () => {
 
   test('errors with missing_topics when --topics absent in non-interactive mode', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { updateContactTopicsCommand } = await import(
@@ -168,7 +168,7 @@ describe('contacts update-topics command', () => {
       value: true,
       writable: true,
     });
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { Command } = await import('@commander-js/extra-typings');
@@ -197,7 +197,7 @@ describe('contacts update-topics command', () => {
 
   test('errors with invalid_topics when --topics is not valid JSON', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { updateContactTopicsCommand } = await import(
@@ -216,7 +216,7 @@ describe('contacts update-topics command', () => {
 
   test('errors with invalid_topics when --topics is not an array', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { updateContactTopicsCommand } = await import(
@@ -237,7 +237,7 @@ describe('contacts update-topics command', () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { updateContactTopicsCommand } = await import(
@@ -263,7 +263,7 @@ describe('contacts update-topics command', () => {
     mockUpdateTopics.mockResolvedValueOnce(
       mockSdkError('Topic not found', 'not_found'),
     );
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);
