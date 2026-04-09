@@ -128,7 +128,7 @@ describe('batch command', () => {
 
   test('errors with missing_file when no --file in non-interactive mode', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { batchCommand } = await import('../../../src/commands/emails/batch');
@@ -140,7 +140,7 @@ describe('batch command', () => {
 
   test('errors with file_read_error when file does not exist', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { batchCommand } = await import('../../../src/commands/emails/batch');
@@ -157,7 +157,7 @@ describe('batch command', () => {
 
   test('errors with invalid_json when file is not valid JSON', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const path = join(
@@ -178,7 +178,7 @@ describe('batch command', () => {
 
   test('errors with invalid_format when file content is not an array', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const file = await writeTmpJson({
@@ -199,7 +199,7 @@ describe('batch command', () => {
 
   test('errors with invalid_format when an entry is not an object', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const file = await writeTmpJson([null]);
@@ -215,7 +215,7 @@ describe('batch command', () => {
 
   test('rejects entries with attachments', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const emails = [
@@ -236,7 +236,7 @@ describe('batch command', () => {
 
   test('rejects entries with scheduled_at', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const emails = [
@@ -328,7 +328,7 @@ describe('batch command', () => {
       tmpdir(),
       `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     );
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const file = await writeTmpJson(VALID_EMAILS);
@@ -458,7 +458,7 @@ describe('batch command', () => {
 
   test('errors with batch_error when SDK returns an error', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);

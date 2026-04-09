@@ -109,7 +109,7 @@ describe('contacts delete command', () => {
 
   test('errors with confirmation_required when --yes absent in non-interactive mode', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { deleteContactCommand } = await import(
@@ -128,7 +128,7 @@ describe('contacts delete command', () => {
 
   test('does not call SDK when confirmation_required error is raised', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { deleteContactCommand } = await import(
@@ -148,7 +148,7 @@ describe('contacts delete command', () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { deleteContactCommand } = await import(
@@ -172,7 +172,7 @@ describe('contacts delete command', () => {
     mockRemove.mockResolvedValueOnce(
       mockSdkError('Contact not found', 'not_found'),
     );
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);
