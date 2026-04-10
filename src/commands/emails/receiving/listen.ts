@@ -1,6 +1,7 @@
 import { Command } from '@commander-js/extra-typings';
 import pc from 'picocolors';
 import type { ListReceivingEmail } from 'resend';
+import { createBoundedSet } from '../../../lib/bounded-set';
 import { getCancelExitCode, setSigintHandler } from '../../../lib/cli-exit';
 import type { GlobalOpts } from '../../../lib/client';
 import { requireClient } from '../../../lib/client';
@@ -10,6 +11,7 @@ import { createSpinner } from '../../../lib/spinner';
 import { isInteractive } from '../../../lib/tty';
 
 const PAGE_SIZE = 100;
+const MAX_SEEN_IDS = 10_000;
 
 function timestamp(): string {
   return new Date().toLocaleTimeString('en-GB', { hour12: false });
@@ -78,7 +80,7 @@ Ctrl+C exits cleanly.`,
       globalOpts.quiet || jsonMode,
     );
 
-    const seenIds = new Set<string>();
+    const seenIds = createBoundedSet<string>(MAX_SEEN_IDS);
     let consecutiveErrors = 0;
 
     try {
