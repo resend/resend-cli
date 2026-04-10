@@ -11,21 +11,11 @@ export function openInBrowser(url: string): Promise<boolean> {
   return new Promise((resolve) => {
     const cmd =
       process.platform === 'win32'
-        ? 'cmd.exe'
+        ? 'explorer.exe'
         : process.platform === 'darwin'
           ? 'open'
           : 'xdg-open';
-    const safeUrl = url.replaceAll('"', '');
-    const args =
-      process.platform === 'win32'
-        ? ['/c', 'start', '""', `"${safeUrl}"`]
-        : [url];
-    execFile(
-      cmd,
-      args,
-      { timeout: 5000, windowsVerbatimArguments: true },
-      (err) => resolve(!err),
-    );
+    execFile(cmd, [url], { timeout: 5000 }, (err) => resolve(!err));
   });
 }
 
