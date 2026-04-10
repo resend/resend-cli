@@ -19,6 +19,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Build Node bundle
         run: pnpm build
+        env:
+          POSTHOG_PUBLIC_KEY: ${{ secrets.POSTHOG_STAGING_KEY }}
       - name: Build pkg binary
         run: pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-linux-x64 --output dist/resend
       - name: Smoke test Node bundle
@@ -29,3 +31,21 @@ jobs:
         run: |
           ./dist/resend --version
           ./dist/resend --help
+      - name: Verify telemetry spawn (Node bundle)
+        run: |
+          rm -f "$HOME/.config/resend/telemetry-id"
+          node dist/cli.cjs --api-key re_fake whoami || true
+          if [ ! -f "$HOME/.config/resend/telemetry-id" ]; then
+            echo "::error::telemetry-id was never created — trackCommand did not fire"
+            exit 1
+          fi
+          echo "Telemetry spawn OK — telemetry-id created by Node bundle"
+      - name: Verify telemetry spawn (pkg binary)
+        run: |
+          rm -f "$HOME/.config/resend/telemetry-id"
+          ./dist/resend --api-key re_fake whoami || true
+          if [ ! -f "$HOME/.config/resend/telemetry-id" ]; then
+            echo "::error::telemetry-id was never created — trackCommand did not fire"
+            exit 1
+          fi
+          echo "Telemetry spawn OK — telemetry-id created by pkg binary"
