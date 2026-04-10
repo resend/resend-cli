@@ -199,8 +199,7 @@ export const sendCommand = new Command('send')
             }
             const key = v.slice(0, eq);
             const raw = v.slice(eq + 1);
-            const num = Number(raw);
-            return [key, raw !== '' && !Number.isNaN(num) ? num : raw];
+            return [key, raw];
           }),
         )
       : undefined;
