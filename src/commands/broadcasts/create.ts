@@ -116,6 +116,26 @@ Scheduling:
       );
     }
 
+    if (opts.html !== undefined && opts.htmlFile !== undefined) {
+      outputError(
+        {
+          message: '--html and --html-file are mutually exclusive.',
+          code: 'invalid_options',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
+    if (opts.text !== undefined && opts.textFile !== undefined) {
+      outputError(
+        {
+          message: '--text and --text-file are mutually exclusive.',
+          code: 'invalid_options',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
     let from = opts.from;
     let subject = opts.subject;
     let segmentId = opts.segmentId;
@@ -186,30 +206,12 @@ Scheduling:
       }
     }
 
-    let html = opts.html;
-    let text = opts.text;
-
-    if (opts.htmlFile) {
-      if (opts.html) {
-        process.stderr.write(
-          'Warning: both --html and --html-file provided; using --html-file\n',
-        );
-      }
-      html = readFile(opts.htmlFile, globalOpts);
-    }
-
-    if (opts.textFile) {
-      if (opts.text) {
-        process.stderr.write(
-          'Warning: both --text and --text-file provided; using --text-file\n',
-        );
-      }
-      text = readFile(opts.textFile, globalOpts);
-    }
-
-    if (opts.reactEmail) {
-      html = await buildReactEmailHtml(opts.reactEmail, globalOpts);
-    }
+    const html = opts.reactEmail
+      ? await buildReactEmailHtml(opts.reactEmail, globalOpts)
+      : opts.htmlFile
+        ? readFile(opts.htmlFile, globalOpts)
+        : opts.html;
+    let text = opts.textFile ? readFile(opts.textFile, globalOpts) : opts.text;
 
     if (!html && !text) {
       if (!isInteractive() || globalOpts.json) {
