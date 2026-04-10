@@ -187,7 +187,7 @@ program
     }
 
     const globals = program.opts();
-    return checkForUpdates({
+    void checkForUpdates({
       json: Boolean(globals.json || globals.quiet),
     }).catch(() => {});
   })
