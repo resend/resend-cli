@@ -235,7 +235,7 @@ describe('api-keys create command', () => {
 
   it('errors with invalid_flags when --domain-id is used without --permission sending_access', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createApiKeyCommand } = await import(
@@ -257,7 +257,7 @@ describe('api-keys create command', () => {
 
   it('errors with invalid_flags when --domain-id is used with --permission full_access', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createApiKeyCommand } = await import(
@@ -283,7 +283,7 @@ describe('api-keys create command', () => {
 
   it('does not call SDK when --domain-id is used without sending_access', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createApiKeyCommand } = await import(
