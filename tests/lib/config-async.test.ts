@@ -485,4 +485,159 @@ describe('renameProfileAsync', () => {
     expect(creds?.profiles['new-name']).toEqual({ api_key: 're_file_key' });
     expect(creds?.profiles['old-name']).toBeUndefined();
   });
+
+  test('no-op rename does not touch secure backend', async () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'same-name',
+        storage: 'secure_storage',
+        profiles: { 'same-name': {} },
+      }),
+    );
+
+    const mockBackend = {
+      get: vi.fn(),
+      set: vi.fn(),
+      delete: vi.fn(),
+      isAvailable: vi.fn().mockResolvedValue(true),
+      name: 'mock-backend',
+      isSecure: true,
+    };
+
+    vi.resetModules();
+    vi.doMock('../../src/lib/credential-store', () => ({
+      getCredentialBackend: vi.fn().mockResolvedValue(mockBackend),
+      SERVICE_NAME: 'resend-cli',
+      resetCredentialBackend: vi.fn(),
+    }));
+
+    const { renameProfileAsync, readCredentials } = await import(
+      '../../src/lib/config'
+    );
+    await renameProfileAsync('same-name', 'same-name');
+    expect(mockBackend.get).not.toHaveBeenCalled();
+    expect(mockBackend.set).not.toHaveBeenCalled();
+    expect(mockBackend.delete).not.toHaveBeenCalled();
+    const creds = readCredentials();
+    expect(creds?.profiles['same-name']).toBeDefined();
+  });
+
+  test('rejects rename to existing profile without touching secure backend', async () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'alpha',
+        storage: 'secure_storage',
+        profiles: { alpha: {}, beta: {} },
+      }),
+    );
+
+    const mockBackend = {
+      get: vi.fn(),
+      set: vi.fn(),
+      delete: vi.fn(),
+      isAvailable: vi.fn().mockResolvedValue(true),
+      name: 'mock-backend',
+      isSecure: true,
+    };
+
+    vi.resetModules();
+    vi.doMock('../../src/lib/credential-store', () => ({
+      getCredentialBackend: vi.fn().mockResolvedValue(mockBackend),
+      SERVICE_NAME: 'resend-cli',
+      resetCredentialBackend: vi.fn(),
+    }));
+
+    const { renameProfileAsync, readCredentials } = await import(
+      '../../src/lib/config'
+    );
+    await expect(renameProfileAsync('alpha', 'beta')).rejects.toThrow(
+      'already exists',
+    );
+    expect(mockBackend.get).not.toHaveBeenCalled();
+    expect(mockBackend.set).not.toHaveBeenCalled();
+    expect(mockBackend.delete).not.toHaveBeenCalled();
+    const creds = readCredentials();
+    expect(creds?.profiles.alpha).toBeDefined();
+    expect(creds?.profiles.beta).toBeDefined();
+  });
+
+  test('rejects invalid new name without touching secure backend', async () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'valid',
+        storage: 'secure_storage',
+        profiles: { valid: {} },
+      }),
+    );
+
+    const mockBackend = {
+      get: vi.fn(),
+      set: vi.fn(),
+      delete: vi.fn(),
+      isAvailable: vi.fn().mockResolvedValue(true),
+      name: 'mock-backend',
+      isSecure: true,
+    };
+
+    vi.resetModules();
+    vi.doMock('../../src/lib/credential-store', () => ({
+      getCredentialBackend: vi.fn().mockResolvedValue(mockBackend),
+      SERVICE_NAME: 'resend-cli',
+      resetCredentialBackend: vi.fn(),
+    }));
+
+    const { renameProfileAsync } = await import('../../src/lib/config');
+    await expect(renameProfileAsync('valid', 'has spaces')).rejects.toThrow(
+      'letters',
+    );
+    expect(mockBackend.get).not.toHaveBeenCalled();
+    expect(mockBackend.set).not.toHaveBeenCalled();
+    expect(mockBackend.delete).not.toHaveBeenCalled();
+  });
+
+  test('rejects rename of non-existent profile without touching secure backend', async () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'exists',
+        storage: 'secure_storage',
+        profiles: { exists: {} },
+      }),
+    );
+
+    const mockBackend = {
+      get: vi.fn(),
+      set: vi.fn(),
+      delete: vi.fn(),
+      isAvailable: vi.fn().mockResolvedValue(true),
+      name: 'mock-backend',
+      isSecure: true,
+    };
+
+    vi.resetModules();
+    vi.doMock('../../src/lib/credential-store', () => ({
+      getCredentialBackend: vi.fn().mockResolvedValue(mockBackend),
+      SERVICE_NAME: 'resend-cli',
+      resetCredentialBackend: vi.fn(),
+    }));
+
+    const { renameProfileAsync } = await import('../../src/lib/config');
+    await expect(renameProfileAsync('nope', 'new-name')).rejects.toThrow(
+      'not found',
+    );
+    expect(mockBackend.get).not.toHaveBeenCalled();
+    expect(mockBackend.set).not.toHaveBeenCalled();
+    expect(mockBackend.delete).not.toHaveBeenCalled();
+  });
 });
