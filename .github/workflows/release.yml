@@ -26,6 +26,9 @@ jobs:
           - os: macos-latest
             target: node24-macos-arm64
             binary: dist/resend
+          - os: macos-latest
+            target: node24-macos-x64
+            binary: dist/resend
           - os: ubuntu-latest
             target: node24-linux-x64
             binary: dist/resend
@@ -100,6 +103,13 @@ jobs:
         run: |
           pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-macos-arm64 --output dist/resend-darwin-arm64
           pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-macos-x64   --output dist/resend-darwin-x64
+      - name: Verify binaries run
+        run: |
+          chmod +x dist/resend-darwin-arm64 dist/resend-darwin-x64
+          dist/resend-darwin-arm64 --version
+          dist/resend-darwin-arm64 --help
+          dist/resend-darwin-x64 --version
+          dist/resend-darwin-x64 --help
       - name: Verify signatures
         run: |
           codesign -v dist/resend-darwin-arm64
