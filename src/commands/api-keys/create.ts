@@ -95,7 +95,7 @@ Permissions:
 
     let domainId = opts.domainId;
 
-    if (domainId && permission !== 'sending_access') {
+    if (domainId !== undefined && permission !== 'sending_access') {
       outputError(
         {
           message: '--domain-id requires --permission sending_access',
