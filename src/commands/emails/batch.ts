@@ -130,10 +130,10 @@ export const batchCommand = new Command('batch')
           { json: globalOpts.json },
         );
       }
-      if ('scheduled_at' in email) {
+      if ('scheduled_at' in email || 'scheduledAt' in email) {
         outputError(
           {
-            message: `Email at index ${i} contains "scheduled_at", which is not supported in batch sends.`,
+            message: `Email at index ${i} contains scheduling, which is not supported in batch sends.`,
             code: 'batch_error',
           },
           { json: globalOpts.json },

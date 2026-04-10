@@ -7,6 +7,7 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
   test,
   vi,
@@ -248,7 +249,27 @@ describe('batch command', () => {
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
-    expect(output).toContain('scheduled_at');
+    expect(output).toContain('scheduling');
+    expect(output).toContain('batch_error');
+  });
+
+  it('rejects entries with camelCase scheduledAt', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const emails = [
+      { ...VALID_EMAILS[0], scheduledAt: '2026-01-01T00:00:00Z' },
+    ];
+    const file = await writeTmpJson(emails);
+    const { batchCommand } = await import('../../../src/commands/emails/batch');
+    await expectExit1(() =>
+      batchCommand.parseAsync(['--file', file], { from: 'user' }),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('scheduling');
+    expect(output).toContain('batch_error');
   });
 
   test('warns but continues when array length exceeds 100', async () => {
