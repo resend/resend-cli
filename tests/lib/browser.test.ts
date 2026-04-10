@@ -38,7 +38,8 @@ describe('openInBrowser', () => {
     try {
       await openInBrowser('https://resend.com/templates/abc');
 
-      const opts = execFileMock.mock.calls[0]?.[2] as Record<string, unknown>;
+      const lastCall = execFileMock.mock.calls.at(-1);
+      const opts = lastCall?.[2] as Record<string, unknown>;
       expect(opts).not.toHaveProperty('windowsVerbatimArguments');
     } finally {
       Object.defineProperty(process, 'platform', { value: original });
