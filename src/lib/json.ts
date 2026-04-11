@@ -10,10 +10,10 @@ export function parseJsonFlag(
   }
   try {
     return JSON.parse(raw);
-  } catch {
+  } catch (err) {
     outputError(
       {
-        message: `Invalid JSON for ${flagName}.`,
+        message: `Invalid JSON for ${flagName}: ${err instanceof Error ? err.message : 'parse error'}`,
         code: 'invalid_json',
       },
       { json: globalOpts.json },

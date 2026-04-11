@@ -13,10 +13,10 @@ export const automationsCommand = new Command('automations')
   .addHelpText(
     'after',
     buildHelpText({
-      context: `Automations are event-driven workflows composed of steps and edges.
+      context: `Automations are event-driven workflows composed of steps and connections.
 
 Steps define the actions (trigger, delay, send_email, wait_for_event, condition).
-Edges define the flow between steps (default, condition_met, condition_not_met, timeout, event_received).
+Connections define the flow between steps (default, condition_met, condition_not_met, timeout, event_received).
 
 Lifecycle:
   1. resend automations create --name "Welcome" --file workflow.json

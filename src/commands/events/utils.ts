@@ -43,9 +43,6 @@ export function parseSchemaJson(
   }
 
   const parsed = parseJsonFlag(raw, '--schema', globalOpts);
-  if (parsed === undefined) {
-    return null;
-  }
 
   if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
     outputError(

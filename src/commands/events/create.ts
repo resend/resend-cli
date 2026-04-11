@@ -52,13 +52,11 @@ Schema format:
     await runCreate(
       {
         loading: 'Creating event...',
-        sdkCall: (resend) => {
-          const payload: Parameters<typeof resend.events.create>[0] = { name };
-          if (schema !== undefined) {
-            payload.schema = schema;
-          }
-          return resend.events.create(payload);
-        },
+        sdkCall: (resend) =>
+          resend.events.create({
+            name,
+            ...(schema !== undefined && { schema }),
+          }),
         onInteractive: (d) => {
           console.log(`Event created: ${d.id}`);
         },

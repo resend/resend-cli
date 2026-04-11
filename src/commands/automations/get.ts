@@ -7,13 +7,13 @@ import { renderTable } from '../../lib/table';
 import { automationPickerConfig, statusIndicator } from './utils';
 
 export const getAutomationCommand = new Command('get')
-  .description('Retrieve an automation with its steps and edges')
+  .description('Retrieve an automation with its steps and connections')
   .argument('[id]', 'Automation ID')
   .addHelpText(
     'after',
     buildHelpText({
       output:
-        '  Full automation object including steps and edges arrays.\n\nAutomation status values: enabled | disabled',
+        '  Full automation object including steps and connections arrays.\n\nAutomation status values: enabled | disabled',
       errorCodes: ['auth_error', 'fetch_error'],
       examples: [
         'resend automations get <id>',
