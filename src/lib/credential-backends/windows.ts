@@ -84,7 +84,8 @@ export class WindowsBackend implements CredentialBackend {
   }
 
   async set(service: string, account: string, secret: string): Promise<void> {
-    // Remove existing credential first (PasswordVault throws on duplicate)
+    const previous = await this.get(service, account);
+
     const removeScript = `${LOAD_VAULT}
       $v = New-Object Windows.Security.Credentials.PasswordVault
       try {
@@ -94,7 +95,6 @@ export class WindowsBackend implements CredentialBackend {
     `;
     await runPowershell(removeScript);
 
-    // Read secret from stdin to avoid exposing it in process args
     const addScript = `${LOAD_VAULT}
       $secret = [Console]::In.ReadLine()
       $v = New-Object Windows.Security.Credentials.PasswordVault
@@ -103,6 +103,11 @@ export class WindowsBackend implements CredentialBackend {
     `;
     const { code, stderr } = await runPowershellWithStdin(addScript, secret);
     if (code !== 0) {
+      if (previous) {
+        try {
+          await runPowershellWithStdin(addScript, previous);
+        } catch {}
+      }
       throw new Error(
         `Failed to store credential in Windows Credential Manager: ${stderr.trim()}`,
       );

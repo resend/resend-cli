@@ -1,6 +1,20 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// We mock child_process to verify stdin usage without requiring Windows
+const createMockChild = (closeCode: number) => {
+  const stdin = { on: vi.fn(), write: vi.fn(), end: vi.fn() };
+  const child = {
+    stdin,
+    stdout: { on: vi.fn() },
+    stderr: { on: vi.fn() },
+    on: vi.fn((event: string, cb: (code: number) => void) => {
+      if (event === 'close') {
+        setTimeout(() => cb(closeCode), 0);
+      }
+    }),
+  };
+  return child;
+};
+
 vi.mock('node:child_process', () => {
   const mockExecFile = vi.fn(
     (
@@ -13,29 +27,7 @@ vi.mock('node:child_process', () => {
     },
   );
 
-  const mockStdin = {
-    on: vi.fn(),
-    write: vi.fn(),
-    end: vi.fn(),
-  };
-
-  const mockSpawn = vi.fn(() => ({
-    stdin: mockStdin,
-    stdout: {
-      on: vi.fn((_event: string, _cb: (data: Buffer) => void) => {
-        // no output
-      }),
-    },
-    stderr: {
-      on: vi.fn(),
-    },
-    on: vi.fn((event: string, cb: (code: number) => void) => {
-      if (event === 'close') {
-        // Defer to allow stdin writes to be tracked first
-        setTimeout(() => cb(0), 0);
-      }
-    }),
-  }));
+  const mockSpawn = vi.fn(() => createMockChild(0));
 
   return { execFile: mockExecFile, spawn: mockSpawn };
 });
@@ -45,7 +37,7 @@ describe('WindowsBackend', () => {
     vi.clearAllMocks();
   });
 
-  test('set() passes secret via stdin, NOT in PowerShell script args', async () => {
+  it('passes secret via stdin, not in PowerShell script args', async () => {
     const { spawn } = await import('node:child_process');
     const { WindowsBackend } = await import(
       '../../../src/lib/credential-backends/windows'
@@ -54,24 +46,20 @@ describe('WindowsBackend', () => {
 
     await backend.set('resend-cli', 'default', 're_secret_key_1234');
 
-    // spawn is called for the add operation (second call - first is execFile for remove)
     expect(spawn).toHaveBeenCalled();
     const spawnCall = vi.mocked(spawn).mock.calls[0];
     const script = spawnCall[1]?.[spawnCall[1].length - 1] as string;
 
-    // The script should NOT contain the secret directly
     expect(script).not.toContain('re_secret_key_1234');
-    // The script should read from stdin
     expect(script).toContain('[Console]::In.ReadLine()');
 
-    // The secret should have been written to stdin
     const mockChild = vi.mocked(spawn).mock.results[0].value as {
       stdin: { write: ReturnType<typeof vi.fn> };
     };
     expect(mockChild.stdin.write).toHaveBeenCalledWith('re_secret_key_1234');
   });
 
-  test('get() does not use stdin', async () => {
+  it('does not use stdin for get()', async () => {
     const { execFile } = await import('node:child_process');
     const { WindowsBackend } = await import(
       '../../../src/lib/credential-backends/windows'
@@ -80,10 +68,104 @@ describe('WindowsBackend', () => {
 
     await backend.get('resend-cli', 'default');
 
-    // get() uses execFile, not spawn
     expect(execFile).toHaveBeenCalled();
     const args = vi.mocked(execFile).mock.calls[0][1] as string[];
     const script = args[args.length - 1];
     expect(script).toContain('Retrieve');
+  });
+
+  it('restores previous credential when add fails', async () => {
+    const { execFile, spawn } = await import('node:child_process');
+    const { WindowsBackend } = await import(
+      '../../../src/lib/credential-backends/windows'
+    );
+    const backend = new WindowsBackend();
+
+    type ExecFileCb = (...args: never) => unknown;
+    vi.mocked(execFile).mockImplementation(((
+      _cmd: string,
+      _args: unknown,
+      _opts: unknown,
+      cb: ExecFileCb,
+    ) => {
+      const callIndex = vi.mocked(execFile).mock.calls.length - 1;
+      if (callIndex === 0) {
+        (cb as (e: null, o: string, e2: string) => void)(
+          null,
+          'previous_secret\n',
+          '',
+        );
+      } else {
+        (cb as (e: null, o: string, e2: string) => void)(null, '', '');
+      }
+    }) as typeof execFile);
+
+    const failChild = createMockChild(1);
+    failChild.stderr.on.mockImplementation(
+      (event: string, cb: (data: Buffer) => void) => {
+        if (event === 'data') {
+          cb(Buffer.from('vault error'));
+        }
+      },
+    );
+    const rollbackChild = createMockChild(0);
+
+    vi.mocked(spawn)
+      .mockReturnValueOnce(failChild as ReturnType<typeof spawn>)
+      .mockReturnValueOnce(rollbackChild as ReturnType<typeof spawn>);
+
+    await expect(
+      backend.set('resend-cli', 'default', 're_new_key'),
+    ).rejects.toThrow(
+      'Failed to store credential in Windows Credential Manager',
+    );
+
+    expect(spawn).toHaveBeenCalledTimes(2);
+    expect(rollbackChild.stdin.write).toHaveBeenCalledWith('previous_secret');
+  });
+
+  it('skips rollback when no previous credential exists', async () => {
+    const { execFile, spawn } = await import('node:child_process');
+    const { WindowsBackend } = await import(
+      '../../../src/lib/credential-backends/windows'
+    );
+    const backend = new WindowsBackend();
+
+    vi.mocked(execFile).mockImplementation(((
+      _cmd: string,
+      _args: unknown,
+      _opts: unknown,
+      cb: (...args: never) => unknown,
+    ) => {
+      const callIndex = vi.mocked(execFile).mock.calls.length - 1;
+      if (callIndex === 0) {
+        (cb as (e: { code: number }, o: string, e2: string) => void)(
+          { code: 1 },
+          '',
+          '',
+        );
+      } else {
+        (cb as (e: null, o: string, e2: string) => void)(null, '', '');
+      }
+    }) as typeof execFile);
+
+    const failChild = createMockChild(1);
+    failChild.stderr.on.mockImplementation(
+      (event: string, cb: (data: Buffer) => void) => {
+        if (event === 'data') {
+          cb(Buffer.from('vault error'));
+        }
+      },
+    );
+
+    vi.mocked(spawn).mockReturnValueOnce(failChild as ReturnType<typeof spawn>);
+
+    await expect(
+      backend.set('resend-cli', 'default', 're_new_key'),
+    ).rejects.toThrow(
+      'Failed to store credential in Windows Credential Manager',
+    );
+
+    expect(spawn).toHaveBeenCalledTimes(1);
   });
 });
