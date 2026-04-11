@@ -53,9 +53,6 @@ export const getAutomationRunCommand = new Command('get')
         onInteractive: (r) => {
           console.log(`Run: ${r.id}`);
           console.log(`Status: ${r.status}`);
-          if (r.trigger) {
-            console.log(`Trigger: ${r.trigger.event_name}`);
-          }
           if (r.started_at) {
             console.log(`Started: ${r.started_at}`);
           }

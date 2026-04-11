@@ -4,8 +4,8 @@ import { createAutomationCommand } from './create';
 import { deleteAutomationCommand } from './delete';
 import { getAutomationCommand } from './get';
 import { listAutomationsCommand } from './list';
-import { automationRunsCommand } from './runs/index';
 import { openAutomationCommand } from './open';
+import { automationRunsCommand } from './runs/index';
 import { updateAutomationCommand } from './update';
 
 export const automationsCommand = new Command('automations')

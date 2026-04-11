@@ -56,13 +56,12 @@ export const listAutomationRunsCommand = new Command('list')
           const rows = list.data.map((r) => [
             r.id,
             r.status,
-            r.trigger?.event_name ?? '-',
             r.started_at ?? '-',
             r.completed_at ?? '-',
           ]);
           console.log(
             renderTable(
-              ['ID', 'Status', 'Trigger', 'Started', 'Completed'],
+              ['ID', 'Status', 'Started', 'Completed'],
               rows,
               '(no runs)',
             ),

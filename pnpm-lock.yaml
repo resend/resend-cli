@@ -24,8 +24,8 @@ importers:
         specifier: 1.1.1
         version: 1.1.1
       resend:
-        specifier: 6.10.0-preview-workflows.4
-        version: 6.10.0-preview-workflows.4
+        specifier: 6.11.0-canary.1
+        version: 6.11.0-canary.1
     devDependencies:
       '@biomejs/biome':
         specifier: 2.4.8
@@ -1036,8 +1036,8 @@ packages:
     resolution: {integrity: sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q==}
     engines: {node: '>=0.10.0'}
 
-  resend@6.10.0-preview-workflows.4:
-    resolution: {integrity: sha512-uN1qTBqhe82YDmqC/QxAg1FM9a2Jxl49zBMyUr7R/YqPBqIZqhG4oF4bC0XsD1Cym+CItTSX+QNOWqIcnPS/+Q==}
+  resend@6.11.0-canary.1:
+    resolution: {integrity: sha512-sdCDdxWcOH8E4HOfFNx1RqCSN38/OO8f3JRy0uZwekwPisxZEg38Xi+XBmKaBhTxrzyeiCS2HqZwLtmbMvIaRQ==}
     engines: {node: '>=20'}
     peerDependencies:
       '@react-email/render': '*'
@@ -2118,7 +2118,7 @@ snapshots:
 
   require-directory@2.1.1: {}
 
-  resend@6.10.0-preview-workflows.4:
+  resend@6.11.0-canary.1:
     dependencies:
       postal-mime: 2.7.4
       svix: 1.90.0

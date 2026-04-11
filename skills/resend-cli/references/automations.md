@@ -21,14 +21,14 @@ Detailed flag specifications for `resend automations` and `resend events` comman
 | `--name <name>` | string | Yes (unless in `--file`) | Automation name |
 | `--status <status>` | string | No | Initial status: `enabled` or `disabled` |
 | `--steps <json>` | string | Yes (unless `--file`) | Steps array as JSON string |
-| `--edges <json>` | string | Yes (unless `--file`) | Edges array as JSON string |
+| `--connections <json>` | string | Yes (unless `--file`) | Connections array as JSON string |
 | `--file <path>` | string | No | Path to JSON file with full payload (use `"-"` for stdin) |
 
-When using `--file`, the JSON object should contain `{ name, status?, steps, edges }`. Flags override file values.
+When using `--file`, the JSON object should contain `{ name, status?, steps, connections }`. Flags override file values.
 
 **Step types:** `trigger`, `delay`, `send_email`, `wait_for_event`, `condition`
 
-**Edge types:** `default`, `condition_met`, `condition_not_met`, `timeout`, `event_received`
+**Connection types:** `default`, `condition_met`, `condition_not_met`, `timeout`, `event_received`
 
 ---
 
@@ -38,7 +38,7 @@ When using `--file`, the JSON object should contain `{ name, status?, steps, edg
 resend automations get <id>
 ```
 
-Returns the full automation object including steps and edges.
+Returns the full automation object including steps and connections.
 
 ---
 
