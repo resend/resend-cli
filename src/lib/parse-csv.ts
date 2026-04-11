@@ -8,6 +8,7 @@ export function parseCsvTable(content: string): string[][] {
   let field = '';
   let i = 0;
   let inQuotes = false;
+  let hasContent = false;
 
   const pushField = () => {
     row.push(field);
@@ -16,13 +17,11 @@ export function parseCsvTable(content: string): string[][] {
   const pushRow = () => {
     rows.push(row);
     row = [];
+    hasContent = false;
   };
 
   while (i < content.length) {
     const c = content[i];
-    if (c === undefined) {
-      break;
-    }
 
     if (inQuotes) {
       if (c === '"') {
@@ -43,10 +42,12 @@ export function parseCsvTable(content: string): string[][] {
     switch (c) {
       case '"':
         inQuotes = true;
+        hasContent = true;
         i++;
         break;
       case ',':
         pushField();
+        hasContent = true;
         i++;
         break;
       case '\r':
@@ -54,17 +55,22 @@ export function parseCsvTable(content: string): string[][] {
         break;
       case '\n':
         pushField();
-        pushRow();
+        if (hasContent || row.length > 1) {
+          pushRow();
+        } else if (row.length === 1) {
+          row = [];
+        }
         i++;
         break;
       default:
         field += c;
+        hasContent = true;
         i++;
     }
   }
 
   pushField();
-  if (row.length > 0 && row.some((cell) => cell.trim() !== '')) {
+  if (hasContent || row.length > 1 || (row.length === 1 && row[0] !== '')) {
     pushRow();
   }
 
