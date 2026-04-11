@@ -113,6 +113,24 @@ export function parseTopicsJson(
   return parsed as Array<{ id: string; subscription: 'opt_in' | 'opt_out' }>;
 }
 
+export function tryParsePropertiesJsonObject(
+  raw: string,
+): Record<string, string | number | null> | undefined {
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (
+      parsed === null ||
+      typeof parsed !== 'object' ||
+      Array.isArray(parsed)
+    ) {
+      return undefined;
+    }
+    return parsed as Record<string, string | number | null>;
+  } catch {
+    return undefined;
+  }
+}
+
 export function parsePropertiesJson(
   raw: string | undefined,
   globalOpts: GlobalOpts,
@@ -120,12 +138,12 @@ export function parsePropertiesJson(
   if (!raw) {
     return undefined;
   }
-  try {
-    return JSON.parse(raw) as Record<string, string | number | null>;
-  } catch {
+  const value = tryParsePropertiesJsonObject(raw);
+  if (value === undefined) {
     outputError(
       { message: 'Invalid --properties JSON.', code: 'invalid_properties' },
       { json: globalOpts.json },
     );
   }
+  return value;
 }
