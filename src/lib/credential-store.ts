@@ -25,14 +25,16 @@ export async function getCredentialBackend(): Promise<CredentialBackend> {
 
   if (override === 'secure_storage' || override === 'keychain') {
     const backend = await getOsBackend();
-    if (backend) {
-      cachedBackend = backend;
-      return cachedBackend;
+    if (!backend) {
+      throw new Error(
+        'Secure credential storage was requested (RESEND_CREDENTIAL_STORE=' +
+          `${override}) but no secure backend is available on this system`,
+      );
     }
-    // Fall through to file if keychain forced but unavailable
+    cachedBackend = backend;
+    return cachedBackend;
   }
 
-  // Auto-detect: try OS backend first
   if (!override) {
     const backend = await getOsBackend();
     if (backend) {
@@ -69,7 +71,6 @@ async function getOsBackend(): Promise<CredentialBackend | null> {
   return null;
 }
 
-/** Reset cached backend (for testing) */
 export function resetCredentialBackend(): void {
   cachedBackend = null;
 }

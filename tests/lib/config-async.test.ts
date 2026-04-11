@@ -135,6 +135,43 @@ describe('resolveApiKeyAsync', () => {
     });
   });
 
+  test('reports source as config when backend is not secure despite storage marker', async () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'default',
+        storage: 'secure_storage',
+        profiles: { default: {} },
+      }),
+    );
+
+    const mockBackend = {
+      get: vi.fn().mockResolvedValue('re_file_key'),
+      set: vi.fn(),
+      delete: vi.fn(),
+      isAvailable: vi.fn().mockResolvedValue(true),
+      name: 'plaintext file',
+      isSecure: false,
+    };
+
+    vi.resetModules();
+    vi.doMock('../../src/lib/credential-store', () => ({
+      getCredentialBackend: vi.fn().mockResolvedValue(mockBackend),
+      SERVICE_NAME: 'resend-cli',
+      resetCredentialBackend: vi.fn(),
+    }));
+
+    const { resolveApiKeyAsync } = await import('../../src/lib/config');
+    const result = await resolveApiKeyAsync();
+    expect(result).toEqual({
+      key: 're_file_key',
+      source: 'config',
+      profile: 'default',
+    });
+  });
+
   test('returns null when keychain has no entry', async () => {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });

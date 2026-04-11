@@ -328,15 +328,16 @@ export async function resolveApiKeyAsync(
     creds?.active_profile ||
     'default';
 
-  // If storage is 'secure_storage', try credential backend first
   if (creds?.storage === 'secure_storage') {
     const backend = await getCredentialBackend();
     const key = await backend.get(SERVICE_NAME, profile);
     if (key) {
       const permission = creds.profiles[profile]?.permission;
-      return { key, source: 'secure_storage', profile, permission };
+      const source: ApiKeySource = backend.isSecure
+        ? 'secure_storage'
+        : 'config';
+      return { key, source, profile, permission };
     }
-    // Fall through: profile may not be migrated yet (api_key still in file)
   }
 
   // File-based storage (or unmigrated profile in mixed state)
@@ -387,10 +388,6 @@ export async function storeApiKeyAsync(
   const isFileBackend = !backend.isSecure;
 
   if (isFileBackend) {
-    // Do NOT clear a pre-existing `storage: 'secure_storage'` marker here.
-    // Other profiles may still have their keys in secure storage.
-    // resolveApiKeyAsync already falls through from secure storage to file-based
-    // lookup, so keeping the marker is safe and avoids orphaning those profiles.
     const configPath = storeApiKey(apiKey, profile, permission);
     return { configPath, backend };
   }
