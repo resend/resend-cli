@@ -435,6 +435,46 @@ describe('batch command', () => {
     }
   });
 
+  test('errors with invalid_format when an entry is null with --react-email', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const file = await writeTmpJson([null]);
+    const { batchCommand } = await import('../../../src/commands/emails/batch');
+    await expectExit1(() =>
+      batchCommand.parseAsync(
+        ['--file', file, '--react-email', './emails/welcome.tsx'],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_format');
+    expect(output).toContain('Email at index 0 must be a JSON object.');
+    expect(mockBuildReactEmailHtml).not.toHaveBeenCalled();
+  });
+
+  test('errors with invalid_format when an entry is a string with --react-email', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const file = await writeTmpJson(['oops']);
+    const { batchCommand } = await import('../../../src/commands/emails/batch');
+    await expectExit1(() =>
+      batchCommand.parseAsync(
+        ['--file', file, '--react-email', './emails/welcome.tsx'],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_format');
+    expect(output).toContain('Email at index 0 must be a JSON object.');
+    expect(mockBuildReactEmailHtml).not.toHaveBeenCalled();
+  });
+
   test('errors with batch_error when SDK returns an error', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
