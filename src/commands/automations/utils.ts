@@ -1,8 +1,6 @@
 import type { PickerConfig } from '../../lib/prompts';
 import { renderTable } from '../../lib/table';
 
-export { parseJsonFlag } from '../../lib/json';
-
 export function renderAutomationsTable(
   automations: Array<{
     id: string;

@@ -4,9 +4,9 @@ import { runCreate } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { readFile } from '../../lib/files';
 import { buildHelpText } from '../../lib/help-text';
+import { parseJsonFlag } from '../../lib/json';
 import { outputError } from '../../lib/output';
 import { requireText } from '../../lib/prompts';
-import { parseJsonFlag } from './utils';
 
 export const createAutomationCommand = new Command('create')
   .description('Create a new automation')
@@ -26,7 +26,7 @@ export const createAutomationCommand = new Command('create')
   .addHelpText(
     'after',
     buildHelpText({
-      context: `Non-interactive: --name and --steps/--edges (or --file) are required.
+      context: `Non-interactive: --name and --steps/--connections (or --file) are required.
 
 Payload format:
   --file accepts a JSON object with { name, status?, steps, connections }.
@@ -61,10 +61,27 @@ Connection types: default, condition_met, condition_not_met, timeout, event_rece
     if (opts.file) {
       const raw = readFile(opts.file, globalOpts);
       try {
-        payload = JSON.parse(raw) as Partial<CreateAutomationOptions>;
-      } catch {
+        payload = JSON.parse(raw);
+      } catch (err) {
         outputError(
-          { message: 'Invalid JSON in --file.', code: 'invalid_json' },
+          {
+            message: `Invalid JSON in --file: ${err instanceof Error ? err.message : 'parse error'}`,
+            code: 'invalid_json',
+          },
+          { json: globalOpts.json },
+        );
+      }
+      if (
+        typeof payload !== 'object' ||
+        payload === null ||
+        Array.isArray(payload)
+      ) {
+        outputError(
+          {
+            message:
+              '--file must contain a JSON object with automation properties (name, steps, connections).',
+            code: 'invalid_json',
+          },
           { json: globalOpts.json },
         );
       }
