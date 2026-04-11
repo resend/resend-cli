@@ -49,6 +49,10 @@ function parseContactsImportCsv(raw: string): Record<string, string>[] | null {
   };
 
   const headers = headerRow.map(normalize);
+  if (!headers.includes('email')) {
+    return null;
+  }
+
   const rows: Record<string, string>[] = [];
 
   for (let r = 1; r < table.length; r++) {
@@ -67,7 +71,7 @@ function parseContactsImportCsv(raw: string): Record<string, string>[] | null {
     rows.push(row);
   }
 
-  if (rows.length === 0 || !rows[0]?.email) {
+  if (rows.length === 0) {
     return null;
   }
   return rows;
