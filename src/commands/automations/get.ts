@@ -37,19 +37,14 @@ export const getAutomationCommand = new Command('get')
           }
           if (a.steps.length > 0) {
             console.log('\nSteps:');
-            const stepRows = a.steps.map((s) => [s.id, s.type]);
-            console.log(renderTable(['ID', 'Type'], stepRows, '(no steps)'));
+            const stepRows = a.steps.map((s) => [s.key, s.type]);
+            console.log(renderTable(['Key', 'Type'], stepRows, '(no steps)'));
           }
-          if (a.edges.length > 0) {
-            console.log('\nEdges:');
-            const edgeRows = a.edges.map((e) => [
-              e.id,
-              e.from_step_id,
-              e.to_step_id,
-              e.edge_type,
-            ]);
+          if (a.connections.length > 0) {
+            console.log('\nConnections:');
+            const connRows = a.connections.map((c) => [c.from, c.to, c.type]);
             console.log(
-              renderTable(['ID', 'From', 'To', 'Type'], edgeRows, '(no edges)'),
+              renderTable(['From', 'To', 'Type'], connRows, '(no connections)'),
             );
           }
         },

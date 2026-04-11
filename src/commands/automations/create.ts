@@ -18,7 +18,7 @@ export const createAutomationCommand = new Command('create')
     ] as const),
   )
   .option('--steps <json>', 'Steps array as JSON string')
-  .option('--edges <json>', 'Edges array as JSON string')
+  .option('--connections <json>', 'Connections array as JSON string')
   .option(
     '--file <path>',
     'Path to a JSON file containing the full automation payload (use "-" for stdin)',
@@ -29,18 +29,18 @@ export const createAutomationCommand = new Command('create')
       context: `Non-interactive: --name and --steps/--edges (or --file) are required.
 
 Payload format:
-  --file accepts a JSON object with { name, status?, steps, edges }.
-  --steps and --edges accept JSON arrays directly.
-  When using --file, --name/--status/--steps/--edges flags override file values.
+  --file accepts a JSON object with { name, status?, steps, connections }.
+  --steps and --connections accept JSON arrays directly.
+  When using --file, --name/--status/--steps/--connections flags override file values.
 
 Step types: trigger, delay, send_email, wait_for_event, condition
-Edge types: default, condition_met, condition_not_met, timeout, event_received`,
+Connection types: default, condition_met, condition_not_met, timeout, event_received`,
       output: '  {"object":"automation","id":"<id>"}',
       errorCodes: [
         'auth_error',
         'missing_name',
         'missing_steps',
-        'missing_edges',
+        'missing_connections',
         'invalid_json',
         'file_read_error',
         'create_error',
@@ -49,7 +49,7 @@ Edge types: default, condition_met, condition_not_met, timeout, event_received`,
         'resend automations create --file automation.json',
         'cat automation.json | resend automations create --file -',
         'resend automations create --file automation.json --status disabled',
-        "resend automations create --name \"Welcome Flow\" --steps '[...]' --edges '[...]'",
+        "resend automations create --name \"Welcome Flow\" --steps '[...]' --connections '[...]'",
       ],
     }),
   )
@@ -91,24 +91,29 @@ Edge types: default, condition_met, condition_not_met, timeout, event_received`,
       );
     }
 
-    const edges = (parseJsonFlag(opts.edges, '--edges', globalOpts) ??
-      payload.edges) as CreateAutomationOptions['edges'] | undefined;
+    const connections = (parseJsonFlag(
+      opts.connections,
+      '--connections',
+      globalOpts,
+    ) ?? payload.connections) as
+      | CreateAutomationOptions['connections']
+      | undefined;
 
-    if (!edges) {
+    if (!connections) {
       outputError(
         {
           message:
-            'Missing edges. Provide --edges as a JSON array or use --file (empty array is valid for single-step automations).',
-          code: 'missing_edges',
+            'Missing connections. Provide --connections as a JSON array or use --file (empty array is valid for single-step automations).',
+          code: 'missing_connections',
         },
         { json: globalOpts.json },
       );
     }
 
-    if (!Array.isArray(edges)) {
+    if (!Array.isArray(connections)) {
       outputError(
         {
-          message: '--edges must be a JSON array.',
+          message: '--connections must be a JSON array.',
           code: 'invalid_json',
         },
         { json: globalOpts.json },
@@ -124,7 +129,7 @@ Edge types: default, condition_met, condition_not_met, timeout, event_received`,
           resend.automations.create({
             name,
             steps,
-            edges,
+            connections,
             ...(status && { status }),
           }),
         onInteractive: (d) => {

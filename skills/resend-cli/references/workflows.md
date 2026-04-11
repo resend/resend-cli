@@ -304,13 +304,13 @@ cat > workflow.json << 'EOF'
 {
   "name": "Welcome Flow",
   "steps": [
-    { "ref": "t", "type": "trigger", "config": { "eventName": "user.signed_up" } },
-    { "ref": "d", "type": "delay", "config": { "seconds": 300 } },
-    { "ref": "e", "type": "send_email", "config": { "templateId": "<published-template-id>" } }
+    { "key": "t", "type": "trigger", "config": { "eventName": "user.signed_up" } },
+    { "key": "d", "type": "delay", "config": { "duration": "5m" } },
+    { "key": "e", "type": "send_email", "config": { "template": { "id": "<published-template-id>" } } }
   ],
-  "edges": [
-    { "from": "t", "to": "d", "edgeType": "default" },
-    { "from": "d", "to": "e", "edgeType": "default" }
+  "connections": [
+    { "from": "t", "to": "d", "type": "default" },
+    { "from": "d", "to": "e", "type": "default" }
   ]
 }
 EOF
