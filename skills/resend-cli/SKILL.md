@@ -14,10 +14,29 @@ metadata:
   version: "1.9.0"
   homepage: https://resend.com
   source: https://github.com/resend/resend-cli
+  openclaw:
+    primaryEnv: RESEND_API_KEY
+    requires:
+      env:
+        - RESEND_API_KEY
+      bins:
+        - resend
+    install:
+      - kind: node
+        package: resend-cli
+        bins: [resend]
+        label: Resend CLI
+    links:
+      homepage: https://resend.com
+      repository: https://github.com/resend/resend-cli
+      documentation: https://resend.com/docs/cli
 inputs:
   - name: RESEND_API_KEY
     description: Resend API key for authenticating CLI commands. Get yours at https://resend.com/api-keys
     required: true
+  - name: RESEND_PROFILE
+    description: Named auth profile for multi-account setups. Selects which stored API key to use (see `resend auth`).
+    required: false
 references:
   - references/emails.md
   - references/domains.md
