@@ -157,12 +157,12 @@ describe('checkForUpdates', () => {
   });
 
   test('writes state file after successful fetch', async () => {
-    mockFetch(`v${VERSION}`);
+    mockFetch('v1.0.0');
     await checkForUpdates();
 
     expect(existsSync(statePath)).toBe(true);
     const state = JSON.parse(readFileSync(statePath, 'utf-8'));
-    expect(state.latestVersion).toBe(VERSION);
+    expect(state.latestVersion).toBe('1.0.0');
   });
 
   test('ignores prerelease versions', async () => {
