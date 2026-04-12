@@ -47,7 +47,7 @@ Payload:
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
-    if (opts.contactId && opts.email) {
+    if (opts.contactId !== undefined && opts.email !== undefined) {
       outputError(
         {
           message:

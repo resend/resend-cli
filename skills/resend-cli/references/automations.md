@@ -123,10 +123,10 @@ Event names cannot start with `resend:` (reserved).
 ## events get
 
 ```
-resend events get <id-or-name>
+resend events get <id>
 ```
 
-Accepts either a UUID or the event name.
+Accepts an event ID.
 
 ---
 

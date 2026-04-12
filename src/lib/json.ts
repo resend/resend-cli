@@ -5,7 +5,7 @@ export function parseJsonFlag(
   flagName: string,
   globalOpts: { json?: boolean },
 ): unknown | undefined {
-  if (!raw) {
+  if (raw === undefined) {
     return undefined;
   }
   try {

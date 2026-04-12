@@ -43,7 +43,7 @@ Schema format:
 
     let schemaRaw = opts.schema;
 
-    if (!schemaRaw) {
+    if (schemaRaw === undefined) {
       if (!isInteractive() || globalOpts.json) {
         outputError(
           {
