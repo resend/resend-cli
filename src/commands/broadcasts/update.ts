@@ -108,32 +108,36 @@ Variable interpolation:
       );
     }
 
+    if (opts.html != null && opts.htmlFile != null) {
+      outputError(
+        {
+          message: '--html and --html-file are mutually exclusive.',
+          code: 'invalid_options',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
+    if (opts.text != null && opts.textFile != null) {
+      outputError(
+        {
+          message: '--text and --text-file are mutually exclusive.',
+          code: 'invalid_options',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
     const id = await pickId(idArg, broadcastPickerConfig, globalOpts);
 
-    let html = opts.html;
-    let text = opts.text;
-
-    if (opts.htmlFile != null) {
-      if (opts.html != null) {
-        process.stderr.write(
-          'Warning: both --html and --html-file provided; using --html-file\n',
-        );
-      }
-      html = readFile(opts.htmlFile, globalOpts);
-    }
-
-    if (opts.textFile != null) {
-      if (opts.text != null) {
-        process.stderr.write(
-          'Warning: both --text and --text-file provided; using --text-file\n',
-        );
-      }
-      text = readFile(opts.textFile, globalOpts);
-    }
-
-    if (opts.reactEmail != null) {
-      html = await buildReactEmailHtml(opts.reactEmail, globalOpts);
-    }
+    const html =
+      opts.reactEmail != null
+        ? await buildReactEmailHtml(opts.reactEmail, globalOpts)
+        : opts.htmlFile != null
+          ? readFile(opts.htmlFile, globalOpts)
+          : opts.html;
+    const text =
+      opts.textFile != null ? readFile(opts.textFile, globalOpts) : opts.text;
 
     await runWrite(
       {

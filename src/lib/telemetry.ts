@@ -125,9 +125,21 @@ export function trackCommand(
     const spoolDir = getSpoolDir();
     const tmpPath = join(
       spoolDir,
-      `resend-telemetry-${process.pid}-${Date.now()}.json`,
+      `resend-telemetry-${crypto.randomUUID()}.json`,
     );
-    writeFileSync(tmpPath, payload, { mode: 0o600 });
+    const fd = openSync(
+      tmpPath,
+      constants.O_CREAT |
+        constants.O_EXCL |
+        constants.O_WRONLY |
+        (constants.O_NOFOLLOW ?? 0),
+      0o600,
+    );
+    try {
+      writeFileSync(fd, payload);
+    } finally {
+      closeSync(fd);
+    }
 
     const isCompiled = 'pkg' in process;
     const args = isCompiled
@@ -194,6 +206,9 @@ export async function flushPayload(payload: string): Promise<void> {
   }
 }
 
+const UUID_RE = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
+const SPOOL_FILENAME_RE = new RegExp(`^resend-telemetry-${UUID_RE}\\.json$`);
+
 export async function flushFromFile(filePath: string): Promise<void> {
   const resolved = join(filePath);
   const spoolDir = getSpoolDir();
@@ -201,7 +216,7 @@ export async function flushFromFile(filePath: string): Promise<void> {
 
   if (
     dirname(resolved) !== spoolDir ||
-    !/^resend-telemetry-\d+-\d+\.json$/.test(baseName) ||
+    !SPOOL_FILENAME_RE.test(baseName) ||
     realpathSync(dirname(resolved)) !== realpathSync(spoolDir)
   ) {
     throw new Error('invalid telemetry flush path');
