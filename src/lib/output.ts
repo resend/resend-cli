@@ -1,4 +1,5 @@
 import pc from 'picocolors';
+import { isInteractive } from './tty';
 
 export function errorMessage(err: unknown, fallback: string): string {
   return err instanceof Error ? err.message : fallback;
@@ -13,7 +14,7 @@ function shouldOutputJson(json?: boolean): boolean {
   if (json) {
     return true;
   }
-  if (!process.stdout.isTTY) {
+  if (!isInteractive()) {
     return true;
   }
   return false;
