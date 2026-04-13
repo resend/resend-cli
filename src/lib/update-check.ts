@@ -24,10 +24,14 @@ const readState = (): UpdateState | null => {
 };
 
 export const resolveNodePath = (): string => {
-  if (/(?:^|[\\/])node(?:\.exe)?$/i.test(process.execPath)) {
+  const nodePattern = /(?:^|[\\/])node(?:\.exe)?$/i;
+  if (nodePattern.test(process.execPath)) {
     return process.execPath;
   }
-  return 'node';
+  if (process.argv[0] && nodePattern.test(process.argv[0])) {
+    return process.argv[0];
+  }
+  return process.execPath;
 };
 
 export const buildRefreshScript = (
@@ -115,7 +119,14 @@ export const fetchLatestVersion = async (): Promise<string | null> => {
   }
 };
 
-const shouldSkipCheck = (): boolean => {
+export type UpdateCheckOptions = {
+  readonly json?: boolean;
+};
+
+const shouldSkipCheck = (opts?: UpdateCheckOptions): boolean => {
+  if (opts?.json) {
+    return true;
+  }
   if (process.env.RESEND_NO_UPDATE_NOTIFIER === '1') {
     return true;
   }
@@ -197,8 +208,8 @@ const formatNotice = (latestVersion: string): string => {
   return [...lines, ''].join('\n');
 };
 
-export const checkForUpdates = (): void => {
-  if (shouldSkipCheck()) {
+export const checkForUpdates = (opts?: UpdateCheckOptions): void => {
+  if (shouldSkipCheck(opts)) {
     return;
   }
 

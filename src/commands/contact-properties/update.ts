@@ -1,9 +1,11 @@
 import { Command } from '@commander-js/extra-typings';
 import { runWrite } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
+import { requireClient } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
 import { pickId } from '../../lib/prompts';
+import { withSpinner } from '../../lib/spinner';
 import { contactPropertyPickerConfig } from './utils';
 
 export const updateContactPropertyCommand = new Command('update')
@@ -33,6 +35,8 @@ The fallback value is used in broadcast template interpolation when a contact ha
         'auth_error',
         'no_changes',
         'conflicting_flags',
+        'fetch_error',
+        'invalid_fallback_value',
         'update_error',
       ],
       examples: [
@@ -69,7 +73,33 @@ The fallback value is used in broadcast template interpolation when a contact ha
       );
     }
 
-    const fallbackValue = opts.clearFallbackValue ? null : opts.fallbackValue;
+    let fallbackValue: string | number | null | undefined =
+      opts.clearFallbackValue ? null : opts.fallbackValue;
+
+    if (typeof fallbackValue === 'string') {
+      const resend = await requireClient(globalOpts);
+      const property = await withSpinner(
+        'Fetching contact property...',
+        () => resend.contactProperties.get(id),
+        'fetch_error',
+        globalOpts,
+      );
+
+      if (property.type === 'number') {
+        const parsed = parseFloat(fallbackValue);
+        if (Number.isNaN(parsed)) {
+          outputError(
+            {
+              message:
+                '--fallback-value must be a valid number for number-type properties.',
+              code: 'invalid_fallback_value',
+            },
+            { json: globalOpts.json },
+          );
+        }
+        fallbackValue = parsed;
+      }
+    }
 
     await runWrite(
       {

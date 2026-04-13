@@ -13,8 +13,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 
@@ -45,19 +45,19 @@ describe('isDisabled', () => {
     restoreEnv();
   });
 
-  test('returns true when DO_NOT_TRACK=1', () => {
+  it('returns true when DO_NOT_TRACK=1', () => {
     process.env.DO_NOT_TRACK = '1';
     delete process.env.RESEND_TELEMETRY_DISABLED;
     expect(isDisabled()).toBe(true);
   });
 
-  test('returns true when RESEND_TELEMETRY_DISABLED=1', () => {
+  it('returns true when RESEND_TELEMETRY_DISABLED=1', () => {
     delete process.env.DO_NOT_TRACK;
     process.env.RESEND_TELEMETRY_DISABLED = '1';
     expect(isDisabled()).toBe(true);
   });
 
-  test('returns false when neither env var set', () => {
+  it('returns false when neither env var set', () => {
     delete process.env.DO_NOT_TRACK;
     delete process.env.RESEND_TELEMETRY_DISABLED;
     expect(isDisabled()).toBe(false);
@@ -79,7 +79,7 @@ describe('getOrCreateAnonymousId', () => {
     }
   });
 
-  test('creates and persists a UUID', () => {
+  it('creates and persists a UUID', () => {
     const id = getOrCreateAnonymousId();
     expect(id).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
@@ -89,7 +89,7 @@ describe('getOrCreateAnonymousId', () => {
     expect(stored).toBe(id);
   });
 
-  test('returns same ID on subsequent calls', () => {
+  it('returns same ID on subsequent calls', () => {
     const first = getOrCreateAnonymousId();
     const second = getOrCreateAnonymousId();
     expect(first).toBe(second);
@@ -144,7 +144,7 @@ describe('trackCommand', () => {
     return JSON.parse(content);
   }
 
-  test('spawns detached process with payload in temp file', () => {
+  it('spawns detached process with payload in temp file', () => {
     trackCommand('emails send', { json: true });
 
     expect(spawnMock).toHaveBeenCalledOnce();
@@ -153,7 +153,9 @@ describe('trackCommand', () => {
     expect(args).toContain('telemetry');
     expect(args).toContain('flush');
     const filePath = args[args.length - 1] as string;
-    expect(filePath).toMatch(/resend-telemetry-.*\.json$/);
+    expect(filePath).toMatch(
+      /resend-telemetry-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.json$/,
+    );
     expect(options.detached).toBe(true);
     expect(options.stdio).toBe('ignore');
     expect(options.env.RESEND_TELEMETRY_DISABLED).toBe('1');
@@ -169,12 +171,12 @@ describe('trackCommand', () => {
     );
   });
 
-  test('calls child.unref()', () => {
+  it('calls child.unref()', () => {
     trackCommand('emails send', {});
     expect(unrefMock).toHaveBeenCalledOnce();
   });
 
-  test('interactive is false when --json flag is set', () => {
+  it('interactive is false when --json flag is set', () => {
     Object.defineProperty(process.stdin, 'isTTY', {
       value: true,
       writable: true,
@@ -190,7 +192,7 @@ describe('trackCommand', () => {
     expect(parsePayload().properties.interactive).toBe(false);
   });
 
-  test('interactive is false when not a TTY', () => {
+  it('interactive is false when not a TTY', () => {
     Object.defineProperty(process.stdin, 'isTTY', {
       value: undefined,
       writable: true,
@@ -204,7 +206,7 @@ describe('trackCommand', () => {
     expect(parsePayload().properties.interactive).toBe(false);
   });
 
-  test('interactive is false in CI even with TTY', () => {
+  it('interactive is false in CI even with TTY', () => {
     Object.defineProperty(process.stdin, 'isTTY', {
       value: true,
       writable: true,
@@ -219,7 +221,7 @@ describe('trackCommand', () => {
     expect(parsePayload().properties.interactive).toBe(false);
   });
 
-  test('interactive is true with TTY and no --json', () => {
+  it('interactive is true with TTY and no --json', () => {
     Object.defineProperty(process.stdin, 'isTTY', {
       value: true,
       writable: true,
@@ -236,7 +238,7 @@ describe('trackCommand', () => {
     expect(parsePayload().properties.interactive).toBe(true);
   });
 
-  test('includes flags in payload when provided', () => {
+  it('includes flags in payload when provided', () => {
     trackCommand('emails send', {
       flags: ['to', 'subject'],
       globalFlags: ['json'],
@@ -246,34 +248,63 @@ describe('trackCommand', () => {
     expect(body.properties.global_flags).toEqual(['json']);
   });
 
-  test('omits flags from payload when empty', () => {
+  it('omits flags from payload when empty', () => {
     trackCommand('emails list', {});
     const body = parsePayload();
     expect(body.properties.flags).toBeUndefined();
     expect(body.properties.global_flags).toBeUndefined();
   });
 
-  test('omits flags from payload when arrays are empty', () => {
+  it('omits flags from payload when arrays are empty', () => {
     trackCommand('emails list', { flags: [], globalFlags: [] });
     const body = parsePayload();
     expect(body.properties.flags).toBeUndefined();
     expect(body.properties.global_flags).toBeUndefined();
   });
 
-  test('does nothing when disabled', () => {
+  it('does nothing when disabled', () => {
     process.env.RESEND_TELEMETRY_DISABLED = '1';
     trackCommand('emails send', {});
     expect(spawnMock).not.toHaveBeenCalled();
   });
 
-  test('handles spawn failures gracefully', () => {
+  it('handles spawn failures gracefully', () => {
     spawnMock.mockImplementation(() => {
       throw new Error('spawn error');
     });
     expect(() => trackCommand('emails send', {})).not.toThrow();
   });
 
-  test('shows first-run notice only once', () => {
+  it('does not follow symlinks when writing temp file', () => {
+    if (process.platform === 'win32') {
+      return;
+    }
+
+    const targetFile = join(testConfigDir, 'clobber-target.txt');
+    writeFileSync(targetFile, 'original content');
+
+    const originalRandomUUID = crypto.randomUUID.bind(crypto);
+    const fixedUUID = originalRandomUUID();
+    const uuidMock = vi.spyOn(crypto, 'randomUUID').mockReturnValue(fixedUUID);
+
+    const symlinkPath = join(tmpdir(), `resend-telemetry-${fixedUUID}.json`);
+    symlinkSync(targetFile, symlinkPath);
+
+    try {
+      trackCommand('emails send', {});
+      expect(readFileSync(targetFile, 'utf-8')).toBe('original content');
+    } finally {
+      uuidMock.mockRestore();
+      if (existsSync(symlinkPath)) {
+        rmSync(symlinkPath, { force: true });
+      }
+      if (existsSync(targetFile)) {
+        rmSync(targetFile, { force: true });
+      }
+    }
+  });
+
+  it('shows first-run notice only once', () => {
     Object.defineProperty(process.stdin, 'isTTY', {
       value: true,
       writable: true,
@@ -314,7 +345,7 @@ describe('flushPayload', () => {
     fetchSpy.mockRestore();
   });
 
-  test('POSTs payload to PostHog endpoint', async () => {
+  it('POSTs payload to PostHog endpoint', async () => {
     const payload = JSON.stringify({
       api_key: 'test-key',
       distinct_id: 'test-id',
@@ -332,17 +363,17 @@ describe('flushPayload', () => {
     expect(options.body).toBe(payload);
   });
 
-  test('rejects invalid JSON', async () => {
+  it('rejects invalid JSON', async () => {
     await expect(flushPayload('not json')).rejects.toThrow();
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  test('propagates fetch errors', async () => {
+  it('propagates fetch errors', async () => {
     fetchSpy.mockRejectedValue(new Error('network error'));
     await expect(flushPayload('{}')).rejects.toThrow('network error');
   });
 
-  test('throws on non-ok HTTP response', async () => {
+  it('throws on non-ok HTTP response', async () => {
     fetchSpy.mockResolvedValue({ ok: false, status: 400 } as Response);
     await expect(flushPayload('{}')).rejects.toThrow('telemetry flush failed');
   });
@@ -365,7 +396,7 @@ describe('flushFromFile', () => {
     }
   });
 
-  test('reads file, sends payload, then deletes it', async () => {
+  it('reads file, sends payload, then deletes it', async () => {
     const payload = JSON.stringify({ event: 'test' });
     writeFileSync(tmpFile, payload);
 
@@ -377,7 +408,7 @@ describe('flushFromFile', () => {
     expect(existsSync(tmpFile)).toBe(false);
   });
 
-  test('rejects paths outside the temp directory', async () => {
+  it('rejects paths outside the temp directory', async () => {
     const siblingPath = join(
       `${tmpdir()}-outside`,
       `resend-telemetry-${process.pid}-1.json`,
@@ -389,7 +420,7 @@ describe('flushFromFile', () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  test('rejects symlinks that point outside the temp directory', async () => {
+  it('rejects symlinks that point outside the temp directory', async () => {
     if (process.platform === 'win32') {
       return;
     }
@@ -418,7 +449,7 @@ describe('flushFromFile', () => {
     }
   });
 
-  test('preserves file when flush fails', async () => {
+  it('preserves file when flush fails', async () => {
     fetchSpy.mockResolvedValue({ ok: false, status: 500 } as Response);
     const payload = JSON.stringify({ event: 'test' });
     writeFileSync(tmpFile, payload);

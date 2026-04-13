@@ -96,6 +96,25 @@ describe('checkForUpdates', () => {
     expect(mockedSpawn).not.toHaveBeenCalled();
   });
 
+  it('skips check when json option is true', () => {
+    checkForUpdates({ json: true });
+    expect(stderrOutput).toBe('');
+    expect(mockedSpawn).not.toHaveBeenCalled();
+  });
+
+  it('skips check when json option is true with cached state', () => {
+    writeFileSync(
+      statePath,
+      JSON.stringify({
+        lastChecked: Date.now(),
+        latestVersion: NEWER_VERSION,
+      }),
+    );
+    checkForUpdates({ json: true });
+    expect(stderrOutput).toBe('');
+    expect(mockedSpawn).not.toHaveBeenCalled();
+  });
+
   it('prints notice from fresh cache when newer version available', () => {
     writeFileSync(
       statePath,
@@ -111,6 +130,20 @@ describe('checkForUpdates', () => {
     expect(stderrOutput).toContain(`v${VERSION}`);
     expect(stderrOutput).toContain(`v${NEWER_VERSION}`);
     expect(mockedSpawn).not.toHaveBeenCalled();
+  });
+
+  it('prints notice when json option is explicitly false', () => {
+    writeFileSync(
+      statePath,
+      JSON.stringify({
+        lastChecked: Date.now(),
+        latestVersion: NEWER_VERSION,
+      }),
+    );
+
+    checkForUpdates({ json: false });
+
+    expect(stderrOutput).toContain('Update available');
   });
 
   it('prints nothing from fresh cache when already on latest', () => {
@@ -211,29 +244,45 @@ describe('buildRefreshScript', () => {
 });
 
 describe('resolveNodePath', () => {
+  let origExecPath: string;
+  let origArgv0: string;
+
+  beforeEach(() => {
+    origExecPath = process.execPath;
+    origArgv0 = process.argv[0];
+  });
+
+  afterEach(() => {
+    Object.defineProperty(process, 'execPath', { value: origExecPath });
+    process.argv[0] = origArgv0;
+  });
+
   it('returns execPath when it ends with node', () => {
-    const orig = process.execPath;
     Object.defineProperty(process, 'execPath', { value: '/usr/bin/node' });
     expect(resolveNodePath()).toBe('/usr/bin/node');
-    Object.defineProperty(process, 'execPath', { value: orig });
   });
 
   it('returns execPath when it ends with node.exe', () => {
-    const orig = process.execPath;
     Object.defineProperty(process, 'execPath', {
       value: 'C:\\Program Files\\nodejs\\node.exe',
     });
     expect(resolveNodePath()).toBe('C:\\Program Files\\nodejs\\node.exe');
-    Object.defineProperty(process, 'execPath', { value: orig });
   });
 
-  it('returns "node" when execPath is not a node binary', () => {
-    const orig = process.execPath;
+  it('falls back to argv[0] when execPath is not node', () => {
     Object.defineProperty(process, 'execPath', {
       value: '/usr/local/bin/resend',
     });
-    expect(resolveNodePath()).toBe('node');
-    Object.defineProperty(process, 'execPath', { value: orig });
+    process.argv[0] = '/usr/bin/node';
+    expect(resolveNodePath()).toBe('/usr/bin/node');
+  });
+
+  it('falls back to execPath for standalone binary installs', () => {
+    Object.defineProperty(process, 'execPath', {
+      value: '/usr/local/bin/resend',
+    });
+    process.argv[0] = '/usr/local/bin/resend';
+    expect(resolveNodePath()).toBe('/usr/local/bin/resend');
   });
 });
 

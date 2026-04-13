@@ -2,6 +2,7 @@ import {
   afterEach,
   describe,
   expect,
+  it,
   type MockInstance,
   test,
   vi,
@@ -186,6 +187,49 @@ describe('pickId', () => {
     const { pickId } = await import('../../src/lib/prompts');
     const result = await pickId('test-id', {} as never, {}, { optional: true });
     expect(result).toBe('test-id');
+  });
+});
+
+describe('pickItem', () => {
+  it('returns id and label matching the id when provided directly', async () => {
+    const { pickItem } = await import('../../src/lib/prompts');
+    const result = await pickItem('test-id', {} as never, {});
+    expect(result).toEqual({ id: 'test-id', label: 'test-id' });
+  });
+
+  it('exits with missing_id error in non-interactive mode', async () => {
+    setTTY(undefined);
+    setupSpies();
+
+    const { pickItem } = await import('../../src/lib/prompts');
+
+    await expectExit1(() => pickItem(undefined, {} as never, {}));
+
+    expect(spyOutput()).toContain('missing_id');
+  });
+
+  it('returns undefined in non-interactive mode when optional', async () => {
+    setTTY(undefined);
+
+    const { pickItem } = await import('../../src/lib/prompts');
+    const result = await pickItem(
+      undefined,
+      {} as never,
+      {},
+      { optional: true },
+    );
+    expect(result).toBeUndefined();
+  });
+
+  it('returns id and label matching the id when provided and optional', async () => {
+    const { pickItem } = await import('../../src/lib/prompts');
+    const result = await pickItem(
+      'test-id',
+      {} as never,
+      {},
+      { optional: true },
+    );
+    expect(result).toEqual({ id: 'test-id', label: 'test-id' });
   });
 });
 
