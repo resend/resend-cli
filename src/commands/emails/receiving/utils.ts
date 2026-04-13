@@ -1,5 +1,6 @@
 import type { ListReceivingEmail } from 'resend';
 import type { PickerConfig } from '../../../lib/prompts';
+import { safeTerminalText } from '../../../lib/safe-terminal-text';
 import { renderTable } from '../../../lib/table';
 
 export const receivedEmailPickerConfig: PickerConfig<{
@@ -33,11 +34,13 @@ export function renderReceivingEmailsTable(
   emails: ListReceivingEmail[],
 ): string {
   const rows = emails.map((e) => {
-    const to = e.to.join(', ');
+    const from = safeTerminalText(e.from);
+    const to = e.to.map(safeTerminalText).join(', ');
     const toStr = to.length > 40 ? `${to.slice(0, 37)}...` : to;
+    const rawSubject = safeTerminalText(e.subject);
     const subject =
-      e.subject.length > 50 ? `${e.subject.slice(0, 47)}...` : e.subject;
-    return [e.from, toStr, subject, e.created_at, e.id];
+      rawSubject.length > 50 ? `${rawSubject.slice(0, 47)}...` : rawSubject;
+    return [from, toStr, subject, e.created_at, e.id];
   });
   return renderTable(
     ['From', 'To', 'Subject', 'Created At', 'ID'],
