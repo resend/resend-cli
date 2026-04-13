@@ -53,7 +53,12 @@ Use "all" as a shorthand for all 17 event types.
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const id = await pickId(idArg, webhookPickerConfig, globalOpts);
 
-    if (!opts.endpoint && !opts.events?.length && !opts.status) {
+    const normalized = opts.events?.length
+      ? normalizeEvents(opts.events)
+      : undefined;
+    const hasEventChange = normalized !== undefined;
+
+    if (!opts.endpoint && !hasEventChange && !opts.status) {
       outputError(
         {
           message:
@@ -64,9 +69,16 @@ Use "all" as a shorthand for all 17 event types.
       );
     }
 
-    const normalized = opts.events?.length
-      ? normalizeEvents(opts.events)
-      : undefined;
+    if (hasEventChange && !normalized.length) {
+      outputError(
+        {
+          message: 'Missing --events values.',
+          code: 'no_changes',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
     const selectedEvents = normalized?.includes('all')
       ? ALL_WEBHOOK_EVENTS
       : normalized?.length

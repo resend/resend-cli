@@ -97,6 +97,61 @@ describe('broadcasts create command', () => {
     expect(args.html).toBe('<p>Hi</p>');
   });
 
+  test('dry-run does not call API and prints create payload', async () => {
+    spies = setupOutputSpies();
+
+    const { createBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/create'
+    );
+    await createBroadcastCommand.parseAsync(
+      [
+        '--from',
+        'hello@domain.com',
+        '--subject',
+        'Weekly Update',
+        '--segment-id',
+        '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
+        '--html',
+        '<p>Hi</p>',
+        '--dry-run',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockCreate).not.toHaveBeenCalled();
+    const out = JSON.parse(spies.logSpy.mock.calls[0][0] as string);
+    expect(out.dryRun).toBe(true);
+    expect(out.request.from).toBe('hello@domain.com');
+    expect(out.request.segmentId).toBe('7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d');
+  });
+
+  test('dry-run does not require API key', async () => {
+    spies = setupOutputSpies();
+    delete process.env.RESEND_API_KEY;
+
+    const { createBroadcastCommand } = await import(
+      '../../../src/commands/broadcasts/create'
+    );
+    await createBroadcastCommand.parseAsync(
+      [
+        '--from',
+        'hello@domain.com',
+        '--subject',
+        'Weekly Update',
+        '--segment-id',
+        '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
+        '--html',
+        '<p>Hi</p>',
+        '--dry-run',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockCreate).not.toHaveBeenCalled();
+    const out = JSON.parse(spies.logSpy.mock.calls[0][0] as string);
+    expect(out.dryRun).toBe(true);
+  });
+
   test('outputs JSON id when non-interactive', async () => {
     spies = setupOutputSpies();
 
@@ -211,7 +266,7 @@ describe('broadcasts create command', () => {
 
   test('errors with missing_from when --from absent in non-interactive mode', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createBroadcastCommand } = await import(
@@ -237,7 +292,7 @@ describe('broadcasts create command', () => {
 
   test('errors with missing_subject when --subject absent in non-interactive mode', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createBroadcastCommand } = await import(
@@ -263,7 +318,7 @@ describe('broadcasts create command', () => {
 
   test('errors with missing_segment when --segment-id absent in non-interactive mode', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createBroadcastCommand } = await import(
@@ -289,7 +344,7 @@ describe('broadcasts create command', () => {
 
   test('errors with missing_body when no body flag in non-interactive mode', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createBroadcastCommand } = await import(
@@ -317,7 +372,7 @@ describe('broadcasts create command', () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createBroadcastCommand } = await import(
@@ -348,7 +403,7 @@ describe('broadcasts create command', () => {
     mockCreate.mockResolvedValueOnce(
       mockSdkError('Segment not found', 'not_found'),
     );
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);
@@ -379,7 +434,7 @@ describe('broadcasts create command', () => {
 
   test('does not call SDK when validation fails', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createBroadcastCommand } = await import(
@@ -401,7 +456,7 @@ describe('broadcasts create command', () => {
       value: true,
       writable: true,
     });
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { Command } = await import('@commander-js/extra-typings');
@@ -493,69 +548,73 @@ describe('broadcasts create command', () => {
     expect(args.text).toBe('Plain text from file');
   });
 
-  test('warns to stderr when --html and --html-file both provided, html-file wins', async () => {
-    spies = setupOutputSpies();
-    readFileSpy = vi
-      .spyOn(files, 'readFile')
-      .mockReturnValue('<p>From file</p>');
+  test('errors with invalid_options when --html and --html-file both provided', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
 
     const { createBroadcastCommand } = await import(
       '../../../src/commands/broadcasts/create'
     );
-    await createBroadcastCommand.parseAsync(
-      [
-        '--from',
-        'hello@domain.com',
-        '--subject',
-        'News',
-        '--segment-id',
-        '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
-        '--html',
-        '<p>Inline</p>',
-        '--html-file',
-        '/fake/email.html',
-      ],
-      { from: 'user' },
+    await expectExit1(() =>
+      createBroadcastCommand.parseAsync(
+        [
+          '--from',
+          'hello@domain.com',
+          '--subject',
+          'News',
+          '--segment-id',
+          '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
+          '--html',
+          '<p>Inline</p>',
+          '--html-file',
+          '/fake/email.html',
+        ],
+        { from: 'user' },
+      ),
     );
 
-    const stderrOutput = spies.stderrSpy.mock.calls.map((c) => c[0]).join('');
-    expect(stderrOutput).toContain('--html-file');
-    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.html).toBe('<p>From file</p>');
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_options');
+    expect(output).toContain('mutually exclusive');
+    expect(mockCreate).not.toHaveBeenCalled();
   });
 
-  test('warns to stderr when --text and --text-file both provided, text-file wins', async () => {
-    spies = setupOutputSpies();
-    readFileSpy = vi.spyOn(files, 'readFile').mockReturnValue('From file');
+  test('errors with invalid_options when --text and --text-file both provided', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
 
     const { createBroadcastCommand } = await import(
       '../../../src/commands/broadcasts/create'
     );
-    await createBroadcastCommand.parseAsync(
-      [
-        '--from',
-        'hello@domain.com',
-        '--subject',
-        'News',
-        '--segment-id',
-        '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
-        '--text',
-        'Inline text',
-        '--text-file',
-        '/fake/body.txt',
-      ],
-      { from: 'user' },
+    await expectExit1(() =>
+      createBroadcastCommand.parseAsync(
+        [
+          '--from',
+          'hello@domain.com',
+          '--subject',
+          'News',
+          '--segment-id',
+          '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
+          '--text',
+          'Inline text',
+          '--text-file',
+          '/fake/body.txt',
+        ],
+        { from: 'user' },
+      ),
     );
 
-    const stderrOutput = spies.stderrSpy.mock.calls.map((c) => c[0]).join('');
-    expect(stderrOutput).toContain('--text-file');
-    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.text).toBe('From file');
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_options');
+    expect(output).toContain('mutually exclusive');
+    expect(mockCreate).not.toHaveBeenCalled();
   });
 
   test('errors with invalid_options when --html-file - and --text-file - both read stdin', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createBroadcastCommand } = await import(
@@ -641,7 +700,7 @@ describe('broadcasts create command', () => {
 
   test('errors with invalid_options when --react-email and --html used together', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createBroadcastCommand } = await import(
@@ -671,7 +730,7 @@ describe('broadcasts create command', () => {
 
   test('errors with file_read_error when --html-file path is unreadable', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);
