@@ -190,10 +190,14 @@ program
       });
     }
 
-    const globals = program.opts();
-    void checkForUpdates({
-      json: Boolean(globals.json || globals.quiet),
-    }).catch(() => {});
+    try {
+      const globals = program.opts();
+      checkForUpdates({
+        json: Boolean(globals.json || globals.quiet),
+      });
+    } catch {
+      /* update check is non-critical */
+    }
   })
   .catch((err) => {
     outputError({

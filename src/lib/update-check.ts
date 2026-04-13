@@ -1,38 +1,85 @@
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { spawn } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getConfigDir } from './config';
 import { VERSION } from './version';
 
-const CHECK_INTERVAL_MS = 1 * 60 * 60 * 1000; // 1 hour
+const CHECK_INTERVAL_MS = 1 * 60 * 60 * 1000;
 export const GITHUB_RELEASES_URL =
   'https://api.github.com/repos/resend/resend-cli/releases/latest';
 
 type UpdateState = {
-  lastChecked: number;
-  latestVersion: string;
+  readonly lastChecked: number;
+  readonly latestVersion: string;
 };
 
-function getStatePath(): string {
-  return join(getConfigDir(), 'update-state.json');
-}
+const getStatePath = (): string => join(getConfigDir(), 'update-state.json');
 
-function readState(): UpdateState | null {
+const readState = (): UpdateState | null => {
   try {
     return JSON.parse(readFileSync(getStatePath(), 'utf-8')) as UpdateState;
   } catch {
     return null;
   }
-}
+};
 
-function writeState(state: UpdateState): void {
-  mkdirSync(getConfigDir(), { recursive: true, mode: 0o700 });
-  writeFileSync(getStatePath(), JSON.stringify(state), { mode: 0o600 });
-}
+export const resolveNodePath = (): string => {
+  const nodePattern = /(?:^|[\\/])node(?:\.exe)?$/i;
+  if (nodePattern.test(process.execPath)) {
+    return process.execPath;
+  }
+  if (process.argv[0] && nodePattern.test(process.argv[0])) {
+    return process.argv[0];
+  }
+  return process.execPath;
+};
 
-/**
- * Compare two semver strings. Returns true if remote > local.
- */
-export function isNewer(local: string, remote: string): boolean {
+export const buildRefreshScript = (
+  url: string,
+  configDir: string,
+  statePath: string,
+  fallbackVersion: string,
+): string => {
+  const u = JSON.stringify(url);
+  const d = JSON.stringify(configDir);
+  const p = JSON.stringify(statePath);
+  const fv = JSON.stringify(fallbackVersion);
+
+  return [
+    'const{mkdirSync:m,writeFileSync:w}=require("node:fs");',
+    `const s=v=>{m(${d},{recursive:true,mode:0o700});`,
+    `w(${p},JSON.stringify({lastChecked:Date.now(),latestVersion:v}),{mode:0o600})};`,
+    '(async()=>{try{',
+    `const r=await fetch(${u},{headers:{Accept:"application/vnd.github.v3+json"},signal:AbortSignal.timeout(5000)});`,
+    `if(!r.ok){s(${fv});return}const d=await r.json();`,
+    `if(d.prerelease||d.draft){s(${fv});return}`,
+    'const v=d.tag_name?.replace(/^v/,"");',
+    `if(!v||!/^\\d+\\.\\d+\\.\\d+$/.test(v)){s(${fv});return}`,
+    `s(v)}catch{s(${fv})}})();`,
+  ].join('');
+};
+
+export const spawnBackgroundRefresh = (): void => {
+  try {
+    const configDir = getConfigDir();
+    const statePath = getStatePath();
+    const script = buildRefreshScript(
+      GITHUB_RELEASES_URL,
+      configDir,
+      statePath,
+      VERSION,
+    );
+    const child = spawn(resolveNodePath(), ['-e', script], {
+      detached: true,
+      stdio: 'ignore',
+    });
+    child.unref();
+  } catch {
+    /* spawn failure is non-fatal */
+  }
+};
+
+export const isNewer = (local: string, remote: string): boolean => {
   const parse = (v: string) => v.replace(/^v/, '').split('.').map(Number);
   const [lMaj, lMin, lPat] = parse(local);
   const [rMaj, rMin, rPat] = parse(remote);
@@ -43,9 +90,9 @@ export function isNewer(local: string, remote: string): boolean {
     return rMin > lMin;
   }
   return rPat > lPat;
-}
+};
 
-export async function fetchLatestVersion(): Promise<string | null> {
+export const fetchLatestVersion = async (): Promise<string | null> => {
   try {
     const res = await fetch(GITHUB_RELEASES_URL, {
       headers: { Accept: 'application/vnd.github.v3+json' },
@@ -59,7 +106,6 @@ export async function fetchLatestVersion(): Promise<string | null> {
       prerelease?: boolean;
       draft?: boolean;
     };
-    // /releases/latest already excludes prereleases, but guard anyway
     if (data.prerelease || data.draft) {
       return null;
     }
@@ -71,13 +117,13 @@ export async function fetchLatestVersion(): Promise<string | null> {
   } catch {
     return null;
   }
-}
+};
 
 export type UpdateCheckOptions = {
   readonly json?: boolean;
 };
 
-function shouldSkipCheck(opts?: UpdateCheckOptions): boolean {
+const shouldSkipCheck = (opts?: UpdateCheckOptions): boolean => {
   if (opts?.json) {
     return true;
   }
@@ -94,9 +140,35 @@ function shouldSkipCheck(opts?: UpdateCheckOptions): boolean {
     return true;
   }
   return false;
-}
+};
 
-export function detectInstallMethodName(): string {
+export const detectInstallMethod = (): string => {
+  const execPath = process.execPath || process.argv[0] || '';
+  const scriptPath = process.argv[1] || '';
+
+  if (
+    process.env.npm_execpath ||
+    /node_modules/.test(scriptPath) ||
+    /node_modules/.test(execPath)
+  ) {
+    return 'npm install -g resend-cli';
+  }
+
+  if (/\/(Cellar|homebrew)\//i.test(execPath)) {
+    return 'brew update && brew upgrade resend';
+  }
+
+  if (/[/\\]\.resend[/\\]bin[/\\]/.test(execPath)) {
+    if (process.platform === 'win32') {
+      return 'irm https://resend.com/install.ps1 | iex';
+    }
+    return 'curl -fsSL https://resend.com/install.sh | bash';
+  }
+
+  return 'https://github.com/resend/resend-cli/releases/latest';
+};
+
+export const detectInstallMethodName = (): string => {
   const full = detectInstallMethod();
   if (full.startsWith('npm')) {
     return 'npm';
@@ -108,41 +180,9 @@ export function detectInstallMethodName(): string {
     return 'install-script';
   }
   return 'manual';
-}
+};
 
-export function detectInstallMethod(): string {
-  const execPath = process.execPath || process.argv[0] || '';
-  const scriptPath = process.argv[1] || '';
-
-  // npm / npx global install — check first because npm_execpath and
-  // the script path inside node_modules are the most reliable signals,
-  // even when Node itself was installed via Homebrew.
-  if (
-    process.env.npm_execpath ||
-    /node_modules/.test(scriptPath) ||
-    /node_modules/.test(execPath)
-  ) {
-    return 'npm install -g resend-cli';
-  }
-
-  // Homebrew (direct tap install, not npm-via-brew)
-  if (/\/(Cellar|homebrew)\//i.test(execPath)) {
-    return 'brew update && brew upgrade resend';
-  }
-
-  // Install script (default install location ~/.resend/bin/)
-  if (/[/\\]\.resend[/\\]bin[/\\]/.test(execPath)) {
-    if (process.platform === 'win32') {
-      return 'irm https://resend.com/install.ps1 | iex';
-    }
-    return 'curl -fsSL https://resend.com/install.sh | bash';
-  }
-
-  // Unknown — likely a manual download from GitHub Releases
-  return 'https://github.com/resend/resend-cli/releases/latest';
-}
-
-function formatNotice(latestVersion: string): string {
+const formatNotice = (latestVersion: string): string => {
   const upgrade = detectInstallMethod();
   const isUrl = upgrade.startsWith('http');
 
@@ -158,23 +198,17 @@ function formatNotice(latestVersion: string): string {
   ];
 
   if (process.platform === 'win32') {
-    lines.push(
+    return [
+      ...lines,
       `${dim}Or download from: ${cyan}https://github.com/resend/resend-cli/releases/latest${reset}`,
-    );
+      '',
+    ].join('\n');
   }
 
-  lines.push('');
-  return lines.join('\n');
-}
+  return [...lines, ''].join('\n');
+};
 
-/**
- * Check for updates and print a notice to stderr if one is available.
- * Designed to be called after the main command completes — never blocks
- * or throws.
- */
-export async function checkForUpdates(
-  opts?: UpdateCheckOptions,
-): Promise<void> {
+export const checkForUpdates = (opts?: UpdateCheckOptions): void => {
   if (shouldSkipCheck(opts)) {
     return;
   }
@@ -182,7 +216,6 @@ export async function checkForUpdates(
   const state = readState();
   const now = Date.now();
 
-  // If we have a cached check that's still fresh, just use it
   if (state && now - state.lastChecked < CHECK_INTERVAL_MS) {
     if (isNewer(VERSION, state.latestVersion)) {
       process.stderr.write(formatNotice(state.latestVersion));
@@ -190,15 +223,9 @@ export async function checkForUpdates(
     return;
   }
 
-  // Stale or missing — fetch in the background
-  const latest = await fetchLatestVersion();
-  if (!latest) {
-    return;
-  }
+  spawnBackgroundRefresh();
 
-  writeState({ lastChecked: now, latestVersion: latest });
-
-  if (isNewer(VERSION, latest)) {
-    process.stderr.write(formatNotice(latest));
+  if (state && isNewer(VERSION, state.latestVersion)) {
+    process.stderr.write(formatNotice(state.latestVersion));
   }
-}
+};
