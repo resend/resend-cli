@@ -6,6 +6,7 @@ import type { GlobalOpts } from '../../../lib/client';
 import { requireClient } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { errorMessage, outputError } from '../../../lib/output';
+import { safeTerminalText } from '../../../lib/safe-terminal-text';
 import { createSpinner } from '../../../lib/spinner';
 import { isInteractive } from '../../../lib/tty';
 
@@ -19,14 +20,15 @@ function displayEmail(email: ListReceivingEmail, jsonMode: boolean): void {
   if (jsonMode) {
     console.log(JSON.stringify(email));
   } else {
-    const to = email.to.join(', ');
+    const to = email.to.map(safeTerminalText).join(', ');
     const ts = pc.dim(`[${timestamp()}]`);
+    const rawSubject = safeTerminalText(email.subject);
     const subject =
-      email.subject.length > 50
-        ? `${email.subject.slice(0, 47)}...`
-        : email.subject;
+      rawSubject.length > 50 ? `${rawSubject.slice(0, 47)}...` : rawSubject;
+    const from = safeTerminalText(email.from);
+    const id = safeTerminalText(email.id);
     process.stderr.write(
-      `${ts} ${email.from} -> ${to}  ${pc.bold(`"${subject}"`)}  ${pc.dim(email.id)}\n`,
+      `${ts} ${from} -> ${to}  ${pc.bold(`"${subject}"`)}  ${pc.dim(id)}\n`,
     );
   }
 }
