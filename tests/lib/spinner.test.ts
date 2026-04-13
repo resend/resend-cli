@@ -190,7 +190,6 @@ describe('withSpinner retry on rate_limit_exceeded', () => {
   });
 
   test('exits with error when request times out', async () => {
-    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     vi.spyOn(timeoutModule, 'withTimeout').mockRejectedValue(
       new Error('Request timed out after 30s'),
     );
@@ -209,9 +208,8 @@ describe('withSpinner retry on rate_limit_exceeded', () => {
       expect((err as ExitError).code).toBe(1);
     }
     expect(threw).toBe(true);
-    const logOutput = logSpy.mock.calls.flat().join(' ');
-    expect(logOutput).toContain('timed out');
-    logSpy.mockRestore();
+    const errOutput = errorSpy.mock.calls.flat().join(' ');
+    expect(errOutput).toContain('timed out');
   });
 });
 
