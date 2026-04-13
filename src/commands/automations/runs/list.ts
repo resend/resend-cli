@@ -56,7 +56,9 @@ export const listAutomationRunsCommand = new Command('list')
           resend.automations.runs.list({
             automationId,
             ...paginationOpts,
-            ...(opts.status ? { status: opts.status } : {}),
+            ...(opts.status
+              ? { status: opts.status as Parameters<typeof resend.automations.runs.list>[0]['status'] }
+              : {}),
           }),
         onInteractive: (list) => {
           const rows = list.data.map((r) => [
