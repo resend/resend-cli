@@ -8,7 +8,8 @@ import {
   printPaginationHint,
 } from '../../../lib/pagination';
 import { pickId } from '../../../lib/prompts';
-import { receivedEmailPickerConfig, renderAttachmentsTable } from './utils';
+import { renderAttachmentsTable } from '../utils';
+import { receivedEmailPickerConfig } from './utils';
 
 export const listAttachmentsCommand = new Command('attachments')
   .description('List attachments on a received (inbound) email')
