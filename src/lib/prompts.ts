@@ -5,6 +5,7 @@ import type { GlobalOpts } from './client';
 import { requireClient } from './client';
 import { renameProfileAsync, validateProfileName } from './config';
 import { errorMessage, outputError } from './output';
+import { sanitizeTerminalText } from './sanitize-terminal-text';
 import { createSpinner } from './spinner';
 import { isInteractive } from './tty';
 
@@ -357,8 +358,8 @@ export async function pickItem<T extends { id: string }>(
     const options: { value: string; label: string; hint?: string }[] =
       itemOptions.map(({ item, label, hint }) => ({
         value: item.id,
-        label,
-        hint,
+        label: sanitizeTerminalText(label),
+        ...(hint && { hint: sanitizeTerminalText(hint) }),
       }));
 
     if (optional) {
