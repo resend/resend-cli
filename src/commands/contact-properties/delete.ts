@@ -2,7 +2,7 @@ import { Command } from '@commander-js/extra-typings';
 import { runDelete } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
-import { pickId } from '../../lib/prompts';
+import { pickItem } from '../../lib/prompts';
 import { contactPropertyPickerConfig } from './utils';
 
 export const deleteContactPropertyCommand = new Command('delete')
@@ -31,16 +31,20 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
   )
   .action(async (idArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const id = await pickId(idArg, contactPropertyPickerConfig, globalOpts);
+    const picked = await pickItem(
+      idArg,
+      contactPropertyPickerConfig,
+      globalOpts,
+    );
     await runDelete(
-      id,
+      picked.id,
       !!opts.yes,
       {
-        confirmMessage: `Delete contact property "${id}"?\nThis will remove this property from ALL contacts permanently.`,
+        confirmMessage: `Delete contact property "${picked.label}"?\nID: ${picked.id}\nThis will remove this property from ALL contacts permanently.`,
         loading: 'Deleting contact property...',
         object: 'contact_property',
         successMsg: 'Contact property deleted',
-        sdkCall: (resend) => resend.contactProperties.remove(id),
+        sdkCall: (resend) => resend.contactProperties.remove(picked.id),
       },
       globalOpts,
     );

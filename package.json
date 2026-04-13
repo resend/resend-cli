@@ -1,6 +1,6 @@
 {
   "name": "resend-cli",
-  "version": "1.8.0",
+  "version": "1.10.0",
   "description": "The official CLI for Resend",
   "license": "MIT",
   "repository": {
@@ -37,7 +37,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "vitest run --config vitest.config.e2e.ts",
-    "prepack": "pnpm build && node scripts/verify-bundle.mjs"
+    "prepack": "pnpm install && pnpm build && node scripts/verify-bundle.mjs"
   },
   "dependencies": {
     "@clack/prompts": "1.2.0",
@@ -45,7 +45,7 @@
     "commander": "14.0.3",
     "esbuild": "0.28.0",
     "picocolors": "1.1.1",
-    "resend": "6.10.0"
+    "resend": "6.11.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

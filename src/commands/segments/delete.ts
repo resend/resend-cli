@@ -2,7 +2,7 @@ import { Command } from '@commander-js/extra-typings';
 import { runDelete } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
-import { pickId } from '../../lib/prompts';
+import { pickItem } from '../../lib/prompts';
 import { segmentPickerConfig } from './utils';
 
 export const deleteSegmentCommand = new Command('delete')
@@ -30,16 +30,16 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
   )
   .action(async (idArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const id = await pickId(idArg, segmentPickerConfig, globalOpts);
+    const picked = await pickItem(idArg, segmentPickerConfig, globalOpts);
     await runDelete(
-      id,
+      picked.id,
       !!opts.yes,
       {
-        confirmMessage: `Delete segment ${id}?\nContacts will not be deleted, but broadcasts targeting this segment will no longer work.`,
+        confirmMessage: `Delete segment "${picked.label}"?\nID: ${picked.id}\nContacts will not be deleted, but broadcasts targeting this segment will no longer work.`,
         loading: 'Deleting segment...',
         object: 'segment',
         successMsg: 'Segment deleted',
-        sdkCall: (resend) => resend.segments.remove(id),
+        sdkCall: (resend) => resend.segments.remove(picked.id),
       },
       globalOpts,
     );

@@ -114,7 +114,7 @@ export async function requireText(
   error: { message: string; code: string },
   globalOpts: GlobalOpts,
 ): Promise<string> {
-  if (value) {
+  if (value !== undefined) {
     return value;
   }
 
@@ -148,7 +148,7 @@ export async function requireSelect<V extends string>(
   error: { message: string; code: string },
   globalOpts: GlobalOpts,
 ): Promise<V> {
-  if (value) {
+  if (value !== undefined) {
     return value;
   }
 
@@ -250,25 +250,27 @@ export type PickerConfig<T extends { id: string }> = {
   filter?: (item: T) => boolean;
 };
 
-export async function pickId<T extends { id: string }>(
+export type PickedItem = { readonly id: string; readonly label: string };
+
+export async function pickItem<T extends { id: string }>(
   id: string | undefined,
   config: PickerConfig<T>,
   globalOpts: GlobalOpts,
-): Promise<string>;
-export async function pickId<T extends { id: string }>(
+): Promise<PickedItem>;
+export async function pickItem<T extends { id: string }>(
   id: string | undefined,
   config: PickerConfig<T>,
   globalOpts: GlobalOpts,
   opts: { optional: true },
-): Promise<string | undefined>;
-export async function pickId<T extends { id: string }>(
+): Promise<PickedItem | undefined>;
+export async function pickItem<T extends { id: string }>(
   id: string | undefined,
   config: PickerConfig<T>,
   globalOpts: GlobalOpts,
   opts?: { optional?: boolean },
-): Promise<string | undefined> {
+): Promise<PickedItem | undefined> {
   if (id) {
-    return id;
+    return { id, label: id };
   }
 
   const optional = opts?.optional ?? false;
@@ -288,7 +290,7 @@ export async function pickId<T extends { id: string }>(
   const fetchPage = async (
     cursors: readonly (string | undefined)[],
     pageIndex: number,
-  ): Promise<string | undefined> => {
+  ): Promise<PickedItem | undefined> => {
     const cursor = cursors[pageIndex];
     const spinner = createSpinner(
       pageIndex === 0
@@ -354,14 +356,20 @@ export async function pickId<T extends { id: string }>(
       p.log.info(`No matching ${config.resourcePlural} on this page.`);
     }
 
+    const itemOptions = displayItems.map((item) => ({
+      item,
+      ...config.display(item),
+    }));
+
     const options: { value: string; label: string; hint?: string }[] = [
       ...(pageIndex > 0
         ? [{ value: PREV_PAGE, label: '\u2190 Previous page' }]
         : []),
       ...(optional ? [{ value: NONE, label: 'None' }] : []),
-      ...displayItems.map((item) => ({
+      ...itemOptions.map(({ item, label, hint }) => ({
         value: item.id,
-        ...config.display(item),
+        label,
+        hint,
       })),
       ...(hasMore ? [{ value: NEXT_PAGE, label: 'Next page \u2192' }] : []),
     ];
@@ -387,8 +395,30 @@ export async function pickId<T extends { id: string }>(
       return fetchPage(nextCursors, pageIndex - 1);
     }
 
-    return selected;
+    const match = itemOptions.find(({ item }) => item.id === selected);
+    return { id: selected, label: match?.label ?? selected };
   };
 
   return fetchPage([undefined], 0);
+}
+
+export async function pickId<T extends { id: string }>(
+  id: string | undefined,
+  config: PickerConfig<T>,
+  globalOpts: GlobalOpts,
+): Promise<string>;
+export async function pickId<T extends { id: string }>(
+  id: string | undefined,
+  config: PickerConfig<T>,
+  globalOpts: GlobalOpts,
+  opts: { optional: true },
+): Promise<string | undefined>;
+export async function pickId<T extends { id: string }>(
+  id: string | undefined,
+  config: PickerConfig<T>,
+  globalOpts: GlobalOpts,
+  opts?: { optional?: boolean },
+): Promise<string | undefined> {
+  const result = await pickItem(id, config, globalOpts, opts as never);
+  return result?.id;
 }
