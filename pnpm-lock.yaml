@@ -24,8 +24,8 @@ importers:
         specifier: 1.1.1
         version: 1.1.1
       resend:
-        specifier: 6.11.0-canary.1
-        version: 6.11.0-canary.1
+        specifier: 6.11.0
+        version: 6.11.0
     devDependencies:
       '@biomejs/biome':
         specifier: 2.4.11
@@ -1206,8 +1206,8 @@ packages:
     resolution: {integrity: sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q==}
     engines: {node: '>=0.10.0'}
 
-  resend@6.11.0-canary.1:
-    resolution: {integrity: sha512-sdCDdxWcOH8E4HOfFNx1RqCSN38/OO8f3JRy0uZwekwPisxZEg38Xi+XBmKaBhTxrzyeiCS2HqZwLtmbMvIaRQ==}
+  resend@6.11.0:
+    resolution: {integrity: sha512-S9gxOccfwc+E6Cr3q28Gu8NkiIjYlYPlj9rqk4zkIuzlEoh8sWu/IvJSg7U7t+o3g0Ov2IOCzcneUaCi/M/WdQ==}
     engines: {node: '>=20'}
     peerDependencies:
       '@react-email/render': '*'
@@ -2414,7 +2414,7 @@ snapshots:
 
   require-directory@2.1.1: {}
 
-  resend@6.11.0-canary.1:
+  resend@6.11.0:
     dependencies:
       postal-mime: 2.7.4
       svix: 1.90.0
