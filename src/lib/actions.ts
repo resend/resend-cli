@@ -4,6 +4,7 @@ import { requireClient } from './client';
 import type { ApiKeyPermission } from './config';
 import { outputResult } from './output';
 import { confirmDelete } from './prompts';
+import { deepSanitize } from './safe-terminal-text';
 import { withSpinner } from './spinner';
 import { isInteractive } from './tty';
 
@@ -35,7 +36,7 @@ export async function runGet<T>(
     globalOpts,
   );
   if (!globalOpts.json && isInteractive()) {
-    config.onInteractive(data);
+    config.onInteractive(deepSanitize(data));
   } else {
     outputResult(data, { json: globalOpts.json });
   }
@@ -105,7 +106,7 @@ export async function runCreate<T>(
     globalOpts,
   );
   if (!globalOpts.json && isInteractive()) {
-    config.onInteractive(data);
+    config.onInteractive(deepSanitize(data));
   } else {
     outputResult(data, { json: globalOpts.json });
   }
@@ -170,7 +171,7 @@ export async function runList<T>(
     globalOpts,
   );
   if (!globalOpts.json && isInteractive()) {
-    config.onInteractive(result);
+    config.onInteractive(deepSanitize(result));
   } else {
     outputResult(result, { json: globalOpts.json });
   }

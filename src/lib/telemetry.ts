@@ -116,9 +116,21 @@ export function trackCommand(
 
     const tmpPath = join(
       tmpdir(),
-      `resend-telemetry-${process.pid}-${Date.now()}.json`,
+      `resend-telemetry-${crypto.randomUUID()}.json`,
     );
-    writeFileSync(tmpPath, payload, { mode: 0o600 });
+    const fd = openSync(
+      tmpPath,
+      constants.O_CREAT |
+        constants.O_EXCL |
+        constants.O_WRONLY |
+        (constants.O_NOFOLLOW ?? 0),
+      0o600,
+    );
+    try {
+      writeFileSync(fd, payload);
+    } finally {
+      closeSync(fd);
+    }
 
     const isCompiled = 'pkg' in process;
     const args = isCompiled

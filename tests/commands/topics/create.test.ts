@@ -119,7 +119,7 @@ describe('topics create command', () => {
 
   test('errors with missing_name in non-interactive mode when --name absent', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createTopicCommand } = await import(
@@ -135,7 +135,7 @@ describe('topics create command', () => {
 
   test('does not call SDK when missing_name error is raised', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createTopicCommand } = await import(
@@ -152,7 +152,7 @@ describe('topics create command', () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createTopicCommand } = await import(
@@ -171,7 +171,7 @@ describe('topics create command', () => {
     mockCreate.mockResolvedValueOnce(
       mockSdkError('Topic already exists', 'validation_error'),
     );
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);

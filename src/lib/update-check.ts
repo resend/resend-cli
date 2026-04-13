@@ -73,7 +73,14 @@ export async function fetchLatestVersion(): Promise<string | null> {
   }
 }
 
-function shouldSkipCheck(): boolean {
+export type UpdateCheckOptions = {
+  readonly json?: boolean;
+};
+
+function shouldSkipCheck(opts?: UpdateCheckOptions): boolean {
+  if (opts?.json) {
+    return true;
+  }
   if (process.env.RESEND_NO_UPDATE_NOTIFIER === '1') {
     return true;
   }
@@ -165,8 +172,10 @@ function formatNotice(latestVersion: string): string {
  * Designed to be called after the main command completes — never blocks
  * or throws.
  */
-export async function checkForUpdates(): Promise<void> {
-  if (shouldSkipCheck()) {
+export async function checkForUpdates(
+  opts?: UpdateCheckOptions,
+): Promise<void> {
+  if (shouldSkipCheck(opts)) {
     return;
   }
 
