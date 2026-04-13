@@ -3,7 +3,6 @@ import { runGet } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { pickId } from '../../lib/prompts';
-import { safeTerminalText } from '../../lib/safe-terminal-text';
 import { templatePickerConfig } from './utils';
 
 export const getTemplateCommand = new Command('get')
@@ -30,40 +29,38 @@ export const getTemplateCommand = new Command('get')
         loading: 'Fetching template...',
         sdkCall: (resend) => resend.templates.get(id),
         onInteractive: (data) => {
-          console.log(`${safeTerminalText(data.name)}`);
-          console.log(`ID: ${safeTerminalText(data.id)}`);
-          console.log(`Status: ${safeTerminalText(data.status)}`);
+          console.log(`${data.name}`);
+          console.log(`ID: ${data.id}`);
+          console.log(`Status: ${data.status}`);
           if (data.alias) {
-            console.log(`Alias: ${safeTerminalText(data.alias)}`);
+            console.log(`Alias: ${data.alias}`);
           }
           if (data.subject) {
-            console.log(`Subject: ${safeTerminalText(data.subject)}`);
+            console.log(`Subject: ${data.subject}`);
           }
           if (data.from) {
-            console.log(`From: ${safeTerminalText(data.from)}`);
+            console.log(`From: ${data.from}`);
           }
           if (data.reply_to?.length) {
-            console.log(
-              `Reply-To: ${data.reply_to.map(safeTerminalText).join(', ')}`,
-            );
+            console.log(`Reply-To: ${data.reply_to.join(', ')}`);
           }
           if (data.html) {
             const snippet =
               data.html.length > 200
                 ? `${data.html.slice(0, 197)}...`
                 : data.html;
-            console.log(`HTML: ${safeTerminalText(snippet)}`);
+            console.log(`HTML: ${snippet}`);
           }
           if (data.variables?.length) {
             console.log(
-              `Variables: ${data.variables.map((v) => safeTerminalText(v.key)).join(', ')}`,
+              `Variables: ${data.variables.map((v) => v.key).join(', ')}`,
             );
           }
           if (data.published_at) {
-            console.log(`Published: ${safeTerminalText(data.published_at)}`);
+            console.log(`Published: ${data.published_at}`);
           }
-          console.log(`Created: ${safeTerminalText(data.created_at)}`);
-          console.log(`Updated: ${safeTerminalText(data.updated_at)}`);
+          console.log(`Created: ${data.created_at}`);
+          console.log(`Updated: ${data.updated_at}`);
         },
       },
       globalOpts,

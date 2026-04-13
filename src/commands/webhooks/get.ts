@@ -3,7 +3,6 @@ import { runGet } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { pickId } from '../../lib/prompts';
-import { safeTerminalText } from '../../lib/safe-terminal-text';
 import { webhookPickerConfig } from './utils';
 
 export const getWebhookCommand = new Command('get')
@@ -30,13 +29,11 @@ To rotate secrets, delete the webhook and recreate it.`,
         loading: 'Fetching webhook...',
         sdkCall: (resend) => resend.webhooks.get(id),
         onInteractive: (d) => {
-          console.log(`${safeTerminalText(d.endpoint)}`);
-          console.log(`ID:      ${safeTerminalText(d.id)}`);
-          console.log(`Status:  ${safeTerminalText(d.status)}`);
-          console.log(
-            `Events:  ${(d.events ?? []).map(safeTerminalText).join(', ') || '(none)'}`,
-          );
-          console.log(`Created: ${safeTerminalText(d.created_at)}`);
+          console.log(`${d.endpoint}`);
+          console.log(`ID:      ${d.id}`);
+          console.log(`Status:  ${d.status}`);
+          console.log(`Events:  ${(d.events ?? []).join(', ') || '(none)'}`);
+          console.log(`Created: ${d.created_at}`);
         },
       },
       globalOpts,

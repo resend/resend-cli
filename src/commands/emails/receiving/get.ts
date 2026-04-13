@@ -3,7 +3,6 @@ import { runGet } from '../../../lib/actions';
 import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { pickId } from '../../../lib/prompts';
-import { safeTerminalText } from '../../../lib/safe-terminal-text';
 import { receivedEmailPickerConfig } from './utils';
 
 export const getReceivingCommand = new Command('get')
@@ -33,10 +32,10 @@ export const getReceivingCommand = new Command('get')
         loading: 'Fetching received email...',
         sdkCall: (resend) => resend.emails.receiving.get(id),
         onInteractive: (data) => {
-          console.log(`From:    ${safeTerminalText(data.from)}`);
-          console.log(`To:      ${data.to.map(safeTerminalText).join(', ')}`);
-          console.log(`Subject: ${safeTerminalText(data.subject)}`);
-          console.log(`Date:    ${safeTerminalText(data.created_at)}`);
+          console.log(`From:    ${data.from}`);
+          console.log(`To:      ${data.to.join(', ')}`);
+          console.log(`Subject: ${data.subject}`);
+          console.log(`Date:    ${data.created_at}`);
           if (data.attachments.length > 0) {
             console.log(`Files:   ${data.attachments.length} attachment(s)`);
           }
@@ -45,7 +44,7 @@ export const getReceivingCommand = new Command('get')
               data.text.length > 200
                 ? `${data.text.slice(0, 197)}...`
                 : data.text;
-            console.log(`${safeTerminalText(snippet)}`);
+            console.log(`${snippet}`);
           } else if (data.html) {
             console.log(
               '\n(HTML body only — use --json to view or pipe to a browser)',

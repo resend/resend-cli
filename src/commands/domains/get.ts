@@ -3,7 +3,6 @@ import { runGet } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { pickId } from '../../lib/prompts';
-import { safeTerminalText } from '../../lib/safe-terminal-text';
 import {
   domainPickerConfig,
   renderDnsRecordsTable,
@@ -35,12 +34,10 @@ export const getDomainCommand = new Command('get')
         loading: 'Fetching domain...',
         sdkCall: (resend) => resend.domains.get(id),
         onInteractive: (d) => {
-          console.log(
-            `${safeTerminalText(d.name)} — ${statusIndicator(d.status)}`,
-          );
-          console.log(`ID: ${safeTerminalText(d.id)}`);
-          console.log(`Region: ${safeTerminalText(d.region)}`);
-          console.log(`Created: ${safeTerminalText(d.created_at)}`);
+          console.log(`${d.name} — ${statusIndicator(d.status)}`);
+          console.log(`ID: ${d.id}`);
+          console.log(`Region: ${d.region}`);
+          console.log(`Created: ${d.created_at}`);
           if (d.records.length > 0) {
             console.log('\nDNS Records:');
             console.log(renderDnsRecordsTable(d.records, d.name));

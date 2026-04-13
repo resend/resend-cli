@@ -3,7 +3,6 @@ import { runGet } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { pickId } from '../../lib/prompts';
-import { safeTerminalText } from '../../lib/safe-terminal-text';
 import { topicPickerConfig } from './utils';
 
 export const getTopicCommand = new Command('get')
@@ -28,15 +27,13 @@ export const getTopicCommand = new Command('get')
         loading: 'Fetching topic...',
         sdkCall: (resend) => resend.topics.get(id),
         onInteractive: (data) => {
-          console.log(`${safeTerminalText(data.name)}`);
-          console.log(`ID: ${safeTerminalText(data.id)}`);
+          console.log(`${data.name}`);
+          console.log(`ID: ${data.id}`);
           if (data.description) {
-            console.log(`Description: ${safeTerminalText(data.description)}`);
+            console.log(`Description: ${data.description}`);
           }
-          console.log(
-            `Default subscription: ${safeTerminalText(data.default_subscription)}`,
-          );
-          console.log(`Created: ${safeTerminalText(data.created_at)}`);
+          console.log(`Default subscription: ${data.default_subscription}`);
+          console.log(`Created: ${data.created_at}`);
         },
       },
       globalOpts,
