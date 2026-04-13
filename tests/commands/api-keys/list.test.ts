@@ -147,7 +147,7 @@ describe('api-keys list command', () => {
 
   it('errors when both after and before cursors are provided', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { listApiKeysCommand } = await import(
