@@ -32,7 +32,11 @@ export function buildPaginationOpts(
       { json: globalOpts.json },
     );
   }
-  return after ? { limit, after } : before ? { limit, before } : { limit };
+  return after !== undefined
+    ? { limit, after }
+    : before !== undefined
+      ? { limit, before }
+      : { limit };
 }
 
 export function printPaginationHint(

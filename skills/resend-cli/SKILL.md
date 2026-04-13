@@ -3,10 +3,11 @@ name: resend-cli
 description: >
   Operate the Resend platform from the terminal — send emails (including React Email
   .tsx templates via --react-email), manage domains, contacts, broadcasts, templates,
-  webhooks, API keys, and logs via the `resend` CLI. Use when the user wants to run
-  Resend commands in the shell, scripts, or CI/CD pipelines, or send/preview React
-  Email templates. Always load this skill before running `resend` commands — it
-  contains the non-interactive flag contract and gotchas that prevent silent failures.
+  webhooks, API keys, logs, automations, and events via the `resend` CLI. Use when the
+  user wants to run Resend commands in the shell, scripts, or CI/CD pipelines, or
+  send/preview React Email templates. Always load this skill before running `resend`
+  commands — it contains the non-interactive flag contract and gotchas that prevent
+  silent failures.
 license: MIT
 metadata:
   author: resend
@@ -21,6 +22,7 @@ references:
   - references/emails.md
   - references/domains.md
   - references/api-keys.md
+  - references/automations.md
   - references/broadcasts.md
   - references/contacts.md
   - references/contact-properties.md
@@ -108,6 +110,8 @@ Auth resolves: `--api-key` flag > `RESEND_API_KEY` env > config file (`resend lo
 | `domains` | create, verify, update, delete, list |
 | `logs` | list, get, open |
 | `api-keys` | create, list, delete |
+| `automations` | create, get, list, update, delete, open, runs |
+| `events` | create, get, list, update, delete, send, open |
 | `broadcasts` | create, send, update, delete, list |
 | `contacts` | create, update, delete, segments, topics |
 | `contact-properties` | create, update, delete, list |
@@ -116,9 +120,11 @@ Auth resolves: `--api-key` flag > `RESEND_API_KEY` env > config file (`resend lo
 | `topics` | create, update, delete, list |
 | `webhooks` | create, update, listen, delete, list |
 | `auth` | login, logout, switch, rename, remove |
-| `whoami` / `doctor` / `update` / `open` | Utility commands |
+| `whoami` / `doctor` / `update` / `open` / `commands` | Utility commands |
 
 Read the matching reference file for detailed flags and output shapes.
+
+**Dry-run:** Only `emails send` and `broadcasts create` support `--dry-run` (payload validation before send/create). They print `{ "dryRun": true, "request": { ... } }` on stdout without calling the API. There is no `--dry-run` on `emails batch`, `broadcasts send`, or other commands yet.
 
 ## Common Mistakes
 
@@ -126,7 +132,7 @@ Read the matching reference file for detailed flags and output shapes.
 |---|---------|-----|
 | 1 | **Forgetting `--yes` on delete commands** | All `delete`/`rm` subcommands require `--yes` in non-interactive mode — otherwise the CLI exits with an error |
 | 2 | **Not saving webhook `signing_secret`** | `webhooks create` shows the secret once only — it cannot be retrieved later. Capture it from command output immediately |
-| 3 | **Omitting `--quiet` in CI** | Without `-q`, spinners and status text leak into stdout. Use `-q` to get clean JSON only |
+| 3 | **Omitting `--quiet` in CI** | Without `-q`, spinners and status text still go to stderr (not stdout). Use `-q` for JSON on stdout with no spinner noise on stderr |
 | 4 | **Using `--scheduled-at` with batch** | Batch sending does not support `scheduled_at` — use single `emails send` instead |
 | 5 | **Expecting `domains list` to include DNS records** | List returns summaries only — use `domains get <id>` for the full `records[]` array |
 | 6 | **Sending a dashboard-created broadcast via CLI** | Only API-created broadcasts can be sent with `broadcasts send` — dashboard broadcasts must be sent from the dashboard |
@@ -178,6 +184,7 @@ resend doctor -q
 - **Defining contact properties** → [references/contact-properties.md](references/contact-properties.md)
 - **Working with templates** → [references/templates.md](references/templates.md)
 - **Viewing API request logs** → [references/logs.md](references/logs.md)
+- **Creating automations or sending events** → [references/automations.md](references/automations.md)
 - **Setting up webhooks or listening for events** → [references/webhooks.md](references/webhooks.md)
 - **Auth, profiles, or health checks** → [references/auth.md](references/auth.md)
 - **Multi-step recipes** (setup, CI/CD, broadcast workflow) → [references/workflows.md](references/workflows.md)

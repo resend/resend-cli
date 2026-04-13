@@ -34,7 +34,12 @@ Permissions:
   sending_access  Send-only access; optionally scope to a domain with --domain-id`,
       output: `  {"id":"<id>","token":"<token>"}
   The token is only returned at creation time and cannot be retrieved again.`,
-      errorCodes: ['auth_error', 'missing_name', 'create_error'],
+      errorCodes: [
+        'auth_error',
+        'missing_name',
+        'invalid_flags',
+        'create_error',
+      ],
       examples: [
         'resend api-keys create --name "Production"',
         'resend api-keys create --name "CI Token" --permission sending_access',
@@ -89,6 +94,17 @@ Permissions:
     }
 
     let domainId = opts.domainId;
+
+    if (domainId !== undefined && permission !== 'sending_access') {
+      outputError(
+        {
+          message: '--domain-id requires --permission sending_access',
+          code: 'invalid_flags',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
     if (!domainId && permission === 'sending_access') {
       domainId = await pickId(undefined, domainPickerConfig, globalOpts, {
         optional: true,
