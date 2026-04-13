@@ -21,6 +21,13 @@ metadata:
         - RESEND_API_KEY
       bins:
         - resend
+    envVars:
+      - name: RESEND_API_KEY
+        required: true
+        description: Resend API key for authenticating CLI commands
+      - name: RESEND_PROFILE
+        required: false
+        description: Named auth profile for multi-account setups
     install:
       - kind: node
         package: resend-cli
