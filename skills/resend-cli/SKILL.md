@@ -135,7 +135,7 @@ Auth resolves: `--api-key` flag > `RESEND_API_KEY` env > config file (`resend lo
 | `domains` | create, verify, update, delete, list |
 | `logs` | list, get, open |
 | `api-keys` | create, list, delete |
-| `automations` | create, get, list, update, delete, open, runs |
+| `automations` | create, get, list, update, delete, stop, open, runs |
 | `events` | create, get, list, update, delete, send, open |
 | `broadcasts` | create, send, update, delete, list |
 | `contacts` | create, update, delete, segments, topics |

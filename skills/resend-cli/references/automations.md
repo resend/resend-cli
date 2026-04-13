@@ -54,6 +54,18 @@ resend automations update <id> --status enabled
 
 ---
 
+## automations stop
+
+```
+resend automations stop <id>
+```
+
+Stops a running automation by setting its status to disabled and cancelling active runs.
+
+Returns `{"object":"automation","id":"<id>","status":"disabled"}`.
+
+---
+
 ## automations delete
 
 | Flag | Type | Required | Description |
