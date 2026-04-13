@@ -6,6 +6,7 @@ import { getAutomationCommand } from './get';
 import { listAutomationsCommand } from './list';
 import { openAutomationCommand } from './open';
 import { automationRunsCommand } from './runs/index';
+import { stopAutomationCommand } from './stop';
 import { updateAutomationCommand } from './update';
 
 export const automationsCommand = new Command('automations')
@@ -21,13 +22,15 @@ Connections define the flow between steps (default, condition_met, condition_not
 Lifecycle:
   1. resend automations create --name "Welcome" --file workflow.json
   2. resend automations update <id> --status enabled
-  3. resend automations runs <id>                        (inspect runs)
-  4. resend automations open <id>                        (view in dashboard)`,
+  3. resend automations stop <id>                        (stop automation)
+  4. resend automations runs <id>                        (inspect runs)
+  5. resend automations open <id>                        (view in dashboard)`,
       examples: [
         'resend automations list',
         'resend automations create --name "Welcome Flow" --file workflow.json',
         'resend automations get <id>',
         'resend automations update <id> --status enabled',
+        'resend automations stop <id>',
         'resend automations delete <id> --yes',
         'resend automations runs <automation-id>',
         'resend automations runs get --automation-id <id> --run-id <id>',
@@ -40,5 +43,6 @@ Lifecycle:
   .addCommand(listAutomationsCommand, { isDefault: true })
   .addCommand(updateAutomationCommand)
   .addCommand(deleteAutomationCommand)
+  .addCommand(stopAutomationCommand)
   .addCommand(openAutomationCommand)
   .addCommand(automationRunsCommand);
