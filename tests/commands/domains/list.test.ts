@@ -138,7 +138,7 @@ describe('domains list command', () => {
 
   test('errors when both after and before cursors are provided', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { listDomainsCommand } = await import(
@@ -171,7 +171,7 @@ describe('domains list command', () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { listDomainsCommand } = await import(
@@ -188,7 +188,7 @@ describe('domains list command', () => {
   test('errors with list_error when SDK returns an error', async () => {
     setNonInteractive();
     mockList.mockResolvedValueOnce(mockSdkError('Unauthorized', 'auth_error'));
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);

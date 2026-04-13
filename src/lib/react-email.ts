@@ -1,4 +1,4 @@
-import { existsSync, rmSync } from 'node:fs';
+import { existsSync, rmSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { GlobalOpts } from './client';
 import { errorMessage, outputError } from './output';
@@ -6,20 +6,26 @@ import { bundleReactEmail } from './react-email-bundler';
 import { renderReactEmail } from './react-email-renderer';
 import { createSpinner } from './spinner';
 
-function cleanupTmpDir(tmpDir: string | undefined) {
+const cleanupTmpDir = (tmpDir: string | undefined) => {
   if (tmpDir) {
     rmSync(tmpDir, { recursive: true, force: true });
   }
-}
+};
 
-/**
- * Bundles and renders a React Email template (.tsx) to an HTML string.
- * Shows spinners for each phase and exits with the appropriate error code on failure.
- */
-export async function buildReactEmailHtml(
+export const buildReactEmailHtml = async (
   templatePath: string,
   globalOpts: GlobalOpts,
-): Promise<string> {
+): Promise<string> => {
+  if (templatePath.trim() === '') {
+    return outputError(
+      {
+        message: '--react-email path cannot be empty',
+        code: 'react_email_build_error',
+      },
+      { json: globalOpts.json },
+    );
+  }
+
   if ('pkg' in process) {
     return outputError(
       {
@@ -36,6 +42,16 @@ export async function buildReactEmailHtml(
     return outputError(
       {
         message: `File not found: ${templatePath}`,
+        code: 'react_email_build_error',
+      },
+      { json: globalOpts.json },
+    );
+  }
+
+  if (!statSync(resolved).isFile()) {
+    return outputError(
+      {
+        message: `--react-email path must be a file, got a directory: ${templatePath}`,
         code: 'react_email_build_error',
       },
       { json: globalOpts.json },
@@ -83,4 +99,4 @@ export async function buildReactEmailHtml(
       { json: globalOpts.json },
     );
   }
-}
+};

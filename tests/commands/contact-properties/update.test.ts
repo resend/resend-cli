@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -24,10 +24,22 @@ const mockUpdate = vi.fn(async () => ({
   error: null,
 }));
 
+const mockGet = vi.fn(async () => ({
+  data: {
+    object: 'contact_property' as const,
+    id: 'b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d',
+    key: 'company_name',
+    type: 'string' as const,
+    fallbackValue: null,
+    createdAt: '2026-01-01T00:00:00.000Z',
+  },
+  error: null,
+}));
+
 vi.mock('resend', () => ({
   Resend: class MockResend {
     constructor(public key: string) {}
-    contactProperties = { update: mockUpdate };
+    contactProperties = { update: mockUpdate, get: mockGet };
   },
 }));
 
@@ -41,6 +53,7 @@ describe('contact-properties update command', () => {
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
     mockUpdate.mockClear();
+    mockGet.mockClear();
   });
 
   afterEach(() => {
@@ -54,7 +67,7 @@ describe('contact-properties update command', () => {
     exitSpy = undefined;
   });
 
-  test('updates property fallback value', async () => {
+  it('updates property fallback value', async () => {
     spies = setupOutputSpies();
 
     const { updateContactPropertyCommand } = await import(
@@ -71,7 +84,7 @@ describe('contact-properties update command', () => {
     expect(args.fallbackValue).toBe('Acme Corp');
   });
 
-  test('clears fallback value with --clear-fallback-value', async () => {
+  it('clears fallback value with --clear-fallback-value', async () => {
     spies = setupOutputSpies();
 
     const { updateContactPropertyCommand } = await import(
@@ -87,9 +100,9 @@ describe('contact-properties update command', () => {
     expect(args.fallbackValue).toBeNull();
   });
 
-  test('errors with conflicting_flags when both --fallback-value and --clear-fallback-value are given', async () => {
+  it('errors with conflicting_flags when both --fallback-value and --clear-fallback-value are given', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { updateContactPropertyCommand } = await import(
@@ -111,7 +124,7 @@ describe('contact-properties update command', () => {
     expect(output).toContain('conflicting_flags');
   });
 
-  test('outputs JSON result when non-interactive', async () => {
+  it('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { updateContactPropertyCommand } = await import(
@@ -128,9 +141,9 @@ describe('contact-properties update command', () => {
     expect(parsed.id).toBe('b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d');
   });
 
-  test('errors with no_changes when no flags are provided', async () => {
+  it('errors with no_changes when no flags are provided', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { updateContactPropertyCommand } = await import(
@@ -149,9 +162,9 @@ describe('contact-properties update command', () => {
     expect(output).toContain('no_changes');
   });
 
-  test('does not call SDK when no_changes error is raised', async () => {
+  it('does not call SDK when no_changes error is raised', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { updateContactPropertyCommand } = await import(
@@ -169,11 +182,11 @@ describe('contact-properties update command', () => {
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { updateContactPropertyCommand } = await import(
@@ -190,12 +203,12 @@ describe('contact-properties update command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with update_error when SDK returns an error', async () => {
+  it('errors with update_error when SDK returns an error', async () => {
     setNonInteractive();
     mockUpdate.mockResolvedValueOnce(
       mockSdkError('Property not found', 'not_found'),
     );
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);
@@ -213,5 +226,96 @@ describe('contact-properties update command', () => {
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('update_error');
+  });
+
+  it('coerces fallback-value to number for number-type properties', async () => {
+    spies = setupOutputSpies();
+    mockGet.mockResolvedValueOnce({
+      data: {
+        object: 'contact_property' as const,
+        id: 'b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d',
+        key: 'score',
+        type: 'number' as const,
+        fallbackValue: 0,
+        createdAt: '2026-01-01T00:00:00.000Z',
+      },
+      error: null,
+    });
+
+    const { updateContactPropertyCommand } = await import(
+      '../../../src/commands/contact-properties/update'
+    );
+    await updateContactPropertyCommand.parseAsync(
+      ['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d', '--fallback-value', '42'],
+      { from: 'user' },
+    );
+
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
+    const args = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.fallbackValue).toBe(42);
+  });
+
+  it('keeps fallback-value as string for string-type properties', async () => {
+    spies = setupOutputSpies();
+    mockGet.mockResolvedValueOnce({
+      data: {
+        object: 'contact_property' as const,
+        id: 'b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d',
+        key: 'company_name',
+        type: 'string' as const,
+        fallbackValue: null,
+        createdAt: '2026-01-01T00:00:00.000Z',
+      },
+      error: null,
+    });
+
+    const { updateContactPropertyCommand } = await import(
+      '../../../src/commands/contact-properties/update'
+    );
+    await updateContactPropertyCommand.parseAsync(
+      ['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d', '--fallback-value', 'Acme Corp'],
+      { from: 'user' },
+    );
+
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
+    const args = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.fallbackValue).toBe('Acme Corp');
+  });
+
+  it('errors with invalid_fallback_value when number-type gets a non-numeric fallback', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
+    exitSpy = mockExitThrow();
+    mockGet.mockResolvedValueOnce({
+      data: {
+        object: 'contact_property' as const,
+        id: 'b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d',
+        key: 'score',
+        type: 'number' as const,
+        fallbackValue: 0,
+        createdAt: '2026-01-01T00:00:00.000Z',
+      },
+      error: null,
+    });
+
+    const { updateContactPropertyCommand } = await import(
+      '../../../src/commands/contact-properties/update'
+    );
+    await expectExit1(() =>
+      updateContactPropertyCommand.parseAsync(
+        [
+          'b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d',
+          '--fallback-value',
+          'not-a-number',
+        ],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_fallback_value');
   });
 });

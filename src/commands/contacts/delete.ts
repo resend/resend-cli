@@ -2,7 +2,7 @@ import { Command } from '@commander-js/extra-typings';
 import { runDelete } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
-import { pickId } from '../../lib/prompts';
+import { pickItem } from '../../lib/prompts';
 import { contactPickerConfig } from './utils';
 
 export const deleteContactCommand = new Command('delete')
@@ -32,16 +32,16 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
   )
   .action(async (idArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const id = await pickId(idArg, contactPickerConfig, globalOpts);
+    const picked = await pickItem(idArg, contactPickerConfig, globalOpts);
     await runDelete(
-      id,
+      picked.id,
       !!opts.yes,
       {
-        confirmMessage: `Delete contact ${id}?\nThis cannot be undone.`,
+        confirmMessage: `Delete contact "${picked.label}"?\nID: ${picked.id}\nThis cannot be undone.`,
         loading: 'Deleting contact...',
         object: 'contact',
         successMsg: 'Contact deleted',
-        sdkCall: (resend) => resend.contacts.remove(id),
+        sdkCall: (resend) => resend.contacts.remove(picked.id),
       },
       globalOpts,
     );
