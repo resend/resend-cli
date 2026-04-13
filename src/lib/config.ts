@@ -421,7 +421,15 @@ export async function removeApiKeyAsync(profileName?: string): Promise<string> {
     creds?.active_profile ||
     'default';
 
-  if (creds?.storage === 'secure_storage') {
+  if (!creds?.profiles[profile]) {
+    throw new Error(
+      creds
+        ? `Profile "${profile}" not found. Available profiles: ${Object.keys(creds.profiles).join(', ')}`
+        : 'No credentials file found.',
+    );
+  }
+
+  if (creds.storage === 'secure_storage') {
     const backend = await getCredentialBackend();
     if (backend.isSecure) {
       const deleted = await backend.delete(SERVICE_NAME, profile);
@@ -476,9 +484,11 @@ export async function renameProfileAsync(
         await backend.set(SERVICE_NAME, newName, key);
         const deleted = await backend.delete(SERVICE_NAME, oldName);
         if (!deleted) {
-          await backend.delete(SERVICE_NAME, newName);
+          const rolledBack = await backend.delete(SERVICE_NAME, newName);
           throw new Error(
-            `Failed to remove old credential "${oldName}" from ${backend.name} during rename. The rename has been rolled back.`,
+            rolledBack
+              ? `Failed to remove old credential "${oldName}" from ${backend.name} during rename. The rename has been rolled back.`
+              : `Failed to remove old credential "${oldName}" from ${backend.name} during rename. Rollback also failed — credential "${newName}" may still exist in secure storage.`,
           );
         }
       }
