@@ -188,7 +188,7 @@ describe('webhooks create command', () => {
 
   test('errors with missing_endpoint in non-interactive mode when --endpoint absent', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createWebhookCommand } = await import(
@@ -206,7 +206,7 @@ describe('webhooks create command', () => {
 
   test('errors with missing_events in non-interactive mode when --events absent', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createWebhookCommand } = await import(
@@ -232,7 +232,7 @@ describe('webhooks create command', () => {
       value: true,
       writable: true,
     });
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { Command } = await import('@commander-js/extra-typings');
@@ -261,7 +261,7 @@ describe('webhooks create command', () => {
 
   test('does not call SDK when missing_endpoint error is raised', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createWebhookCommand } = await import(
@@ -280,7 +280,7 @@ describe('webhooks create command', () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { createWebhookCommand } = await import(
@@ -307,7 +307,7 @@ describe('webhooks create command', () => {
     mockCreate.mockResolvedValueOnce(
       mockSdkError('Invalid endpoint', 'validation_error'),
     );
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);

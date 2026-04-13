@@ -20,7 +20,7 @@ function setTTY(value: boolean | undefined) {
 }
 
 function setupSpies() {
-  errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+  errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
   exitSpy = mockExitThrow();
 }
 

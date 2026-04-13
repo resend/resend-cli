@@ -1,15 +1,17 @@
 import { Command } from '@commander-js/extra-typings';
+import { runGet } from '../../../lib/actions';
 import type { GlobalOpts } from '../../../lib/client';
-import { requireClient } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
-import { outputResult } from '../../../lib/output';
-import { withSpinner } from '../../../lib/spinner';
-import { isInteractive } from '../../../lib/tty';
+import { pickId } from '../../../lib/prompts';
+import {
+  receivedAttachmentPickerConfig,
+  receivedEmailPickerConfig,
+} from './utils';
 
 export const getAttachmentCommand = new Command('attachment')
   .description('Retrieve a single attachment from a received (inbound) email')
-  .argument('<emailId>', 'Received email UUID')
-  .argument('<attachmentId>', 'Attachment UUID')
+  .argument('[emailId]', 'Received email UUID')
+  .argument('[attachmentId]', 'Attachment UUID')
   .addHelpText(
     'after',
     buildHelpText({
@@ -24,28 +26,36 @@ export const getAttachmentCommand = new Command('attachment')
       ],
     }),
   )
-  .action(async (emailId, attachmentId, _opts, cmd) => {
+  .action(async (emailIdArg, attachmentIdArg, _opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const resend = await requireClient(globalOpts);
-
-    const data = await withSpinner(
-      'Fetching attachment...',
-      () =>
-        resend.emails.receiving.attachments.get({ emailId, id: attachmentId }),
-      'fetch_error',
+    const emailId = await pickId(
+      emailIdArg,
+      receivedEmailPickerConfig,
       globalOpts,
     );
-
-    if (!globalOpts.json && isInteractive()) {
-      const d = data;
-      console.log(`${d.filename ?? '(unnamed)'}`);
-      console.log(`ID:           ${d.id}`);
-      console.log(`Content-Type: ${d.content_type}`);
-      console.log(`Size:         ${d.size} bytes`);
-      console.log(`Disposition:  ${d.content_disposition}`);
-      console.log(`Download URL: ${d.download_url}`);
-      console.log(`Expires:      ${d.expires_at}`);
-    } else {
-      outputResult(data, { json: globalOpts.json });
-    }
+    const attachmentId = await pickId(
+      attachmentIdArg,
+      receivedAttachmentPickerConfig(emailId),
+      globalOpts,
+    );
+    await runGet(
+      {
+        loading: 'Fetching attachment...',
+        sdkCall: (resend) =>
+          resend.emails.receiving.attachments.get({
+            emailId,
+            id: attachmentId,
+          }),
+        onInteractive: (data) => {
+          console.log(`${data.filename ?? '(unnamed)'}`);
+          console.log(`ID:           ${data.id}`);
+          console.log(`Content-Type: ${data.content_type}`);
+          console.log(`Size:         ${data.size} bytes`);
+          console.log(`Disposition:  ${data.content_disposition}`);
+          console.log(`Download URL: ${data.download_url}`);
+          console.log(`Expires:      ${data.expires_at}`);
+        },
+      },
+      globalOpts,
+    );
   });

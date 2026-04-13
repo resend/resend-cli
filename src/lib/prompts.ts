@@ -114,7 +114,7 @@ export async function requireText(
   error: { message: string; code: string },
   globalOpts: GlobalOpts,
 ): Promise<string> {
-  if (value) {
+  if (value !== undefined) {
     return value;
   }
 
@@ -148,7 +148,7 @@ export async function requireSelect<V extends string>(
   error: { message: string; code: string },
   globalOpts: GlobalOpts,
 ): Promise<V> {
-  if (value) {
+  if (value !== undefined) {
     return value;
   }
 
