@@ -11,8 +11,8 @@ description: >
 license: MIT
 metadata:
   author: resend
-  version: "1.9.0"
-  homepage: https://resend.com
+  version: "1.10.0"
+  homepage: https://resend.com/docs/cli-agents
   source: https://github.com/resend/resend-cli
   openclaw:
     primaryEnv: RESEND_API_KEY
@@ -27,7 +27,6 @@ metadata:
         bins: [resend]
         label: Resend CLI
     links:
-      homepage: https://resend.com
       repository: https://github.com/resend/resend-cli
       documentation: https://resend.com/docs/cli
 inputs:
