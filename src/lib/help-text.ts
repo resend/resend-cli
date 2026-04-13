@@ -30,7 +30,7 @@ export function buildHelpText(opts: HelpTextOptions): string {
   }
   if (opts.errorCodes != null) {
     parts.push(
-      `Errors (exit code 1):\n${ERROR_ENVELOPE}\n  Codes: ${opts.errorCodes.join(' | ')}`,
+      `Errors (exit code 1, JSON on stderr when using --json or non-TTY):\n${ERROR_ENVELOPE}\n  Codes: ${opts.errorCodes.join(' | ')}`,
     );
   }
   parts.push(`Examples:\n${opts.examples.map((e) => `  $ ${e}`).join('\n')}`);
