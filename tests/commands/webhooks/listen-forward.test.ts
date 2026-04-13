@@ -47,7 +47,6 @@ const startTargetServer = (
 
 describe('webhook listen --forward-to status propagation', () => {
   const restoreEnv = captureTestEnv();
-  let listenerAbort: AbortController | undefined;
   let targetServer: Server | undefined;
 
   beforeEach(() => {
@@ -56,10 +55,16 @@ describe('webhook listen --forward-to status propagation', () => {
     mockRemove.mockClear();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     restoreEnv();
-    listenerAbort?.abort();
-    listenerAbort = undefined;
+
+    const exitStub = vi
+      .spyOn(process, 'exit')
+      .mockImplementation((() => {}) as never);
+    process.emit('SIGTERM', 'SIGTERM');
+    await new Promise((r) => setTimeout(r, 200));
+    exitStub.mockRestore();
+
     targetServer?.close();
     targetServer = undefined;
     process.removeAllListeners('SIGINT');
@@ -75,8 +80,6 @@ describe('webhook listen --forward-to status propagation', () => {
     );
 
     const listenerPort = 10_000 + Math.floor(Math.random() * 50_000);
-
-    listenerAbort = new AbortController();
 
     listenWebhookCommand
       .parseAsync(
@@ -148,8 +151,6 @@ describe('webhook listen --forward-to status propagation', () => {
     );
 
     const listenerPort = 10_000 + Math.floor(Math.random() * 50_000);
-
-    listenerAbort = new AbortController();
 
     listenWebhookCommand
       .parseAsync(
