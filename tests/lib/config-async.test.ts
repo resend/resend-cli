@@ -133,6 +133,7 @@ describe('resolveApiKeyAsync', () => {
       source: 'config',
       profile: 'default',
     });
+    expect(mockBackend.set).not.toHaveBeenCalled();
   });
 
   test('returns null when keychain has no entry', async () => {
@@ -166,6 +167,43 @@ describe('resolveApiKeyAsync', () => {
     const { resolveApiKeyAsync } = await import('../../src/lib/config');
     const result = await resolveApiKeyAsync();
     expect(result).toBeNull();
+  });
+
+  test('does not auto-migrate plaintext keys to secure storage on read', async () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'default',
+        profiles: { default: { api_key: 're_plaintext_key' } },
+      }),
+    );
+
+    const mockBackend = {
+      get: vi.fn().mockResolvedValue(null),
+      set: vi.fn(),
+      delete: vi.fn(),
+      isAvailable: vi.fn().mockResolvedValue(true),
+      name: 'mock-backend',
+      isSecure: true,
+    };
+
+    vi.resetModules();
+    vi.doMock('../../src/lib/credential-store', () => ({
+      getCredentialBackend: vi.fn().mockResolvedValue(mockBackend),
+      SERVICE_NAME: 'resend-cli',
+      resetCredentialBackend: vi.fn(),
+    }));
+
+    const { resolveApiKeyAsync } = await import('../../src/lib/config');
+    const result = await resolveApiKeyAsync();
+    expect(result).toEqual({
+      key: 're_plaintext_key',
+      source: 'config',
+      profile: 'default',
+    });
+    expect(mockBackend.set).not.toHaveBeenCalled();
   });
 });
 
