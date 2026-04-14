@@ -14,8 +14,19 @@ const parseRetryDelay = (
   if (!value) {
     return undefined;
   }
+
   const seconds = Number(value);
-  return Number.isFinite(seconds) && seconds >= 0 ? seconds : undefined;
+  if (Number.isFinite(seconds) && seconds >= 0) {
+    return seconds;
+  }
+
+  const dateMs = Date.parse(value);
+  if (!Number.isNaN(dateMs)) {
+    const delta = (dateMs - Date.now()) / 1000;
+    return delta > 0 ? delta : 0;
+  }
+
+  return undefined;
 };
 
 const sleep = (ms: number): Promise<void> =>

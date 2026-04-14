@@ -1,7 +1,11 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { withRetry } from '../../src/lib/with-retry';
 
 describe('withRetry', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('returns the response on success', async () => {
     const call = vi.fn().mockResolvedValue({
       data: { id: '1' },
@@ -56,8 +60,6 @@ describe('withRetry', () => {
     const result = await resultPromise;
     expect(result.data).toEqual({ id: '1' });
     expect(call).toHaveBeenCalledTimes(3);
-
-    vi.useRealTimers();
   });
 
   it('stops retrying after max retries', async () => {
@@ -79,8 +81,6 @@ describe('withRetry', () => {
     const result = await resultPromise;
     expect(result.error?.name).toBe('rate_limit_exceeded');
     expect(call).toHaveBeenCalledTimes(4);
-
-    vi.useRealTimers();
   });
 
   it('uses retry-after header when available', async () => {
@@ -108,7 +108,59 @@ describe('withRetry', () => {
     const result = await resultPromise;
     expect(result.data).toEqual({ id: '1' });
     expect(call).toHaveBeenCalledTimes(2);
+  });
 
-    vi.useRealTimers();
+  it('uses retry-after header with HTTP-date value', async () => {
+    vi.useFakeTimers({ now: new Date('2026-04-14T12:00:00Z') });
+
+    const rateLimitError = {
+      data: null,
+      error: { message: 'Rate limited', name: 'rate_limit_exceeded' },
+      headers: { 'retry-after': 'Tue, 14 Apr 2026 12:00:05 GMT' },
+    };
+    const success = {
+      data: { id: '1' },
+      error: null,
+      headers: null,
+    };
+
+    const call = vi
+      .fn()
+      .mockResolvedValueOnce(rateLimitError)
+      .mockResolvedValueOnce(success);
+
+    const resultPromise = withRetry(call);
+    await vi.advanceTimersByTimeAsync(5000);
+
+    const result = await resultPromise;
+    expect(result.data).toEqual({ id: '1' });
+    expect(call).toHaveBeenCalledTimes(2);
+  });
+
+  it('treats past HTTP-date retry-after as zero delay', async () => {
+    vi.useFakeTimers({ now: new Date('2026-04-14T12:00:10Z') });
+
+    const rateLimitError = {
+      data: null,
+      error: { message: 'Rate limited', name: 'rate_limit_exceeded' },
+      headers: { 'retry-after': 'Tue, 14 Apr 2026 12:00:05 GMT' },
+    };
+    const success = {
+      data: { id: '1' },
+      error: null,
+      headers: null,
+    };
+
+    const call = vi
+      .fn()
+      .mockResolvedValueOnce(rateLimitError)
+      .mockResolvedValueOnce(success);
+
+    const resultPromise = withRetry(call);
+    await vi.advanceTimersByTimeAsync(0);
+
+    const result = await resultPromise;
+    expect(result.data).toEqual({ id: '1' });
+    expect(call).toHaveBeenCalledTimes(2);
   });
 });
