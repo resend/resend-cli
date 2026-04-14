@@ -122,7 +122,7 @@ describe('templates update command', () => {
 
   test('errors with no_changes before trying to pick an id', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { updateTemplateCommand } = await import(
@@ -142,7 +142,7 @@ describe('templates update command', () => {
 
   test('errors when --react-email and empty --html are used together', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { updateTemplateCommand } = await import(
@@ -163,7 +163,7 @@ describe('templates update command', () => {
 
   test('errors when empty --html and --html-file are used together', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { updateTemplateCommand } = await import(

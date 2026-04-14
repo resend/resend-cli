@@ -1,4 +1,4 @@
-import { existsSync, rmSync } from 'node:fs';
+import { existsSync, rmSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { GlobalOpts } from './client';
 import { errorMessage, outputError } from './output';
@@ -17,6 +17,16 @@ export const buildReactEmailHtml = async (
   globalOpts: GlobalOpts,
   props: Record<string, unknown> = {},
 ): Promise<string> => {
+  if (templatePath.trim() === '') {
+    return outputError(
+      {
+        message: '--react-email path cannot be empty',
+        code: 'react_email_build_error',
+      },
+      { json: globalOpts.json },
+    );
+  }
+
   if ('pkg' in process) {
     return outputError(
       {
@@ -33,6 +43,16 @@ export const buildReactEmailHtml = async (
     return outputError(
       {
         message: `File not found: ${templatePath}`,
+        code: 'react_email_build_error',
+      },
+      { json: globalOpts.json },
+    );
+  }
+
+  if (!statSync(resolved).isFile()) {
+    return outputError(
+      {
+        message: `--react-email path must be a file, got a directory: ${templatePath}`,
         code: 'react_email_build_error',
       },
       { json: globalOpts.json },
