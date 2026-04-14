@@ -11,7 +11,7 @@ description: >
 license: MIT
 metadata:
   author: resend
-  version: "1.11.0"
+  version: "1.12.0"
   homepage: https://resend.com/docs/cli-agents
   source: https://github.com/resend/resend-cli
   openclaw:
@@ -140,7 +140,7 @@ Auth resolves: `--api-key` flag > `RESEND_API_KEY` env > config file (`resend lo
 | `broadcasts` | create, send, update, delete, list |
 | `contacts` | create, update, delete, segments, topics |
 | `contact-properties` | create, update, delete, list |
-| `segments` | create, get, list, delete |
+| `segments` | create, get, list, delete, contacts |
 | `templates` | create, publish, duplicate, delete, list |
 | `topics` | create, update, delete, list |
 | `webhooks` | create, update, listen, delete, list |
