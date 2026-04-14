@@ -78,11 +78,33 @@ function statusText(code: number): string {
   return map[code] ?? '';
 }
 
-async function forwardPayload(
+const verifyPayload = (
+  resend: Resend,
+  rawBody: string,
+  headers: Record<string, string | undefined>,
+  signingSecret: string,
+): boolean => {
+  try {
+    resend.webhooks.verify({
+      payload: rawBody,
+      headers: {
+        id: headers['svix-id'] ?? '',
+        timestamp: headers['svix-timestamp'] ?? '',
+        signature: headers['svix-signature'] ?? '',
+      },
+      webhookSecret: signingSecret,
+    });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const forwardPayload = async (
   forwardTo: string,
   rawBody: string,
   headers: Record<string, string | undefined>,
-): Promise<{ status: number }> {
+): Promise<{ status: number }> => {
   const forwardHeaders: Record<string, string> = {
     'content-type': 'application/json',
   };
@@ -100,7 +122,7 @@ async function forwardPayload(
     body: rawBody,
   });
   return { status: resp.status };
-}
+};
 
 function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -130,6 +152,10 @@ export const listenWebhookCommand = new Command('listen')
   .description('Listen for webhook events locally during development')
   .option('--url <url>', 'Public URL for receiving webhooks (your tunnel URL)')
   .option('--forward-to <url>', 'Forward payloads to this local URL')
+  .option(
+    '--insecure-forward',
+    'Skip signature verification before forwarding (not recommended)',
+  )
   .option('--events <events...>', 'Event types to listen for (default: all)')
   .option('--port <port>', 'Local server port', '4318')
   .addHelpText(
@@ -143,7 +169,8 @@ points to the local server port. The CLI will:
   2. Register a temporary Resend webhook pointing at --url
   3. Display incoming events in the terminal
   4. Optionally forward payloads to --forward-to (with original Svix headers)
-  5. Delete the temporary webhook on exit (Ctrl+C)
+  5. Verify Svix signatures before forwarding (use --insecure-forward to skip)
+  6. Delete the temporary webhook on exit (Ctrl+C)
 
 Important: your tunnel must forward traffic to the same port as --port (default 4318).
 For example, if using ngrok: ngrok http 4318`,
@@ -222,6 +249,29 @@ For example, if using ngrok: ngrok http 4318`,
         for (const h of SVIX_HEADERS) {
           const val = req.headers[h];
           svixHeaders[h] = Array.isArray(val) ? val[0] : val;
+        }
+
+        const shouldVerify = !opts.insecureForward && !!signingSecret;
+        const verified = shouldVerify
+          ? verifyPayload(resend, rawBody, svixHeaders, signingSecret)
+          : true;
+
+        if (!verified) {
+          if (jsonMode) {
+            console.log(
+              JSON.stringify({
+                timestamp: new Date().toISOString(),
+                error: 'signature_verification_failed',
+              }),
+            );
+          } else {
+            const ts = pc.dim(`[${timestamp()}]`);
+            process.stderr.write(
+              `${ts} ${pc.red('Signature verification failed — request rejected')}\n`,
+            );
+          }
+          res.writeHead(401).end('Signature verification failed');
+          return;
         }
 
         const { type, resourceId, detail } = summarizeEvent(body);
@@ -310,6 +360,7 @@ For example, if using ngrok: ngrok http 4318`,
     );
 
     let webhookId: string;
+    let signingSecret: string;
     try {
       const { data, error } = await resend.webhooks.create({
         endpoint: url,
@@ -327,6 +378,7 @@ For example, if using ngrok: ngrok http 4318`,
         );
       }
       webhookId = data.id;
+      signingSecret = data.signing_secret;
     } catch (err) {
       spinner.fail('Failed to create webhook');
       server.close();
@@ -362,6 +414,12 @@ For example, if using ngrok: ngrok http 4318`,
           ? opts.forwardTo
           : `http://${opts.forwardTo}`;
         process.stderr.write(`  ${pc.bold('Forward:')}  ${fwd}\n`);
+      }
+      if (opts.insecureForward) {
+        process.stderr.write(
+          `\n  ${pc.yellow(pc.bold('⚠ --insecure-forward: signature verification is disabled.'))}
+  ${pc.yellow('Payloads will be forwarded without verifying Svix signatures.')}\n`,
+        );
       }
       process.stderr.write(
         `\nReady! Listening for webhook events. Press Ctrl+C to stop.\n\n`,
