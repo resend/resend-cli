@@ -2,7 +2,7 @@ import { Command } from '@commander-js/extra-typings';
 import { runDelete } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
-import { pickId } from '../../lib/prompts';
+import { pickItem } from '../../lib/prompts';
 import { domainPickerConfig } from './utils';
 
 export const deleteDomainCommand = new Command('delete')
@@ -25,16 +25,16 @@ export const deleteDomainCommand = new Command('delete')
   )
   .action(async (idArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const id = await pickId(idArg, domainPickerConfig, globalOpts);
+    const picked = await pickItem(idArg, domainPickerConfig, globalOpts);
     await runDelete(
-      id,
+      picked.id,
       !!opts.yes,
       {
-        confirmMessage: `Delete domain ${id}?\nThis cannot be undone.`,
+        confirmMessage: `Delete domain "${picked.label}"?\nID: ${picked.id}\nThis cannot be undone.`,
         loading: 'Deleting domain...',
         object: 'domain',
         successMsg: 'Domain deleted',
-        sdkCall: (resend) => resend.domains.remove(id),
+        sdkCall: (resend) => resend.domains.remove(picked.id),
       },
       globalOpts,
     );
