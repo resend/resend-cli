@@ -1,18 +1,28 @@
-import { execFileSync, execFile, spawn } from 'node:child_process';
+import { execFile, execFileSync, spawn } from 'node:child_process';
 import path from 'node:path';
 import type { CredentialBackend } from '../credential-store';
 
 const resolvePowershellPath = (): string => {
   try {
-    const systemRoot = execFileSync('cmd.exe', ['/d', '/c', 'echo', '%SystemRoot%'], {
-      timeout: 5000,
-      windowsHide: true,
-    })
+    const systemRoot = execFileSync(
+      'cmd.exe',
+      ['/d', '/c', 'echo', '%SystemRoot%'],
+      {
+        timeout: 5000,
+        windowsHide: true,
+      },
+    )
       .toString()
       .trim();
 
     if (systemRoot && systemRoot !== '%SystemRoot%') {
-      return path.join(systemRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
+      return path.join(
+        systemRoot,
+        'System32',
+        'WindowsPowerShell',
+        'v1.0',
+        'powershell.exe',
+      );
     }
   } catch {
     // Fall through to hardcoded default
