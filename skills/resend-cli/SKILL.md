@@ -3,24 +3,51 @@ name: resend-cli
 description: >
   Operate the Resend platform from the terminal — send emails (including React Email
   .tsx templates via --react-email), manage domains, contacts, broadcasts, templates,
-  webhooks, API keys, and logs via the `resend` CLI. Use when the user wants to run
-  Resend commands in the shell, scripts, or CI/CD pipelines, or send/preview React
-  Email templates. Always load this skill before running `resend` commands — it
-  contains the non-interactive flag contract and gotchas that prevent silent failures.
+  webhooks, API keys, logs, automations, and events via the `resend` CLI. Use when the
+  user wants to run Resend commands in the shell, scripts, or CI/CD pipelines, or
+  send/preview React Email templates. Always load this skill before running `resend`
+  commands — it contains the non-interactive flag contract and gotchas that prevent
+  silent failures.
 license: MIT
 metadata:
   author: resend
-  version: "1.9.0"
-  homepage: https://resend.com
+  version: "1.11.0"
+  homepage: https://resend.com/docs/cli-agents
   source: https://github.com/resend/resend-cli
+  openclaw:
+    primaryEnv: RESEND_API_KEY
+    requires:
+      env:
+        - RESEND_API_KEY
+      bins:
+        - resend
+    envVars:
+      - name: RESEND_API_KEY
+        required: true
+        description: Resend API key for authenticating CLI commands
+      - name: RESEND_PROFILE
+        required: false
+        description: Named auth profile for multi-account setups
+    install:
+      - kind: node
+        package: resend-cli
+        bins: [resend]
+        label: Resend CLI
+    links:
+      repository: https://github.com/resend/resend-cli
+      documentation: https://resend.com/docs/cli
 inputs:
   - name: RESEND_API_KEY
     description: Resend API key for authenticating CLI commands. Get yours at https://resend.com/api-keys
     required: true
+  - name: RESEND_PROFILE
+    description: Named auth profile for multi-account setups. Selects which stored API key to use (see `resend auth`).
+    required: false
 references:
   - references/emails.md
   - references/domains.md
   - references/api-keys.md
+  - references/automations.md
   - references/broadcasts.md
   - references/contacts.md
   - references/contact-properties.md
@@ -108,6 +135,8 @@ Auth resolves: `--api-key` flag > `RESEND_API_KEY` env > config file (`resend lo
 | `domains` | create, verify, update, delete, list |
 | `logs` | list, get, open |
 | `api-keys` | create, list, delete |
+| `automations` | create, get, list, update, delete, stop, open, runs |
+| `events` | create, get, list, update, delete, send, open |
 | `broadcasts` | create, send, update, delete, list |
 | `contacts` | create, update, delete, segments, topics |
 | `contact-properties` | create, update, delete, list |
@@ -180,6 +209,7 @@ resend doctor -q
 - **Defining contact properties** → [references/contact-properties.md](references/contact-properties.md)
 - **Working with templates** → [references/templates.md](references/templates.md)
 - **Viewing API request logs** → [references/logs.md](references/logs.md)
+- **Creating automations or sending events** → [references/automations.md](references/automations.md)
 - **Setting up webhooks or listening for events** → [references/webhooks.md](references/webhooks.md)
 - **Auth, profiles, or health checks** → [references/auth.md](references/auth.md)
 - **Multi-step recipes** (setup, CI/CD, broadcast workflow) → [references/workflows.md](references/workflows.md)
