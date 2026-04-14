@@ -3,7 +3,6 @@ import { runGet } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { pickId } from '../../lib/prompts';
-import { safeTerminalText } from '../../lib/safe-terminal-text';
 import { contactPickerConfig } from './utils';
 
 export const getContactCommand = new Command('get')
@@ -33,23 +32,18 @@ export const getContactCommand = new Command('get')
         sdkCall: (resend) => resend.contacts.get(id),
         onInteractive: (data) => {
           const name = [data.first_name, data.last_name]
-            .filter((s): s is string => Boolean(s))
-            .map(safeTerminalText)
+            .filter(Boolean)
             .join(' ');
-          console.log(
-            `${safeTerminalText(data.email)}${name ? ` (${name})` : ''}`,
-          );
-          console.log(`ID: ${safeTerminalText(data.id)}`);
-          console.log(`Created: ${safeTerminalText(data.created_at)}`);
+          console.log(`${data.email}${name ? ` (${name})` : ''}`);
+          console.log(`ID: ${data.id}`);
+          console.log(`Created: ${data.created_at}`);
           console.log(`Unsubscribed: ${data.unsubscribed ? 'yes' : 'no'}`);
           const propEntries = Object.entries(data.properties ?? {});
           if (propEntries.length > 0) {
             console.log('Properties:');
-            propEntries.map(([key, val]) =>
-              console.log(
-                `  ${safeTerminalText(key)}: ${safeTerminalText(String(val.value))}`,
-              ),
-            );
+            for (const [key, val] of propEntries) {
+              console.log(`  ${key}: ${val.value}`);
+            }
           }
         },
       },

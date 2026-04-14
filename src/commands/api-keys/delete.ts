@@ -2,7 +2,7 @@ import { Command } from '@commander-js/extra-typings';
 import { runDelete } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
-import { pickId } from '../../lib/prompts';
+import { pickItem } from '../../lib/prompts';
 import { apiKeyPickerConfig } from './utils';
 
 export const deleteApiKeyCommand = new Command('delete')
@@ -30,16 +30,16 @@ can delete itself — the API does not prevent self-deletion.`,
   )
   .action(async (idArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const id = await pickId(idArg, apiKeyPickerConfig, globalOpts);
+    const picked = await pickItem(idArg, apiKeyPickerConfig, globalOpts);
     await runDelete(
-      id,
+      picked.id,
       !!opts.yes,
       {
-        confirmMessage: `Delete API key ${id}?\nAny services using this key will stop working.`,
+        confirmMessage: `Delete API key "${picked.label}"?\nID: ${picked.id}\nAny services using this key will stop working.`,
         loading: 'Deleting API key...',
         object: 'api-key',
         successMsg: 'API key deleted',
-        sdkCall: (resend) => resend.apiKeys.remove(id),
+        sdkCall: (resend) => resend.apiKeys.remove(picked.id),
       },
       globalOpts,
     );

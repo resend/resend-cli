@@ -1,11 +1,22 @@
-// biome-ignore lint/complexity/useRegexLiterals: literal form triggers noControlCharactersInRegex
-const CONTROL_CHARS = new RegExp(
-  '[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F-\\u009F]',
-  'g',
-);
+import { stripVTControlCharacters } from 'node:util';
 
-export const safeTerminalText = (value: string): string =>
-  value.replace(
-    CONTROL_CHARS,
-    (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`,
-  );
+// biome-ignore lint/suspicious/noControlCharactersInRegex: intentional — this regex strips dangerous C0 control chars
+const DANGEROUS_CONTROL_CHARS = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]|\r(?!\n)/g;
+
+export const safeTerminalText = (value: unknown): string =>
+  stripVTControlCharacters(String(value)).replace(DANGEROUS_CONTROL_CHARS, '');
+
+export function deepSanitize<T>(value: T): T {
+  if (typeof value === 'string') {
+    return safeTerminalText(value) as T;
+  }
+  if (Array.isArray(value)) {
+    return value.map(deepSanitize) as T;
+  }
+  if (value !== null && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([k, v]) => [k, deepSanitize(v)]),
+    ) as T;
+  }
+  return value;
+}
