@@ -2,7 +2,7 @@ import { Command } from '@commander-js/extra-typings';
 import { runDelete } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
-import { pickId } from '../../lib/prompts';
+import { pickItem } from '../../lib/prompts';
 import { topicPickerConfig } from './utils';
 
 export const deleteTopicCommand = new Command('delete')
@@ -30,16 +30,16 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
   )
   .action(async (idArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const id = await pickId(idArg, topicPickerConfig, globalOpts);
+    const picked = await pickItem(idArg, topicPickerConfig, globalOpts);
     await runDelete(
-      id,
+      picked.id,
       !!opts.yes,
       {
-        confirmMessage: `Delete topic ${id}?\nAll contact subscriptions and broadcast associations will be removed.`,
+        confirmMessage: `Delete topic "${picked.label}"?\nID: ${picked.id}\nAll contact subscriptions and broadcast associations will be removed.`,
         loading: 'Deleting topic...',
         object: 'topic',
         successMsg: 'Topic deleted',
-        sdkCall: (resend) => resend.topics.remove(id),
+        sdkCall: (resend) => resend.topics.remove(picked.id),
       },
       globalOpts,
     );

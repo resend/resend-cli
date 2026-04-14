@@ -12,6 +12,7 @@ import { requireClient } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
 import { requireText } from '../../lib/prompts';
+import { safeTerminalText } from '../../lib/safe-terminal-text';
 import { createSpinner } from '../../lib/spinner';
 import { isInteractive } from '../../lib/tty';
 import { ALL_WEBHOOK_EVENTS, normalizeEvents } from './utils';
@@ -27,22 +28,24 @@ function summarizeEvent(body: Record<string, unknown>): {
   resourceId: string;
   detail: string;
 } {
-  const type = (body.type as string) ?? 'unknown';
+  const type = safeTerminalText((body.type as string) ?? 'unknown');
   const data = (body.data as Record<string, unknown>) ?? {};
 
-  const resourceId = (data.id as string) ?? '';
+  const resourceId = safeTerminalText((data.id as string) ?? '');
 
   let detail = '';
   if (type.startsWith('email.')) {
-    const from = (data.from as string) ?? '';
-    const to = Array.isArray(data.to) ? (data.to[0] as string) : '';
+    const from = safeTerminalText((data.from as string) ?? '');
+    const to = safeTerminalText(
+      Array.isArray(data.to) ? (data.to[0] as string) : '',
+    );
     if (from || to) {
       detail = `${from} -> ${to}`;
     }
   } else if (type.startsWith('domain.')) {
-    detail = (data.name as string) ?? '';
+    detail = safeTerminalText((data.name as string) ?? '');
   } else if (type.startsWith('contact.')) {
-    detail = (data.email as string) ?? '';
+    detail = safeTerminalText((data.email as string) ?? '');
   }
 
   return { type, resourceId, detail };
