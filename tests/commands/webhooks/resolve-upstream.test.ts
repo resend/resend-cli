@@ -57,6 +57,15 @@ describe('resolveUpstream', () => {
     });
   });
 
+  it('returns 504 for a timeout error', () => {
+    expect(
+      resolveUpstream({ error: 'The operation timed out', timeout: true }),
+    ).toEqual({
+      status: 504,
+      body: 'Forward target timed out',
+    });
+  });
+
   it('treats boundary status 300 as failure', () => {
     expect(resolveUpstream({ status: 300 })).toEqual({
       status: 300,

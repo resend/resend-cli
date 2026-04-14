@@ -15,7 +15,7 @@ import { requireText } from '../../lib/prompts';
 import { safeTerminalText } from '../../lib/safe-terminal-text';
 import { createSpinner } from '../../lib/spinner';
 import { isInteractive } from '../../lib/tty';
-import { resolveUpstream } from './resolve-upstream';
+import { type ForwardResult, resolveUpstream } from './resolve-upstream';
 import { ALL_WEBHOOK_EVENTS, normalizeEvents } from './utils';
 
 const SVIX_HEADERS = ['svix-id', 'svix-timestamp', 'svix-signature'];
@@ -77,6 +77,7 @@ function statusText(code: number): string {
     500: 'Internal Server Error',
     502: 'Bad Gateway',
     503: 'Service Unavailable',
+    504: 'Gateway Timeout',
   };
   return map[code] ?? '';
 }
@@ -208,90 +209,96 @@ For example, if using ngrok: ngrok http 4318`,
     // Start local server
     const server = createServer(
       async (req: IncomingMessage, res: ServerResponse) => {
-        if (req.method !== 'POST') {
-          res.writeHead(405).end('Method not allowed');
-          return;
-        }
-
-        const rawBody = await readBody(req);
-        let body: Record<string, unknown>;
         try {
-          body = JSON.parse(rawBody);
-        } catch {
-          res.writeHead(400).end('Invalid JSON');
-          return;
-        }
+          if (req.method !== 'POST') {
+            res.writeHead(405).end('Method not allowed');
+            return;
+          }
 
-        const svixHeaders: Record<string, string | undefined> = {};
-        for (const h of SVIX_HEADERS) {
-          const val = req.headers[h];
-          svixHeaders[h] = Array.isArray(val) ? val[0] : val;
-        }
-
-        const { type, resourceId, detail } = summarizeEvent(body);
-
-        let forwardResult:
-          | { readonly status: number }
-          | { readonly error: string }
-          | undefined;
-
-        if (opts.forwardTo) {
+          const rawBody = await readBody(req);
+          let body: Record<string, unknown>;
           try {
-            const { status } = await forwardPayload(
-              opts.forwardTo,
-              rawBody,
-              svixHeaders,
-            );
-            forwardResult = { status };
-          } catch (err) {
-            forwardResult = {
-              error: err instanceof Error ? err.message : 'Unknown error',
-            };
-          }
-        }
-
-        if (jsonMode) {
-          const entry: Record<string, unknown> = {
-            timestamp: new Date().toISOString(),
-            type,
-            resource_id: resourceId,
-            payload: body,
-          };
-
-          if (opts.forwardTo && forwardResult) {
-            entry.forwarded =
-              'error' in forwardResult
-                ? { url: opts.forwardTo, error: forwardResult.error }
-                : { url: opts.forwardTo, status: forwardResult.status };
+            body = JSON.parse(rawBody);
+          } catch {
+            res.writeHead(400).end('Invalid JSON');
+            return;
           }
 
-          console.log(JSON.stringify(entry));
-        } else {
-          const ts = pc.dim(`[${timestamp()}]`);
-          const typePad = type.padEnd(20);
-          const idPad = resourceId.padEnd(14);
-          process.stderr.write(
-            `${ts} ${pc.bold(typePad)} ${pc.cyan(idPad)} ${detail}\n`,
-          );
+          const svixHeaders: Record<string, string | undefined> = {};
+          for (const h of SVIX_HEADERS) {
+            const val = req.headers[h];
+            svixHeaders[h] = Array.isArray(val) ? val[0] : val;
+          }
 
-          if (opts.forwardTo && forwardResult) {
-            const target = opts.forwardTo.startsWith('http')
-              ? opts.forwardTo
-              : `http://${opts.forwardTo}`;
-            if ('error' in forwardResult) {
-              process.stderr.write(
-                `${pc.dim('           -> POST')} ${target} ${pc.red(`[Error: ${forwardResult.error}]`)}\n`,
+          const { type, resourceId, detail } = summarizeEvent(body);
+
+          let forwardResult: ForwardResult | undefined;
+
+          if (opts.forwardTo) {
+            try {
+              const { status } = await forwardPayload(
+                opts.forwardTo,
+                rawBody,
+                svixHeaders,
               );
-            } else {
-              process.stderr.write(
-                `${pc.dim('           -> POST')} ${target} ${pc.dim(`[${formatStatus(forwardResult.status)}]`)}\n`,
-              );
+              forwardResult = { status };
+            } catch (err) {
+              const isTimeout =
+                err instanceof DOMException && err.name === 'TimeoutError';
+              forwardResult = {
+                error: err instanceof Error ? err.message : 'Unknown error',
+                timeout: isTimeout,
+              };
             }
           }
-        }
 
-        const upstream = resolveUpstream(forwardResult);
-        res.writeHead(upstream.status).end(upstream.body);
+          if (jsonMode) {
+            const entry: Record<string, unknown> = {
+              timestamp: new Date().toISOString(),
+              type,
+              resource_id: resourceId,
+              payload: body,
+            };
+
+            if (opts.forwardTo && forwardResult) {
+              entry.forwarded =
+                'error' in forwardResult
+                  ? { url: opts.forwardTo, error: forwardResult.error }
+                  : { url: opts.forwardTo, status: forwardResult.status };
+            }
+
+            console.log(JSON.stringify(entry));
+          } else {
+            const ts = pc.dim(`[${timestamp()}]`);
+            const typePad = type.padEnd(20);
+            const idPad = resourceId.padEnd(14);
+            process.stderr.write(
+              `${ts} ${pc.bold(typePad)} ${pc.cyan(idPad)} ${detail}\n`,
+            );
+
+            if (opts.forwardTo && forwardResult) {
+              const target = opts.forwardTo.startsWith('http')
+                ? opts.forwardTo
+                : `http://${opts.forwardTo}`;
+              if ('error' in forwardResult) {
+                process.stderr.write(
+                  `${pc.dim('           -> POST')} ${target} ${pc.red(`[Error: ${forwardResult.error}]`)}\n`,
+                );
+              } else {
+                process.stderr.write(
+                  `${pc.dim('           -> POST')} ${target} ${pc.dim(`[${formatStatus(forwardResult.status)}]`)}\n`,
+                );
+              }
+            }
+          }
+
+          const upstream = resolveUpstream(forwardResult);
+          res.writeHead(upstream.status).end(upstream.body);
+        } catch {
+          if (!res.headersSent) {
+            res.writeHead(500).end('Internal error');
+          }
+        }
       },
     );
 
