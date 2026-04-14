@@ -8,8 +8,6 @@ const TRUSTED_SECRET_TOOL_PATHS = [
   '/bin/secret-tool',
 ] as const;
 
-const WHICH_PATH = '/usr/bin/which';
-
 const resolvedPaths = new Map<string, string>();
 
 function run(
@@ -78,18 +76,6 @@ const resolveSecretTool = async (): Promise<string | null> => {
   if (trusted) {
     resolvedPaths.set('secret-tool', trusted);
     return trusted;
-  }
-
-  const result = await run(WHICH_PATH, ['secret-tool']);
-  const resolved = result.stdout.trim();
-  if (result.code === 0 && resolved.startsWith('/')) {
-    try {
-      await access(resolved, constants.X_OK);
-      resolvedPaths.set('secret-tool', resolved);
-      return resolved;
-    } catch {
-      return null;
-    }
   }
 
   return null;
