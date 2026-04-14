@@ -457,6 +457,17 @@ export async function removeAllApiKeysAsync(): Promise<string> {
       );
       const failed = profileNames.filter((_, i) => !results[i]);
       if (failed.length > 0) {
+        // Remove successfully-deleted profiles from the file so retries
+        // only re-attempt the ones that actually failed.
+        const succeeded = profileNames.filter((_, i) => results[i]);
+        for (const name of succeeded) {
+          delete creds.profiles[name];
+        }
+        if (creds.active_profile && !creds.profiles[creds.active_profile]) {
+          const remaining = Object.keys(creds.profiles);
+          creds.active_profile = remaining[0] || 'default';
+        }
+        writeCredentials(creds);
         throw new Error(
           `Failed to remove API keys from ${backend.name} for profiles: ${failed.join(', ')}. Credentials may still exist in secure storage.`,
         );

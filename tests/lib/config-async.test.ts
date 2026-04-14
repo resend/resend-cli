@@ -484,13 +484,18 @@ describe('removeAllApiKeysAsync', () => {
       resetCredentialBackend: vi.fn(),
     }));
 
-    const { removeAllApiKeysAsync, getCredentialsPath } = await import(
-      '../../src/lib/config'
-    );
+    const { removeAllApiKeysAsync, getCredentialsPath, readCredentials } =
+      await import('../../src/lib/config');
     await expect(removeAllApiKeysAsync()).rejects.toThrow(
       'Failed to remove API keys',
     );
     expect(existsSync(getCredentialsPath())).toBe(true);
+    // Successfully-deleted profiles should be removed from the file
+    // so retries only re-attempt the ones that actually failed.
+    const creds = readCredentials();
+    expect(creds?.profiles.default).toBeUndefined();
+    expect(creds?.profiles.staging).toBeDefined();
+    expect(creds?.profiles.prod).toBeUndefined();
   });
 });
 
