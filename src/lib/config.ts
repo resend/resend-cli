@@ -382,11 +382,21 @@ export async function resolveApiKeyAsync(
       if (backend.isSecure) {
         try {
           await backend.set(SERVICE_NAME, profile, entry.api_key);
-          creds.profiles[profile] = {
-            ...(entry.permission && { permission: entry.permission }),
-          };
-          creds.storage = 'secure_storage';
-          writeCredentials(creds);
+          withFileLock(getCredentialsLockPath(), () => {
+            const freshCreds = readCredentials();
+            if (freshCreds) {
+              const { api_key: _, ...rest } =
+                freshCreds.profiles[profile] ?? {};
+              writeCredentials({
+                ...freshCreds,
+                storage: 'secure_storage',
+                profiles: {
+                  ...freshCreds.profiles,
+                  [profile]: rest,
+                },
+              });
+            }
+          });
           process.stderr.write(
             `Notice: API key for profile "${profile}" has been moved to ${backend.name}\n`,
           );

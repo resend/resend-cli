@@ -8,7 +8,6 @@ import {
   readCredentials,
   removeAllApiKeysAsync,
   removeApiKeyAsync,
-  resolveProfileName,
 } from '../../lib/config';
 import { buildHelpText } from '../../lib/help-text';
 import { errorMessage, outputError, outputResult } from '../../lib/output';
@@ -65,7 +64,12 @@ If no credentials file exists, exits cleanly with no error.`,
 
     const profileFlag = globalOpts.profile ?? globalOpts.team;
     const logoutAll = !profileFlag;
-    const profileLabel = profileFlag || resolveProfileName();
+    const profileLabel =
+      profileFlag ||
+      process.env.RESEND_PROFILE ||
+      process.env.RESEND_TEAM ||
+      creds?.active_profile ||
+      'default';
 
     if (!globalOpts.json && isInteractive()) {
       const message = logoutAll
