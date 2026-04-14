@@ -55,7 +55,7 @@ describe('buildPaginationOpts', () => {
 
   test('errors when both after and before cursors are provided', () => {
     setNonInteractive();
-    logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    logSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     expect(() =>

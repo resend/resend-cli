@@ -292,7 +292,55 @@ resend contacts topics user@example.com
 
 ---
 
-## 10. CI/CD Integration
+## 10. Automations & Events
+
+```bash
+# 1. Create an event definition (the trigger signal)
+resend events create --name "user.signed_up" --schema '{"plan":"string"}'
+
+# 2. Create an automation triggered by that event
+#    Using a JSON file:
+cat > workflow.json << 'EOF'
+{
+  "name": "Welcome Flow",
+  "steps": [
+    { "key": "t", "type": "trigger", "config": { "eventName": "user.signed_up" } },
+    { "key": "d", "type": "delay", "config": { "duration": "5m" } },
+    { "key": "e", "type": "send_email", "config": { "template": { "id": "<published-template-id>" } } }
+  ],
+  "connections": [
+    { "from": "t", "to": "d", "type": "default" },
+    { "from": "d", "to": "e", "type": "default" }
+  ]
+}
+EOF
+
+resend automations create --file workflow.json
+
+# 3. Enable the automation
+resend automations update <automation-id> --status enabled
+
+# 4. Send an event to trigger it
+resend events send --event "user.signed_up" --email user@example.com --payload '{"plan":"pro"}'
+
+# 5. Check runs
+resend automations runs <automation-id>
+resend automations runs get --automation-id <id> --run-id <id>
+
+# 6. View in dashboard
+resend automations open <automation-id>
+
+# Disable when done
+resend automations update <automation-id> --status disabled
+
+# Clean up
+resend automations delete <automation-id> --yes
+resend events delete <event-id> --yes
+```
+
+---
+
+## 11. CI/CD Integration
 
 ```yaml
 # GitHub Actions example
@@ -332,7 +380,7 @@ resend emails send -q \
 
 ---
 
-## 11. Inbound Email Processing
+## 12. Inbound Email Processing
 
 ```bash
 # Enable receiving on domain (at creation or check existing)
