@@ -384,34 +384,36 @@ export async function storeApiKeyAsync(
   }
 
   const backend = await getCredentialBackend();
-  const isFileBackend = !backend.isSecure;
 
-  if (isFileBackend) {
-    // Do NOT clear a pre-existing `storage: 'secure_storage'` marker here.
-    // Other profiles may still have their keys in secure storage.
-    // resolveApiKeyAsync already falls through from secure storage to file-based
-    // lookup, so keeping the marker is safe and avoids orphaning those profiles.
+  if (!backend.isSecure) {
     const configPath = storeApiKey(apiKey, profile, permission);
     return { configPath, backend };
   }
 
-  // Store in secure backend
   await backend.set(SERVICE_NAME, profile, apiKey);
 
-  // Update credentials file: mark storage as secure, keep profile entry (without api_key)
-  const creds = readCredentials() || {
-    active_profile: 'default',
-    profiles: {},
-  };
-  creds.storage = 'secure_storage';
-  creds.profiles[profile] = { ...(permission && { permission }) };
+  try {
+    const creds = readCredentials() || {
+      active_profile: 'default',
+      profiles: {},
+    };
+    creds.storage = 'secure_storage';
+    creds.profiles[profile] = { ...(permission && { permission }) };
 
-  if (Object.keys(creds.profiles).length === 1) {
-    creds.active_profile = profile;
+    if (Object.keys(creds.profiles).length === 1) {
+      creds.active_profile = profile;
+    }
+
+    const configPath = writeCredentials(creds);
+    return { configPath, backend };
+  } catch (fileError) {
+    try {
+      await backend.delete(SERVICE_NAME, profile);
+    } catch {
+      // intentionally empty
+    }
+    throw fileError;
   }
-
-  const configPath = writeCredentials(creds);
-  return { configPath, backend };
 }
 
 export async function removeApiKeyAsync(profileName?: string): Promise<string> {
@@ -423,14 +425,34 @@ export async function removeApiKeyAsync(profileName?: string): Promise<string> {
     creds?.active_profile ||
     'default';
 
+  let removedKey: string | null = null;
+
   if (creds?.storage === 'secure_storage') {
     const backend = await getCredentialBackend();
     if (backend.isSecure) {
-      await backend.delete(SERVICE_NAME, profile);
+      removedKey = await backend.get(SERVICE_NAME, profile);
+      const deleted = await backend.delete(SERVICE_NAME, profile);
+      if (!deleted) {
+        throw new Error(
+          `Failed to remove credential for profile "${profile}" from ${backend.name}`,
+        );
+      }
     }
   }
 
-  return removeApiKey(profile);
+  try {
+    return removeApiKey(profile);
+  } catch (fileError) {
+    if (removedKey) {
+      const backend = await getCredentialBackend();
+      try {
+        await backend.set(SERVICE_NAME, profile, removedKey);
+      } catch {
+        // intentionally empty
+      }
+    }
+    throw fileError;
+  }
 }
 
 export async function removeAllApiKeysAsync(): Promise<string> {
@@ -440,15 +462,23 @@ export async function removeAllApiKeysAsync(): Promise<string> {
   if (creds?.storage === 'secure_storage') {
     const backend = await getCredentialBackend();
     if (backend.isSecure) {
-      await Promise.all(
-        Object.keys(creds.profiles).map((profile) =>
-          backend.delete(SERVICE_NAME, profile),
-        ),
+      const profiles = Object.keys(creds.profiles);
+      const results = await Promise.all(
+        profiles.map(async (profile) => ({
+          profile,
+          deleted: await backend.delete(SERVICE_NAME, profile),
+        })),
       );
+
+      const failed = results.filter((r) => !r.deleted);
+      if (failed.length > 0) {
+        throw new Error(
+          `Failed to remove credentials from ${backend.name} for profiles: ${failed.map((r) => r.profile).join(', ')}`,
+        );
+      }
     }
   }
 
-  // Remove credentials file (may already be gone if only secure storage)
   if (existsSync(configPath)) {
     unlinkSync(configPath);
   }
@@ -467,7 +497,31 @@ export async function renameProfileAsync(
       const key = await backend.get(SERVICE_NAME, oldName);
       if (key) {
         await backend.set(SERVICE_NAME, newName, key);
-        await backend.delete(SERVICE_NAME, oldName);
+
+        const deleted = await backend.delete(SERVICE_NAME, oldName);
+        if (!deleted) {
+          try {
+            await backend.delete(SERVICE_NAME, newName);
+          } catch {
+            // intentionally empty
+          }
+          throw new Error(
+            `Failed to remove old credential for profile "${oldName}" from ${backend.name}`,
+          );
+        }
+
+        try {
+          renameProfile(oldName, newName);
+        } catch (fileError) {
+          try {
+            await backend.set(SERVICE_NAME, oldName, key);
+            await backend.delete(SERVICE_NAME, newName);
+          } catch {
+            // intentionally empty
+          }
+          throw fileError;
+        }
+        return;
       }
     }
   }
