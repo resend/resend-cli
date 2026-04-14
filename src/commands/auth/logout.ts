@@ -3,16 +3,24 @@ import * as p from '@clack/prompts';
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import {
+  type CredentialsFile,
   getCredentialsPath,
   readCredentials,
   removeAllApiKeysAsync,
   removeApiKeyAsync,
-  resolveProfileName,
 } from '../../lib/config';
 import { buildHelpText } from '../../lib/help-text';
 import { errorMessage, outputError, outputResult } from '../../lib/output';
 import { cancelAndExit } from '../../lib/prompts';
 import { isInteractive } from '../../lib/tty';
+
+const tryReadCredentials = (): CredentialsFile | null => {
+  try {
+    return readCredentials();
+  } catch {
+    return null;
+  }
+};
 
 export const logoutCommand = new Command('logout')
   .description('Remove your saved Resend API key')
@@ -39,7 +47,8 @@ If no credentials file exists, exits cleanly with no error.`,
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
     const configPath = getCredentialsPath();
-    const creds = readCredentials();
+
+    const creds = tryReadCredentials();
 
     if (!creds && !existsSync(configPath)) {
       if (!globalOpts.json && isInteractive()) {
@@ -55,7 +64,12 @@ If no credentials file exists, exits cleanly with no error.`,
 
     const profileFlag = globalOpts.profile ?? globalOpts.team;
     const logoutAll = !profileFlag;
-    const profileLabel = profileFlag || resolveProfileName();
+    const profileLabel =
+      profileFlag ||
+      process.env.RESEND_PROFILE ||
+      process.env.RESEND_TEAM ||
+      creds?.active_profile ||
+      'default';
 
     if (!globalOpts.json && isInteractive()) {
       const message = logoutAll
