@@ -2,7 +2,7 @@ import { Command } from '@commander-js/extra-typings';
 import { runDelete } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
-import { pickId } from '../../lib/prompts';
+import { pickItem } from '../../lib/prompts';
 import { webhookPickerConfig } from './utils';
 
 export const deleteWebhookCommand = new Command('delete')
@@ -32,16 +32,16 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
   )
   .action(async (idArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const id = await pickId(idArg, webhookPickerConfig, globalOpts);
+    const picked = await pickItem(idArg, webhookPickerConfig, globalOpts);
     await runDelete(
-      id,
+      picked.id,
       !!opts.yes,
       {
-        confirmMessage: `Delete webhook ${id}?\nEvents will no longer be delivered to this endpoint.`,
+        confirmMessage: `Delete webhook "${picked.label}"?\nID: ${picked.id}\nEvents will no longer be delivered to this endpoint.`,
         loading: 'Deleting webhook...',
         object: 'webhook',
         successMsg: 'Webhook deleted',
-        sdkCall: (resend) => resend.webhooks.remove(id),
+        sdkCall: (resend) => resend.webhooks.remove(picked.id),
       },
       globalOpts,
     );
