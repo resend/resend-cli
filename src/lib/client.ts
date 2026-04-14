@@ -93,10 +93,12 @@ export async function requireClient(
 
     return new Resend(resolved.key);
   } catch (err) {
+    const msg = errorMessage(err, 'Failed to create client');
+    const isBackendError = msg.includes('Credential backend unavailable');
     outputError(
       {
-        message: errorMessage(err, 'Failed to create client'),
-        code: 'auth_error',
+        message: msg,
+        code: isBackendError ? 'credential_store_error' : 'auth_error',
       },
       { json: opts.json },
     );
