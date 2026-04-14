@@ -7,7 +7,7 @@ import { requireClient } from '../../lib/client';
 import { fetchVerifiedDomains, promptForFromAddress } from '../../lib/domains';
 import { readFile } from '../../lib/files';
 import { buildHelpText } from '../../lib/help-text';
-import { outputError } from '../../lib/output';
+import { outputError, outputResult } from '../../lib/output';
 import { cancelAndExit, pickId } from '../../lib/prompts';
 import { buildReactEmailHtml } from '../../lib/react-email';
 import { isInteractive } from '../../lib/tty';
@@ -51,11 +51,17 @@ export const createBroadcastCommand = new Command('create')
     '--scheduled-at <datetime>',
     'Schedule delivery — ISO 8601 or natural language e.g. "in 1 hour", "tomorrow at 9am ET" (only valid with --send)',
   )
+  .option(
+    '--dry-run',
+    'Validate input and print the create request JSON without calling the API (interactive: type segment/topic IDs; lists are not fetched)',
+  )
   .addHelpText(
     'after',
     buildHelpText({
       context: `Non-interactive: --from, --subject, and --segment-id are required.
 Body: provide at least one of --html, --html-file, --text, --text-file, or --react-email.
+
+Use --dry-run to print the request JSON without creating a broadcast.
 
 Variable interpolation:
   HTML bodies support triple-brace syntax for contact properties.
@@ -110,13 +116,32 @@ Scheduling:
       );
     }
 
-    const resend = await requireClient(globalOpts);
+    if (opts.html !== undefined && opts.htmlFile !== undefined) {
+      outputError(
+        {
+          message: '--html and --html-file are mutually exclusive.',
+          code: 'invalid_options',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
+    if (opts.text !== undefined && opts.textFile !== undefined) {
+      outputError(
+        {
+          message: '--text and --text-file are mutually exclusive.',
+          code: 'invalid_options',
+        },
+        { json: globalOpts.json },
+      );
+    }
 
     let from = opts.from;
     let subject = opts.subject;
     let segmentId = opts.segmentId;
 
-    if (!from && isInteractive() && !globalOpts.json) {
+    if (!from && isInteractive() && !globalOpts.json && !opts.dryRun) {
+      const resend = await requireClient(globalOpts);
       const domains = await fetchVerifiedDomains(resend);
       if (domains.length > 0) {
         from = await promptForFromAddress(domains);
@@ -166,33 +191,27 @@ Scheduling:
           { json: globalOpts.json },
         );
       }
-      segmentId = await pickId(undefined, segmentPickerConfig, globalOpts);
-    }
-
-    let html = opts.html;
-    let text = opts.text;
-
-    if (opts.htmlFile) {
-      if (opts.html) {
-        process.stderr.write(
-          'Warning: both --html and --html-file provided; using --html-file\n',
-        );
+      if (opts.dryRun) {
+        const result = await p.text({
+          message: 'Segment ID',
+          placeholder: 'e.g. 7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
+          validate: (v) => (!v ? 'Required' : undefined),
+        });
+        if (p.isCancel(result)) {
+          cancelAndExit('Cancelled.');
+        }
+        segmentId = result;
+      } else {
+        segmentId = await pickId(undefined, segmentPickerConfig, globalOpts);
       }
-      html = readFile(opts.htmlFile, globalOpts);
     }
 
-    if (opts.textFile) {
-      if (opts.text) {
-        process.stderr.write(
-          'Warning: both --text and --text-file provided; using --text-file\n',
-        );
-      }
-      text = readFile(opts.textFile, globalOpts);
-    }
-
-    if (opts.reactEmail) {
-      html = await buildReactEmailHtml(opts.reactEmail, globalOpts);
-    }
+    const html = opts.reactEmail
+      ? await buildReactEmailHtml(opts.reactEmail, globalOpts)
+      : opts.htmlFile
+        ? readFile(opts.htmlFile, globalOpts)
+        : opts.html;
+    let text = opts.textFile ? readFile(opts.textFile, globalOpts) : opts.text;
 
     if (!html && !text) {
       if (!isInteractive() || globalOpts.json) {
@@ -218,29 +237,48 @@ Scheduling:
 
     let topicId = opts.topicId;
     if (!topicId && isInteractive() && !globalOpts.json) {
-      topicId = await pickId(undefined, topicPickerConfig, globalOpts, {
-        optional: true,
-      });
+      if (opts.dryRun) {
+        const result = await p.text({
+          message: 'Topic ID (optional)',
+          placeholder: 'Press Enter to skip',
+        });
+        if (p.isCancel(result)) {
+          cancelAndExit('Cancelled.');
+        }
+        topicId = result.trim() || undefined;
+      } else {
+        topicId = await pickId(undefined, topicPickerConfig, globalOpts, {
+          optional: true,
+        });
+      }
+    }
+
+    const createPayload = {
+      from,
+      subject,
+      segmentId,
+      ...(html && { html }),
+      ...(text && { text }),
+      ...(opts.name && { name: opts.name }),
+      ...(opts.replyTo && { replyTo: opts.replyTo }),
+      ...(opts.previewText && { previewText: opts.previewText }),
+      ...(topicId && { topicId }),
+      ...(opts.send && { send: true as const }),
+      ...(opts.send && opts.scheduledAt && { scheduledAt: opts.scheduledAt }),
+    } as CreateBroadcastOptions;
+
+    if (opts.dryRun) {
+      outputResult(
+        { dryRun: true, request: createPayload },
+        { json: globalOpts.json },
+      );
+      return;
     }
 
     await runCreate(
       {
         loading: 'Creating broadcast...',
-        sdkCall: (resend) =>
-          resend.broadcasts.create({
-            from,
-            subject,
-            segmentId,
-            ...(html && { html }),
-            ...(text && { text }),
-            ...(opts.name && { name: opts.name }),
-            ...(opts.replyTo && { replyTo: opts.replyTo }),
-            ...(opts.previewText && { previewText: opts.previewText }),
-            ...(topicId && { topicId }),
-            ...(opts.send && { send: true as const }),
-            ...(opts.send &&
-              opts.scheduledAt && { scheduledAt: opts.scheduledAt }),
-          } as CreateBroadcastOptions),
+        sdkCall: (resend) => resend.broadcasts.create(createPayload),
         onInteractive: (d) => {
           if (opts.send) {
             if (opts.scheduledAt) {
