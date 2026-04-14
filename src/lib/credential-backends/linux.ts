@@ -78,6 +78,18 @@ const resolveSecretTool = async (): Promise<string | null> => {
     return trusted;
   }
 
+  const { stdout, code } = await run('/usr/bin/which', ['secret-tool']);
+  if (code === 0) {
+    const resolved = stdout.trim();
+    if (resolved && resolved.startsWith('/')) {
+      try {
+        await access(resolved, constants.X_OK);
+        resolvedPaths.set('secret-tool', resolved);
+        return resolved;
+      } catch {}
+    }
+  }
+
   return null;
 };
 
