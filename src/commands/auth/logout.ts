@@ -53,7 +53,7 @@ If no credentials file exists, exits cleanly with no error.`,
       return;
     }
 
-    const profileFlag = globalOpts.profile ?? globalOpts.team;
+    const profileFlag = globalOpts.profile;
     const logoutAll = !profileFlag;
     const profileLabel = profileFlag || resolveProfileName();
 

@@ -91,45 +91,6 @@ describe('resolveApiKey', () => {
     });
   });
 
-  test('config file is third priority (legacy teams format)', () => {
-    delete process.env.RESEND_API_KEY;
-    process.env.XDG_CONFIG_HOME = tmpDir;
-    const configDir = join(tmpDir, 'resend');
-    mkdirSync(configDir, { recursive: true });
-    writeFileSync(
-      join(configDir, 'credentials.json'),
-      JSON.stringify({
-        active_team: 'default',
-        teams: { default: { api_key: 're_config_key' } },
-      }),
-    );
-
-    const result = resolveApiKey();
-    expect(result).toEqual({
-      key: 're_config_key',
-      source: 'config',
-      profile: 'default',
-    });
-  });
-
-  test('reads legacy format (api_key at root)', () => {
-    delete process.env.RESEND_API_KEY;
-    process.env.XDG_CONFIG_HOME = tmpDir;
-    const configDir = join(tmpDir, 'resend');
-    mkdirSync(configDir, { recursive: true });
-    writeFileSync(
-      join(configDir, 'credentials.json'),
-      JSON.stringify({ api_key: 're_legacy_key' }),
-    );
-
-    const result = resolveApiKey();
-    expect(result).toEqual({
-      key: 're_legacy_key',
-      source: 'config',
-      profile: 'default',
-    });
-  });
-
   test('resolves specific profile from config', () => {
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = tmpDir;
@@ -218,15 +179,8 @@ describe('resolveProfileName', () => {
     expect(resolveProfileName()).toBe('env_profile');
   });
 
-  test('RESEND_TEAM env var is fallback for RESEND_PROFILE', () => {
-    delete process.env.RESEND_PROFILE;
-    process.env.RESEND_TEAM = 'env_team';
-    expect(resolveProfileName()).toBe('env_team');
-  });
-
   test('active_profile from config is third priority', () => {
     delete process.env.RESEND_PROFILE;
-    delete process.env.RESEND_TEAM;
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     writeFileSync(
@@ -242,7 +196,6 @@ describe('resolveProfileName', () => {
 
   test('defaults to "default" when nothing configured', () => {
     delete process.env.RESEND_PROFILE;
-    delete process.env.RESEND_TEAM;
     expect(resolveProfileName()).toBe('default');
   });
 });

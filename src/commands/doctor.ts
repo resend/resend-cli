@@ -218,8 +218,7 @@ export const doctorCommand = new Command('doctor')
       ...(!usingSecure &&
       process.env.RESEND_CREDENTIAL_STORE !== 'file' &&
       (creds?.storage === 'secure_storage' ||
-        process.env.RESEND_CREDENTIAL_STORE === 'secure_storage' ||
-        process.env.RESEND_CREDENTIAL_STORE === 'keychain')
+        process.env.RESEND_CREDENTIAL_STORE === 'secure_storage')
         ? {
             detail:
               'Secure backend unavailable despite secure storage preference — falling back to plaintext',

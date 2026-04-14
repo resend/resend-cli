@@ -31,7 +31,7 @@ Shows which profile is active and where the API key comes from.`,
   )
   .action(async (_opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const profileFlag = globalOpts.profile ?? globalOpts.team;
+    const profileFlag = globalOpts.profile;
     const resolved = await resolveApiKeyAsync(globalOpts.apiKey, profileFlag);
 
     if (!resolved) {
@@ -40,8 +40,7 @@ Shows which profile is active and where the API key comes from.`,
         : resolveProfileName(profileFlag);
       const profiles = listProfiles();
       const profileExists = profiles.some((p) => p.name === requestedProfile);
-      const explicitProfile =
-        profileFlag || process.env.RESEND_PROFILE || process.env.RESEND_TEAM;
+      const explicitProfile = profileFlag || process.env.RESEND_PROFILE;
 
       // If a specific profile was requested but doesn't exist, show a targeted error
       const message =

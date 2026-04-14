@@ -72,8 +72,8 @@ describe('createClient', () => {
     writeFileSync(
       join(configDir, 'credentials.json'),
       JSON.stringify({
-        active_team: 'default',
-        teams: {
+        active_profile: 'default',
+        profiles: {
           default: { api_key: 're_default_key' },
           staging: { api_key: 're_staging_key' },
         },
@@ -81,7 +81,7 @@ describe('createClient', () => {
     );
 
     const { createClient } = await import('../../src/lib/client');
-    // Should not throw — resolves staging team's key
+    // Should not throw — resolves staging profile's key
     const client = await createClient(undefined, 'staging');
     expect(client).toBeInstanceOf(Resend);
 

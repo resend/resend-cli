@@ -17,7 +17,6 @@ describe('resolveApiKeyAsync', () => {
     process.env.XDG_CONFIG_HOME = tmpDir;
     delete process.env.RESEND_API_KEY;
     delete process.env.RESEND_PROFILE;
-    delete process.env.RESEND_TEAM;
     process.env.RESEND_CREDENTIAL_STORE = 'file';
   });
 
@@ -40,7 +39,7 @@ describe('resolveApiKeyAsync', () => {
     expect(result).toEqual({ key: 're_env_key', source: 'env' });
   });
 
-  test('reads from file when storage is not keychain', async () => {
+  test('reads from file when storage is not secure_storage', async () => {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     writeFileSync(
@@ -60,7 +59,7 @@ describe('resolveApiKeyAsync', () => {
     });
   });
 
-  test('reads from credential backend when storage is keychain', async () => {
+  test('reads from credential backend when storage is secure_storage', async () => {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     writeFileSync(
@@ -98,7 +97,7 @@ describe('resolveApiKeyAsync', () => {
     expect(mockBackend.get).toHaveBeenCalledWith('resend-cli', 'default');
   });
 
-  test('falls back to file api_key when keychain has no entry but file does (mixed state)', async () => {
+  test('falls back to file api_key when secure storage has no entry but file does', async () => {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     writeFileSync(
@@ -135,7 +134,7 @@ describe('resolveApiKeyAsync', () => {
     });
   });
 
-  test('returns null when keychain has no entry', async () => {
+  test('returns null when secure storage has no entry', async () => {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     writeFileSync(
@@ -189,7 +188,7 @@ describe('storeApiKeyAsync', () => {
     vi.restoreAllMocks();
   });
 
-  test('stores key in file backend when keychain unavailable', async () => {
+  test('stores key in file backend when secure storage unavailable', async () => {
     vi.resetModules();
     vi.doUnmock('../../src/lib/credential-store');
     const { storeApiKeyAsync } = await import('../../src/lib/config');
@@ -311,7 +310,7 @@ describe('removeAllApiKeysAsync', () => {
     vi.restoreAllMocks();
   });
 
-  test('deletes all profiles from keychain when secure', async () => {
+  test('deletes all profiles from secure storage when secure', async () => {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     writeFileSync(
@@ -347,7 +346,7 @@ describe('removeAllApiKeysAsync', () => {
     expect(mockBackend.delete).toHaveBeenCalledWith('resend-cli', 'prod');
   });
 
-  test('skips keychain deletion when not secure', async () => {
+  test('skips secure storage deletion when not secure', async () => {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     writeFileSync(
@@ -401,7 +400,7 @@ describe('renameProfileAsync', () => {
     vi.restoreAllMocks();
   });
 
-  test('renames in keychain when secure', async () => {
+  test('renames in secure storage when secure', async () => {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     writeFileSync(
@@ -446,7 +445,7 @@ describe('renameProfileAsync', () => {
     expect(creds?.active_profile).toBe('new-name');
   });
 
-  test('skips keychain when not secure', async () => {
+  test('skips secure storage when not secure', async () => {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     writeFileSync(

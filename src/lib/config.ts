@@ -34,9 +34,6 @@ export type CredentialsFile = {
   profiles: Record<string, Profile>;
 };
 
-/** @deprecated Use `Profile` instead */
-export type TeamProfile = Profile;
-
 export function getConfigDir(): string {
   if (process.env.XDG_CONFIG_HOME) {
     return join(process.env.XDG_CONFIG_HOME, 'resend');
@@ -54,28 +51,11 @@ export function getCredentialsPath(): string {
 export function readCredentials(): CredentialsFile | null {
   try {
     const data = JSON.parse(readFileSync(getCredentialsPath(), 'utf-8'));
-    // Support legacy format: { api_key: "re_xxx" }
-    if (data.api_key && !data.profiles && !data.teams) {
-      return {
-        active_profile: 'default',
-        profiles: { default: { api_key: data.api_key } },
-      };
-    }
-    // New format: { profiles, active_profile }
     if (data.profiles) {
-      const storage =
-        data.storage === 'keychain' ? 'secure_storage' : data.storage;
       return {
         active_profile: data.active_profile ?? 'default',
-        ...(storage ? { storage } : {}),
+        ...(data.storage ? { storage: data.storage } : {}),
         profiles: data.profiles,
-      };
-    }
-    // Old format: { teams, active_team }
-    if (data.teams) {
-      return {
-        active_profile: data.active_team ?? 'default',
-        profiles: data.teams,
       };
     }
     return null;
@@ -102,8 +82,7 @@ export function resolveProfileName(flagValue?: string): string {
     return flagValue;
   }
 
-  // Check RESEND_PROFILE first, fall back to deprecated RESEND_TEAM
-  const envProfile = process.env.RESEND_PROFILE || process.env.RESEND_TEAM;
+  const envProfile = process.env.RESEND_PROFILE;
   if (envProfile) {
     return envProfile;
   }
@@ -115,9 +94,6 @@ export function resolveProfileName(flagValue?: string): string {
 
   return 'default';
 }
-
-/** @deprecated Use `resolveProfileName` instead */
-export const resolveTeamName = resolveProfileName;
 
 export function resolveApiKey(
   flagValue?: string,
@@ -190,7 +166,7 @@ export function removeApiKey(profileName?: string): string {
     if (!existsSync(configPath)) {
       throw new Error('No credentials file found.');
     }
-    // Try to delete legacy file
+    // File exists but is not valid credentials — delete it
     unlinkSync(configPath);
     return configPath;
   }
@@ -237,9 +213,6 @@ export function setActiveProfile(profileName: string): void {
   writeCredentials(creds);
 }
 
-/** @deprecated Use `setActiveProfile` instead */
-export const setActiveTeam = setActiveProfile;
-
 export function listProfiles(): Array<{ name: string; active: boolean }> {
   const creds = readCredentials();
   if (!creds) {
@@ -250,9 +223,6 @@ export function listProfiles(): Array<{ name: string; active: boolean }> {
     active: name === creds.active_profile,
   }));
 }
-
-/** @deprecated Use `listProfiles` instead */
-export const listTeams = listProfiles;
 
 export function validateProfileName(name: string): string | undefined {
   if (!name || name.length === 0) {
@@ -266,9 +236,6 @@ export function validateProfileName(name: string): string | undefined {
   }
   return undefined;
 }
-
-/** @deprecated Use `validateProfileName` instead */
-export const validateTeamName = validateProfileName;
 
 export function renameProfile(oldName: string, newName: string): void {
   if (oldName === newName) {
@@ -324,7 +291,6 @@ export async function resolveApiKeyAsync(
   const profile =
     profileName ||
     process.env.RESEND_PROFILE ||
-    process.env.RESEND_TEAM ||
     creds?.active_profile ||
     'default';
 
@@ -336,30 +302,12 @@ export async function resolveApiKeyAsync(
       const permission = creds.profiles[profile]?.permission;
       return { key, source: 'secure_storage', profile, permission };
     }
-    // Fall through: profile may not be migrated yet (api_key still in file)
   }
 
-  // File-based storage (or unmigrated profile in mixed state)
+  // File-based storage
   if (creds) {
     const entry = creds.profiles[profile];
     if (entry?.api_key) {
-      // Auto-migrate: move plaintext key to secure storage if available
-      const backend = await getCredentialBackend();
-      if (backend.isSecure) {
-        try {
-          await backend.set(SERVICE_NAME, profile, entry.api_key);
-          creds.profiles[profile] = {
-            ...(entry.permission && { permission: entry.permission }),
-          };
-          creds.storage = 'secure_storage';
-          writeCredentials(creds);
-          process.stderr.write(
-            `Notice: API key for profile "${profile}" has been moved to ${backend.name}\n`,
-          );
-        } catch {
-          // Non-fatal — plaintext key still works
-        }
-      }
       return {
         key: entry.api_key,
         source: 'config',
@@ -419,7 +367,6 @@ export async function removeApiKeyAsync(profileName?: string): Promise<string> {
   const profile =
     profileName ||
     process.env.RESEND_PROFILE ||
-    process.env.RESEND_TEAM ||
     creds?.active_profile ||
     'default';
 

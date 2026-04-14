@@ -33,7 +33,6 @@ describe('whoami command', () => {
     process.env.XDG_CONFIG_HOME = tmpDir;
     delete process.env.RESEND_API_KEY;
     delete process.env.RESEND_PROFILE;
-    delete process.env.RESEND_TEAM;
   });
 
   afterEach(() => {
