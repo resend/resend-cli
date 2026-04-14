@@ -9,6 +9,7 @@ import { errorMessage, outputError } from '../../../lib/output';
 import { safeTerminalText } from '../../../lib/safe-terminal-text';
 import { createSpinner } from '../../../lib/spinner';
 import { isInteractive } from '../../../lib/tty';
+import { createBoundedSet } from '../../../utils/bounded-set';
 
 const PAGE_SIZE = 100;
 
@@ -80,7 +81,7 @@ Ctrl+C exits cleanly.`,
       globalOpts.quiet || jsonMode,
     );
 
-    const seenIds = new Set<string>();
+    const seenIds = createBoundedSet<string>();
     let consecutiveErrors = 0;
 
     try {
@@ -183,13 +184,17 @@ Ctrl+C exits cleanly.`,
 
         consecutiveErrors = 0;
 
+        // Reverse to chronological order so newest IDs land at the
+        // tail of the LRU and are evicted last.
+        newEmails.reverse();
+
         // Mark all new emails as seen
         for (const email of newEmails) {
           seenIds.add(email.id);
         }
 
         // Display in chronological order (oldest first)
-        for (const email of newEmails.reverse()) {
+        for (const email of newEmails) {
           displayEmail(email, jsonMode);
         }
       } catch (err) {
