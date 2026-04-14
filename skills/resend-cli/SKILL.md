@@ -140,7 +140,7 @@ Auth resolves: `--api-key` flag > `RESEND_API_KEY` env > config file (`resend lo
 | `broadcasts` | create, send, update, delete, list |
 | `contacts` | create, update, delete, segments, topics |
 | `contact-properties` | create, update, delete, list |
-| `segments` | create, get, list, delete |
+| `segments` | create, get, list, delete, contacts |
 | `templates` | create, publish, duplicate, delete, list |
 | `topics` | create, update, delete, list |
 | `webhooks` | create, update, listen, delete, list |

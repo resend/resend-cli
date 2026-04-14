@@ -15,9 +15,12 @@ import { requireText } from '../../lib/prompts';
 import { safeTerminalText } from '../../lib/safe-terminal-text';
 import { createSpinner } from '../../lib/spinner';
 import { isInteractive } from '../../lib/tty';
+import { type ForwardResult, resolveUpstream } from './resolve-upstream';
 import { ALL_WEBHOOK_EVENTS, normalizeEvents } from './utils';
 
 const SVIX_HEADERS = ['svix-id', 'svix-timestamp', 'svix-signature'];
+
+const FORWARD_TIMEOUT_MS = 30_000;
 
 function timestamp(): string {
   return new Date().toLocaleTimeString('en-GB', { hour12: false });
@@ -74,6 +77,7 @@ function statusText(code: number): string {
     500: 'Internal Server Error',
     502: 'Bad Gateway',
     503: 'Service Unavailable',
+    504: 'Gateway Timeout',
   };
   return map[code] ?? '';
 }
@@ -98,6 +102,7 @@ async function forwardPayload(
     method: 'POST',
     headers: forwardHeaders,
     body: rawBody,
+    signal: AbortSignal.timeout(FORWARD_TIMEOUT_MS),
   });
   return { status: resp.status };
 }
@@ -204,35 +209,30 @@ For example, if using ngrok: ngrok http 4318`,
     // Start local server
     const server = createServer(
       async (req: IncomingMessage, res: ServerResponse) => {
-        if (req.method !== 'POST') {
-          res.writeHead(405).end('Method not allowed');
-          return;
-        }
-
-        const rawBody = await readBody(req);
-        let body: Record<string, unknown>;
         try {
-          body = JSON.parse(rawBody);
-        } catch {
-          res.writeHead(400).end('Invalid JSON');
-          return;
-        }
+          if (req.method !== 'POST') {
+            res.writeHead(405).end('Method not allowed');
+            return;
+          }
 
-        const svixHeaders: Record<string, string | undefined> = {};
-        for (const h of SVIX_HEADERS) {
-          const val = req.headers[h];
-          svixHeaders[h] = Array.isArray(val) ? val[0] : val;
-        }
+          const rawBody = await readBody(req);
+          let body: Record<string, unknown>;
+          try {
+            body = JSON.parse(rawBody);
+          } catch {
+            res.writeHead(400).end('Invalid JSON');
+            return;
+          }
 
-        const { type, resourceId, detail } = summarizeEvent(body);
+          const svixHeaders: Record<string, string | undefined> = {};
+          for (const h of SVIX_HEADERS) {
+            const val = req.headers[h];
+            svixHeaders[h] = Array.isArray(val) ? val[0] : val;
+          }
 
-        if (jsonMode) {
-          const entry: Record<string, unknown> = {
-            timestamp: new Date().toISOString(),
-            type,
-            resource_id: resourceId,
-            payload: body,
-          };
+          const { type, resourceId, detail } = summarizeEvent(body);
+
+          let forwardResult: ForwardResult | undefined;
 
           if (opts.forwardTo) {
             try {
@@ -241,47 +241,64 @@ For example, if using ngrok: ngrok http 4318`,
                 rawBody,
                 svixHeaders,
               );
-              entry.forwarded = { url: opts.forwardTo, status };
+              forwardResult = { status };
             } catch (err) {
-              entry.forwarded = {
-                url: opts.forwardTo,
+              const isTimeout =
+                err instanceof DOMException && err.name === 'TimeoutError';
+              forwardResult = {
                 error: err instanceof Error ? err.message : 'Unknown error',
+                timeout: isTimeout,
               };
             }
           }
 
-          console.log(JSON.stringify(entry));
-        } else {
-          const ts = pc.dim(`[${timestamp()}]`);
-          const typePad = type.padEnd(20);
-          const idPad = resourceId.padEnd(14);
-          process.stderr.write(
-            `${ts} ${pc.bold(typePad)} ${pc.cyan(idPad)} ${detail}\n`,
-          );
+          if (jsonMode) {
+            const entry: Record<string, unknown> = {
+              timestamp: new Date().toISOString(),
+              type,
+              resource_id: resourceId,
+              payload: body,
+            };
 
-          if (opts.forwardTo) {
-            const target = opts.forwardTo.startsWith('http')
-              ? opts.forwardTo
-              : `http://${opts.forwardTo}`;
-            try {
-              const { status } = await forwardPayload(
-                opts.forwardTo,
-                rawBody,
-                svixHeaders,
-              );
-              process.stderr.write(
-                `${pc.dim('           -> POST')} ${target} ${pc.dim(`[${formatStatus(status)}]`)}\n`,
-              );
-            } catch (err) {
-              const msg = err instanceof Error ? err.message : 'Unknown error';
-              process.stderr.write(
-                `${pc.dim('           -> POST')} ${target} ${pc.red(`[Error: ${msg}]`)}\n`,
-              );
+            if (opts.forwardTo && forwardResult) {
+              entry.forwarded =
+                'error' in forwardResult
+                  ? { url: opts.forwardTo, error: forwardResult.error }
+                  : { url: opts.forwardTo, status: forwardResult.status };
+            }
+
+            console.log(JSON.stringify(entry));
+          } else {
+            const ts = pc.dim(`[${timestamp()}]`);
+            const typePad = type.padEnd(20);
+            const idPad = resourceId.padEnd(14);
+            process.stderr.write(
+              `${ts} ${pc.bold(typePad)} ${pc.cyan(idPad)} ${detail}\n`,
+            );
+
+            if (opts.forwardTo && forwardResult) {
+              const target = opts.forwardTo.startsWith('http')
+                ? opts.forwardTo
+                : `http://${opts.forwardTo}`;
+              if ('error' in forwardResult) {
+                process.stderr.write(
+                  `${pc.dim('           -> POST')} ${target} ${pc.red(`[Error: ${forwardResult.error}]`)}\n`,
+                );
+              } else {
+                process.stderr.write(
+                  `${pc.dim('           -> POST')} ${target} ${pc.dim(`[${formatStatus(forwardResult.status)}]`)}\n`,
+                );
+              }
             }
           }
-        }
 
-        res.writeHead(200).end('OK');
+          const upstream = resolveUpstream(forwardResult);
+          res.writeHead(upstream.status).end(upstream.body);
+        } catch {
+          if (!res.headersSent) {
+            res.writeHead(500).end('Internal error');
+          }
+        }
       },
     );
 
