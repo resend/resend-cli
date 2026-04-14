@@ -9,14 +9,15 @@ import { errorMessage, outputError } from '../../../lib/output';
 import { safeTerminalText } from '../../../lib/safe-terminal-text';
 import { createSpinner } from '../../../lib/spinner';
 import { isInteractive } from '../../../lib/tty';
+import { withRetry } from '../../../lib/with-retry';
 
 const PAGE_SIZE = 100;
+const MAX_PAGES_PER_POLL = 5;
 
-function timestamp(): string {
-  return new Date().toLocaleTimeString('en-GB', { hour12: false });
-}
+const timestamp = (): string =>
+  new Date().toLocaleTimeString('en-GB', { hour12: false });
 
-function displayEmail(email: ListReceivingEmail, jsonMode: boolean): void {
+const displayEmail = (email: ListReceivingEmail, jsonMode: boolean): void => {
   if (jsonMode) {
     console.log(JSON.stringify(email));
   } else {
@@ -31,7 +32,28 @@ function displayEmail(email: ListReceivingEmail, jsonMode: boolean): void {
       `${ts} ${from} -> ${to}  ${pc.bold(`"${subject}"`)}  ${pc.dim(id)}\n`,
     );
   }
-}
+};
+
+type PageResult = {
+  readonly newEmails: ReadonlyArray<ListReceivingEmail>;
+  readonly foundSeen: boolean;
+};
+
+const extractNewEmails = (
+  emails: ReadonlyArray<ListReceivingEmail>,
+  seenIds: ReadonlySet<string>,
+): PageResult => {
+  const idx = emails.findIndex((e) => seenIds.has(e.id));
+  return idx === -1
+    ? { newEmails: emails, foundSeen: false }
+    : { newEmails: emails.slice(0, idx), foundSeen: true };
+};
+
+type FetchResult = {
+  readonly emails: ReadonlyArray<ListReceivingEmail>;
+  readonly error?: string;
+  readonly hasMore: boolean;
+};
 
 export const listenReceivingCommand = new Command('listen')
   .description('Poll for new inbound emails and display them as they arrive')
@@ -74,7 +96,6 @@ Ctrl+C exits cleanly.`,
     const resend = await requireClient(globalOpts);
     const jsonMode = globalOpts.json || !isInteractive();
 
-    // Initial poll — just grab the latest email to establish our starting point
     const spinner = createSpinner(
       'Connecting...',
       globalOpts.quiet || jsonMode,
@@ -112,7 +133,6 @@ Ctrl+C exits cleanly.`,
       );
     }
 
-    // Print banner
     if (!jsonMode) {
       process.stderr.write('\n');
       process.stderr.write(`  ${pc.bold('Polling:')}  every ${interval}s\n`);
@@ -121,8 +141,7 @@ Ctrl+C exits cleanly.`,
       );
     }
 
-    // Helper: handle consecutive poll errors and exit if threshold reached
-    function handlePollError(message: string): void {
+    const handlePollError = (message: string): void => {
       consecutiveErrors++;
       if (!jsonMode) {
         process.stderr.write(
@@ -138,70 +157,75 @@ Ctrl+C exits cleanly.`,
           { json: globalOpts.json },
         );
       }
-    }
+    };
 
-    // Poll loop — paginates until it hits a seen email to guarantee no misses
+    const fetchPages = async (
+      cursor: string | undefined,
+      accumulated: ReadonlyArray<ListReceivingEmail>,
+      pagesLeft: number,
+    ): Promise<FetchResult> => {
+      if (pagesLeft <= 0) {
+        return { emails: accumulated, hasMore: true };
+      }
+
+      const params = cursor
+        ? { limit: PAGE_SIZE, after: cursor }
+        : { limit: PAGE_SIZE };
+      const { data, error } = await withRetry(() =>
+        resend.emails.receiving.list(params),
+      );
+
+      if (error || !data) {
+        return {
+          emails: accumulated,
+          error: error?.message ?? 'Empty response',
+          hasMore: false,
+        };
+      }
+
+      const { newEmails, foundSeen } = extractNewEmails(data.data, seenIds);
+
+      for (const email of newEmails) {
+        seenIds.add(email.id);
+      }
+
+      const allEmails = [...accumulated, ...newEmails];
+
+      if (foundSeen || !data.has_more) {
+        return { emails: allEmails, hasMore: false };
+      }
+
+      const nextCursor = data.data[data.data.length - 1]?.id;
+      return fetchPages(nextCursor, allEmails, pagesLeft - 1);
+    };
+
     let timeoutHandle: ReturnType<typeof setTimeout>;
 
-    async function poll(): Promise<void> {
+    const poll = async (): Promise<void> => {
       try {
-        const newEmails: ListReceivingEmail[] = [];
-        let cursor: string | undefined;
-        let hasMore = true;
+        const result = await fetchPages(undefined, [], MAX_PAGES_PER_POLL);
 
-        // Paginate through results until we find an email we've already seen
-        while (hasMore) {
-          const params: { limit: number; after?: string } = {
-            limit: PAGE_SIZE,
-          };
-          if (cursor) {
-            params.after = cursor;
-          }
-
-          const { data, error } = await resend.emails.receiving.list(params);
-          if (error || !data) {
-            handlePollError(error?.message ?? 'Empty response');
-            return;
-          }
-
-          let foundSeen = false;
-          for (const email of data.data) {
-            if (seenIds.has(email.id)) {
-              foundSeen = true;
-              break;
-            }
-            newEmails.push(email);
-          }
-
-          if (foundSeen || !data.has_more) {
-            hasMore = false;
-          } else {
-            // Use the last email as cursor for the next page
-            cursor = data.data[data.data.length - 1]?.id;
-          }
+        if (result.error) {
+          handlePollError(result.error);
         }
 
-        consecutiveErrors = 0;
-
-        // Mark all new emails as seen
-        for (const email of newEmails) {
-          seenIds.add(email.id);
-        }
-
-        // Display in chronological order (oldest first)
-        for (const email of newEmails.reverse()) {
-          displayEmail(email, jsonMode);
+        if (result.emails.length > 0) {
+          consecutiveErrors = 0;
+          for (const email of result.emails.toReversed()) {
+            displayEmail(email, jsonMode);
+          }
+        } else if (!result.error) {
+          consecutiveErrors = 0;
         }
       } catch (err) {
         handlePollError(errorMessage(err, 'Unknown error'));
       } finally {
         timeoutHandle = setTimeout(poll, interval * 1000);
       }
-    }
+    };
 
     timeoutHandle = setTimeout(poll, interval * 1000);
 
-    // Graceful exit
     const handleSignal = () => {
       clearTimeout(timeoutHandle);
       if (!jsonMode) {
@@ -213,6 +237,5 @@ Ctrl+C exits cleanly.`,
     setSigintHandler(handleSignal);
     process.on('SIGTERM', handleSignal);
 
-    // Keep alive
     await new Promise(() => {});
   });
