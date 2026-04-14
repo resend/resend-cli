@@ -264,6 +264,7 @@ describe('templates create command', () => {
     expect(mockBuildReactEmailHtml).toHaveBeenCalledWith(
       './emails/welcome.tsx',
       expect.anything(),
+      {},
     );
     const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.html).toBe('<html><body>Rendered</body></html>');

@@ -8,6 +8,7 @@ import { fetchVerifiedDomains, promptForFromAddress } from '../../lib/domains';
 import { readFile } from '../../lib/files';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError, outputResult } from '../../lib/output';
+import { parseReactEmailProps } from '../../lib/parse-react-email-props';
 import { cancelAndExit, pickId } from '../../lib/prompts';
 import { buildReactEmailHtml } from '../../lib/react-email';
 import { isInteractive } from '../../lib/tty';
@@ -35,6 +36,14 @@ export const createBroadcastCommand = new Command('create')
   .option(
     '--react-email <path>',
     'Path to a React Email template (.tsx) to bundle, render, and use as HTML body (npm install only)',
+  )
+  .option(
+    '--react-email-props <json>',
+    'JSON string of props to pass to the React Email component',
+  )
+  .option(
+    '--react-email-props-file <path>',
+    'Path to a JSON file of props to pass to the React Email component',
   )
   .option('--name <name>', 'Internal label for the broadcast (optional)')
   .option('--reply-to <address>', 'Reply-to address (optional)')
@@ -110,6 +119,20 @@ Scheduling:
       outputError(
         {
           message: 'Cannot use --react-email with --html or --html-file',
+          code: 'invalid_options',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
+    if (
+      (opts.reactEmailProps || opts.reactEmailPropsFile) &&
+      !opts.reactEmail
+    ) {
+      outputError(
+        {
+          message:
+            '--react-email-props and --react-email-props-file can only be used with --react-email',
           code: 'invalid_options',
         },
         { json: globalOpts.json },
@@ -206,8 +229,15 @@ Scheduling:
       }
     }
 
+    const reactProps = opts.reactEmail
+      ? parseReactEmailProps(
+          opts.reactEmailProps,
+          opts.reactEmailPropsFile,
+          globalOpts,
+        )
+      : undefined;
     const html = opts.reactEmail
-      ? await buildReactEmailHtml(opts.reactEmail, globalOpts)
+      ? await buildReactEmailHtml(opts.reactEmail, globalOpts, reactProps ?? {})
       : opts.htmlFile
         ? readFile(opts.htmlFile, globalOpts)
         : opts.html;

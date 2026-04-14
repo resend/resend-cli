@@ -15,6 +15,7 @@ const cleanupTmpDir = (tmpDir: string | undefined) => {
 export const buildReactEmailHtml = async (
   templatePath: string,
   globalOpts: GlobalOpts,
+  props: Record<string, unknown> = {},
 ): Promise<string> => {
   if (templatePath.trim() === '') {
     return outputError(
@@ -73,7 +74,7 @@ export const buildReactEmailHtml = async (
       globalOpts.quiet,
     );
     try {
-      const html = await renderReactEmail(result.cjsPath);
+      const html = await renderReactEmail(result.cjsPath, props);
       renderSpinner.stop('Rendered React Email template');
       cleanupTmpDir(tmpDir);
       return html;
