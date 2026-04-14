@@ -200,15 +200,12 @@ describe('doctor command', () => {
     expect(apiCheck.message).toContain('Sending-only API key');
   });
 
-  it('fails API validation when domains.list times out', async () => {
+  it('warns when domains.list times out instead of failing', async () => {
     const timeoutError = new Error('Operation timed out after 5000ms');
     timeoutError.name = 'TimeoutError';
     mockDomainListResult = () => Promise.reject(timeoutError);
 
     spies = setupOutputSpies();
-    exitSpy = vi
-      .spyOn(process, 'exit')
-      .mockImplementation(() => undefined as never);
 
     const program = await createDoctorProgram();
     await program.parseAsync(['doctor', '--json'], { from: 'user' });
@@ -220,7 +217,7 @@ describe('doctor command', () => {
       (c: Record<string, unknown>) => c.name === 'API Validation',
     );
     expect(apiCheck).toBeDefined();
-    expect(apiCheck.status).toBe('fail');
+    expect(apiCheck.status).toBe('warn');
     expect(apiCheck.message).toContain('timed out');
   });
 });

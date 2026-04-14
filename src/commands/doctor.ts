@@ -14,7 +14,7 @@ import { createSpinner } from '../lib/spinner';
 import { isInteractive } from '../lib/tty';
 import { GITHUB_RELEASES_URL } from '../lib/update-check';
 import { VERSION } from '../lib/version';
-import { withTimeout } from '../utils/with-timeout';
+import { TIMEOUT_ERROR_NAME, withTimeout } from '../utils/with-timeout';
 
 const API_TIMEOUT_MS = 5000;
 
@@ -158,6 +158,14 @@ async function checkApiValidationAndDomains(
       detail: domains.map((d) => `${d.name} (${d.status})`).join(', '),
     };
   } catch (err) {
+    if (err instanceof Error && err.name === TIMEOUT_ERROR_NAME) {
+      return {
+        name: 'API Validation',
+        status: 'warn',
+        message: 'Could not reach Resend API (request timed out)',
+        detail: 'Check your network connection and try again',
+      };
+    }
     return {
       name: 'API Validation',
       status: 'fail',

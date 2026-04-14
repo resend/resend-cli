@@ -1,4 +1,4 @@
-const TIMEOUT_ERROR_NAME = 'TimeoutError';
+export const TIMEOUT_ERROR_NAME = 'TimeoutError';
 
 export const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> => {
   let id: ReturnType<typeof setTimeout>;
