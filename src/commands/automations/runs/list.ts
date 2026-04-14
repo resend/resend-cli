@@ -15,6 +15,10 @@ export const listAutomationRunsCommand = new Command('list')
   .alias('ls')
   .description('List runs for an automation')
   .argument('[automation-id]', 'Automation ID')
+  .option(
+    '--status <status>',
+    'Filter by status (running, completed, failed, cancelled). Comma-separated.',
+  )
   .option('--limit <n>', 'Maximum number of runs to return (1-100)', '10')
   .option('--after <cursor>', 'Return runs after this cursor (next page)')
   .option('--before <cursor>', 'Return runs before this cursor (previous page)')
@@ -26,6 +30,7 @@ export const listAutomationRunsCommand = new Command('list')
       examples: [
         'resend automations runs <automation-id>',
         'resend automations runs list <automation-id>',
+        'resend automations runs list <automation-id> --status running',
         'resend automations runs list <automation-id> --limit 25 --json',
       ],
     }),
@@ -51,6 +56,13 @@ export const listAutomationRunsCommand = new Command('list')
           resend.automations.runs.list({
             automationId,
             ...paginationOpts,
+            ...(opts.status
+              ? {
+                  status: opts.status as Parameters<
+                    typeof resend.automations.runs.list
+                  >[0]['status'],
+                }
+              : {}),
           }),
         onInteractive: (list) => {
           const rows = list.data.map((r) => [
