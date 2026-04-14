@@ -200,6 +200,32 @@ describe('doctor command', () => {
     expect(apiCheck.message).toContain('Sending-only API key');
   });
 
+  it('warns when network is unreachable instead of reporting invalid key', async () => {
+    mockDomainListResult = {
+      data: null,
+      error: {
+        name: 'application_error',
+        statusCode: null,
+        message: 'Unable to fetch data. The request could not be resolved.',
+      },
+    };
+
+    spies = setupOutputSpies();
+
+    const program = await createDoctorProgram();
+    await program.parseAsync(['doctor', '--json'], { from: 'user' });
+
+    const output = spies.logSpy.mock.calls[0][0] as string;
+    const parsed = JSON.parse(output);
+
+    const apiCheck = parsed.checks.find(
+      (c: Record<string, unknown>) => c.name === 'API Validation',
+    );
+    expect(apiCheck).toBeDefined();
+    expect(apiCheck.status).toBe('warn');
+    expect(apiCheck.message).toContain('Network error');
+  });
+
   it('warns when domains.list times out instead of failing', async () => {
     const timeoutError = new Error('Operation timed out after 5000ms');
     timeoutError.name = 'TimeoutError';

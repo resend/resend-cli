@@ -122,6 +122,13 @@ async function checkApiValidationAndDomains(
           detail: SENDING_KEY_MESSAGE,
         };
       }
+      if (err.name === 'application_error') {
+        return {
+          name: 'API Validation',
+          status: 'warn',
+          message: 'Network error. Check your connection and try again',
+        };
+      }
       return {
         name: 'API Validation',
         status: 'fail',
@@ -162,8 +169,7 @@ async function checkApiValidationAndDomains(
       return {
         name: 'API Validation',
         status: 'warn',
-        message: 'Could not reach Resend API (request timed out)',
-        detail: 'Check your network connection and try again',
+        message: 'Request timed out',
       };
     }
     return {
