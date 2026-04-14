@@ -115,7 +115,7 @@ describe('emails receiving listen command', () => {
 
   it('errors with invalid_interval for interval below 2', async () => {
     setNonInteractive();
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { listenReceivingCommand } = await import(
@@ -133,7 +133,7 @@ describe('emails receiving listen command', () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     const { listenReceivingCommand } = await import(
@@ -152,7 +152,7 @@ describe('emails receiving listen command', () => {
     mockList.mockResolvedValueOnce(
       mockSdkError('Server error', 'server_error'),
     );
-    errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);

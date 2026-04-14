@@ -5,7 +5,9 @@ import { apiKeysCommand } from './commands/api-keys/index';
 import { authCommand } from './commands/auth/index';
 import { loginCommand } from './commands/auth/login';
 import { logoutCommand } from './commands/auth/logout';
+import { automationsCommand } from './commands/automations/index';
 import { broadcastsCommand } from './commands/broadcasts/index';
+import { listCommandsCommand } from './commands/commands';
 import { completionCommand } from './commands/completion';
 import { contactPropertiesCommand } from './commands/contact-properties/index';
 import { contactsCommand } from './commands/contacts/index';
@@ -13,6 +15,7 @@ import { docsCommand } from './commands/docs';
 import { doctorCommand } from './commands/doctor';
 import { domainsCommand } from './commands/domains/index';
 import { emailsCommand } from './commands/emails/index';
+import { eventsCommand } from './commands/events/index';
 import { logsCommand } from './commands/logs/index';
 import { openCommand } from './commands/open';
 import { segmentsCommand } from './commands/segments/index';
@@ -128,6 +131,8 @@ ${pc.gray('Examples:')}
   .addCommand(loginCommand)
   .addCommand(emailsCommand)
   .addCommand(broadcastsCommand)
+  .addCommand(automationsCommand)
+  .addCommand(eventsCommand)
   .addCommand(templatesCommand)
   .addCommand(contactsCommand)
   .addCommand(contactPropertiesCommand)
@@ -145,6 +150,7 @@ ${pc.gray('Examples:')}
   .addCommand(docsCommand)
   .addCommand(updateCommand)
   .addCommand(teamsDeprecatedCommand)
+  .addCommand(listCommandsCommand)
   .addCommand(completionCommand);
 
 const telemetryCommand = new Command('telemetry')
@@ -184,7 +190,10 @@ program
       });
     }
 
-    return checkForUpdates().catch(() => {});
+    const globals = program.opts();
+    void checkForUpdates({
+      json: Boolean(globals.json || globals.quiet),
+    }).catch(() => {});
   })
   .catch((err) => {
     outputError({
