@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -56,7 +56,7 @@ describe('segments get command', () => {
     exitSpy = undefined;
   });
 
-  test('calls SDK with the provided segment ID', async () => {
+  it('calls SDK with the provided segment ID', async () => {
     spies = setupOutputSpies();
 
     const { getSegmentCommand } = await import(
@@ -73,7 +73,7 @@ describe('segments get command', () => {
     );
   });
 
-  test('outputs JSON segment data when non-interactive', async () => {
+  it('outputs JSON segment data when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { getSegmentCommand } = await import(
@@ -92,7 +92,7 @@ describe('segments get command', () => {
     expect(parsed.created_at).toBe('2026-01-01T00:00:00.000Z');
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -112,7 +112,7 @@ describe('segments get command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with fetch_error when SDK returns an error', async () => {
+  it('errors with fetch_error when SDK returns an error', async () => {
     setNonInteractive();
     mockGet.mockResolvedValueOnce(
       mockSdkError('Segment not found', 'not_found'),

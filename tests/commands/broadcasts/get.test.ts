@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -68,7 +68,7 @@ describe('broadcasts get command', () => {
     exitSpy = undefined;
   });
 
-  test('fetches broadcast by id', async () => {
+  it('fetches broadcast by id', async () => {
     spies = setupOutputSpies();
 
     const { getBroadcastCommand } = await import(
@@ -85,7 +85,7 @@ describe('broadcasts get command', () => {
     );
   });
 
-  test('outputs full JSON when non-interactive', async () => {
+  it('outputs full JSON when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { getBroadcastCommand } = await import(
@@ -103,7 +103,7 @@ describe('broadcasts get command', () => {
     expect(parsed.subject).toBe('This week in Resend');
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -123,7 +123,7 @@ describe('broadcasts get command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with fetch_error when SDK returns an error', async () => {
+  it('errors with fetch_error when SDK returns an error', async () => {
     setNonInteractive();
     mockGet.mockResolvedValueOnce(mockSdkError('Not found', 'not_found'));
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});

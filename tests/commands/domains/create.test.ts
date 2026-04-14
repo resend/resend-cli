@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -69,7 +69,7 @@ describe('domains create command', () => {
     exitSpy = undefined;
   });
 
-  test('creates domain with --name flag', async () => {
+  it('creates domain with --name flag', async () => {
     spies = setupOutputSpies();
 
     const { createDomainCommand } = await import(
@@ -84,7 +84,7 @@ describe('domains create command', () => {
     expect(args.name).toBe('example.com');
   });
 
-  test('passes region and tls flags to SDK', async () => {
+  it('passes region and tls flags to SDK', async () => {
     spies = setupOutputSpies();
 
     const { createDomainCommand } = await import(
@@ -100,7 +100,7 @@ describe('domains create command', () => {
     expect(args.tls).toBe('enforced');
   });
 
-  test('passes receiving capability when --receiving flag is set', async () => {
+  it('passes receiving capability when --receiving flag is set', async () => {
     spies = setupOutputSpies();
 
     const { createDomainCommand } = await import(
@@ -115,7 +115,7 @@ describe('domains create command', () => {
     expect(args.capabilities?.receiving).toBe('enabled');
   });
 
-  test('outputs JSON result when non-interactive', async () => {
+  it('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { createDomainCommand } = await import(
@@ -131,7 +131,7 @@ describe('domains create command', () => {
     expect(parsed.name).toBe('example.com');
   });
 
-  test('errors with missing_name when --name absent in non-interactive mode', async () => {
+  it('errors with missing_name when --name absent in non-interactive mode', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -147,7 +147,7 @@ describe('domains create command', () => {
     expect(output).toContain('missing_name');
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -167,7 +167,7 @@ describe('domains create command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with create_error when SDK returns an error', async () => {
+  it('errors with create_error when SDK returns an error', async () => {
     setNonInteractive();
     mockCreate.mockResolvedValueOnce(
       mockSdkError('Domain already exists', 'validation_error'),

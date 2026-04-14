@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -51,7 +51,7 @@ describe('topics create command', () => {
     exitSpy = undefined;
   });
 
-  test('creates topic with --name and default subscription', async () => {
+  it('creates topic with --name and default subscription', async () => {
     spies = setupOutputSpies();
 
     const { createTopicCommand } = await import(
@@ -67,7 +67,7 @@ describe('topics create command', () => {
     expect(args.defaultSubscription).toBe('opt_in');
   });
 
-  test('creates topic with explicit --default-subscription opt_out', async () => {
+  it('creates topic with explicit --default-subscription opt_out', async () => {
     spies = setupOutputSpies();
 
     const { createTopicCommand } = await import(
@@ -82,7 +82,7 @@ describe('topics create command', () => {
     expect(args.defaultSubscription).toBe('opt_out');
   });
 
-  test('includes description when --description is provided', async () => {
+  it('includes description when --description is provided', async () => {
     spies = setupOutputSpies();
 
     const { createTopicCommand } = await import(
@@ -102,7 +102,7 @@ describe('topics create command', () => {
     expect(args.description).toBe('Get notified about new features');
   });
 
-  test('outputs JSON with id when non-interactive', async () => {
+  it('outputs JSON with id when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { createTopicCommand } = await import(
@@ -117,7 +117,7 @@ describe('topics create command', () => {
     expect(parsed.id).toBe('top_abc123');
   });
 
-  test('errors with missing_name in non-interactive mode when --name absent', async () => {
+  it('errors with missing_name in non-interactive mode when --name absent', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -133,7 +133,7 @@ describe('topics create command', () => {
     expect(output).toContain('missing_name');
   });
 
-  test('does not call SDK when missing_name error is raised', async () => {
+  it('does not call SDK when missing_name error is raised', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -148,7 +148,7 @@ describe('topics create command', () => {
     expect(mockCreate).not.toHaveBeenCalled();
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -166,7 +166,7 @@ describe('topics create command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with create_error when SDK returns an error', async () => {
+  it('errors with create_error when SDK returns an error', async () => {
     setNonInteractive();
     mockCreate.mockResolvedValueOnce(
       mockSdkError('Topic already exists', 'validation_error'),

@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -60,7 +60,7 @@ describe('contacts get command', () => {
     exitSpy = undefined;
   });
 
-  test('calls SDK with contact ID', async () => {
+  it('calls SDK with contact ID', async () => {
     spies = setupOutputSpies();
 
     const { getContactCommand } = await import(
@@ -77,7 +77,7 @@ describe('contacts get command', () => {
     );
   });
 
-  test('calls SDK with email address', async () => {
+  it('calls SDK with email address', async () => {
     spies = setupOutputSpies();
 
     const { getContactCommand } = await import(
@@ -88,7 +88,7 @@ describe('contacts get command', () => {
     expect(mockGet.mock.calls[0][0]).toBe('jane@example.com');
   });
 
-  test('outputs JSON when non-interactive', async () => {
+  it('outputs JSON when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { getContactCommand } = await import(
@@ -105,7 +105,7 @@ describe('contacts get command', () => {
     expect(parsed.email).toBe('jane@example.com');
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -125,7 +125,7 @@ describe('contacts get command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with fetch_error when SDK returns an error', async () => {
+  it('errors with fetch_error when SDK returns an error', async () => {
     setNonInteractive();
     mockGet.mockResolvedValueOnce(
       mockSdkError('Contact not found', 'not_found'),

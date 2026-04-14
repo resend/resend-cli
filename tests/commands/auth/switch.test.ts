@@ -7,8 +7,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import { storeApiKey } from '../../../src/lib/config';
@@ -54,7 +54,7 @@ describe('auth switch command', () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  test('switches active profile in JSON mode', async () => {
+  it('switches active profile in JSON mode', async () => {
     spies = setupOutputSpies();
     storeApiKey('re_default', 'default');
     storeApiKey('re_staging', 'staging');
@@ -73,7 +73,7 @@ describe('auth switch command', () => {
     expect(data.active_profile).toBe('staging');
   });
 
-  test('errors when name omitted in non-interactive mode', async () => {
+  it('errors when name omitted in non-interactive mode', async () => {
     spies = setupOutputSpies();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -88,7 +88,7 @@ describe('auth switch command', () => {
     expect(output.error.code).toBe('missing_name');
   });
 
-  test('errors with missing_name when --json is set even in TTY', async () => {
+  it('errors with missing_name when --json is set even in TTY', async () => {
     Object.defineProperty(process.stdin, 'isTTY', {
       value: true,
       writable: true,
@@ -110,7 +110,7 @@ describe('auth switch command', () => {
     expect(output.error.code).toBe('missing_name');
   });
 
-  test('errors when profile does not exist', async () => {
+  it('errors when profile does not exist', async () => {
     spies = setupOutputSpies();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
