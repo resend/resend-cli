@@ -9,6 +9,10 @@ const DEFAULT_MAX_SIZE = 10_000;
 export const createBoundedSet = <T>(
   maxSize: number = DEFAULT_MAX_SIZE,
 ): BoundedSet<T> => {
+  if (!Number.isInteger(maxSize) || maxSize < 1) {
+    throw new RangeError(`maxSize must be a positive integer, got ${maxSize}`);
+  }
+
   const map = new Map<T, true>();
 
   const evict = () => {
@@ -19,7 +23,14 @@ export const createBoundedSet = <T>(
   };
 
   return {
-    has: (value: T) => map.has(value),
+    has: (value: T) => {
+      if (map.has(value)) {
+        map.delete(value);
+        map.set(value, true);
+        return true;
+      }
+      return false;
+    },
 
     add: (value: T) => {
       if (map.has(value)) {

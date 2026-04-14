@@ -65,6 +65,33 @@ describe('createBoundedSet', () => {
     expect(set.has('x')).toBe(true);
   });
 
+  it('refreshes LRU position on has() checks', () => {
+    const set = createBoundedSet<string>(3);
+    set.add('a');
+    set.add('b');
+    set.add('c');
+
+    // Touch 'a' via has() to refresh its position
+    expect(set.has('a')).toBe(true);
+
+    // 'b' is now the oldest — should be evicted
+    set.add('d');
+    expect(set.has('b')).toBe(false);
+    expect(set.has('a')).toBe(true);
+    expect(set.has('c')).toBe(true);
+    expect(set.has('d')).toBe(true);
+  });
+
+  it('throws on invalid maxSize', () => {
+    expect(() => createBoundedSet(0)).toThrow(RangeError);
+    expect(() => createBoundedSet(-1)).toThrow(RangeError);
+    expect(() => createBoundedSet(3.5)).toThrow(RangeError);
+    expect(() => createBoundedSet(Number.NaN)).toThrow(RangeError);
+    expect(() => createBoundedSet(Number.POSITIVE_INFINITY)).toThrow(
+      RangeError,
+    );
+  });
+
   it('uses default capacity when none is provided', () => {
     const set = createBoundedSet<number>();
     const entries = Array.from({ length: 10_001 }, (_, i) => i);

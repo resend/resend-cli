@@ -184,13 +184,17 @@ Ctrl+C exits cleanly.`,
 
         consecutiveErrors = 0;
 
+        // Reverse to chronological order so newest IDs land at the
+        // tail of the LRU and are evicted last.
+        newEmails.reverse();
+
         // Mark all new emails as seen
         for (const email of newEmails) {
           seenIds.add(email.id);
         }
 
         // Display in chronological order (oldest first)
-        for (const email of newEmails.reverse()) {
+        for (const email of newEmails) {
           displayEmail(email, jsonMode);
         }
       } catch (err) {
