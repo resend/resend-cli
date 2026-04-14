@@ -143,7 +143,11 @@ Scheduling:
     if (!from && isInteractive() && !globalOpts.json && !opts.dryRun) {
       const resend = await requireClient(globalOpts);
       const domains = await fetchVerifiedDomains(resend);
-      if (domains.length > 0) {
+      if (domains === null) {
+        process.stderr.write(
+          'Warning: Could not fetch verified domains. Please provide a sender address explicitly.\n',
+        );
+      } else if (domains.length > 0) {
         from = await promptForFromAddress(domains);
       }
     }

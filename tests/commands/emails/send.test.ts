@@ -1353,7 +1353,7 @@ describe('send command', () => {
     );
   });
 
-  test('degrades gracefully when domain fetch fails', async () => {
+  test('returns null when domain fetch fails', async () => {
     const { fetchVerifiedDomains } = await import('../../../src/lib/domains');
     const failingResend = {
       domains: {
@@ -1363,8 +1363,7 @@ describe('send command', () => {
       },
     } as Record<string, unknown>;
 
-    // Should return [] without throwing, so the caller falls through to promptForMissing
     const result = await fetchVerifiedDomains(failingResend);
-    expect(result).toEqual([]);
+    expect(result).toBeNull();
   });
 });
