@@ -14,6 +14,9 @@ import { createSpinner } from '../lib/spinner';
 import { isInteractive } from '../lib/tty';
 import { GITHUB_RELEASES_URL } from '../lib/update-check';
 import { VERSION } from '../lib/version';
+import { TIMEOUT_ERROR_NAME, withTimeout } from '../utils/with-timeout';
+
+const API_TIMEOUT_MS = 5000;
 
 type CheckStatus = 'pass' | 'warn' | 'fail';
 
@@ -104,7 +107,10 @@ async function checkApiValidationAndDomains(
 
   try {
     const resend = new Resend(resolved.key);
-    const { data, error } = await resend.domains.list();
+    const { data, error } = await withTimeout(
+      resend.domains.list(),
+      API_TIMEOUT_MS,
+    );
 
     if (error) {
       const err = error as { name?: string; message?: string };
@@ -114,6 +120,13 @@ async function checkApiValidationAndDomains(
           status: 'warn',
           message: `Sending-only API key`,
           detail: SENDING_KEY_MESSAGE,
+        };
+      }
+      if (err.name === 'application_error') {
+        return {
+          name: 'API Validation',
+          status: 'warn',
+          message: 'Network error. Check your connection and try again',
         };
       }
       return {
@@ -152,6 +165,13 @@ async function checkApiValidationAndDomains(
       detail: domains.map((d) => `${d.name} (${d.status})`).join(', '),
     };
   } catch (err) {
+    if (err instanceof Error && err.name === TIMEOUT_ERROR_NAME) {
+      return {
+        name: 'API Validation',
+        status: 'warn',
+        message: 'Request timed out',
+      };
+    }
     return {
       name: 'API Validation',
       status: 'fail',
