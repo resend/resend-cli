@@ -34,6 +34,14 @@ const mockGet = vi.fn(async () => ({
         value: 'feedback-smtp.us-east-1.amazonses.com',
         priority: 10,
       },
+      {
+        record: 'TrackingCAA',
+        type: 'CAA',
+        name: '',
+        ttl: 'Auto',
+        status: 'verified',
+        value: '0 issue "amazon.com"',
+      },
     ],
     capabilities: { sending: 'enabled', receiving: 'disabled' },
   },
@@ -93,7 +101,9 @@ describe('domains get command', () => {
     const parsed = JSON.parse(output);
     expect(parsed.id).toBe('test-domain-id');
     expect(parsed.status).toBe('verified');
-    expect(parsed.records).toHaveLength(1);
+    expect(parsed.records).toHaveLength(2);
+    expect(parsed.records[1].record).toBe('TrackingCAA');
+    expect(parsed.records[1].type).toBe('CAA');
   });
 
   it('errors with auth_error when no API key', async () => {

@@ -85,6 +85,26 @@ describe('renderDnsRecordsTable', () => {
     expect(output).toContain('Name   example.com');
   });
 
+  it('renders a TrackingCAA record using domain name when record name is empty', () => {
+    const output = renderDnsRecordsTable(
+      [
+        {
+          record: 'TrackingCAA',
+          type: 'CAA',
+          name: '',
+          ttl: 'Auto',
+          status: 'verified',
+          value: '0 issue "amazon.com"',
+        },
+      ],
+      'example.com',
+    );
+
+    expect(output).toContain('CAA');
+    expect(output).toContain('Name   example.com');
+    expect(output).toContain('Value  0 issue "amazon.com"');
+  });
+
   it('separates multiple records with blank line', () => {
     const output = renderDnsRecordsTable(
       [
