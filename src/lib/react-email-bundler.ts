@@ -22,7 +22,7 @@ export async function bundleReactEmail(
   const tmpDir = mkdtempSync(path.join(tmpdir(), 'resend-react-email-'));
 
   try {
-    const { build } = await loadEsbuild();
+    const { build } = loadEsbuild();
     await build({
       bundle: true,
       entryPoints: [resolved],
