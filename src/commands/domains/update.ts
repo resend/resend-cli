@@ -9,7 +9,7 @@ import { domainPickerConfig } from './utils';
 
 export const updateDomainCommand = new Command('update')
   .description(
-    'Update domain settings: TLS mode, open tracking, and click tracking',
+    'Update domain settings: TLS mode, tracking, and tracking subdomain',
   )
   .argument('[id]', 'Domain ID')
   .addOption(
@@ -22,6 +22,10 @@ export const updateDomainCommand = new Command('update')
   .option('--no-open-tracking', 'Disable open tracking')
   .option('--click-tracking', 'Enable click tracking')
   .option('--no-click-tracking', 'Disable click tracking')
+  .option(
+    '--tracking-subdomain <subdomain>',
+    'Subdomain for click and open tracking (e.g. track)',
+  )
   .addHelpText(
     'after',
     buildHelpText({
@@ -30,6 +34,7 @@ export const updateDomainCommand = new Command('update')
       examples: [
         'resend domains update <id> --tls enforced',
         'resend domains update <id> --open-tracking --click-tracking',
+        'resend domains update <id> --tracking-subdomain track',
         'resend domains update <id> --no-open-tracking --json',
       ],
     }),
@@ -38,13 +43,18 @@ export const updateDomainCommand = new Command('update')
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const id = await pickId(idArg, domainPickerConfig, globalOpts);
 
-    const { tls, openTracking, clickTracking } = opts;
+    const { tls, openTracking, clickTracking, trackingSubdomain } = opts;
 
-    if (!tls && openTracking === undefined && clickTracking === undefined) {
+    if (
+      !tls &&
+      openTracking === undefined &&
+      clickTracking === undefined &&
+      !trackingSubdomain
+    ) {
       outputError(
         {
           message:
-            'Provide at least one option to update: --tls, --open-tracking, or --click-tracking.',
+            'Provide at least one option to update: --tls, --open-tracking, --click-tracking, or --tracking-subdomain.',
           code: 'no_changes',
         },
         { json: globalOpts.json },
@@ -60,6 +70,9 @@ export const updateDomainCommand = new Command('update')
     }
     if (clickTracking !== undefined) {
       payload.clickTracking = clickTracking;
+    }
+    if (trackingSubdomain) {
+      payload.trackingSubdomain = trackingSubdomain;
     }
 
     await runWrite(

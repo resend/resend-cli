@@ -27,6 +27,7 @@ Create a new domain and receive DNS records to configure.
 | `--name <domain>` | string | Yes (non-interactive) | Domain name (e.g., `example.com`) |
 | `--region <region>` | string | No | `us-east-1` \| `eu-west-1` \| `sa-east-1` \| `ap-northeast-1` |
 | `--tls <mode>` | string | No | `opportunistic` (default) \| `enforced` |
+| `--tracking-subdomain <subdomain>` | string | No | Subdomain for click and open tracking (e.g., `track`) |
 | `--sending` | boolean | No | Enable sending (default: enabled) |
 | `--receiving` | boolean | No | Enable receiving (default: disabled) |
 
@@ -38,7 +39,7 @@ Create a new domain and receive DNS records to configure.
 
 **Argument:** `<id>` — Domain ID
 
-Returns full domain with `records[]`, `status` (`not_started`|`pending`|`verified`|`failed`|`temporary_failure`), `capabilities`, `region`.
+Returns full domain with `records[]`, `status` (`not_started`|`pending`|`verified`|`failed`|`temporary_failure`), `capabilities`, `region`, `open_tracking`, `click_tracking`, `tracking_subdomain`. Records may include a `Tracking` CNAME record when a tracking subdomain is configured, and a `TrackingCAA` CAA record when the root domain has CAA records that require an additional entry for AWS certificate issuance.
 
 ---
 
@@ -63,6 +64,7 @@ Trigger async DNS verification.
 | `--no-open-tracking` | boolean | Disable open tracking |
 | `--click-tracking` | boolean | Enable click tracking |
 | `--no-click-tracking` | boolean | Disable click tracking |
+| `--tracking-subdomain <subdomain>` | string | Subdomain for click and open tracking (e.g., `track`) |
 
 At least one option required.
 

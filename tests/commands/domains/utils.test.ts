@@ -85,6 +85,26 @@ describe('renderDnsRecordsTable', () => {
     expect(output).toContain('Name   example.com');
   });
 
+  it('renders a Tracking CNAME record', () => {
+    const output = renderDnsRecordsTable(
+      [
+        {
+          record: 'Tracking',
+          type: 'CNAME',
+          name: 'track',
+          ttl: 'Auto',
+          status: 'not_started',
+          value: 'tracking.resend.com',
+        },
+      ],
+      'example.com',
+    );
+
+    expect(output).toContain('CNAME');
+    expect(output).toContain('Name   track.example.com');
+    expect(output).toContain('Value  tracking.resend.com');
+  });
+
   it('separates multiple records with blank line', () => {
     const output = renderDnsRecordsTable(
       [
