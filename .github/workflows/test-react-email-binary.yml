@@ -1,0 +1,59 @@
+name: Test react-email in binaries
+on: [pull_request]
+concurrency:
+  group: test-react-email-binary-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            target: node24-macos-arm64
+            binary: dist/resend
+          - os: ubuntu-latest
+            target: node24-linux-x64
+            binary: dist/resend
+          - os: windows-latest
+            target: node24-win-x64
+            binary: dist/resend.exe
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: pnpm/action-setup@08c4be7e2e672a47d11bd04269e27e5f3e8529cb # v6
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
+        with:
+          node-version: 24
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Build binary
+        run: pnpm exec pkg dist/cli.cjs --config package.json --compress Brotli --target ${{ matrix.target }} --output ${{ matrix.binary }}
+      - name: Create test project
+        shell: bash
+        run: |
+          mkdir -p /tmp/react-email-test
+          cd /tmp/react-email-test
+          npm init -y
+          npm install react @react-email/components
+          cat > email.tsx << 'TEMPLATE'
+          import { Html, Text } from '@react-email/components';
+          export default function Email() {
+            return <Html><Text>Hello from React Email!</Text></Html>;
+          }
+          TEMPLATE
+      - name: Test react-email in binary
+        shell: bash
+        run: |
+          output=$(cd /tmp/react-email-test && "$GITHUB_WORKSPACE/${{ matrix.binary }}" emails send \
+            --from test@example.com --to test@example.com --subject Test \
+            --react-email ./email.tsx --json 2>&1 || true)
+          echo "$output"
+
+          # If we see a build/render error, esbuild-wasm failed
+          if echo "$output" | grep -q '"react_email_build_error"\|"react_email_render_error"'; then
+            echo "::error::react-email bundling/rendering failed in binary"
+            exit 1
+          fi
+          echo "react-email template bundled and rendered successfully in binary"

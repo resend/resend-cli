@@ -31,7 +31,7 @@
     "dev": "tsx src/cli.ts",
     "dev:watch": "tsx --watch src/cli.ts",
     "build": "node scripts/build.mjs",
-    "build:bin": "pnpm build && pkg dist/cli.cjs --compress Brotli --target node24 --output dist/resend",
+    "build:bin": "pnpm build && pkg dist/cli.cjs --config package.json --compress Brotli --target node24 --output dist/resend",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "typecheck": "tsc --noEmit",
@@ -44,8 +44,19 @@
     "@commander-js/extra-typings": "14.0.0",
     "commander": "14.0.3",
     "esbuild": "0.28.0",
+    "esbuild-wasm": "0.28.0",
     "picocolors": "1.1.1",
     "resend": "6.12.0"
+  },
+  "pkg": {
+    "scripts": [
+      "node_modules/esbuild-wasm/bin/esbuild",
+      "node_modules/esbuild-wasm/wasm_exec.js",
+      "node_modules/esbuild-wasm/wasm_exec_node.js"
+    ],
+    "assets": [
+      "node_modules/esbuild-wasm/esbuild.wasm"
+    ]
   },
   "pnpm": {
     "onlyBuiltDependencies": [

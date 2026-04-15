@@ -1,8 +1,14 @@
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { build } from 'esbuild';
 import { renderingUtilitiesExporter } from './esbuild/rendering-utilities-exporter';
+
+function loadEsbuild(): typeof import('esbuild') {
+  if ('pkg' in process) {
+    return require('esbuild-wasm');
+  }
+  return require('esbuild');
+}
 
 export interface BundleResult {
   cjsPath: string;
@@ -16,6 +22,7 @@ export async function bundleReactEmail(
   const tmpDir = mkdtempSync(path.join(tmpdir(), 'resend-react-email-'));
 
   try {
+    const { build } = await loadEsbuild();
     await build({
       bundle: true,
       entryPoints: [resolved],
