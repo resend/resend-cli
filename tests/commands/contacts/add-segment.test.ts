@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -58,7 +58,7 @@ describe('contacts add-segment command', () => {
     }
   });
 
-  test('adds contact to segment by contact ID', async () => {
+  it('adds contact to segment by contact ID', async () => {
     spies = setupOutputSpies();
 
     const { addContactSegmentCommand } = await import(
@@ -79,7 +79,7 @@ describe('contacts add-segment command', () => {
     expect(args.segmentId).toBe('7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d');
   });
 
-  test('adds contact to segment by email', async () => {
+  it('adds contact to segment by email', async () => {
     spies = setupOutputSpies();
 
     const { addContactSegmentCommand } = await import(
@@ -99,7 +99,7 @@ describe('contacts add-segment command', () => {
     expect(args.segmentId).toBe('7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d');
   });
 
-  test('outputs JSON result when non-interactive', async () => {
+  it('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { addContactSegmentCommand } = await import(
@@ -119,7 +119,7 @@ describe('contacts add-segment command', () => {
     expect(parsed.id).toBe('7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d');
   });
 
-  test('errors with missing_id when --segment-id absent in non-interactive mode', async () => {
+  it('errors with missing_id when --segment-id absent in non-interactive mode', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -138,7 +138,7 @@ describe('contacts add-segment command', () => {
     expect(output).toContain('missing_id');
   });
 
-  test('errors with missing_id when --json is set even in TTY', async () => {
+  it('errors with missing_id when --json is set even in TTY', async () => {
     Object.defineProperty(process.stdin, 'isTTY', {
       value: true,
       writable: true,
@@ -174,7 +174,7 @@ describe('contacts add-segment command', () => {
     expect(output).toContain('missing_id');
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -199,7 +199,7 @@ describe('contacts add-segment command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with add_segment_error when SDK returns an error', async () => {
+  it('errors with add_segment_error when SDK returns an error', async () => {
     setNonInteractive();
     mockAddSegment.mockResolvedValueOnce(
       mockSdkError('Segment not found', 'not_found'),

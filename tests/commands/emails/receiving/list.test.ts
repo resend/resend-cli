@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -68,7 +68,7 @@ describe('emails receiving list command', () => {
     exitSpy = undefined;
   });
 
-  test('calls SDK list with default pagination', async () => {
+  it('calls SDK list with default pagination', async () => {
     spies = setupOutputSpies();
 
     const { listReceivingCommand } = await import(
@@ -81,7 +81,7 @@ describe('emails receiving list command', () => {
     expect(args.limit).toBe(10);
   });
 
-  test('passes --limit to pagination options', async () => {
+  it('passes --limit to pagination options', async () => {
     spies = setupOutputSpies();
 
     const { listReceivingCommand } = await import(
@@ -93,7 +93,7 @@ describe('emails receiving list command', () => {
     expect(args.limit).toBe(5);
   });
 
-  test('passes --after cursor to pagination options', async () => {
+  it('passes --after cursor to pagination options', async () => {
     spies = setupOutputSpies();
 
     const { listReceivingCommand } = await import(
@@ -107,7 +107,7 @@ describe('emails receiving list command', () => {
     expect(args.after).toBe('rcv_cursor123');
   });
 
-  test('outputs JSON list with received email data when non-interactive', async () => {
+  it('outputs JSON list with received email data when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { listReceivingCommand } = await import(
@@ -124,7 +124,7 @@ describe('emails receiving list command', () => {
     expect(parsed.has_more).toBe(false);
   });
 
-  test('errors with invalid_limit for out-of-range limit', async () => {
+  it('errors with invalid_limit for out-of-range limit', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -140,7 +140,7 @@ describe('emails receiving list command', () => {
     expect(output).toContain('invalid_limit');
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -158,7 +158,7 @@ describe('emails receiving list command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with list_error when SDK returns an error', async () => {
+  it('errors with list_error when SDK returns an error', async () => {
     setNonInteractive();
     mockList.mockResolvedValueOnce(
       mockSdkError('Server error', 'server_error'),

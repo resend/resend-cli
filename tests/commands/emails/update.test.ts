@@ -5,8 +5,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -53,7 +53,7 @@ describe('emails update command', () => {
     exitSpy = undefined;
   });
 
-  test('calls SDK update with correct id and scheduledAt', async () => {
+  it('calls SDK update with correct id and scheduledAt', async () => {
     spies = setupOutputSpies();
 
     const { updateCommand } = await import(
@@ -70,7 +70,7 @@ describe('emails update command', () => {
     });
   });
 
-  test('outputs JSON object in non-interactive mode', async () => {
+  it('outputs JSON object in non-interactive mode', async () => {
     spies = setupOutputSpies();
 
     const { updateCommand } = await import(
@@ -87,7 +87,7 @@ describe('emails update command', () => {
     expect(parsed.object).toBe('email');
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = join(
@@ -111,7 +111,7 @@ describe('emails update command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with update_error when SDK returns an error', async () => {
+  it('errors with update_error when SDK returns an error', async () => {
     setNonInteractive();
     mockUpdate.mockResolvedValueOnce(
       mockSdkError('Email not found', 'not_found'),

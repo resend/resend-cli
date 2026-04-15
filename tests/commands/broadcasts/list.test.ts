@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -66,7 +66,7 @@ describe('broadcasts list command', () => {
     exitSpy = undefined;
   });
 
-  test('lists broadcasts', async () => {
+  it('lists broadcasts', async () => {
     spies = setupOutputSpies();
 
     const { listBroadcastsCommand } = await import(
@@ -77,7 +77,7 @@ describe('broadcasts list command', () => {
     expect(mockList).toHaveBeenCalledTimes(1);
   });
 
-  test('outputs JSON list when non-interactive', async () => {
+  it('outputs JSON list when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { listBroadcastsCommand } = await import(
@@ -92,7 +92,7 @@ describe('broadcasts list command', () => {
     expect(parsed.data[0].id).toBe('d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
   });
 
-  test('passes --limit to SDK', async () => {
+  it('passes --limit to SDK', async () => {
     spies = setupOutputSpies();
 
     const { listBroadcastsCommand } = await import(
@@ -104,7 +104,7 @@ describe('broadcasts list command', () => {
     expect(opts.limit).toBe(5);
   });
 
-  test('passes --after cursor to SDK', async () => {
+  it('passes --after cursor to SDK', async () => {
     spies = setupOutputSpies();
 
     const { listBroadcastsCommand } = await import(
@@ -121,7 +121,7 @@ describe('broadcasts list command', () => {
     expect(opts.after).toBe('c0c0c0c0-d1d1-e2e2-f3f3-a4a4a4a4a4a4');
   });
 
-  test('passes --before cursor to SDK', async () => {
+  it('passes --before cursor to SDK', async () => {
     spies = setupOutputSpies();
 
     const { listBroadcastsCommand } = await import(
@@ -138,7 +138,7 @@ describe('broadcasts list command', () => {
     expect(opts.before).toBe('c0c0c0c0-d1d1-e2e2-f3f3-a4a4a4a4a4a4');
   });
 
-  test('errors with invalid_limit when --limit is out of range', async () => {
+  it('errors with invalid_limit when --limit is out of range', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = vi
@@ -157,7 +157,7 @@ describe('broadcasts list command', () => {
     expect(output).toContain('invalid_limit');
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -175,7 +175,7 @@ describe('broadcasts list command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with list_error when SDK returns an error', async () => {
+  it('errors with list_error when SDK returns an error', async () => {
     setNonInteractive();
     mockList.mockResolvedValueOnce(
       mockSdkError('Internal server error', 'server_error'),

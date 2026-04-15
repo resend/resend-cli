@@ -7,7 +7,7 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   getConfigDir,
   listProfiles,
@@ -29,12 +29,12 @@ describe('getConfigDir', () => {
     restoreEnv();
   });
 
-  test('respects XDG_CONFIG_HOME', () => {
+  it('respects XDG_CONFIG_HOME', () => {
     process.env.XDG_CONFIG_HOME = '/custom/config';
     expect(getConfigDir()).toBe('/custom/config/resend');
   });
 
-  test('falls back to ~/.config/resend on non-Windows', () => {
+  it('falls back to ~/.config/resend on non-Windows', () => {
     delete process.env.XDG_CONFIG_HOME;
     const dir = getConfigDir();
     expect(dir).toMatch(/\.config\/resend$/);
@@ -58,19 +58,19 @@ describe('resolveApiKey', () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  test('flag value takes highest priority', () => {
+  it('flag value takes highest priority', () => {
     process.env.RESEND_API_KEY = 're_env_key';
     const result = resolveApiKey('re_flag_key');
     expect(result).toEqual({ key: 're_flag_key', source: 'flag' });
   });
 
-  test('env var is second priority', () => {
+  it('env var is second priority', () => {
     process.env.RESEND_API_KEY = 're_env_key';
     const result = resolveApiKey();
     expect(result).toEqual({ key: 're_env_key', source: 'env' });
   });
 
-  test('config file is third priority (new format)', () => {
+  it('config file is third priority (new format)', () => {
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = tmpDir;
     const configDir = join(tmpDir, 'resend');
@@ -91,7 +91,7 @@ describe('resolveApiKey', () => {
     });
   });
 
-  test('resolves specific profile from config', () => {
+  it('resolves specific profile from config', () => {
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = tmpDir;
     const configDir = join(tmpDir, 'resend');
@@ -115,14 +115,14 @@ describe('resolveApiKey', () => {
     });
   });
 
-  test('returns null when no key found', () => {
+  it('returns null when no key found', () => {
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = tmpDir;
     const result = resolveApiKey();
     expect(result).toBeNull();
   });
 
-  test('returns null on malformed config JSON', () => {
+  it('returns null on malformed config JSON', () => {
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = tmpDir;
     const configDir = join(tmpDir, 'resend');
@@ -133,7 +133,7 @@ describe('resolveApiKey', () => {
     expect(result).toBeNull();
   });
 
-  test('returns null when profile does not exist in config', () => {
+  it('returns null when profile does not exist in config', () => {
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = tmpDir;
     const configDir = join(tmpDir, 'resend');
@@ -169,17 +169,17 @@ describe('resolveProfileName', () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  test('flag value takes highest priority', () => {
+  it('flag value takes highest priority', () => {
     process.env.RESEND_PROFILE = 'env_profile';
     expect(resolveProfileName('flag_profile')).toBe('flag_profile');
   });
 
-  test('RESEND_PROFILE env var is second priority', () => {
+  it('RESEND_PROFILE env var is second priority', () => {
     process.env.RESEND_PROFILE = 'env_profile';
     expect(resolveProfileName()).toBe('env_profile');
   });
 
-  test('active_profile from config is third priority', () => {
+  it('active_profile from config is third priority', () => {
     delete process.env.RESEND_PROFILE;
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
@@ -194,7 +194,7 @@ describe('resolveProfileName', () => {
     expect(resolveProfileName()).toBe('production');
   });
 
-  test('defaults to "default" when nothing configured', () => {
+  it('defaults to "default" when nothing configured', () => {
     delete process.env.RESEND_PROFILE;
     expect(resolveProfileName()).toBe('default');
   });
@@ -217,7 +217,7 @@ describe('storeApiKey', () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  test('writes credentials.json with profile structure', () => {
+  it('writes credentials.json with profile structure', () => {
     const configPath = storeApiKey('re_test_key_123');
     expect(configPath).toContain('credentials.json');
 
@@ -226,13 +226,13 @@ describe('storeApiKey', () => {
     expect(data.profiles.default.api_key).toBe('re_test_key_123');
   });
 
-  test('stores key under specific profile name', () => {
+  it('stores key under specific profile name', () => {
     const configPath = storeApiKey('re_staging_key', 'staging');
     const data = JSON.parse(readFileSync(configPath, 'utf-8'));
     expect(data.profiles.staging.api_key).toBe('re_staging_key');
   });
 
-  test('preserves existing profiles when adding new one', () => {
+  it('preserves existing profiles when adding new one', () => {
     storeApiKey('re_default_key');
     storeApiKey('re_staging_key', 'staging');
 
@@ -242,21 +242,21 @@ describe('storeApiKey', () => {
     expect(data.profiles.staging.api_key).toBe('re_staging_key');
   });
 
-  test('creates config directory if it does not exist', () => {
+  it('creates config directory if it does not exist', () => {
     storeApiKey('re_test_key');
     const configDir = join(tmpDir, 'resend');
     const stat = statSync(configDir);
     expect(stat.isDirectory()).toBe(true);
   });
 
-  test('sets file permissions to 0600', () => {
+  it('sets file permissions to 0600', () => {
     const configPath = storeApiKey('re_test_key');
     const stat = statSync(configPath);
     const mode = stat.mode & 0o777;
     expect(mode).toBe(0o600);
   });
 
-  test('overwrites existing profile key', () => {
+  it('overwrites existing profile key', () => {
     storeApiKey('re_first_key');
     storeApiKey('re_second_key');
 
@@ -265,7 +265,7 @@ describe('storeApiKey', () => {
     expect(data.profiles.default.api_key).toBe('re_second_key');
   });
 
-  test('sets first profile as active', () => {
+  it('sets first profile as active', () => {
     storeApiKey('re_first_key', 'myprofile');
 
     const configPath = join(tmpDir, 'resend', 'credentials.json');
@@ -291,11 +291,11 @@ describe('listProfiles', () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  test('returns empty array when no config', () => {
+  it('returns empty array when no config', () => {
     expect(listProfiles()).toEqual([]);
   });
 
-  test('returns profiles with active flag', () => {
+  it('returns profiles with active flag', () => {
     storeApiKey('re_default', 'default');
     storeApiKey('re_staging', 'staging');
 
@@ -324,7 +324,7 @@ describe('setActiveProfile', () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  test('switches active profile', () => {
+  it('switches active profile', () => {
     storeApiKey('re_default', 'default');
     storeApiKey('re_staging', 'staging');
 
@@ -335,12 +335,12 @@ describe('setActiveProfile', () => {
     expect(data.active_profile).toBe('staging');
   });
 
-  test('throws when profile does not exist', () => {
+  it('throws when profile does not exist', () => {
     storeApiKey('re_default');
     expect(() => setActiveProfile('nonexistent')).toThrow('not found');
   });
 
-  test('throws when no credentials file', () => {
+  it('throws when no credentials file', () => {
     expect(() => setActiveProfile('any')).toThrow('No credentials file');
   });
 });
@@ -362,7 +362,7 @@ describe('removeApiKey', () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  test('removes a profile entry', () => {
+  it('removes a profile entry', () => {
     storeApiKey('re_default', 'default');
     storeApiKey('re_staging', 'staging');
 
@@ -372,7 +372,7 @@ describe('removeApiKey', () => {
     expect(profiles).toEqual([{ name: 'default', active: true }]);
   });
 
-  test('adjusts active_profile when active is removed', () => {
+  it('adjusts active_profile when active is removed', () => {
     storeApiKey('re_default', 'default');
     storeApiKey('re_staging', 'staging');
     setActiveProfile('staging');
@@ -384,7 +384,7 @@ describe('removeApiKey', () => {
     expect(data.active_profile).toBe('default');
   });
 
-  test('deletes file when last profile removed', () => {
+  it('deletes file when last profile removed', () => {
     storeApiKey('re_only', 'only');
 
     removeApiKey('only');
@@ -394,12 +394,12 @@ describe('removeApiKey', () => {
     expect(existsSync(configPath)).toBe(false);
   });
 
-  test('throws when profile does not exist', () => {
+  it('throws when profile does not exist', () => {
     storeApiKey('re_default');
     expect(() => removeApiKey('nonexistent')).toThrow('not found');
   });
 
-  test('throws when no credentials file', () => {
+  it('throws when no credentials file', () => {
     expect(() => removeApiKey('any')).toThrow('No credentials file');
   });
 });
@@ -421,7 +421,7 @@ describe('renameProfile', () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  test('renames a profile and preserves its API key', () => {
+  it('renames a profile and preserves its API key', () => {
     storeApiKey('re_key', 'old-name');
 
     renameProfile('old-name', 'new-name');
@@ -432,7 +432,7 @@ describe('renameProfile', () => {
     expect(resolved?.key).toBe('re_key');
   });
 
-  test('updates active_profile when renaming the active profile', () => {
+  it('updates active_profile when renaming the active profile', () => {
     storeApiKey('re_a', 'alpha');
     storeApiKey('re_b', 'beta');
     setActiveProfile('beta');
@@ -444,7 +444,7 @@ describe('renameProfile', () => {
     expect(data.active_profile).toBe('gamma');
   });
 
-  test('does not change active_profile when renaming a non-active profile', () => {
+  it('does not change active_profile when renaming a non-active profile', () => {
     storeApiKey('re_a', 'alpha');
     storeApiKey('re_b', 'beta');
 
@@ -455,7 +455,7 @@ describe('renameProfile', () => {
     expect(data.active_profile).toBe('alpha');
   });
 
-  test('renames a legacy profile with spaces', () => {
+  it('renames a legacy profile with spaces', () => {
     // Simulate a legacy profile created before validation was added
     writeCredentials({
       active_profile: 'my team',
@@ -470,29 +470,29 @@ describe('renameProfile', () => {
     expect(resolved?.key).toBe('re_legacy');
   });
 
-  test('throws when new name is invalid', () => {
+  it('throws when new name is invalid', () => {
     storeApiKey('re_key', 'valid');
     expect(() => renameProfile('valid', 'has spaces')).toThrow('letters');
   });
 
-  test('throws when old profile does not exist', () => {
+  it('throws when old profile does not exist', () => {
     storeApiKey('re_key', 'exists');
     expect(() => renameProfile('nope', 'new-name')).toThrow('not found');
   });
 
-  test('throws when new name already exists', () => {
+  it('throws when new name already exists', () => {
     storeApiKey('re_a', 'alpha');
     storeApiKey('re_b', 'beta');
     expect(() => renameProfile('alpha', 'beta')).toThrow('already exists');
   });
 
-  test('throws when no credentials file', () => {
+  it('throws when no credentials file', () => {
     expect(() => renameProfile('any', 'new')).toThrow('No credentials file');
   });
 });
 
 describe('validateProfileName', () => {
-  test('accepts valid names', () => {
+  it('accepts valid names', () => {
     expect(validateProfileName('default')).toBeUndefined();
     expect(validateProfileName('my-profile')).toBeUndefined();
     expect(validateProfileName('profile_1')).toBeUndefined();
@@ -503,21 +503,21 @@ describe('validateProfileName', () => {
     expect(validateProfileName('my.profile')).toBeUndefined();
   });
 
-  test('rejects spaces and special characters', () => {
+  it('rejects spaces and special characters', () => {
     expect(validateProfileName('my profile')).toContain('dots');
     expect(validateProfileName('profile@org')).toContain('dots');
   });
 
-  test('rejects empty name', () => {
+  it('rejects empty name', () => {
     expect(validateProfileName('')).toContain('empty');
   });
 
-  test('rejects names longer than 64 characters', () => {
+  it('rejects names longer than 64 characters', () => {
     const longName = 'a'.repeat(65);
     expect(validateProfileName(longName)).toContain('64');
   });
 
-  test('accepts name exactly 64 characters', () => {
+  it('accepts name exactly 64 characters', () => {
     const maxName = 'a'.repeat(64);
     expect(validateProfileName(maxName)).toBeUndefined();
   });

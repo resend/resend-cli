@@ -1,12 +1,4 @@
-import {
-  afterEach,
-  describe,
-  expect,
-  it,
-  type MockInstance,
-  test,
-  vi,
-} from 'vitest';
+import { afterEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 import { expectExit1, mockExitThrow } from '../helpers';
 
 const originalStdinIsTTY = process.stdin.isTTY;
@@ -44,7 +36,7 @@ afterEach(() => {
 });
 
 describe('promptForMissing', () => {
-  test('returns options unchanged when nothing is missing', async () => {
+  it('returns options unchanged when nothing is missing', async () => {
     const { promptForMissing } = await import('../../src/lib/prompts');
     const opts = { from: 'a@b.com', to: 'c@d.com', subject: 'Hi' };
     const result = await promptForMissing(
@@ -59,7 +51,7 @@ describe('promptForMissing', () => {
     expect(result).toEqual(opts);
   });
 
-  test('exits with missing_flags error in non-interactive mode', async () => {
+  it('exits with missing_flags error in non-interactive mode', async () => {
     setTTY(undefined);
     setupSpies();
 
@@ -83,7 +75,7 @@ describe('promptForMissing', () => {
     expect(spyOutput()).not.toContain('--to,');
   });
 
-  test('errors output includes missing_flags code', async () => {
+  it('errors output includes missing_flags code', async () => {
     setTTY(undefined);
     setupSpies();
 
@@ -100,7 +92,7 @@ describe('promptForMissing', () => {
     expect(spyOutput()).toContain('missing_flags');
   });
 
-  test('exits with missing_flags error when --json is set even in TTY', async () => {
+  it('exits with missing_flags error when --json is set even in TTY', async () => {
     setTTY(true);
     setupSpies();
 
@@ -117,7 +109,7 @@ describe('promptForMissing', () => {
     expect(spyOutput()).toContain('missing_flags');
   });
 
-  test('skips fields marked as required=false', async () => {
+  it('skips fields marked as required=false', async () => {
     const { promptForMissing } = await import('../../src/lib/prompts');
     const opts = { from: 'a@b.com', to: undefined };
     const result = await promptForMissing(
@@ -133,13 +125,13 @@ describe('promptForMissing', () => {
 });
 
 describe('pickId', () => {
-  test('returns id immediately when provided', async () => {
+  it('returns id immediately when provided', async () => {
     const { pickId } = await import('../../src/lib/prompts');
     const result = await pickId('test-id', {} as never, {});
     expect(result).toBe('test-id');
   });
 
-  test('exits with missing_id error in non-interactive mode', async () => {
+  it('exits with missing_id error in non-interactive mode', async () => {
     setTTY(undefined);
     setupSpies();
 
@@ -150,7 +142,7 @@ describe('pickId', () => {
     expect(spyOutput()).toContain('missing_id');
   });
 
-  test('exits with missing_id error when --json is set even in TTY', async () => {
+  it('exits with missing_id error when --json is set even in TTY', async () => {
     setTTY(true);
     setupSpies();
 
@@ -162,7 +154,7 @@ describe('pickId', () => {
     expect(parsed.error.code).toBe('missing_id');
   });
 
-  test('returns undefined in non-interactive mode when optional', async () => {
+  it('returns undefined in non-interactive mode when optional', async () => {
     setTTY(undefined);
 
     const { pickId } = await import('../../src/lib/prompts');
@@ -170,7 +162,7 @@ describe('pickId', () => {
     expect(result).toBeUndefined();
   });
 
-  test('returns undefined when --json is set and optional', async () => {
+  it('returns undefined when --json is set and optional', async () => {
     setTTY(true);
 
     const { pickId } = await import('../../src/lib/prompts');
@@ -183,7 +175,7 @@ describe('pickId', () => {
     expect(result).toBeUndefined();
   });
 
-  test('returns id immediately when provided and optional', async () => {
+  it('returns id immediately when provided and optional', async () => {
     const { pickId } = await import('../../src/lib/prompts');
     const result = await pickId('test-id', {} as never, {}, { optional: true });
     expect(result).toBe('test-id');
@@ -234,7 +226,7 @@ describe('pickItem', () => {
 });
 
 describe('confirmDelete', () => {
-  test('exits with confirmation_required when non-interactive', async () => {
+  it('exits with confirmation_required when non-interactive', async () => {
     setTTY(undefined);
     setupSpies();
 
@@ -247,7 +239,7 @@ describe('confirmDelete', () => {
     expect(spyOutput()).toContain('confirmation_required');
   });
 
-  test('outputs JSON confirmation_required error when json option is true', async () => {
+  it('outputs JSON confirmation_required error when json option is true', async () => {
     setTTY(undefined);
     setupSpies();
 
@@ -260,7 +252,7 @@ describe('confirmDelete', () => {
     expect(parsed.error.code).toBe('confirmation_required');
   });
 
-  test('exits with confirmation_required when --json is set even in TTY', async () => {
+  it('exits with confirmation_required when --json is set even in TTY', async () => {
     setTTY(true);
     setupSpies();
 

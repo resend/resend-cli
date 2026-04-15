@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -70,7 +70,7 @@ describe('domains get command', () => {
     exitSpy = undefined;
   });
 
-  test('calls SDK get with correct id', async () => {
+  it('calls SDK get with correct id', async () => {
     spies = setupOutputSpies();
 
     const { getDomainCommand } = await import(
@@ -81,7 +81,7 @@ describe('domains get command', () => {
     expect(mockGet).toHaveBeenCalledWith('test-domain-id');
   });
 
-  test('outputs full domain JSON in non-interactive mode', async () => {
+  it('outputs full domain JSON in non-interactive mode', async () => {
     spies = setupOutputSpies();
 
     const { getDomainCommand } = await import(
@@ -96,7 +96,7 @@ describe('domains get command', () => {
     expect(parsed.records).toHaveLength(1);
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -114,7 +114,7 @@ describe('domains get command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with fetch_error when SDK returns an error', async () => {
+  it('errors with fetch_error when SDK returns an error', async () => {
     setNonInteractive();
     mockGet.mockResolvedValueOnce(
       mockSdkError('Domain not found', 'not_found'),

@@ -6,8 +6,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -60,7 +60,7 @@ describe('logout command', () => {
     );
   }
 
-  test('removes credentials file when it exists (non-interactive)', async () => {
+  it('removes credentials file when it exists (non-interactive)', async () => {
     spies = setupOutputSpies();
     writeCredentials();
 
@@ -75,7 +75,7 @@ describe('logout command', () => {
     expect(output.config_path).toContain('credentials.json');
   });
 
-  test('exits cleanly when no credentials file exists (non-interactive)', async () => {
+  it('exits cleanly when no credentials file exists (non-interactive)', async () => {
     spies = setupOutputSpies();
 
     const { logoutCommand } = await import('../../../src/commands/auth/logout');
@@ -86,7 +86,7 @@ describe('logout command', () => {
     expect(output.already_logged_out).toBe(true);
   });
 
-  test('logout without --profile removes all profiles', async () => {
+  it('logout without --profile removes all profiles', async () => {
     spies = setupOutputSpies();
     writeCredentials({ staging: 're_staging_key', production: 're_prod_key' });
 
@@ -101,7 +101,7 @@ describe('logout command', () => {
     expect(output.profile).toBe('all');
   });
 
-  test('logout with --profile removes only that profile', async () => {
+  it('logout with --profile removes only that profile', async () => {
     spies = setupOutputSpies();
     writeCredentials({ staging: 're_staging_key', production: 're_prod_key' });
 
@@ -133,7 +133,7 @@ describe('logout command', () => {
     expect(output.profile).toBe('staging');
   });
 
-  test('exits with error when file removal fails', async () => {
+  it('exits with error when file removal fails', async () => {
     spies = setupOutputSpies();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
