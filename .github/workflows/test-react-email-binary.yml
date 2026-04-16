@@ -51,8 +51,8 @@ jobs:
             --react-email ./email.tsx --json 2>&1 || true)
           echo "$output"
 
-          # Verify we reached the API call (send_error proves bundling + rendering succeeded)
-          if echo "$output" | grep -q '"send_error"'; then
+          # Verify we got past bundling + rendering (send_error or auth_error both prove success)
+          if echo "$output" | grep -q '"send_error"\|"auth_error"'; then
             echo "react-email template bundled and rendered successfully in binary"
           else
             echo "::error::react-email bundling/rendering failed in binary"
