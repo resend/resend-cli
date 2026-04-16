@@ -172,17 +172,33 @@ type TelemetryPayload = {
   _nonce: string;
 };
 
+const TELEMETRY_KEYS = new Set([
+  'api_key',
+  'distinct_id',
+  'event',
+  'properties',
+  '_nonce',
+]);
+
 const isTelemetryPayload = (data: unknown): data is TelemetryPayload => {
-  if (typeof data !== 'object' || data === null) {
+  if (typeof data !== 'object' || data === null || Array.isArray(data)) {
     return false;
   }
   const obj = data as Record<string, unknown>;
+  const keys = Object.keys(obj);
+  if (
+    keys.length !== TELEMETRY_KEYS.size ||
+    keys.some((k) => !TELEMETRY_KEYS.has(k))
+  ) {
+    return false;
+  }
   return (
     typeof obj.api_key === 'string' &&
     typeof obj.distinct_id === 'string' &&
     obj.event === 'cli.used' &&
     typeof obj.properties === 'object' &&
     obj.properties !== null &&
+    !Array.isArray(obj.properties) &&
     typeof obj._nonce === 'string' &&
     obj._nonce.length > 0
   );

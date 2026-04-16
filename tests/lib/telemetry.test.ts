@@ -412,6 +412,35 @@ describe('flushPayload', () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
+  it('rejects payload with array as properties', async () => {
+    const arrayProps = JSON.stringify({
+      api_key: 'key',
+      distinct_id: 'id',
+      event: 'cli.used',
+      properties: [1, 2],
+      _nonce: crypto.randomUUID(),
+    });
+    await expect(flushPayload(arrayProps)).rejects.toThrow(
+      'invalid telemetry payload schema',
+    );
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('rejects payload with extra top-level keys', async () => {
+    const extraKeys = JSON.stringify({
+      api_key: 'key',
+      distinct_id: 'id',
+      event: 'cli.used',
+      properties: {},
+      _nonce: crypto.randomUUID(),
+      $set: { email: 'attacker@example.com' },
+    });
+    await expect(flushPayload(extraKeys)).rejects.toThrow(
+      'invalid telemetry payload schema',
+    );
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
   it('propagates fetch errors', async () => {
     fetchSpy.mockRejectedValue(new Error('network error'));
     await expect(flushPayload(validPayload)).rejects.toThrow('network error');
