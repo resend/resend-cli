@@ -26,7 +26,7 @@ export const listReceivingCommand = new Command('list')
       context:
         'Receiving must be enabled on the domain first:\n  resend domains update <id> --receiving enabled\n\nPagination: use --after or --before with a received email ID as the cursor.\nOnly one of --after or --before may be used at a time.\nThe response includes has_more: true when additional pages exist.',
       output:
-        '  {"object":"list","has_more":false,"data":[{"id":"<uuid>","to":["inbox@yourdomain.com"],"from":"sender@external.com","subject":"Hello","created_at":"<iso-date>","message_id":"<str>","bcc":null,"cc":null,"reply_to":null,"attachments":[]}]}',
+        '  {"object":"list","has_more":false,"data":[{"id":"<uuid>","to":["inbox@example.com"],"from":"sender@external.com","subject":"Hello","created_at":"<iso-date>","message_id":"<str>","bcc":null,"cc":null,"reply_to":null,"attachments":[]}]}',
       errorCodes: ['auth_error', 'invalid_limit', 'list_error'],
       examples: [
         'resend emails receiving list',

@@ -5,8 +5,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -53,7 +53,7 @@ describe('emails cancel command', () => {
     exitSpy = undefined;
   });
 
-  test('calls SDK cancel with correct id', async () => {
+  it('calls SDK cancel with correct id', async () => {
     spies = setupOutputSpies();
 
     const { cancelCommand } = await import(
@@ -64,7 +64,7 @@ describe('emails cancel command', () => {
     expect(mockCancel).toHaveBeenCalledWith('test-email-id');
   });
 
-  test('outputs JSON object in non-interactive mode', async () => {
+  it('outputs JSON object in non-interactive mode', async () => {
     spies = setupOutputSpies();
 
     const { cancelCommand } = await import(
@@ -78,7 +78,7 @@ describe('emails cancel command', () => {
     expect(parsed.object).toBe('email');
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = join(
@@ -99,7 +99,7 @@ describe('emails cancel command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with cancel_error when SDK returns an error', async () => {
+  it('errors with cancel_error when SDK returns an error', async () => {
     setNonInteractive();
     mockCancel.mockResolvedValueOnce(
       mockSdkError('Email not found', 'not_found'),

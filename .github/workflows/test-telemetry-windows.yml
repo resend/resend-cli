@@ -18,7 +18,7 @@ jobs:
         env:
           POSTHOG_PUBLIC_KEY: ${{ secrets.POSTHOG_STAGING_KEY }}
       - name: Build Windows binary
-        run: pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-win-x64 --output dist/resend.exe
+        run: pnpm exec pkg dist/cli.cjs --config package.json --compress Brotli --target node24-win-x64 --output dist/resend.exe
       - name: Test telemetry spawn from binary
         run: |
           $tmpdir = [System.IO.Path]::GetTempPath()

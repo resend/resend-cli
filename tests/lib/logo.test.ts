@@ -1,11 +1,4 @@
-import {
-  afterEach,
-  describe,
-  expect,
-  type MockInstance,
-  test,
-  vi,
-} from 'vitest';
+import { afterEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 import { printBannerPlain } from '../../src/lib/logo';
 
 describe('printBannerPlain', () => {
@@ -15,7 +8,7 @@ describe('printBannerPlain', () => {
     writeSpy?.mockRestore();
   });
 
-  test('writes ASCII logo to stdout', () => {
+  it('writes ASCII logo to stdout', () => {
     const chunks: string[] = [];
     writeSpy = vi
       .spyOn(process.stdout, 'write')

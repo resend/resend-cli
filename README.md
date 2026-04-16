@@ -49,7 +49,7 @@ resend login
 
 # Send an email
 resend emails send \
-  --from "you@yourdomain.com" \
+  --from "you@example.com" \
   --to delivered@resend.dev \
   --subject "Hello from Resend CLI" \
   --text "Sent from my terminal."
@@ -226,7 +226,7 @@ Provide all options via flags for scripting, or let the CLI prompt interactively
 
 ```bash
 resend emails send \
-  --from "Name <sender@yourdomain.com>" \
+  --from "Name <sender@example.com>" \
   --to delivered@resend.dev \
   --subject "Subject line" \
   --text "Plain text body"
@@ -255,7 +255,7 @@ When run in a terminal without all required flags, the CLI prompts for missing f
 resend emails send
 
 # prompts only for missing fields
-resend emails send --from "you@yourdomain.com"
+resend emails send --from "you@example.com"
 ```
 
 #### Non-interactive mode
@@ -263,7 +263,7 @@ resend emails send --from "you@yourdomain.com"
 When piped or run in CI, all required flags must be provided. Missing flags cause an error listing what's needed:
 
 ```bash
-echo "" | resend emails send --from "you@yourdomain.com"
+echo "" | resend emails send --from "you@example.com"
 # Error: Missing required flags: --to, --subject
 ```
 
@@ -275,7 +275,7 @@ A body (`--text`, `--html`, or `--html-file`) is also required — omitting all 
 
 ```bash
 resend emails send \
-  --from "you@yourdomain.com" \
+  --from "you@example.com" \
   --to delivered@resend.dev bounced@resend.dev \
   --subject "Team update" \
   --text "Hello everyone"
@@ -285,7 +285,7 @@ resend emails send \
 
 ```bash
 resend emails send \
-  --from "you@yourdomain.com" \
+  --from "you@example.com" \
   --to delivered@resend.dev \
   --subject "Newsletter" \
   --html-file ./newsletter.html
@@ -295,7 +295,7 @@ resend emails send \
 
 ```bash
 resend emails send \
-  --from "you@yourdomain.com" \
+  --from "you@example.com" \
   --to delivered@resend.dev \
   --subject "Meeting notes" \
   --text "See attached." \
@@ -308,7 +308,7 @@ resend emails send \
 
 ```bash
 resend --api-key re_other_key emails send \
-  --from "you@yourdomain.com" \
+  --from "you@example.com" \
   --to delivered@resend.dev \
   --subject "Test" \
   --text "Using a different key"
@@ -626,7 +626,7 @@ env:
 steps:
   - run: |
       resend emails send \
-        --from "deploy@yourdomain.com" \
+        --from "deploy@example.com" \
         --to "delivered@resend.com" \
         --subject "Deploy complete" \
         --text "Version ${{ github.sha }} deployed."

@@ -40,9 +40,14 @@ export const renderingUtilitiesExporter = (emailTemplates: string[]) => ({
         }
 
         result = await b.resolve('@react-email/components', options);
+        if (result.errors.length === 0) {
+          return result;
+        }
+
+        result = await b.resolve('react-email', options);
         if (result.errors.length > 0 && result.errors[0]) {
           result.errors[0].text =
-            "Failed trying to import `render` from either `@react-email/render` or `@react-email/components` to be able to render your email template.\n Maybe you don't have either of them installed?";
+            "Failed trying to import `render` from `@react-email/render`, `@react-email/components`, or `react-email` to be able to render your email template.\nMaybe you don't have any of them installed?";
         }
         return result;
       },

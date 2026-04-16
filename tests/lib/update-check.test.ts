@@ -14,7 +14,6 @@ import {
   expect,
   it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -84,19 +83,19 @@ describe('checkForUpdates', () => {
       .mockRejectedValue(new Error('network error'));
   }
 
-  test('skips check when RESEND_NO_UPDATE_NOTIFIER=1', async () => {
+  it('skips check when RESEND_NO_UPDATE_NOTIFIER=1', async () => {
     process.env.RESEND_NO_UPDATE_NOTIFIER = '1';
     await checkForUpdates();
     expect(stderrOutput).toBe('');
   });
 
-  test('skips check when CI=true', async () => {
+  it('skips check when CI=true', async () => {
     process.env.CI = 'true';
     await checkForUpdates();
     expect(stderrOutput).toBe('');
   });
 
-  test('skips check when not a TTY', async () => {
+  it('skips check when not a TTY', async () => {
     Object.defineProperty(process.stdout, 'isTTY', {
       value: undefined,
       writable: true,
@@ -105,7 +104,7 @@ describe('checkForUpdates', () => {
     expect(stderrOutput).toBe('');
   });
 
-  test('prints notice when newer version available from fresh fetch', async () => {
+  it('prints notice when newer version available from fresh fetch', async () => {
     mockFetch(`v${NEWER_VERSION}`);
     await checkForUpdates();
 
@@ -114,13 +113,13 @@ describe('checkForUpdates', () => {
     expect(stderrOutput).toContain(`v${NEWER_VERSION}`);
   });
 
-  test('prints nothing when already on latest', async () => {
+  it('prints nothing when already on latest', async () => {
     mockFetch(`v${VERSION}`);
     await checkForUpdates();
     expect(stderrOutput).toBe('');
   });
 
-  test('uses cached state when fresh (no fetch)', async () => {
+  it('uses cached state when fresh (no fetch)', async () => {
     writeFileSync(
       statePath,
       JSON.stringify({ lastChecked: Date.now(), latestVersion: NEWER_VERSION }),
@@ -133,7 +132,7 @@ describe('checkForUpdates', () => {
     expect(stderrOutput).toContain(`v${NEWER_VERSION}`);
   });
 
-  test('refetches when cache is stale', async () => {
+  it('refetches when cache is stale', async () => {
     const staleTime = Date.now() - 25 * 60 * 60 * 1000; // 25 hours ago
     writeFileSync(
       statePath,
@@ -150,13 +149,13 @@ describe('checkForUpdates', () => {
     expect(state.latestVersion).toBe(NEWER_VERSION);
   });
 
-  test('handles fetch failure gracefully', async () => {
+  it('handles fetch failure gracefully', async () => {
     mockFetchFailure();
     await checkForUpdates();
     expect(stderrOutput).toBe('');
   });
 
-  test('writes state file after successful fetch', async () => {
+  it('writes state file after successful fetch', async () => {
     mockFetch('v1.0.0');
     await checkForUpdates();
 
@@ -165,7 +164,7 @@ describe('checkForUpdates', () => {
     expect(state.latestVersion).toBe('1.0.0');
   });
 
-  test('ignores prerelease versions', async () => {
+  it('ignores prerelease versions', async () => {
     fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({ tag_name: 'v99.0.0', prerelease: true }),
@@ -175,7 +174,7 @@ describe('checkForUpdates', () => {
     expect(stderrOutput).toBe('');
   });
 
-  test('ignores non-semver tag names', async () => {
+  it('ignores non-semver tag names', async () => {
     mockFetch('canary-20260311');
     await checkForUpdates();
     expect(stderrOutput).toBe('');
@@ -227,7 +226,7 @@ describe('detectInstallMethod', () => {
     restoreEnv();
   });
 
-  test('detects npm when script path contains node_modules', () => {
+  it('detects npm when script path contains node_modules', () => {
     Object.defineProperty(process, 'execPath', {
       value: '/opt/homebrew/bin/node',
     });
@@ -236,7 +235,7 @@ describe('detectInstallMethod', () => {
     expect(detectInstallMethod()).toBe('npm install -g resend-cli');
   });
 
-  test('detects npm when npm_execpath is set even with homebrew node', () => {
+  it('detects npm when npm_execpath is set even with homebrew node', () => {
     Object.defineProperty(process, 'execPath', {
       value: '/opt/homebrew/bin/node',
     });
@@ -247,7 +246,7 @@ describe('detectInstallMethod', () => {
     expect(detectInstallMethod()).toBe('npm install -g resend-cli');
   });
 
-  test('detects homebrew when no npm signals present', () => {
+  it('detects homebrew when no npm signals present', () => {
     Object.defineProperty(process, 'execPath', {
       value: '/opt/homebrew/Cellar/resend/1.4.0/bin/resend',
     });
@@ -256,7 +255,7 @@ describe('detectInstallMethod', () => {
     expect(detectInstallMethod()).toBe('brew update && brew upgrade resend');
   });
 
-  test('detects install script', () => {
+  it('detects install script', () => {
     Object.defineProperty(process, 'execPath', {
       value: '/Users/test/.resend/bin/resend',
     });

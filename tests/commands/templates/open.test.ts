@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as browser from '../../../src/lib/browser';
 
 describe('templates open command', () => {
@@ -10,7 +10,7 @@ describe('templates open command', () => {
     vi.restoreAllMocks();
   });
 
-  test('with no args opens templates list', async () => {
+  it('with no args opens templates list', async () => {
     const { openTemplateCommand } = await import(
       '../../../src/commands/templates/open'
     );
@@ -23,7 +23,7 @@ describe('templates open command', () => {
     );
   });
 
-  test('with id opens template URL', async () => {
+  it('with id opens template URL', async () => {
     const { openTemplateCommand } = await import(
       '../../../src/commands/templates/open'
     );

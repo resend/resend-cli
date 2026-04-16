@@ -14,7 +14,7 @@
 
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 const CLI = resolve(import.meta.dirname, '../../src/cli.ts');
 
@@ -42,7 +42,7 @@ function parseJson(stdout: string): unknown {
 }
 
 describe('e2e smoke', () => {
-  test('doctor reports check results', () => {
+  it('doctor reports check results', () => {
     const { stdout } = run('doctor');
     const data = parseJson(stdout) as { checks: unknown[] };
     expect(data.checks).toBeInstanceOf(Array);
@@ -51,7 +51,7 @@ describe('e2e smoke', () => {
     expect(data).toHaveProperty('ok');
   });
 
-  test('domains list returns valid json', () => {
+  it('domains list returns valid json', () => {
     const { stdout, exitCode } = run('domains', 'list');
     expect(exitCode).toBe(0);
     const data = parseJson(stdout) as { object: string; data: unknown[] };
@@ -59,7 +59,7 @@ describe('e2e smoke', () => {
     expect(data.data).toBeInstanceOf(Array);
   });
 
-  test('api-keys list returns valid json', () => {
+  it('api-keys list returns valid json', () => {
     const { stdout, exitCode } = run('api-keys', 'list');
     expect(exitCode).toBe(0);
     const data = parseJson(stdout) as { object: string; data: unknown[] };
@@ -67,7 +67,7 @@ describe('e2e smoke', () => {
     expect(data.data).toBeInstanceOf(Array);
   });
 
-  test('broadcasts list returns valid json', () => {
+  it('broadcasts list returns valid json', () => {
     const { stdout, exitCode } = run('broadcasts', 'list');
     expect(exitCode).toBe(0);
     const data = parseJson(stdout) as { object: string; data: unknown[] };
@@ -75,7 +75,7 @@ describe('e2e smoke', () => {
     expect(data.data).toBeInstanceOf(Array);
   });
 
-  test('webhooks list returns valid json', () => {
+  it('webhooks list returns valid json', () => {
     const { stdout, exitCode } = run('webhooks', 'list');
     expect(exitCode).toBe(0);
     const data = parseJson(stdout) as { object: string; data: unknown[] };
@@ -83,7 +83,7 @@ describe('e2e smoke', () => {
     expect(data.data).toBeInstanceOf(Array);
   });
 
-  test('topics list returns valid json', () => {
+  it('topics list returns valid json', () => {
     const { stdout, exitCode } = run('topics', 'list');
     expect(exitCode).toBe(0);
     const data = parseJson(stdout) as { object: string; data: unknown[] };

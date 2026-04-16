@@ -20,7 +20,7 @@ jobs:
       - name: Build Node bundle
         run: pnpm build
       - name: Build pkg binary
-        run: pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-linux-x64 --output dist/resend
+        run: pnpm exec pkg dist/cli.cjs --config package.json --compress Brotli --target node24-linux-x64 --output dist/resend
       - name: Smoke test Node bundle
         run: |
           node dist/cli.cjs --version

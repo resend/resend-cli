@@ -1,12 +1,12 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { renderDnsRecordsTable } from '../../../src/commands/domains/utils';
 
 describe('renderDnsRecordsTable', () => {
-  test('returns empty message when no records', () => {
+  it('returns empty message when no records', () => {
     expect(renderDnsRecordsTable([], 'example.com')).toBe('(no DNS records)');
   });
 
-  test('renders a card per record with type separator', () => {
+  it('renders a card per record with type separator', () => {
     const output = renderDnsRecordsTable(
       [
         {
@@ -28,7 +28,7 @@ describe('renderDnsRecordsTable', () => {
     expect(output).toContain('Value  feedback-smtp.us-east-1.amazonses.com');
   });
 
-  test('expands short name with domain suffix', () => {
+  it('expands short name with domain suffix', () => {
     const output = renderDnsRecordsTable(
       [
         {
@@ -47,7 +47,7 @@ describe('renderDnsRecordsTable', () => {
     expect(output).toContain('Name   dkim.send.example.com');
   });
 
-  test('keeps FQDN name as-is', () => {
+  it('keeps FQDN name as-is', () => {
     const output = renderDnsRecordsTable(
       [
         {
@@ -66,7 +66,7 @@ describe('renderDnsRecordsTable', () => {
     expect(output).toContain('Name   send.example.com');
   });
 
-  test('uses domain name when record name is empty', () => {
+  it('uses domain name when record name is empty', () => {
     const output = renderDnsRecordsTable(
       [
         {
@@ -85,7 +85,27 @@ describe('renderDnsRecordsTable', () => {
     expect(output).toContain('Name   example.com');
   });
 
-  test('separates multiple records with blank line', () => {
+  it('renders a Tracking CNAME record', () => {
+    const output = renderDnsRecordsTable(
+      [
+        {
+          record: 'Tracking',
+          type: 'CNAME',
+          name: 'track',
+          ttl: 'Auto',
+          status: 'not_started',
+          value: 'tracking.resend.com',
+        },
+      ],
+      'example.com',
+    );
+
+    expect(output).toContain('CNAME');
+    expect(output).toContain('Name   track.example.com');
+    expect(output).toContain('Value  tracking.resend.com');
+  });
+
+  it('separates multiple records with blank line', () => {
     const output = renderDnsRecordsTable(
       [
         {

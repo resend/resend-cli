@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -59,7 +59,7 @@ describe('contacts create command', () => {
     }
   });
 
-  test('creates contact with --email flag', async () => {
+  it('creates contact with --email flag', async () => {
     spies = setupOutputSpies();
 
     const { createContactCommand } = await import(
@@ -74,7 +74,7 @@ describe('contacts create command', () => {
     expect(args.email).toBe('jane@example.com');
   });
 
-  test('outputs JSON id when non-interactive', async () => {
+  it('outputs JSON id when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { createContactCommand } = await import(
@@ -90,7 +90,7 @@ describe('contacts create command', () => {
     expect(parsed.object).toBe('contact');
   });
 
-  test('passes --first-name and --last-name to SDK', async () => {
+  it('passes --first-name and --last-name to SDK', async () => {
     spies = setupOutputSpies();
 
     const { createContactCommand } = await import(
@@ -113,7 +113,7 @@ describe('contacts create command', () => {
     expect(args.lastName).toBe('Smith');
   });
 
-  test('passes --unsubscribed flag to SDK', async () => {
+  it('passes --unsubscribed flag to SDK', async () => {
     spies = setupOutputSpies();
 
     const { createContactCommand } = await import(
@@ -128,7 +128,7 @@ describe('contacts create command', () => {
     expect(args.unsubscribed).toBe(true);
   });
 
-  test('parses --properties JSON and passes to SDK', async () => {
+  it('parses --properties JSON and passes to SDK', async () => {
     spies = setupOutputSpies();
 
     const { createContactCommand } = await import(
@@ -148,7 +148,7 @@ describe('contacts create command', () => {
     expect(args.properties).toEqual({ company: 'Acme', plan: 'pro' });
   });
 
-  test('passes --segment-id (single) to SDK as segments array', async () => {
+  it('passes --segment-id (single) to SDK as segments array', async () => {
     spies = setupOutputSpies();
 
     const { createContactCommand } = await import(
@@ -170,7 +170,7 @@ describe('contacts create command', () => {
     ]);
   });
 
-  test('passes multiple --segment-id values to SDK', async () => {
+  it('passes multiple --segment-id values to SDK', async () => {
     spies = setupOutputSpies();
 
     const { createContactCommand } = await import(
@@ -195,7 +195,7 @@ describe('contacts create command', () => {
     ]);
   });
 
-  test('suppresses name prompts when --json is set even in TTY', async () => {
+  it('suppresses name prompts when --json is set even in TTY', async () => {
     Object.defineProperty(process.stdin, 'isTTY', {
       value: true,
       writable: true,
@@ -237,7 +237,7 @@ describe('contacts create command', () => {
     stderrWriteSpy.mockRestore();
   });
 
-  test('errors with missing_email in non-interactive mode', async () => {
+  it('errors with missing_email in non-interactive mode', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -253,7 +253,7 @@ describe('contacts create command', () => {
     expect(output).toContain('missing_email');
   });
 
-  test('errors with invalid_properties when --properties is not valid JSON', async () => {
+  it('errors with invalid_properties when --properties is not valid JSON', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -272,7 +272,7 @@ describe('contacts create command', () => {
     expect(output).toContain('invalid_properties');
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -292,7 +292,7 @@ describe('contacts create command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with create_error when SDK returns an error', async () => {
+  it('errors with create_error when SDK returns an error', async () => {
     setNonInteractive();
     mockCreate.mockResolvedValueOnce(
       mockSdkError('Contact already exists', 'validation_error'),
