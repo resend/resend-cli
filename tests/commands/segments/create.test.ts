@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -55,7 +55,7 @@ describe('segments create command', () => {
     exitSpy = undefined;
   });
 
-  test('creates segment with --name flag', async () => {
+  it('creates segment with --name flag', async () => {
     spies = setupOutputSpies();
 
     const { createSegmentCommand } = await import(
@@ -71,7 +71,7 @@ describe('segments create command', () => {
     expect(args.name).toBe('Newsletter Subscribers');
   });
 
-  test('outputs JSON with id and object when non-interactive', async () => {
+  it('outputs JSON with id and object when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { createSegmentCommand } = await import(
@@ -89,7 +89,7 @@ describe('segments create command', () => {
     expect(parsed.name).toBe('Newsletter Subscribers');
   });
 
-  test('errors with missing_name in non-interactive mode when --name absent', async () => {
+  it('errors with missing_name in non-interactive mode when --name absent', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -105,7 +105,7 @@ describe('segments create command', () => {
     expect(output).toContain('missing_name');
   });
 
-  test('does not call SDK when missing_name error is raised', async () => {
+  it('does not call SDK when missing_name error is raised', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -120,7 +120,7 @@ describe('segments create command', () => {
     expect(mockCreate).not.toHaveBeenCalled();
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -138,7 +138,7 @@ describe('segments create command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with create_error when SDK returns an error', async () => {
+  it('errors with create_error when SDK returns an error', async () => {
     setNonInteractive();
     mockCreate.mockResolvedValueOnce(
       mockSdkError('Segment already exists', 'validation_error'),

@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -51,7 +51,7 @@ describe('domains update command', () => {
     exitSpy = undefined;
   });
 
-  test('calls SDK update with correct id', async () => {
+  it('calls SDK update with correct id', async () => {
     spies = setupOutputSpies();
 
     const { updateDomainCommand } = await import(
@@ -68,7 +68,7 @@ describe('domains update command', () => {
     expect(args.tls).toBe('enforced');
   });
 
-  test('passes openTracking=true when --open-tracking is set', async () => {
+  it('passes openTracking=true when --open-tracking is set', async () => {
     spies = setupOutputSpies();
 
     const { updateDomainCommand } = await import(
@@ -83,7 +83,7 @@ describe('domains update command', () => {
     expect(args.openTracking).toBe(true);
   });
 
-  test('passes openTracking=false when --no-open-tracking is set', async () => {
+  it('passes openTracking=false when --no-open-tracking is set', async () => {
     spies = setupOutputSpies();
 
     const { updateDomainCommand } = await import(
@@ -98,7 +98,7 @@ describe('domains update command', () => {
     expect(args.openTracking).toBe(false);
   });
 
-  test('does not include tracking keys in payload when no tracking flags are passed', async () => {
+  it('does not include tracking keys in payload when no tracking flags are passed', async () => {
     spies = setupOutputSpies();
 
     const { updateDomainCommand } = await import(
@@ -114,7 +114,7 @@ describe('domains update command', () => {
     expect(args.clickTracking).toBeUndefined();
   });
 
-  test('passes clickTracking=true when --click-tracking is set', async () => {
+  it('passes clickTracking=true when --click-tracking is set', async () => {
     spies = setupOutputSpies();
 
     const { updateDomainCommand } = await import(
@@ -129,7 +129,7 @@ describe('domains update command', () => {
     expect(args.clickTracking).toBe(true);
   });
 
-  test('passes clickTracking=false when --no-click-tracking is set', async () => {
+  it('passes clickTracking=false when --no-click-tracking is set', async () => {
     spies = setupOutputSpies();
 
     const { updateDomainCommand } = await import(
@@ -144,7 +144,36 @@ describe('domains update command', () => {
     expect(args.clickTracking).toBe(false);
   });
 
-  test('errors with no_changes when no update flags are provided', async () => {
+  it('passes trackingSubdomain when --tracking-subdomain is set', async () => {
+    spies = setupOutputSpies();
+
+    const { updateDomainCommand } = await import(
+      '../../../src/commands/domains/update'
+    );
+    await updateDomainCommand.parseAsync(
+      ['test-domain-id', '--tracking-subdomain', 'track'],
+      { from: 'user' },
+    );
+
+    const args = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.trackingSubdomain).toBe('track');
+  });
+
+  it('does not error when only --tracking-subdomain is provided', async () => {
+    spies = setupOutputSpies();
+
+    const { updateDomainCommand } = await import(
+      '../../../src/commands/domains/update'
+    );
+    await updateDomainCommand.parseAsync(
+      ['test-domain-id', '--tracking-subdomain', 'track'],
+      { from: 'user' },
+    );
+
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
+  });
+
+  it('errors with no_changes when no update flags are provided', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -161,7 +190,7 @@ describe('domains update command', () => {
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 
-  test('outputs domain JSON on success', async () => {
+  it('outputs domain JSON on success', async () => {
     spies = setupOutputSpies();
 
     const { updateDomainCommand } = await import(
@@ -178,7 +207,7 @@ describe('domains update command', () => {
     expect(parsed.id).toBe('test-domain-id');
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -198,7 +227,7 @@ describe('domains update command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with update_error when SDK returns an error', async () => {
+  it('errors with update_error when SDK returns an error', async () => {
     setNonInteractive();
     mockUpdate.mockResolvedValueOnce(
       mockSdkError('Domain not found', 'not_found'),

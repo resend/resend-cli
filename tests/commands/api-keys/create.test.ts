@@ -5,7 +5,6 @@ import {
   expect,
   it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -57,7 +56,7 @@ describe('api-keys create command', () => {
     }
   });
 
-  test('creates API key with --name flag', async () => {
+  it('creates API key with --name flag', async () => {
     spies = setupOutputSpies();
 
     const { createApiKeyCommand } = await import(
@@ -72,7 +71,7 @@ describe('api-keys create command', () => {
     expect(args.name).toBe('Production');
   });
 
-  test('passes permission flag to SDK', async () => {
+  it('passes permission flag to SDK', async () => {
     spies = setupOutputSpies();
 
     const { createApiKeyCommand } = await import(
@@ -87,7 +86,7 @@ describe('api-keys create command', () => {
     expect(args.permission).toBe('sending_access');
   });
 
-  test('passes domain_id (snake_case) to SDK when --domain-id is provided', async () => {
+  it('passes domain_id (snake_case) to SDK when --domain-id is provided', async () => {
     spies = setupOutputSpies();
 
     const { createApiKeyCommand } = await import(
@@ -109,7 +108,7 @@ describe('api-keys create command', () => {
     expect(args.domain_id).toBe('domain-123');
   });
 
-  test('outputs JSON result when non-interactive', async () => {
+  it('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { createApiKeyCommand } = await import(
@@ -125,7 +124,7 @@ describe('api-keys create command', () => {
     expect(parsed.token).toBe('re_testtoken1234567890');
   });
 
-  test('errors with missing_name when --name absent in non-interactive mode', async () => {
+  it('errors with missing_name when --name absent in non-interactive mode', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -141,7 +140,7 @@ describe('api-keys create command', () => {
     expect(output).toContain('missing_name');
   });
 
-  test('errors with missing_name when --json is set even in TTY', async () => {
+  it('errors with missing_name when --json is set even in TTY', async () => {
     Object.defineProperty(process.stdin, 'isTTY', {
       value: true,
       writable: true,
@@ -174,7 +173,7 @@ describe('api-keys create command', () => {
     expect(output).toContain('missing_name');
   });
 
-  test('does not call SDK when missing_name error is raised', async () => {
+  it('does not call SDK when missing_name error is raised', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -189,7 +188,7 @@ describe('api-keys create command', () => {
     expect(mockCreate).not.toHaveBeenCalled();
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -209,7 +208,7 @@ describe('api-keys create command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with create_error when SDK returns an error', async () => {
+  it('errors with create_error when SDK returns an error', async () => {
     setNonInteractive();
     mockCreate.mockResolvedValueOnce(
       mockSdkError('Name already taken', 'validation_error'),

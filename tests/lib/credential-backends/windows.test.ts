@@ -41,7 +41,7 @@ describe('WindowsBackend', () => {
     vi.clearAllMocks();
   });
 
-  it('passes secret via stdin, NOT in PowerShell script args', async () => {
+  it('set() passes secret via stdin, NOT in PowerShell script args', async () => {
     const { spawn } = await import('node:child_process');
     const { WindowsBackend } = await import(
       '../../../src/lib/credential-backends/windows'

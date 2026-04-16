@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -61,7 +61,7 @@ describe('segments list command', () => {
     exitSpy = undefined;
   });
 
-  test('calls SDK with default limit of 10', async () => {
+  it('calls SDK with default limit of 10', async () => {
     spies = setupOutputSpies();
 
     const { listSegmentsCommand } = await import(
@@ -74,7 +74,7 @@ describe('segments list command', () => {
     expect(args.limit).toBe(10);
   });
 
-  test('calls SDK with custom --limit', async () => {
+  it('calls SDK with custom --limit', async () => {
     spies = setupOutputSpies();
 
     const { listSegmentsCommand } = await import(
@@ -86,7 +86,7 @@ describe('segments list command', () => {
     expect(args.limit).toBe(25);
   });
 
-  test('calls SDK with --after cursor', async () => {
+  it('calls SDK with --after cursor', async () => {
     spies = setupOutputSpies();
 
     const { listSegmentsCommand } = await import(
@@ -100,7 +100,7 @@ describe('segments list command', () => {
     expect(args.after).toBe('cursor_xyz');
   });
 
-  test('outputs JSON list when non-interactive', async () => {
+  it('outputs JSON list when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { listSegmentsCommand } = await import(
@@ -116,7 +116,7 @@ describe('segments list command', () => {
     expect(parsed.has_more).toBe(false);
   });
 
-  test('errors with invalid_limit when --limit is out of range', async () => {
+  it('errors with invalid_limit when --limit is out of range', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -132,7 +132,7 @@ describe('segments list command', () => {
     expect(output).toContain('invalid_limit');
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -150,7 +150,7 @@ describe('segments list command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with list_error when SDK returns an error', async () => {
+  it('errors with list_error when SDK returns an error', async () => {
     setNonInteractive();
     mockList.mockResolvedValueOnce(
       mockSdkError('Server error', 'server_error'),
