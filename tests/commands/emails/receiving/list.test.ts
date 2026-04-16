@@ -23,7 +23,7 @@ const mockList = vi.fn(async () => ({
     data: [
       {
         id: 'rcv_abc123',
-        to: ['inbox@yourdomain.com'],
+        to: ['inbox@example.com'],
         from: 'sender@external.com',
         subject: 'Hello from outside',
         created_at: '2026-02-18T12:00:00.000Z',
