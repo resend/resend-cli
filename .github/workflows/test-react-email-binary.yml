@@ -44,9 +44,9 @@ jobs:
           mkdir -p /tmp/react-email-test
           cd /tmp/react-email-test
           npm init -y
-          npm install react @react-email/components
+          npm install react react-email
           cat > email.tsx << 'TEMPLATE'
-          import { Html, Text } from '@react-email/components';
+          import { Html, Text } from 'react-email';
           export default function Email() {
             return <Html><Text>Hello from React Email!</Text></Html>;
           }
