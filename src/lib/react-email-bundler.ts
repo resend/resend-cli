@@ -1,14 +1,8 @@
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { loadEsbuild } from './esbuild/load-esbuild';
 import { renderingUtilitiesExporter } from './esbuild/rendering-utilities-exporter';
-
-function loadEsbuild(): typeof import('esbuild') {
-  if ('pkg' in process) {
-    return require('esbuild-wasm');
-  }
-  return require('esbuild');
-}
 
 export interface BundleResult {
   cjsPath: string;
