@@ -1,5 +1,13 @@
 name: Test react-email in binaries
-on: [pull_request]
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'src/lib/react-email*.ts'
+      - 'src/lib/esbuild/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/test-react-email-binary.yml'
 concurrency:
   group: test-react-email-binary-${{ github.ref }}
   cancel-in-progress: true

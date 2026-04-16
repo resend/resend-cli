@@ -1,5 +1,6 @@
 import {
   existsSync,
+  linkSync,
   mkdirSync,
   readFileSync,
   rmSync,
@@ -26,6 +27,7 @@ import {
   flushFromFile,
   flushPayload,
   getOrCreateAnonymousId,
+  getSpoolDir,
   isDisabled,
   trackCommand,
 } from '../../src/lib/telemetry';
@@ -169,6 +171,9 @@ describe('trackCommand', () => {
     expect(body.distinct_id).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
     );
+    expect(body._nonce).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
   });
 
   it('calls child.unref()', () => {
@@ -287,7 +292,8 @@ describe('trackCommand', () => {
     const fixedUUID = originalRandomUUID();
     const uuidMock = vi.spyOn(crypto, 'randomUUID').mockReturnValue(fixedUUID);
 
-    const symlinkPath = join(tmpdir(), `resend-telemetry-${fixedUUID}.json`);
+    const spoolDir = getSpoolDir();
+    const symlinkPath = join(spoolDir, `resend-telemetry-${fixedUUID}.json`);
     symlinkSync(targetFile, symlinkPath);
 
     try {
@@ -335,6 +341,14 @@ describe('trackCommand', () => {
 describe('flushPayload', () => {
   let fetchSpy: MockInstance;
 
+  const validPayload = JSON.stringify({
+    api_key: 'test-key',
+    distinct_id: 'test-id',
+    event: 'cli.used',
+    properties: { command: 'emails send' },
+    _nonce: crypto.randomUUID(),
+  });
+
   beforeEach(() => {
     fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
@@ -345,22 +359,18 @@ describe('flushPayload', () => {
     fetchSpy.mockRestore();
   });
 
-  it('POSTs payload to PostHog endpoint', async () => {
-    const payload = JSON.stringify({
-      api_key: 'test-key',
-      distinct_id: 'test-id',
-      event: 'cli.used',
-      properties: { command: 'emails send' },
-    });
-
-    await flushPayload(payload);
+  it('POSTs payload to PostHog endpoint with nonce stripped', async () => {
+    await flushPayload(validPayload);
 
     expect(fetchSpy).toHaveBeenCalledOnce();
     const [url, options] = fetchSpy.mock.calls[0] as [string, RequestInit];
     expect(url).toBe('https://us.i.posthog.com/capture/');
     expect(options.method).toBe('POST');
     expect(options.headers).toEqual({ 'Content-Type': 'application/json' });
-    expect(options.body).toBe(payload);
+    const sentBody = JSON.parse(options.body as string);
+    expect(sentBody._nonce).toBeUndefined();
+    expect(sentBody.api_key).toBe('test-key');
+    expect(sentBody.event).toBe('cli.used');
   });
 
   it('rejects invalid JSON', async () => {
@@ -368,22 +378,102 @@ describe('flushPayload', () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
+  it('rejects payload missing required telemetry fields', async () => {
+    await expect(
+      flushPayload(JSON.stringify({ arbitrary: 'data' })),
+    ).rejects.toThrow('invalid telemetry payload schema');
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('rejects payload without nonce', async () => {
+    const noNonce = JSON.stringify({
+      api_key: 'key',
+      distinct_id: 'id',
+      event: 'cli.used',
+      properties: {},
+    });
+    await expect(flushPayload(noNonce)).rejects.toThrow(
+      'invalid telemetry payload schema',
+    );
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('rejects payload with wrong event type', async () => {
+    const wrongEvent = JSON.stringify({
+      api_key: 'key',
+      distinct_id: 'id',
+      event: 'some.other.event',
+      properties: {},
+      _nonce: crypto.randomUUID(),
+    });
+    await expect(flushPayload(wrongEvent)).rejects.toThrow(
+      'invalid telemetry payload schema',
+    );
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('rejects payload with array as properties', async () => {
+    const arrayProps = JSON.stringify({
+      api_key: 'key',
+      distinct_id: 'id',
+      event: 'cli.used',
+      properties: [1, 2],
+      _nonce: crypto.randomUUID(),
+    });
+    await expect(flushPayload(arrayProps)).rejects.toThrow(
+      'invalid telemetry payload schema',
+    );
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('rejects payload with extra top-level keys', async () => {
+    const extraKeys = JSON.stringify({
+      api_key: 'key',
+      distinct_id: 'id',
+      event: 'cli.used',
+      properties: {},
+      _nonce: crypto.randomUUID(),
+      $set: { email: 'attacker@example.com' },
+    });
+    await expect(flushPayload(extraKeys)).rejects.toThrow(
+      'invalid telemetry payload schema',
+    );
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
   it('propagates fetch errors', async () => {
     fetchSpy.mockRejectedValue(new Error('network error'));
-    await expect(flushPayload('{}')).rejects.toThrow('network error');
+    await expect(flushPayload(validPayload)).rejects.toThrow('network error');
   });
 
   it('throws on non-ok HTTP response', async () => {
     fetchSpy.mockResolvedValue({ ok: false, status: 400 } as Response);
-    await expect(flushPayload('{}')).rejects.toThrow('telemetry flush failed');
+    await expect(flushPayload(validPayload)).rejects.toThrow(
+      'telemetry flush failed',
+    );
   });
 });
 
 describe('flushFromFile', () => {
+  const restoreEnv = captureTestEnv();
   let fetchSpy: MockInstance;
-  const tmpFile = join(tmpdir(), `resend-telemetry-${process.pid}-0.json`);
+  let spoolDir: string;
+  let tmpFile: string;
+
+  const validFilePayload = () =>
+    JSON.stringify({
+      api_key: 'test-key',
+      distinct_id: 'test-id',
+      event: 'cli.used',
+      properties: { command: 'emails send' },
+      _nonce: crypto.randomUUID(),
+    });
 
   beforeEach(() => {
+    mkdirSync(testResendDir, { recursive: true });
+    process.env.XDG_CONFIG_HOME = testConfigDir;
+    spoolDir = getSpoolDir();
+    tmpFile = join(spoolDir, `resend-telemetry-${crypto.randomUUID()}.json`);
     fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
     } as Response);
@@ -394,24 +484,30 @@ describe('flushFromFile', () => {
     if (existsSync(tmpFile)) {
       rmSync(tmpFile);
     }
+    restoreEnv();
+    if (existsSync(testConfigDir)) {
+      rmSync(testConfigDir, { recursive: true, force: true });
+    }
   });
 
-  it('reads file, sends payload, then deletes it', async () => {
-    const payload = JSON.stringify({ event: 'test' });
+  it('reads file, validates schema, sends payload without nonce, then deletes it', async () => {
+    const payload = validFilePayload();
     writeFileSync(tmpFile, payload);
 
     await flushFromFile(tmpFile);
 
     expect(fetchSpy).toHaveBeenCalledOnce();
     const [, options] = fetchSpy.mock.calls[0] as [string, RequestInit];
-    expect(options.body).toBe(payload);
+    const sentBody = JSON.parse(options.body as string);
+    expect(sentBody._nonce).toBeUndefined();
+    expect(sentBody.event).toBe('cli.used');
     expect(existsSync(tmpFile)).toBe(false);
   });
 
-  it('rejects paths outside the temp directory', async () => {
+  it('rejects paths outside the spool directory', async () => {
     const siblingPath = join(
-      `${tmpdir()}-outside`,
-      `resend-telemetry-${process.pid}-1.json`,
+      `${spoolDir}-outside`,
+      `resend-telemetry-${crypto.randomUUID()}.json`,
     );
 
     await expect(flushFromFile(siblingPath)).rejects.toThrow(
@@ -420,18 +516,33 @@ describe('flushFromFile', () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it('rejects symlinks that point outside the temp directory', async () => {
+  it('rejects filenames not matching strict UUID pattern', async () => {
+    const looseName = join(spoolDir, 'resend-telemetry-arbitrary.json');
+    writeFileSync(looseName, validFilePayload());
+
+    try {
+      await expect(flushFromFile(looseName)).rejects.toThrow(
+        'invalid telemetry flush path',
+      );
+      expect(fetchSpy).not.toHaveBeenCalled();
+    } finally {
+      if (existsSync(looseName)) {
+        rmSync(looseName, { force: true });
+      }
+    }
+  });
+
+  it('rejects symlinks that point outside the spool directory', async () => {
     if (process.platform === 'win32') {
       return;
     }
 
     const outsideFile = join(testConfigDir, 'outside.json');
-    mkdirSync(testConfigDir, { recursive: true });
-    writeFileSync(outsideFile, JSON.stringify({ event: 'test' }));
+    writeFileSync(outsideFile, validFilePayload());
 
     const symlinkPath = join(
-      tmpdir(),
-      `resend-telemetry-${process.pid}-2.json`,
+      spoolDir,
+      `resend-telemetry-${crypto.randomUUID()}.json`,
     );
     symlinkSync(outsideFile, symlinkPath);
 
@@ -449,10 +560,42 @@ describe('flushFromFile', () => {
     }
   });
 
+  it('rejects hardlinked files (nlink > 1)', async () => {
+    if (process.platform === 'win32') {
+      return;
+    }
+
+    writeFileSync(tmpFile, validFilePayload());
+    const hardlinkPath = join(
+      spoolDir,
+      `resend-telemetry-${crypto.randomUUID()}.json`,
+    );
+    linkSync(tmpFile, hardlinkPath);
+
+    try {
+      await expect(flushFromFile(tmpFile)).rejects.toThrow(
+        'invalid telemetry flush path',
+      );
+      expect(fetchSpy).not.toHaveBeenCalled();
+    } finally {
+      if (existsSync(hardlinkPath)) {
+        rmSync(hardlinkPath, { force: true });
+      }
+    }
+  });
+
+  it('rejects file with arbitrary JSON (missing telemetry schema)', async () => {
+    writeFileSync(tmpFile, JSON.stringify({ arbitrary: 'data' }));
+
+    await expect(flushFromFile(tmpFile)).rejects.toThrow(
+      'invalid telemetry payload schema',
+    );
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
   it('deletes file even when flush fails', async () => {
     fetchSpy.mockResolvedValue({ ok: false, status: 500 } as Response);
-    const payload = JSON.stringify({ event: 'test' });
-    writeFileSync(tmpFile, payload);
+    writeFileSync(tmpFile, validFilePayload());
 
     await expect(flushFromFile(tmpFile)).rejects.toThrow();
     expect(existsSync(tmpFile)).toBe(false);

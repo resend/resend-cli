@@ -11,7 +11,6 @@ import {
   unlinkSync,
   writeFileSync,
 } from 'node:fs';
-import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { getConfigDir } from './config';
 import { isInteractive } from './tty';
@@ -29,6 +28,12 @@ const OS_NAMES: Record<string, string> = {
 
 function friendlyOs(): string {
   return OS_NAMES[process.platform] ?? process.platform;
+}
+
+export function getSpoolDir(): string {
+  const dir = join(getConfigDir(), 'telemetry-spool');
+  mkdirSync(dir, { recursive: true, mode: 0o700 });
+  return dir;
 }
 
 export function isDisabled(): boolean {
@@ -107,15 +112,19 @@ export function trackCommand(
       properties.global_flags = opts.globalFlags;
     }
 
+    const nonce = crypto.randomUUID();
+
     const payload = JSON.stringify({
       api_key: POSTHOG_API_KEY,
       distinct_id: distinctId,
       event: 'cli.used',
       properties,
+      _nonce: nonce,
     });
 
+    const spoolDir = getSpoolDir();
     const tmpPath = join(
-      tmpdir(),
+      spoolDir,
       `resend-telemetry-${crypto.randomUUID()}.json`,
     );
     const fd = openSync(
@@ -155,12 +164,57 @@ export function trackCommand(
   } catch {}
 }
 
+type TelemetryPayload = {
+  api_key: string;
+  distinct_id: string;
+  event: 'cli.used';
+  properties: Record<string, unknown>;
+  _nonce: string;
+};
+
+const TELEMETRY_KEYS = new Set([
+  'api_key',
+  'distinct_id',
+  'event',
+  'properties',
+  '_nonce',
+]);
+
+const isTelemetryPayload = (data: unknown): data is TelemetryPayload => {
+  if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+    return false;
+  }
+  const obj = data as Record<string, unknown>;
+  const keys = Object.keys(obj);
+  if (
+    keys.length !== TELEMETRY_KEYS.size ||
+    keys.some((k) => !TELEMETRY_KEYS.has(k))
+  ) {
+    return false;
+  }
+  return (
+    typeof obj.api_key === 'string' &&
+    typeof obj.distinct_id === 'string' &&
+    obj.event === 'cli.used' &&
+    typeof obj.properties === 'object' &&
+    obj.properties !== null &&
+    !Array.isArray(obj.properties) &&
+    typeof obj._nonce === 'string' &&
+    obj._nonce.length > 0
+  );
+};
+
 export async function flushPayload(payload: string): Promise<void> {
-  JSON.parse(payload);
+  const parsed: unknown = JSON.parse(payload);
+  if (!isTelemetryPayload(parsed)) {
+    throw new Error('invalid telemetry payload schema');
+  }
+  const { _nonce: _, ...body } = parsed;
+  const sanitized = JSON.stringify(body);
   const res = await fetch(POSTHOG_HOST, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: payload,
+    body: sanitized,
     signal: AbortSignal.timeout(3000),
   });
   if (!res.ok) {
@@ -168,15 +222,18 @@ export async function flushPayload(payload: string): Promise<void> {
   }
 }
 
+const UUID_RE = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
+const SPOOL_FILENAME_RE = new RegExp(`^resend-telemetry-${UUID_RE}\\.json$`);
+
 export async function flushFromFile(filePath: string): Promise<void> {
   const resolved = join(filePath);
-  const tempDir = tmpdir();
+  const spoolDir = getSpoolDir();
   const baseName = basename(resolved);
 
   if (
-    dirname(resolved) !== tempDir ||
-    !/resend-telemetry-.*\.json$/.test(baseName) ||
-    realpathSync(dirname(resolved)) !== realpathSync(tempDir)
+    dirname(resolved) !== spoolDir ||
+    !SPOOL_FILENAME_RE.test(baseName) ||
+    realpathSync(dirname(resolved)) !== realpathSync(spoolDir)
   ) {
     throw new Error('invalid telemetry flush path');
   }
@@ -184,7 +241,8 @@ export async function flushFromFile(filePath: string): Promise<void> {
   const fd = openSync(resolved, constants.O_RDONLY | constants.O_NOFOLLOW);
   let payload: string;
   try {
-    if (!fstatSync(fd).isFile()) {
+    const stat = fstatSync(fd);
+    if (!stat.isFile() || stat.nlink !== 1) {
       throw new Error('invalid telemetry flush path');
     }
     payload = readFileSync(fd, 'utf-8');
