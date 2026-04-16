@@ -189,7 +189,7 @@ describe('withSpinner retry on rate_limit_exceeded', () => {
     expect(Date.now() - start).toBeGreaterThanOrEqual(900);
   });
 
-  test('exits with error when request times out', async () => {
+  it('exits with error when request times out', async () => {
     vi.spyOn(timeoutModule, 'withTimeout').mockRejectedValue(
       new Error('Request timed out after 30s'),
     );
