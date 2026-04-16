@@ -1,4 +1,11 @@
-import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -12,8 +19,8 @@ const mockBuild = vi.fn(
   },
 );
 
-vi.mock('esbuild', () => ({
-  build: (opts: Record<string, unknown>) => mockBuild(opts as never),
+vi.mock('../../src/lib/esbuild/load-esbuild', () => ({
+  loadEsbuild: () => ({ build: mockBuild }),
 }));
 
 const { bundleReactEmail } = await import('../../src/lib/react-email-bundler');
@@ -52,11 +59,20 @@ describe('bundleReactEmail', () => {
   });
 
   it('cleans up tmpDir on build failure', async () => {
+    const before = readdirSync(tmpdir()).filter((d) =>
+      d.startsWith('resend-react-email-'),
+    );
+
     mockBuild.mockRejectedValueOnce(new Error('build failed'));
 
     await expect(bundleReactEmail('/fake/broken.tsx')).rejects.toThrow(
       'build failed',
     );
+
+    const after = readdirSync(tmpdir()).filter((d) =>
+      d.startsWith('resend-react-email-'),
+    );
+    expect(after.length).toBe(before.length);
   });
 
   it('produces a cjs output path named after the input', async () => {

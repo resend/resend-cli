@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 
-const bundle = readFileSync('dist/cli.cjs', 'utf8');
+const bundlePath = process.argv[2] ?? 'dist/cli.cjs';
+const bundle = readFileSync(bundlePath, 'utf8');
 
 if (!bundle.includes('phc_')) {
   console.error(
@@ -20,6 +21,13 @@ if (bundle.includes(esbuildBundledMarker)) {
 if (!bundle.includes('require("esbuild")')) {
   console.error(
     'Error: esbuild external require not found — ensure esbuild is externalized in scripts/build.mjs',
+  );
+  process.exit(1);
+}
+
+if (!bundle.includes('require("esbuild-wasm")')) {
+  console.error(
+    'Error: esbuild-wasm external require not found — ensure esbuild-wasm is externalized in scripts/build.mjs',
   );
   process.exit(1);
 }
