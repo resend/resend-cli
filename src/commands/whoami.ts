@@ -51,7 +51,10 @@ Shows which profile is active and where the API key comes from.`,
           ? 'profile_not_found'
           : 'not_authenticated';
 
-      outputError({ message, code }, { json: globalOpts.json });
+      outputError(
+        { message, code },
+        { json: globalOpts.json || !isInteractive() },
+      );
       return;
     }
 
