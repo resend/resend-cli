@@ -1,5 +1,14 @@
 import { execFile, spawn } from 'node:child_process';
+import { access, constants } from 'node:fs/promises';
 import type { CredentialBackend } from '../credential-store';
+
+const TRUSTED_SECRET_TOOL_PATHS = [
+  '/usr/bin/secret-tool',
+  '/usr/local/bin/secret-tool',
+  '/bin/secret-tool',
+] as const;
+
+const resolvedPaths = new Map<string, string>();
 
 function run(
   cmd: string,
@@ -29,28 +38,78 @@ function runWithStdin(
       stdio: ['pipe', 'ignore', 'pipe'],
       timeout: 5000,
     });
-    let stderr = '';
+    const chunks: string[] = [];
     child.stderr?.on('data', (data: Buffer) => {
-      stderr += data.toString();
+      chunks.push(data.toString());
     });
     child.on('close', (code) => {
-      resolve({ code, stderr });
+      resolve({ code, stderr: chunks.join('') });
     });
     child.on('error', () => {
       resolve({ code: 1, stderr: 'Failed to spawn process' });
     });
-    child.stdin?.on('error', () => {}); // Prevent EPIPE crash
+    child.stdin?.on('error', () => {});
     child.stdin?.write(stdin);
     child.stdin?.end();
   });
 }
+
+const findExecutableInTrustedPaths = async (
+  candidates: readonly string[],
+): Promise<string | null> => {
+  for (const candidate of candidates) {
+    try {
+      await access(candidate, constants.X_OK);
+      return candidate;
+    } catch {}
+  }
+  return null;
+};
+
+const resolveSecretTool = async (): Promise<string | null> => {
+  const cached = resolvedPaths.get('secret-tool');
+  if (cached) {
+    return cached;
+  }
+
+  const trusted = await findExecutableInTrustedPaths(TRUSTED_SECRET_TOOL_PATHS);
+  if (trusted) {
+    resolvedPaths.set('secret-tool', trusted);
+    return trusted;
+  }
+
+  const { stdout, code } = await run('/usr/bin/which', ['secret-tool']);
+  if (code === 0) {
+    const resolved = stdout.trim();
+    if (resolved && resolved.startsWith('/')) {
+      try {
+        await access(resolved, constants.X_OK);
+        resolvedPaths.set('secret-tool', resolved);
+        return resolved;
+      } catch {}
+    }
+  }
+
+  return null;
+};
+
+const requireSecretTool = async (): Promise<string> => {
+  const resolved = await resolveSecretTool();
+  if (!resolved) {
+    throw new Error(
+      'secret-tool not found in trusted paths (/usr/bin, /usr/local/bin, /bin)',
+    );
+  }
+  return resolved;
+};
 
 export class LinuxBackend implements CredentialBackend {
   name = 'Secret Service (libsecret)';
   readonly isSecure = true;
 
   async get(service: string, account: string): Promise<string | null> {
-    const { stdout, code } = await run('secret-tool', [
+    const cmd = await requireSecretTool();
+    const { stdout, code } = await run(cmd, [
       'lookup',
       'service',
       service,
@@ -64,9 +123,9 @@ export class LinuxBackend implements CredentialBackend {
   }
 
   async set(service: string, account: string, secret: string): Promise<void> {
-    // Pass secret via stdin to avoid exposing in process list
+    const cmd = await requireSecretTool();
     const { code, stderr } = await runWithStdin(
-      'secret-tool',
+      cmd,
       [
         'store',
         `--label=Resend CLI (${account})`,
@@ -85,7 +144,8 @@ export class LinuxBackend implements CredentialBackend {
   }
 
   async delete(service: string, account: string): Promise<boolean> {
-    const { code } = await run('secret-tool', [
+    const cmd = await requireSecretTool();
+    const { code } = await run(cmd, [
       'clear',
       'service',
       service,
@@ -99,18 +159,20 @@ export class LinuxBackend implements CredentialBackend {
     if (process.platform !== 'linux') {
       return false;
     }
-    // Check if secret-tool is installed
-    const which = await run('which', ['secret-tool']);
-    if (which.code !== 0) {
+    const secretTool = await resolveSecretTool();
+    if (!secretTool) {
       return false;
     }
-    // Probe the daemon with a harmless lookup (3s timeout)
     const probe = await run(
-      'secret-tool',
+      secretTool,
       ['lookup', 'service', '__resend_cli_probe__'],
       { timeout: 3000 },
     );
-    // exit code 0 or 1 means daemon is responding; timeout or other errors mean it's not
     return probe.code === 0 || probe.code === 1;
   }
 }
+
+export {
+  resolvedPaths as _resolvedPaths,
+  resolveSecretTool as _resolveSecretTool,
+};
