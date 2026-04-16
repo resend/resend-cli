@@ -27,31 +27,31 @@ resend doctor -q
 ```bash
 # Basic text email
 resend emails send \
-  --from "you@yourdomain.com" \
+  --from "you@example.com" \
   --to recipient@example.com \
   --subject "Hello" \
   --text "Body text"
 
 # HTML email with attachments
 resend emails send \
-  --from "Name <you@yourdomain.com>" \
+  --from "Name <you@example.com>" \
   --to alice@example.com bob@example.com \
   --subject "Report" \
   --html-file ./email.html \
   --attachment ./report.pdf \
   --cc manager@example.com \
-  --reply-to support@yourdomain.com
+  --reply-to support@example.com
 
 # React Email template (.tsx) — bundles, renders to HTML, and sends
 resend emails send \
-  --from "you@yourdomain.com" \
+  --from "you@example.com" \
   --to recipient@example.com \
   --subject "Welcome" \
   --react-email ./emails/welcome.tsx
 
 # React Email with plain-text fallback
 resend emails send \
-  --from "you@yourdomain.com" \
+  --from "you@example.com" \
   --to recipient@example.com \
   --subject "Welcome" \
   --react-email ./emails/welcome.tsx \
@@ -59,7 +59,7 @@ resend emails send \
 
 # Scheduled email (ISO 8601 or natural language)
 resend emails send \
-  --from "you@yourdomain.com" \
+  --from "you@example.com" \
   --to recipient@example.com \
   --subject "Reminder" \
   --text "Don't forget!" \
@@ -127,7 +127,7 @@ resend contacts create --email user@example.com --first-name Jane --segment-id <
 
 # 3. Create and send broadcast
 resend broadcasts create \
-  --from "news@yourdomain.com" \
+  --from "news@example.com" \
   --subject "Monthly Update" \
   --segment-id <segment-id> \
   --html "<h1>Hello {{{FIRST_NAME|there}}}</h1><p>News content...</p>" \
@@ -135,7 +135,7 @@ resend broadcasts create \
 
 # Create broadcast from a React Email template
 resend broadcasts create \
-  --from "news@yourdomain.com" \
+  --from "news@example.com" \
   --subject "Monthly Update" \
   --segment-id <segment-id> \
   --react-email ./emails/newsletter.tsx \
@@ -143,7 +143,7 @@ resend broadcasts create \
 
 # Or create as draft first, then send later
 resend broadcasts create \
-  --from "news@yourdomain.com" \
+  --from "news@example.com" \
   --subject "Monthly Update" \
   --segment-id <segment-id> \
   --html-file ./newsletter.html \
@@ -234,7 +234,7 @@ resend templates create \
   --name "Welcome Email" \
   --subject "Welcome, {{{NAME}}}!" \
   --html "<h1>Welcome {{{NAME}}}</h1><p>Your plan: {{{PLAN}}}</p>" \
-  --from "welcome@yourdomain.com" \
+  --from "welcome@example.com" \
   --alias welcome-email \
   --var NAME:string --var PLAN:string:free
 
@@ -362,8 +362,8 @@ jobs:
       - name: Send deploy notification
         run: |
           resend emails send \
-            --from "deploy@yourdomain.com" \
-            --to "team@yourdomain.com" \
+            --from "deploy@example.com" \
+            --to "team@example.com" \
             --subject "Deploy: ${{ github.repository }}@${{ github.sha }}" \
             --text "Deployed by ${{ github.actor }} at $(date -u)"
 ```
@@ -372,8 +372,8 @@ jobs:
 # Generic CI script
 export RESEND_API_KEY=re_xxx
 resend emails send -q \
-  --from "ci@yourdomain.com" \
-  --to "team@yourdomain.com" \
+  --from "ci@example.com" \
+  --to "team@example.com" \
   --subject "Build complete" \
   --text "Build ${BUILD_ID} passed all tests."
 ```
@@ -400,7 +400,7 @@ resend emails receiving attachment <email-id> <attachment-id>
 
 # Forward received email
 resend emails receiving forward <email-id> \
-  --from "forwarded@yourdomain.com" \
+  --from "forwarded@example.com" \
   --to colleague@example.com
 
 # Watch for new inbound emails in real time

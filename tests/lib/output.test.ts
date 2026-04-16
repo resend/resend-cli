@@ -1,11 +1,4 @@
-import {
-  afterEach,
-  describe,
-  expect,
-  type MockInstance,
-  test,
-  vi,
-} from 'vitest';
+import { afterEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 import { outputError, outputResult } from '../../src/lib/output';
 
 describe('outputResult', () => {
@@ -20,13 +13,13 @@ describe('outputResult', () => {
     });
   });
 
-  test('outputs JSON when json option is true', () => {
+  it('outputs JSON when json option is true', () => {
     logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     outputResult({ id: '123' }, { json: true });
     expect(logSpy).toHaveBeenCalledWith(JSON.stringify({ id: '123' }, null, 2));
   });
 
-  test('outputs JSON when stdout is not TTY', () => {
+  it('outputs JSON when stdout is not TTY', () => {
     Object.defineProperty(process.stdout, 'isTTY', {
       value: undefined,
       writable: true,
@@ -36,7 +29,7 @@ describe('outputResult', () => {
     expect(logSpy).toHaveBeenCalledWith(JSON.stringify({ id: '123' }, null, 2));
   });
 
-  test('outputs string directly for human-readable mode', () => {
+  it('outputs string directly for human-readable mode', () => {
     Object.defineProperty(process.stdout, 'isTTY', {
       value: true,
       writable: true,
@@ -46,7 +39,7 @@ describe('outputResult', () => {
     expect(logSpy).toHaveBeenCalledWith('Email sent successfully');
   });
 
-  test('outputs JSON for objects in human mode (fallback)', () => {
+  it('outputs JSON for objects in human mode (fallback)', () => {
     Object.defineProperty(process.stdout, 'isTTY', {
       value: true,
       writable: true,
@@ -71,7 +64,7 @@ describe('outputError', () => {
     });
   });
 
-  test('outputs JSON error to stderr when json is true', () => {
+  it('outputs JSON error to stderr when json is true', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = vi
       .spyOn(process, 'exit')
@@ -88,7 +81,7 @@ describe('outputError', () => {
     expect(exitSpy).toHaveBeenCalledWith(1);
   });
 
-  test('outputs text error when TTY and no json flag', () => {
+  it('outputs text error when TTY and no json flag', () => {
     Object.defineProperty(process.stdout, 'isTTY', {
       value: true,
       writable: true,
@@ -106,7 +99,7 @@ describe('outputError', () => {
     expect(exitSpy).toHaveBeenCalledWith(1);
   });
 
-  test('uses custom exit code', () => {
+  it('uses custom exit code', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = vi
       .spyOn(process, 'exit')
@@ -117,7 +110,7 @@ describe('outputError', () => {
     expect(exitSpy).toHaveBeenCalledWith(2);
   });
 
-  test('defaults error code to "unknown" when not provided', () => {
+  it('defaults error code to "unknown" when not provided', () => {
     Object.defineProperty(process.stdout, 'isTTY', {
       value: undefined,
       writable: true,

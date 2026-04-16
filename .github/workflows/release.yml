@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   preflight:
-    runs-on: depot-ubuntu-24.04-8
+    runs-on: ubuntu-latest
     steps:
       - name: Verify PostHog key is configured
         run: |
@@ -47,14 +47,14 @@ jobs:
         env:
           POSTHOG_PUBLIC_KEY: ${{ secrets.POSTHOG_PUBLIC_KEY }}
       - name: Build binary
-        run: pnpm exec pkg dist/cli.cjs --compress Brotli --target ${{ matrix.target }} --output ${{ matrix.binary }}
+        run: pnpm exec pkg dist/cli.cjs --config package.json --compress Brotli --target ${{ matrix.target }} --output ${{ matrix.binary }}
       - name: Verify binary runs
         run: |
           ${{ matrix.binary }} --version
           ${{ matrix.binary }} --help
   test-binary-linux-arm64:
     needs: preflight
-    runs-on: depot-ubuntu-24.04-8
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - uses: pnpm/action-setup@08c4be7e2e672a47d11bd04269e27e5f3e8529cb # v6
@@ -69,7 +69,7 @@ jobs:
         env:
           POSTHOG_PUBLIC_KEY: ${{ secrets.POSTHOG_PUBLIC_KEY }}
       - name: Build binary (no-bytecode workaround)
-        run: pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-linux-arm64 --output dist/resend --no-bytecode --public-packages "*" --public
+        run: pnpm exec pkg dist/cli.cjs --config package.json --compress Brotli --target node24-linux-arm64 --output dist/resend --no-bytecode --public-packages "*" --public
       - name: Set up QEMU
         uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4
         with:
@@ -98,8 +98,8 @@ jobs:
           POSTHOG_PUBLIC_KEY: ${{ secrets.POSTHOG_PUBLIC_KEY }}
       - name: Build macOS binaries
         run: |
-          pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-macos-arm64 --output dist/resend-darwin-arm64
-          pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-macos-x64   --output dist/resend-darwin-x64
+          pnpm exec pkg dist/cli.cjs --config package.json --compress Brotli --target node24-macos-arm64 --output dist/resend-darwin-arm64
+          pnpm exec pkg dist/cli.cjs --config package.json --compress Brotli --target node24-macos-x64   --output dist/resend-darwin-x64
       - name: Verify signatures
         run: |
           codesign -v dist/resend-darwin-arm64
@@ -122,7 +122,7 @@ jobs:
             dist/resend-darwin-x64.tar.gz
   build-linux-windows:
     needs: [test-binary, test-binary-linux-arm64]
-    runs-on: depot-ubuntu-24.04-8
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - uses: pnpm/action-setup@08c4be7e2e672a47d11bd04269e27e5f3e8529cb # v6
@@ -138,9 +138,9 @@ jobs:
           POSTHOG_PUBLIC_KEY: ${{ secrets.POSTHOG_PUBLIC_KEY }}
       - name: Build binaries
         run: |
-          pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-linux-x64   --output dist/resend-linux-x64
-          pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-linux-arm64 --output dist/resend-linux-arm64 --no-bytecode --public-packages "*" --public
-          pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-win-x64     --output dist/resend-windows-x64.exe
+          pnpm exec pkg dist/cli.cjs --config package.json --compress Brotli --target node24-linux-x64   --output dist/resend-linux-x64
+          pnpm exec pkg dist/cli.cjs --config package.json --compress Brotli --target node24-linux-arm64 --output dist/resend-linux-arm64 --no-bytecode --public-packages "*" --public
+          pnpm exec pkg dist/cli.cjs --config package.json --compress Brotli --target node24-win-x64     --output dist/resend-windows-x64.exe
       - name: Verify binaries
         run: |
           for f in dist/resend-linux-x64 dist/resend-linux-arm64 dist/resend-windows-x64.exe; do
@@ -171,7 +171,7 @@ jobs:
     needs: [build-macos, build-linux-windows]
     permissions:
       contents: write
-    runs-on: depot-ubuntu-24.04-8
+    runs-on: ubuntu-latest
     outputs:
       prerelease: ${{ steps.meta.outputs.prerelease }}
     steps:
@@ -198,7 +198,7 @@ jobs:
             echo "make_latest=false" >> "$GITHUB_OUTPUT"
           fi
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3
         with:
           prerelease: ${{ steps.meta.outputs.prerelease }}
           make_latest: ${{ steps.meta.outputs.make_latest }}
@@ -235,7 +235,7 @@ jobs:
     if: github.event_name != 'workflow_dispatch' && needs.release.outputs.prerelease == 'false'
     name: Trigger Homebrew Tap Update
     needs: release
-    runs-on: depot-ubuntu-24.04-8
+    runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:

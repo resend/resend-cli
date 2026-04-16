@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -51,7 +51,7 @@ describe('api-keys delete command', () => {
     exitSpy = undefined;
   });
 
-  test('deletes API key with --yes flag', async () => {
+  it('deletes API key with --yes flag', async () => {
     spies = setupOutputSpies();
 
     const { deleteApiKeyCommand } = await import(
@@ -64,7 +64,7 @@ describe('api-keys delete command', () => {
     expect(mockRemove).toHaveBeenCalledWith('test-key-id');
   });
 
-  test('outputs synthesized deleted JSON on success', async () => {
+  it('outputs synthesized deleted JSON on success', async () => {
     spies = setupOutputSpies();
 
     const { deleteApiKeyCommand } = await import(
@@ -80,7 +80,7 @@ describe('api-keys delete command', () => {
     expect(parsed.id).toBe('test-key-id');
   });
 
-  test('errors with confirmation_required when --yes absent in non-interactive mode', async () => {
+  it('errors with confirmation_required when --yes absent in non-interactive mode', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -96,7 +96,7 @@ describe('api-keys delete command', () => {
     expect(output).toContain('confirmation_required');
   });
 
-  test('does not call SDK when confirmation is required but not given', async () => {
+  it('does not call SDK when confirmation is required but not given', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -111,7 +111,7 @@ describe('api-keys delete command', () => {
     expect(mockRemove).not.toHaveBeenCalled();
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -131,7 +131,7 @@ describe('api-keys delete command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with delete_error when SDK returns an error', async () => {
+  it('errors with delete_error when SDK returns an error', async () => {
     setNonInteractive();
     mockRemove.mockResolvedValueOnce(
       mockSdkError('API key not found', 'not_found'),

@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -63,7 +63,7 @@ describe('contacts segments command', () => {
     exitSpy = undefined;
   });
 
-  test('lists segments by contact ID', async () => {
+  it('lists segments by contact ID', async () => {
     spies = setupOutputSpies();
 
     const { listContactSegmentsCommand } = await import(
@@ -82,7 +82,7 @@ describe('contacts segments command', () => {
     expect(args.email).toBeUndefined();
   });
 
-  test('lists segments by contact email', async () => {
+  it('lists segments by contact email', async () => {
     spies = setupOutputSpies();
 
     const { listContactSegmentsCommand } = await import(
@@ -97,7 +97,7 @@ describe('contacts segments command', () => {
     expect(args.contactId).toBeUndefined();
   });
 
-  test('outputs JSON list when non-interactive', async () => {
+  it('outputs JSON list when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { listContactSegmentsCommand } = await import(
@@ -116,7 +116,7 @@ describe('contacts segments command', () => {
     expect(parsed.data[0].name).toBe('Newsletter');
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -139,7 +139,7 @@ describe('contacts segments command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with list_error when SDK returns an error', async () => {
+  it('errors with list_error when SDK returns an error', async () => {
     setNonInteractive();
     mockListSegments.mockResolvedValueOnce(
       mockSdkError('Not found', 'not_found'),

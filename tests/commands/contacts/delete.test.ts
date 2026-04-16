@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -55,7 +55,7 @@ describe('contacts delete command', () => {
     exitSpy = undefined;
   });
 
-  test('deletes contact by ID with --yes', async () => {
+  it('deletes contact by ID with --yes', async () => {
     spies = setupOutputSpies();
 
     const { deleteContactCommand } = await import(
@@ -74,7 +74,7 @@ describe('contacts delete command', () => {
     );
   });
 
-  test('deletes contact by email with --yes', async () => {
+  it('deletes contact by email with --yes', async () => {
     spies = setupOutputSpies();
 
     const { deleteContactCommand } = await import(
@@ -87,7 +87,7 @@ describe('contacts delete command', () => {
     expect(mockRemove.mock.calls[0][0]).toBe('jane@example.com');
   });
 
-  test('outputs synthesized JSON result when non-interactive', async () => {
+  it('outputs synthesized JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { deleteContactCommand } = await import(
@@ -107,7 +107,7 @@ describe('contacts delete command', () => {
     expect(parsed.deleted).toBe(true);
   });
 
-  test('errors with confirmation_required when --yes absent in non-interactive mode', async () => {
+  it('errors with confirmation_required when --yes absent in non-interactive mode', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -126,7 +126,7 @@ describe('contacts delete command', () => {
     expect(output).toContain('confirmation_required');
   });
 
-  test('does not call SDK when confirmation_required error is raised', async () => {
+  it('does not call SDK when confirmation_required error is raised', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -144,7 +144,7 @@ describe('contacts delete command', () => {
     expect(mockRemove).not.toHaveBeenCalled();
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -167,7 +167,7 @@ describe('contacts delete command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with delete_error when SDK returns an error', async () => {
+  it('errors with delete_error when SDK returns an error', async () => {
     setNonInteractive();
     mockRemove.mockResolvedValueOnce(
       mockSdkError('Contact not found', 'not_found'),

@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -61,7 +61,7 @@ describe('logs get command', () => {
     exitSpy = undefined;
   });
 
-  test('calls SDK get with the provided id', async () => {
+  it('calls SDK get with the provided id', async () => {
     spies = setupOutputSpies();
 
     const { getLogCommand } = await import('../../../src/commands/logs/get');
@@ -75,7 +75,7 @@ describe('logs get command', () => {
     );
   });
 
-  test('outputs JSON with log fields when non-interactive', async () => {
+  it('outputs JSON with log fields when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { getLogCommand } = await import('../../../src/commands/logs/get');
@@ -91,7 +91,7 @@ describe('logs get command', () => {
     expect(parsed.response_status).toBe(200);
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -109,7 +109,7 @@ describe('logs get command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with fetch_error when SDK returns an error', async () => {
+  it('errors with fetch_error when SDK returns an error', async () => {
     setNonInteractive();
     mockGet.mockResolvedValueOnce(mockSdkError('Not found', 'not_found'));
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});

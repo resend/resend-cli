@@ -88,12 +88,15 @@ Opens the automations list or a specific automation's editor in the dashboard.
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
+| `--status <status>` | string | — | Filter by status (comma-separated: `running`, `completed`, `failed`, `cancelled`) |
 | `--limit <n>` | number | 10 | Max results (1-100) |
 | `--after <cursor>` | string | — | Forward pagination |
 | `--before <cursor>` | string | — | Backward pagination |
 
 ```
 resend automations runs <automation-id>
+resend automations runs list <automation-id> --status running
+resend automations runs list <automation-id> --status completed,failed
 ```
 
 **Run status values:** `running` | `completed` | `failed` | `cancelled`

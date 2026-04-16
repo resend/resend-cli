@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -51,7 +51,7 @@ describe('topics update command', () => {
     exitSpy = undefined;
   });
 
-  test('calls SDK with id and name when --name is provided', async () => {
+  it('calls SDK with id and name when --name is provided', async () => {
     spies = setupOutputSpies();
 
     const { updateTopicCommand } = await import(
@@ -68,7 +68,7 @@ describe('topics update command', () => {
     expect(payload.name).toBe('Security Alerts');
   });
 
-  test('calls SDK with id and description when --description is provided', async () => {
+  it('calls SDK with id and description when --description is provided', async () => {
     spies = setupOutputSpies();
 
     const { updateTopicCommand } = await import(
@@ -85,7 +85,7 @@ describe('topics update command', () => {
     expect(payload.name).toBeUndefined();
   });
 
-  test('outputs JSON with id when non-interactive', async () => {
+  it('outputs JSON with id when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { updateTopicCommand } = await import(
@@ -101,7 +101,7 @@ describe('topics update command', () => {
     expect(parsed.id).toBe('top_abc123');
   });
 
-  test('errors with no_changes when neither --name nor --description provided', async () => {
+  it('errors with no_changes when neither --name nor --description provided', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -117,7 +117,7 @@ describe('topics update command', () => {
     expect(output).toContain('no_changes');
   });
 
-  test('does not call SDK when no_changes error is raised', async () => {
+  it('does not call SDK when no_changes error is raised', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -132,7 +132,7 @@ describe('topics update command', () => {
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -152,7 +152,7 @@ describe('topics update command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with update_error when SDK returns an error', async () => {
+  it('errors with update_error when SDK returns an error', async () => {
     setNonInteractive();
     mockUpdate.mockResolvedValueOnce(
       mockSdkError('Topic not found', 'not_found'),
