@@ -51,9 +51,10 @@ jobs:
             --react-email ./email.tsx --json 2>&1 || true)
           echo "$output"
 
-          # If we see a build/render error, esbuild-wasm failed
-          if echo "$output" | grep -q '"react_email_build_error"\|"react_email_render_error"'; then
+          # Verify we reached the API call (send_error proves bundling + rendering succeeded)
+          if echo "$output" | grep -q '"send_error"'; then
+            echo "react-email template bundled and rendered successfully in binary"
+          else
             echo "::error::react-email bundling/rendering failed in binary"
             exit 1
           fi
-          echo "react-email template bundled and rendered successfully in binary"
