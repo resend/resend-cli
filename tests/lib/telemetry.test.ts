@@ -564,11 +564,11 @@ describe('flushFromFile', () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it('preserves file when flush fails', async () => {
+  it('deletes file even when flush fails', async () => {
     fetchSpy.mockResolvedValue({ ok: false, status: 500 } as Response);
     writeFileSync(tmpFile, validFilePayload());
 
     await expect(flushFromFile(tmpFile)).rejects.toThrow();
-    expect(existsSync(tmpFile)).toBe(true);
+    expect(existsSync(tmpFile)).toBe(false);
   });
 });

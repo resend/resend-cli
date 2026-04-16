@@ -1,14 +1,7 @@
 import { unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import {
-  afterEach,
-  describe,
-  expect,
-  type MockInstance,
-  test,
-  vi,
-} from 'vitest';
+import { afterEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 import { expectExit1, mockExitThrow } from '../helpers';
 
 const globalOpts = { json: false, apiKey: undefined };
@@ -31,21 +24,21 @@ describe('readFile', () => {
     }
   });
 
-  test('reads file content and returns it as a string', async () => {
+  it('reads file content and returns it as a string', async () => {
     writeFileSync(tmpFile, '<h1>Hello</h1>', 'utf-8');
     const { readFile } = await import('../../src/lib/files');
     const content = readFile(tmpFile, globalOpts);
     expect(content).toBe('<h1>Hello</h1>');
   });
 
-  test('reads JSON file content and returns it as a string', async () => {
+  it('reads JSON file content and returns it as a string', async () => {
     writeFileSync(tmpFile, '[{"id":1}]', 'utf-8');
     const { readFile } = await import('../../src/lib/files');
     const content = readFile(tmpFile, globalOpts);
     expect(content).toBe('[{"id":1}]');
   });
 
-  test('exits with file_read_error when file does not exist', async () => {
+  it('exits with file_read_error when file does not exist', async () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
@@ -58,7 +51,7 @@ describe('readFile', () => {
     expect(output).toContain('Failed to read file:');
   });
 
-  test('outputs JSON error with file_read_error code when json option is true', async () => {
+  it('outputs JSON error with file_read_error code when json option is true', async () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 

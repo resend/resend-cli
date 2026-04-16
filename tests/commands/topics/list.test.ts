@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -61,7 +61,7 @@ describe('topics list command', () => {
     exitSpy = undefined;
   });
 
-  test('calls SDK list method', async () => {
+  it('calls SDK list method', async () => {
     spies = setupOutputSpies();
 
     const { listTopicsCommand } = await import(
@@ -72,7 +72,7 @@ describe('topics list command', () => {
     expect(mockList).toHaveBeenCalledTimes(1);
   });
 
-  test('outputs JSON list when non-interactive', async () => {
+  it('outputs JSON list when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { listTopicsCommand } = await import(
@@ -87,7 +87,7 @@ describe('topics list command', () => {
     expect(parsed.data[0].id).toBe('top_abc123');
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -103,7 +103,7 @@ describe('topics list command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with list_error when SDK returns an error', async () => {
+  it('errors with list_error when SDK returns an error', async () => {
     setNonInteractive();
     mockList.mockResolvedValueOnce(
       mockSdkError('Server error', 'server_error'),

@@ -47,7 +47,7 @@ jobs:
         env:
           POSTHOG_PUBLIC_KEY: ${{ secrets.POSTHOG_PUBLIC_KEY }}
       - name: Build binary
-        run: pnpm exec pkg dist/cli.cjs --compress Brotli --target ${{ matrix.target }} --output ${{ matrix.binary }}
+        run: pnpm exec pkg dist/cli.cjs --config package.json --compress Brotli --target ${{ matrix.target }} --output ${{ matrix.binary }}
       - name: Verify binary runs
         run: |
           ${{ matrix.binary }} --version
@@ -69,7 +69,7 @@ jobs:
         env:
           POSTHOG_PUBLIC_KEY: ${{ secrets.POSTHOG_PUBLIC_KEY }}
       - name: Build binary (no-bytecode workaround)
-        run: pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-linux-arm64 --output dist/resend --no-bytecode --public-packages "*" --public
+        run: pnpm exec pkg dist/cli.cjs --config package.json --compress Brotli --target node24-linux-arm64 --output dist/resend --no-bytecode --public-packages "*" --public
       - name: Set up QEMU
         uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4
         with:
@@ -98,8 +98,8 @@ jobs:
           POSTHOG_PUBLIC_KEY: ${{ secrets.POSTHOG_PUBLIC_KEY }}
       - name: Build macOS binaries
         run: |
-          pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-macos-arm64 --output dist/resend-darwin-arm64
-          pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-macos-x64   --output dist/resend-darwin-x64
+          pnpm exec pkg dist/cli.cjs --config package.json --compress Brotli --target node24-macos-arm64 --output dist/resend-darwin-arm64
+          pnpm exec pkg dist/cli.cjs --config package.json --compress Brotli --target node24-macos-x64   --output dist/resend-darwin-x64
       - name: Verify signatures
         run: |
           codesign -v dist/resend-darwin-arm64
@@ -138,9 +138,9 @@ jobs:
           POSTHOG_PUBLIC_KEY: ${{ secrets.POSTHOG_PUBLIC_KEY }}
       - name: Build binaries
         run: |
-          pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-linux-x64   --output dist/resend-linux-x64
-          pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-linux-arm64 --output dist/resend-linux-arm64 --no-bytecode --public-packages "*" --public
-          pnpm exec pkg dist/cli.cjs --compress Brotli --target node24-win-x64     --output dist/resend-windows-x64.exe
+          pnpm exec pkg dist/cli.cjs --config package.json --compress Brotli --target node24-linux-x64   --output dist/resend-linux-x64
+          pnpm exec pkg dist/cli.cjs --config package.json --compress Brotli --target node24-linux-arm64 --output dist/resend-linux-arm64 --no-bytecode --public-packages "*" --public
+          pnpm exec pkg dist/cli.cjs --config package.json --compress Brotli --target node24-win-x64     --output dist/resend-windows-x64.exe
       - name: Verify binaries
         run: |
           for f in dist/resend-linux-x64 dist/resend-linux-arm64 dist/resend-windows-x64.exe; do
@@ -198,7 +198,7 @@ jobs:
             echo "make_latest=false" >> "$GITHUB_OUTPUT"
           fi
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3
         with:
           prerelease: ${{ steps.meta.outputs.prerelease }}
           make_latest: ${{ steps.meta.outputs.make_latest }}
