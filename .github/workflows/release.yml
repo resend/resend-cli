@@ -265,7 +265,7 @@ jobs:
             echo "tag=${PRERELEASE%%[-.]*}" >> "$GITHUB_OUTPUT"
           fi
       - name: Publish to npm
-        run: npm publish --tag ${{ steps.npm-tag.outputs.tag }}
+        run: npm publish --provenance --tag ${{ steps.npm-tag.outputs.tag }}
   notify-tap:
     if: github.event_name != 'workflow_dispatch' && needs.release.outputs.prerelease == 'false'
     name: Trigger Homebrew Tap Update
