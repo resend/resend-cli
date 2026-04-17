@@ -248,12 +248,6 @@ jobs:
           cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Build
-        run: pnpm build
-        env:
-          POSTHOG_PUBLIC_KEY: ${{ secrets.POSTHOG_PUBLIC_KEY }}
-      - name: Verify bundle
-        run: node scripts/verify-bundle.mjs
       - name: Determine npm tag
         id: npm-tag
         run: |
@@ -266,6 +260,8 @@ jobs:
           fi
       - name: Publish to npm
         run: npm publish --provenance --tag ${{ steps.npm-tag.outputs.tag }}
+        env:
+          POSTHOG_PUBLIC_KEY: ${{ secrets.POSTHOG_PUBLIC_KEY }}
   notify-tap:
     if: github.event_name != 'workflow_dispatch' && needs.release.outputs.prerelease == 'false'
     name: Trigger Homebrew Tap Update
