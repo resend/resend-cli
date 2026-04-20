@@ -46,7 +46,7 @@
     "esbuild": "0.28.0",
     "esbuild-wasm": "0.28.0",
     "picocolors": "1.1.1",
-    "resend": "6.12.0"
+    "resend": "6.12.2"
   },
   "pkg": {
     "scripts": [
