@@ -18,7 +18,7 @@ export const getDomainCommand = new Command('get')
     'after',
     buildHelpText({
       output:
-        '  Full domain object including records array and current status.\n\nDomain status values: not_started | pending | verified | failed | temporary_failure',
+        '  Full domain object including records array and current status.\n\nDomain status values: not_started | pending | verified | failed | partially_verified | partially_failed',
       errorCodes: ['auth_error', 'fetch_error'],
       examples: [
         'resend domains get 4dd369bc-aa82-4ff3-97de-514ae3000ee0',
