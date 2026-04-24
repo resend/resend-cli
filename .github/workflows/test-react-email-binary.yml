@@ -20,7 +20,7 @@ jobs:
           - os: macos-latest
             target: node24-macos-arm64
             binary: dist/resend
-          - os: ubuntu-latest
+          - os: depot-ubuntu-24.04
             target: node24-linux-x64
             binary: dist/resend
           - os: windows-latest

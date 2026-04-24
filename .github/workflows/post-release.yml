@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [depot-ubuntu-24.04, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Install via install.sh
