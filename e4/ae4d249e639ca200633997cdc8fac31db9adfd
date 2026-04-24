@@ -1,0 +1,29 @@
+.github/workflows/test-install-unix.yml
+  ef38125e20afc971 12
+.github/workflows/test-react-email-binary.yml
+  ef38125e20afc971 23
+.github/workflows/release.yml
+  ef38125e20afc971 29
+.github/workflows/post-release.yml
+  ef38125e20afc971 12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "e4ae4d249e639ca200633997cdc8fac31db9adfd",
+  "prompts": {
+    "ef38125e20afc971": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3c52a385-faf2-4176-aee6-3dd4030c7242",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "João Melo",
+      "messages": [],
+      "total_additions": 5,
+      "total_deletions": 5,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    }
+  }
+}
