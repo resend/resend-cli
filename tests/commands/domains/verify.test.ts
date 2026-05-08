@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -51,7 +51,7 @@ describe('domains verify command', () => {
     exitSpy = undefined;
   });
 
-  test('calls SDK verify with correct id', async () => {
+  it('calls SDK verify with correct id', async () => {
     spies = setupOutputSpies();
 
     const { verifyDomainCommand } = await import(
@@ -62,7 +62,7 @@ describe('domains verify command', () => {
     expect(mockVerify).toHaveBeenCalledWith('test-domain-id');
   });
 
-  test('outputs JSON object in non-interactive mode (stdout not a TTY)', async () => {
+  it('outputs JSON object in non-interactive mode (stdout not a TTY)', async () => {
     spies = setupOutputSpies();
 
     const { verifyDomainCommand } = await import(
@@ -76,7 +76,7 @@ describe('domains verify command', () => {
     expect(parsed.object).toBe('domain');
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -94,7 +94,7 @@ describe('domains verify command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with verify_error when SDK returns an error', async () => {
+  it('errors with verify_error when SDK returns an error', async () => {
     setNonInteractive();
     mockVerify.mockResolvedValueOnce(
       mockSdkError('Domain not found', 'not_found'),

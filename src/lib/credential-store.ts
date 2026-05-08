@@ -23,13 +23,13 @@ export async function getCredentialBackend(): Promise<CredentialBackend> {
     return cachedBackend;
   }
 
-  if (override === 'secure_storage' || override === 'keychain') {
+  if (override === 'secure_storage') {
     const backend = await getOsBackend();
     if (backend) {
       cachedBackend = backend;
       return cachedBackend;
     }
-    // Fall through to file if keychain forced but unavailable
+    // Fall through to file if secure storage forced but unavailable
   }
 
   // Auto-detect: try OS backend first

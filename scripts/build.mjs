@@ -24,7 +24,7 @@ await build({
   format: 'cjs',
   minify: true,
   outfile: 'dist/cli.cjs',
-  external: ['esbuild'],
+  external: ['esbuild', 'esbuild-wasm'],
   define: {
     'process.env.POSTHOG_PUBLIC_KEY': JSON.stringify(posthogKey),
   },

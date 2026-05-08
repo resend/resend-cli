@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -51,7 +51,7 @@ describe('emails receiving forward command', () => {
     exitSpy = undefined;
   });
 
-  test('calls SDK forward with correct emailId, to, and from', async () => {
+  it('calls SDK forward with correct emailId, to, and from', async () => {
     spies = setupOutputSpies();
 
     const { forwardCommand } = await import(
@@ -69,7 +69,7 @@ describe('emails receiving forward command', () => {
     });
   });
 
-  test('outputs JSON object in non-interactive mode', async () => {
+  it('outputs JSON object in non-interactive mode', async () => {
     spies = setupOutputSpies();
 
     const { forwardCommand } = await import(
@@ -85,7 +85,7 @@ describe('emails receiving forward command', () => {
     expect(parsed.id).toBe('fwd-email-id');
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -106,7 +106,7 @@ describe('emails receiving forward command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with create_error when SDK returns an error', async () => {
+  it('errors with create_error when SDK returns an error', async () => {
     setNonInteractive();
     mockForward.mockResolvedValueOnce(
       mockSdkError('Email not found', 'not_found'),

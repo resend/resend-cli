@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -60,7 +60,7 @@ describe('webhooks create command', () => {
     }
   });
 
-  test('creates webhook with --endpoint and explicit --events', async () => {
+  it('creates webhook with --endpoint and explicit --events', async () => {
     spies = setupOutputSpies();
 
     const { createWebhookCommand } = await import(
@@ -83,7 +83,7 @@ describe('webhooks create command', () => {
     expect(args.events).toEqual(['email.sent', 'email.bounced']);
   });
 
-  test('expands "all" shorthand to all 17 events', async () => {
+  it('expands "all" shorthand to all 17 events', async () => {
     spies = setupOutputSpies();
 
     const { createWebhookCommand } = await import(
@@ -101,7 +101,7 @@ describe('webhooks create command', () => {
     expect(args.events).toContain('domain.deleted');
   });
 
-  test('outputs JSON with id and signing_secret when non-interactive', async () => {
+  it('outputs JSON with id and signing_secret when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { createWebhookCommand } = await import(
@@ -118,7 +118,7 @@ describe('webhooks create command', () => {
     expect(parsed.signing_secret).toBe('whsec_test1234');
   });
 
-  test('splits comma-separated events', async () => {
+  it('splits comma-separated events', async () => {
     spies = setupOutputSpies();
 
     const { createWebhookCommand } = await import(
@@ -139,7 +139,7 @@ describe('webhooks create command', () => {
     expect(args.events).toEqual(['email.sent', 'email.bounced']);
   });
 
-  test('handles mixed comma and space-separated events', async () => {
+  it('handles mixed comma and space-separated events', async () => {
     spies = setupOutputSpies();
 
     const { createWebhookCommand } = await import(
@@ -165,7 +165,7 @@ describe('webhooks create command', () => {
     ]);
   });
 
-  test('trims spaces around comma-separated events', async () => {
+  it('trims spaces around comma-separated events', async () => {
     spies = setupOutputSpies();
 
     const { createWebhookCommand } = await import(
@@ -186,7 +186,7 @@ describe('webhooks create command', () => {
     expect(args.events).toEqual(['email.sent', 'email.bounced']);
   });
 
-  test('errors with missing_endpoint in non-interactive mode when --endpoint absent', async () => {
+  it('errors with missing_endpoint in non-interactive mode when --endpoint absent', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -204,7 +204,7 @@ describe('webhooks create command', () => {
     expect(output).toContain('missing_endpoint');
   });
 
-  test('errors with missing_events in non-interactive mode when --events absent', async () => {
+  it('errors with missing_events in non-interactive mode when --events absent', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -223,7 +223,7 @@ describe('webhooks create command', () => {
     expect(output).toContain('missing_events');
   });
 
-  test('errors with missing_events when --json is set even in TTY', async () => {
+  it('errors with missing_events when --json is set even in TTY', async () => {
     Object.defineProperty(process.stdin, 'isTTY', {
       value: true,
       writable: true,
@@ -259,7 +259,7 @@ describe('webhooks create command', () => {
     expect(output).toContain('missing_events');
   });
 
-  test('does not call SDK when missing_endpoint error is raised', async () => {
+  it('does not call SDK when missing_endpoint error is raised', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -276,7 +276,7 @@ describe('webhooks create command', () => {
     expect(mockCreate).not.toHaveBeenCalled();
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -302,7 +302,7 @@ describe('webhooks create command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with create_error when SDK returns an error', async () => {
+  it('errors with create_error when SDK returns an error', async () => {
     setNonInteractive();
     mockCreate.mockResolvedValueOnce(
       mockSdkError('Invalid endpoint', 'validation_error'),

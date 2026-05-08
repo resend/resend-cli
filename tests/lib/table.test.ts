@@ -1,8 +1,8 @@
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { renderTable } from '../../src/lib/table';
 
 describe('renderTable', () => {
-  test('renders a table with correct border characters', () => {
+  it('renders a table with correct border characters', () => {
     const output = renderTable(['Name', 'ID'], [['Alice', 'abc-123']]);
     expect(output).toContain('┌');
     expect(output).toContain('┐');
@@ -11,7 +11,7 @@ describe('renderTable', () => {
     expect(output).toContain('│');
   });
 
-  test('includes headers in output', () => {
+  it('includes headers in output', () => {
     const output = renderTable(
       ['Name', 'Status'],
       [['my-domain.com', 'verified']],
@@ -20,7 +20,7 @@ describe('renderTable', () => {
     expect(output).toContain('Status');
   });
 
-  test('includes row data in output', () => {
+  it('includes row data in output', () => {
     const output = renderTable(
       ['Name', 'Status'],
       [['my-domain.com', 'verified']],
@@ -29,7 +29,7 @@ describe('renderTable', () => {
     expect(output).toContain('verified');
   });
 
-  test('pads columns to the widest cell in each column', () => {
+  it('pads columns to the widest cell in each column', () => {
     const output = renderTable(
       ['Key', 'Value'],
       [
@@ -42,7 +42,7 @@ describe('renderTable', () => {
     expect(new Set(lengths).size).toBe(1);
   });
 
-  test('renders multiple rows', () => {
+  it('renders multiple rows', () => {
     const output = renderTable(
       ['A', 'B'],
       [
@@ -54,7 +54,7 @@ describe('renderTable', () => {
     expect(output).toContain('row2a');
   });
 
-  test('contains a separator row between header and data', () => {
+  it('contains a separator row between header and data', () => {
     const output = renderTable(['Col'], [['val']]);
     expect(output).toContain('├');
     expect(output).toContain('┤');
@@ -80,7 +80,7 @@ describe('renderTable card layout fallback', () => {
     });
   }
 
-  test('renders table at full width when terminal width is undefined', () => {
+  it('renders table at full width when terminal width is undefined', () => {
     setTerminalWidth(undefined);
     const output = renderTable(
       ['Name', 'ID'],
@@ -91,7 +91,7 @@ describe('renderTable card layout fallback', () => {
     expect(output).toContain('abc-123-def-456');
   });
 
-  test('renders table when it fits within terminal width', () => {
+  it('renders table when it fits within terminal width', () => {
     setTerminalWidth(undefined);
     const output = renderTable(['Name', 'ID'], [['Alice', 'abc-123']]);
     const lineWidth = output.split('\n')[0].length;
@@ -102,7 +102,7 @@ describe('renderTable card layout fallback', () => {
     expect(output2).toBe(output);
   });
 
-  test('switches to cards when table overflows terminal', () => {
+  it('switches to cards when table overflows terminal', () => {
     setTerminalWidth(30);
     const output = renderTable(
       ['Name', 'ID'],
@@ -113,7 +113,7 @@ describe('renderTable card layout fallback', () => {
     expect(output).toContain('abc-123');
   });
 
-  test('cards include all values untruncated', () => {
+  it('cards include all values untruncated', () => {
     setTerminalWidth(30);
     const output = renderTable(
       ['Name', 'Description', 'ID'],
@@ -124,7 +124,7 @@ describe('renderTable card layout fallback', () => {
     expect(output).toContain('my-widget');
   });
 
-  test('cards separate rows with blank lines', () => {
+  it('cards separate rows with blank lines', () => {
     setTerminalWidth(30);
     const output = renderTable(
       ['Name', 'Description', 'ID'],
@@ -139,7 +139,7 @@ describe('renderTable card layout fallback', () => {
     expect(cards[1]).toContain('widget-b');
   });
 
-  test('cards use box-drawing separator with row number', () => {
+  it('cards use box-drawing separator with row number', () => {
     setTerminalWidth(20);
     const output = renderTable(
       ['Name', 'ID'],
@@ -152,7 +152,7 @@ describe('renderTable card layout fallback', () => {
     expect(output).toContain('── 2 ─');
   });
 
-  test('wide table with many columns switches to cards', () => {
+  it('wide table with many columns switches to cards', () => {
     setTerminalWidth(60);
     const output = renderTable(
       ['From', 'To', 'Subject', 'Status', 'Created', 'ID'],

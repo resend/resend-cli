@@ -52,7 +52,7 @@ export const sendCommand = new Command('send')
   )
   .option(
     '--react-email <path>',
-    'Path to a React Email template (.tsx) to bundle, render, and send (npm install only)',
+    'Path to a React Email template (.tsx) to bundle, render, and send',
   )
   .option('--cc <addresses...>', 'CC recipients')
   .option('--bcc <addresses...>', 'BCC recipients')

@@ -30,7 +30,7 @@ export const updateBroadcastCommand = new Command('update')
   )
   .option(
     '--react-email <path>',
-    'Path to a React Email template (.tsx) to bundle, render, and use as HTML body (npm install only)',
+    'Path to a React Email template (.tsx) to bundle, render, and use as HTML body',
   )
   .option('--name <name>', 'Update internal label')
   .addHelpText(

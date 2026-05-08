@@ -4,8 +4,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -15,17 +15,23 @@ import {
   setupOutputSpies,
 } from '../helpers';
 
-// Mock resend SDK for doctor — default: valid key with one verified domain
-let mockDomainListResult: { data: unknown; error: unknown } = {
-  data: { data: [{ name: 'example.com', status: 'verified' }] },
-  error: null,
-};
+type DomainListResult = { data: unknown; error: unknown };
+
+let mockDomainListResult: DomainListResult | (() => Promise<DomainListResult>) =
+  {
+    data: { data: [{ name: 'example.com', status: 'verified' }] },
+    error: null,
+  };
 
 vi.mock('resend', () => ({
   Resend: class MockResend {
     constructor(public key: string) {}
     domains = {
-      list: vi.fn(async () => mockDomainListResult),
+      list: vi.fn(async () =>
+        typeof mockDomainListResult === 'function'
+          ? mockDomainListResult()
+          : mockDomainListResult,
+      ),
     };
   },
 }));
@@ -63,7 +69,7 @@ describe('doctor command', () => {
     exitSpy = undefined;
   });
 
-  test('outputs JSON with --json flag', async () => {
+  it('outputs JSON with --json flag', async () => {
     spies = setupOutputSpies();
 
     const program = await createDoctorProgram();
@@ -78,7 +84,7 @@ describe('doctor command', () => {
     expect(Array.isArray(parsed.checks)).toBe(true);
   });
 
-  test('JSON output has correct check structure', async () => {
+  it('JSON output has correct check structure', async () => {
     spies = setupOutputSpies();
 
     const program = await createDoctorProgram();
@@ -95,7 +101,7 @@ describe('doctor command', () => {
     }
   });
 
-  test('API key check passes when key is set', async () => {
+  it('API key check passes when key is set', async () => {
     spies = setupOutputSpies();
 
     const program = await createDoctorProgram();
@@ -113,7 +119,7 @@ describe('doctor command', () => {
     expect(keyCheck.message).toContain('env');
   });
 
-  test('API key check fails when no key is set', async () => {
+  it('API key check fails when no key is set', async () => {
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
 
@@ -135,7 +141,7 @@ describe('doctor command', () => {
     expect(keyCheck.status).toBe('fail');
   });
 
-  test('masks API key in output', async () => {
+  it('masks API key in output', async () => {
     process.env.RESEND_API_KEY = 're_abcdefghijklmnop';
     spies = setupOutputSpies();
 
@@ -155,7 +161,7 @@ describe('doctor command', () => {
     expect(keyCheck.message).toContain('...');
   });
 
-  test('exits with code 1 when checks fail', async () => {
+  it('exits with code 1 when checks fail', async () => {
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
 
@@ -168,7 +174,7 @@ describe('doctor command', () => {
     );
   });
 
-  test('shows warn for sending-only API key instead of fail', async () => {
+  it('shows warn for sending-only API key instead of fail', async () => {
     mockDomainListResult = {
       data: null,
       error: {
@@ -192,5 +198,52 @@ describe('doctor command', () => {
     expect(apiCheck).toBeDefined();
     expect(apiCheck.status).toBe('warn');
     expect(apiCheck.message).toContain('Sending-only API key');
+  });
+
+  it('warns when network is unreachable instead of reporting invalid key', async () => {
+    mockDomainListResult = {
+      data: null,
+      error: {
+        name: 'application_error',
+        statusCode: null,
+        message: 'Unable to fetch data. The request could not be resolved.',
+      },
+    };
+
+    spies = setupOutputSpies();
+
+    const program = await createDoctorProgram();
+    await program.parseAsync(['doctor', '--json'], { from: 'user' });
+
+    const output = spies.logSpy.mock.calls[0][0] as string;
+    const parsed = JSON.parse(output);
+
+    const apiCheck = parsed.checks.find(
+      (c: Record<string, unknown>) => c.name === 'API Validation',
+    );
+    expect(apiCheck).toBeDefined();
+    expect(apiCheck.status).toBe('warn');
+    expect(apiCheck.message).toContain('Network error');
+  });
+
+  it('warns when domains.list times out instead of failing', async () => {
+    const timeoutError = new Error('Operation timed out after 5000ms');
+    timeoutError.name = 'TimeoutError';
+    mockDomainListResult = () => Promise.reject(timeoutError);
+
+    spies = setupOutputSpies();
+
+    const program = await createDoctorProgram();
+    await program.parseAsync(['doctor', '--json'], { from: 'user' });
+
+    const output = spies.logSpy.mock.calls[0][0] as string;
+    const parsed = JSON.parse(output);
+
+    const apiCheck = parsed.checks.find(
+      (c: Record<string, unknown>) => c.name === 'API Validation',
+    );
+    expect(apiCheck).toBeDefined();
+    expect(apiCheck.status).toBe('warn');
+    expect(apiCheck.message).toContain('timed out');
   });
 });

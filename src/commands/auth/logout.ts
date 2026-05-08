@@ -53,9 +53,19 @@ If no credentials file exists, exits cleanly with no error.`,
       return;
     }
 
-    const profileFlag = globalOpts.profile ?? globalOpts.team;
+    const profileFlag = globalOpts.profile;
     const logoutAll = !profileFlag;
     const profileLabel = profileFlag || resolveProfileName();
+
+    if (!logoutAll && !creds?.profiles[profileLabel]) {
+      outputError(
+        {
+          message: `Profile "${profileLabel}" not found. Available profiles: ${Object.keys(creds?.profiles ?? {}).join(', ')}`,
+          code: 'remove_failed',
+        },
+        { json: globalOpts.json },
+      );
+    }
 
     if (!globalOpts.json && isInteractive()) {
       const message = logoutAll

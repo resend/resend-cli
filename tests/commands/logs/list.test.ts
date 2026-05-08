@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -64,7 +64,7 @@ describe('logs list command', () => {
     exitSpy = undefined;
   });
 
-  test('calls SDK list method with default pagination', async () => {
+  it('calls SDK list method with default pagination', async () => {
     spies = setupOutputSpies();
 
     const { listLogsCommand } = await import('../../../src/commands/logs/list');
@@ -75,7 +75,7 @@ describe('logs list command', () => {
     expect(args.limit).toBe(10);
   });
 
-  test('passes --limit to pagination options', async () => {
+  it('passes --limit to pagination options', async () => {
     spies = setupOutputSpies();
 
     const { listLogsCommand } = await import('../../../src/commands/logs/list');
@@ -85,7 +85,7 @@ describe('logs list command', () => {
     expect(args.limit).toBe(5);
   });
 
-  test('passes --after cursor to pagination options', async () => {
+  it('passes --after cursor to pagination options', async () => {
     spies = setupOutputSpies();
 
     const { listLogsCommand } = await import('../../../src/commands/logs/list');
@@ -98,7 +98,7 @@ describe('logs list command', () => {
     expect(args.after).toBe('3d4a472d-bc6d-4dd2-aa9d-d3d11b549e55');
   });
 
-  test('outputs JSON list with log data when non-interactive', async () => {
+  it('outputs JSON list with log data when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { listLogsCommand } = await import('../../../src/commands/logs/list');
@@ -112,7 +112,7 @@ describe('logs list command', () => {
     expect(parsed.has_more).toBe(false);
   });
 
-  test('errors with invalid_limit for out-of-range limit', async () => {
+  it('errors with invalid_limit for out-of-range limit', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -126,7 +126,7 @@ describe('logs list command', () => {
     expect(output).toContain('invalid_limit');
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -140,7 +140,7 @@ describe('logs list command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with list_error when SDK returns an error', async () => {
+  it('errors with list_error when SDK returns an error', async () => {
     setNonInteractive();
     mockList.mockResolvedValueOnce(
       mockSdkError('Server error', 'server_error'),

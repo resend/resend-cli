@@ -13,8 +13,6 @@ export type GlobalOpts = {
   json?: boolean;
   quiet?: boolean;
   profile?: string;
-  /** @deprecated Use `profile` instead */
-  team?: string;
 };
 
 export type RequireClientOpts = {
@@ -59,7 +57,7 @@ export async function requireClient(
   opts: GlobalOpts,
   clientOpts?: RequireClientOpts,
 ): Promise<Resend> {
-  const profileName = opts.profile ?? opts.team;
+  const profileName = opts.profile;
 
   try {
     const resolved = await resolveApiKeyAsync(opts.apiKey, profileName);

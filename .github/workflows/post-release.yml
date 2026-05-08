@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [depot-ubuntu-24.04, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Install via install.sh
@@ -33,7 +33,7 @@ jobs:
           & $exe --help
   verify-npx:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    runs-on: depot-ubuntu-24.04-8
+    runs-on: depot-ubuntu-24.04
     steps:
       - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:

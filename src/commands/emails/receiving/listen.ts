@@ -10,6 +10,7 @@ import { safeTerminalText } from '../../../lib/safe-terminal-text';
 import { createSpinner } from '../../../lib/spinner';
 import { isInteractive } from '../../../lib/tty';
 import { withRetry } from '../../../lib/with-retry';
+import { type BoundedSet, createBoundedSet } from '../../../utils/bounded-set';
 
 const PAGE_SIZE = 100;
 const MAX_PAGES_PER_POLL = 5;
@@ -41,7 +42,7 @@ type PageResult = {
 
 const extractNewEmails = (
   emails: ReadonlyArray<ListReceivingEmail>,
-  seenIds: ReadonlySet<string>,
+  seenIds: BoundedSet<string>,
 ): PageResult => {
   const idx = emails.findIndex((e) => seenIds.has(e.id));
   return idx === -1
@@ -101,7 +102,7 @@ Ctrl+C exits cleanly.`,
       globalOpts.quiet || jsonMode,
     );
 
-    const seenIds = new Set<string>();
+    const seenIds = createBoundedSet<string>();
     let consecutiveErrors = 0;
 
     try {

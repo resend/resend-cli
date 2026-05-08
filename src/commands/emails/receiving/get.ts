@@ -16,7 +16,7 @@ export const getReceivingCommand = new Command('get')
       context:
         'The raw.download_url field is a signed URL (expires ~1 hour) containing the full RFC 2822\nMIME message. Pipe it to curl to save the original email:\n  resend emails receiving get <id> --json | jq -r .raw.download_url | xargs curl > email.eml\n\nAttachments are listed in the attachments array. Use the attachments sub-command to get\ndownload URLs:\n  resend emails receiving attachments <id>',
       output:
-        '  {"object":"email","id":"<uuid>","to":["inbox@yourdomain.com"],"from":"sender@external.com","subject":"Hello","html":"<p>Hello!</p>","text":"Hello!","headers":{"x-mailer":"..."},"message_id":"<str>","bcc":[],"cc":[],"reply_to":[],"raw":{"download_url":"<url>","expires_at":"<iso-date>"},"attachments":[]}',
+        '  {"object":"email","id":"<uuid>","to":["inbox@example.com"],"from":"sender@external.com","subject":"Hello","html":"<p>Hello!</p>","text":"Hello!","headers":{"x-mailer":"..."},"message_id":"<str>","bcc":[],"cc":[],"reply_to":[],"raw":{"download_url":"<url>","expires_at":"<iso-date>"},"attachments":[]}',
       errorCodes: ['auth_error', 'fetch_error'],
       examples: [
         'resend emails receiving get <email-id>',

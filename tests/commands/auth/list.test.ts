@@ -2,7 +2,7 @@ import { mkdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Command } from '@commander-js/extra-typings';
-import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { storeApiKey } from '../../../src/lib/config';
 import { captureTestEnv, setupOutputSpies } from '../../helpers';
 
@@ -35,7 +35,7 @@ describe('auth list command', () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  test('lists profiles in JSON mode', async () => {
+  it('lists profiles in JSON mode', async () => {
     spies = setupOutputSpies();
     storeApiKey('re_default', 'default');
     storeApiKey('re_staging', 'staging');
@@ -50,7 +50,7 @@ describe('auth list command', () => {
     ]);
   });
 
-  test('shows message when no profiles configured', async () => {
+  it('shows message when no profiles configured', async () => {
     spies = setupOutputSpies();
 
     const program = await createProgram();

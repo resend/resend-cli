@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import * as files from '../../../src/lib/files';
@@ -84,7 +84,7 @@ describe('templates update command', () => {
     return firstCall[1];
   }
 
-  test('updates template name', async () => {
+  it('updates template name', async () => {
     spies = setupOutputSpies();
 
     const { updateTemplateCommand } = await import(
@@ -101,7 +101,7 @@ describe('templates update command', () => {
     expect(payload.name).toBe('Updated Name');
   });
 
-  test('omits fields not provided from SDK payload', async () => {
+  it('omits fields not provided from SDK payload', async () => {
     spies = setupOutputSpies();
 
     const { updateTemplateCommand } = await import(
@@ -120,7 +120,7 @@ describe('templates update command', () => {
     expect(payload).not.toHaveProperty('from');
   });
 
-  test('errors with no_changes before trying to pick an id', async () => {
+  it('errors with no_changes before trying to pick an id', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -140,7 +140,7 @@ describe('templates update command', () => {
     expect(output).not.toContain('missing_id');
   });
 
-  test('errors when --react-email and empty --html are used together', async () => {
+  it('errors when --react-email and empty --html are used together', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -161,7 +161,7 @@ describe('templates update command', () => {
     expect(output).toContain('invalid_options');
   });
 
-  test('errors when empty --html and --html-file are used together', async () => {
+  it('errors when empty --html and --html-file are used together', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -181,7 +181,7 @@ describe('templates update command', () => {
     expect(output).toContain('invalid_options');
   });
 
-  test('warns when empty --text and --text-file are used together', async () => {
+  it('warns when empty --text and --text-file are used together', async () => {
     spies = setupOutputSpies();
     readFileSpy = vi.spyOn(files, 'readFile').mockReturnValue('From file');
 

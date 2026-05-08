@@ -19,7 +19,6 @@ import { eventsCommand } from './commands/events/index';
 import { logsCommand } from './commands/logs/index';
 import { openCommand } from './commands/open';
 import { segmentsCommand } from './commands/segments/index';
-import { teamsDeprecatedCommand } from './commands/teams-deprecated';
 import { templatesCommand } from './commands/templates/index';
 import { topicsCommand } from './commands/topics/index';
 import { updateCommand } from './commands/update';
@@ -58,7 +57,6 @@ const program = new Command()
   )
   .option('--api-key <key>', 'Resend API key (overrides env/config)')
   .option('-p, --profile <name>', 'Profile to use (overrides RESEND_PROFILE)')
-  .option('--team <name>', 'Deprecated: use --profile instead')
   .option('--json', 'Force JSON output')
   .option('-q, --quiet', 'Suppress spinners and status output (implies --json)')
   .option(
@@ -149,7 +147,6 @@ ${pc.gray('Examples:')}
   .addCommand(openCommand)
   .addCommand(docsCommand)
   .addCommand(updateCommand)
-  .addCommand(teamsDeprecatedCommand)
   .addCommand(listCommandsCommand)
   .addCommand(completionCommand);
 
@@ -166,12 +163,6 @@ telemetryCommand
   });
 
 program.addCommand(telemetryCommand, { hidden: true });
-
-// Hide the deprecated --team option from help
-const teamOption = program.options.find((o) => o.long === '--team');
-if (teamOption) {
-  teamOption.hidden = true;
-}
 
 program
   .parseAsync()

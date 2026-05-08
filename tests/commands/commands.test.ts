@@ -1,5 +1,5 @@
 import { Command } from '@commander-js/extra-typings';
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { listCommandsCommand } from '../../src/commands/commands';
 import { captureTestEnv, setupOutputSpies } from '../helpers';
 
@@ -10,7 +10,7 @@ describe('commands', () => {
     restoreEnv();
   });
 
-  test('prints JSON tree with root name and subcommands', async () => {
+  it('prints JSON tree with root name and subcommands', async () => {
     const spies = setupOutputSpies();
     const program = new Command('resend')
       .description('Resend CLI')

@@ -157,8 +157,7 @@ export const loginCommand = new Command('login')
       );
     }
 
-    let profileName =
-      (globalOpts.profile ?? globalOpts.team)?.trim() || undefined;
+    let profileName = globalOpts.profile?.trim() || undefined;
 
     if (profileName) {
       const profileError = validateProfileName(profileName);

@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import * as files from '../../../src/lib/files';
@@ -69,7 +69,7 @@ describe('broadcasts create command', () => {
     }
   });
 
-  test('creates broadcast with required flags', async () => {
+  it('creates broadcast with required flags', async () => {
     spies = setupOutputSpies();
 
     const { createBroadcastCommand } = await import(
@@ -97,7 +97,7 @@ describe('broadcasts create command', () => {
     expect(args.html).toBe('<p>Hi</p>');
   });
 
-  test('dry-run does not call API and prints create payload', async () => {
+  it('dry-run does not call API and prints create payload', async () => {
     spies = setupOutputSpies();
 
     const { createBroadcastCommand } = await import(
@@ -125,7 +125,7 @@ describe('broadcasts create command', () => {
     expect(out.request.segmentId).toBe('7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d');
   });
 
-  test('dry-run does not require API key', async () => {
+  it('dry-run does not require API key', async () => {
     spies = setupOutputSpies();
     delete process.env.RESEND_API_KEY;
 
@@ -152,7 +152,7 @@ describe('broadcasts create command', () => {
     expect(out.dryRun).toBe(true);
   });
 
-  test('outputs JSON id when non-interactive', async () => {
+  it('outputs JSON id when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { createBroadcastCommand } = await import(
@@ -177,7 +177,7 @@ describe('broadcasts create command', () => {
     expect(parsed.id).toBe('d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
   });
 
-  test('passes --send flag to SDK', async () => {
+  it('passes --send flag to SDK', async () => {
     spies = setupOutputSpies();
 
     const { createBroadcastCommand } = await import(
@@ -202,7 +202,7 @@ describe('broadcasts create command', () => {
     expect(args.send).toBe(true);
   });
 
-  test('passes --scheduled-at with --send to SDK', async () => {
+  it('passes --scheduled-at with --send to SDK', async () => {
     spies = setupOutputSpies();
 
     const { createBroadcastCommand } = await import(
@@ -229,7 +229,7 @@ describe('broadcasts create command', () => {
     expect(args.scheduledAt).toBe('in 1 hour');
   });
 
-  test('passes optional flags to SDK', async () => {
+  it('passes optional flags to SDK', async () => {
     spies = setupOutputSpies();
 
     const { createBroadcastCommand } = await import(
@@ -264,7 +264,7 @@ describe('broadcasts create command', () => {
     expect(args.topicId).toBe('topic_xyz');
   });
 
-  test('errors with missing_from when --from absent in non-interactive mode', async () => {
+  it('errors with missing_from when --from absent in non-interactive mode', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -290,7 +290,7 @@ describe('broadcasts create command', () => {
     expect(output).toContain('missing_from');
   });
 
-  test('errors with missing_subject when --subject absent in non-interactive mode', async () => {
+  it('errors with missing_subject when --subject absent in non-interactive mode', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -316,7 +316,7 @@ describe('broadcasts create command', () => {
     expect(output).toContain('missing_subject');
   });
 
-  test('errors with missing_segment when --segment-id absent in non-interactive mode', async () => {
+  it('errors with missing_segment when --segment-id absent in non-interactive mode', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -342,7 +342,7 @@ describe('broadcasts create command', () => {
     expect(output).toContain('missing_segment');
   });
 
-  test('errors with missing_body when no body flag in non-interactive mode', async () => {
+  it('errors with missing_body when no body flag in non-interactive mode', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -368,7 +368,7 @@ describe('broadcasts create command', () => {
     expect(output).toContain('missing_body');
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -398,7 +398,7 @@ describe('broadcasts create command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with create_error when SDK returns an error', async () => {
+  it('errors with create_error when SDK returns an error', async () => {
     setNonInteractive();
     mockCreate.mockResolvedValueOnce(
       mockSdkError('Segment not found', 'not_found'),
@@ -432,7 +432,7 @@ describe('broadcasts create command', () => {
     expect(output).toContain('create_error');
   });
 
-  test('does not call SDK when validation fails', async () => {
+  it('does not call SDK when validation fails', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -447,7 +447,7 @@ describe('broadcasts create command', () => {
     expect(mockCreate).not.toHaveBeenCalled();
   });
 
-  test('errors with missing_from when --json is set even in TTY', async () => {
+  it('errors with missing_from when --json is set even in TTY', async () => {
     Object.defineProperty(process.stdin, 'isTTY', {
       value: true,
       writable: true,
@@ -492,7 +492,7 @@ describe('broadcasts create command', () => {
     expect(output).toContain('missing_from');
   });
 
-  test('reads html body from --html-file and passes it to SDK', async () => {
+  it('reads html body from --html-file and passes it to SDK', async () => {
     spies = setupOutputSpies();
     readFileSpy = vi
       .spyOn(files, 'readFile')
@@ -520,7 +520,7 @@ describe('broadcasts create command', () => {
     expect(args.html).toBe('<p>From file</p>');
   });
 
-  test('reads text body from --text-file and passes it to SDK', async () => {
+  it('reads text body from --text-file and passes it to SDK', async () => {
     spies = setupOutputSpies();
     readFileSpy = vi
       .spyOn(files, 'readFile')
@@ -548,7 +548,7 @@ describe('broadcasts create command', () => {
     expect(args.text).toBe('Plain text from file');
   });
 
-  test('errors with invalid_options when --html and --html-file both provided', async () => {
+  it('errors with invalid_options when --html and --html-file both provided', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -580,7 +580,7 @@ describe('broadcasts create command', () => {
     expect(mockCreate).not.toHaveBeenCalled();
   });
 
-  test('errors with invalid_options when --text and --text-file both provided', async () => {
+  it('errors with invalid_options when --text and --text-file both provided', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -612,7 +612,7 @@ describe('broadcasts create command', () => {
     expect(mockCreate).not.toHaveBeenCalled();
   });
 
-  test('errors with invalid_options when --html-file - and --text-file - both read stdin', async () => {
+  it('errors with invalid_options when --html-file - and --text-file - both read stdin', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -642,7 +642,7 @@ describe('broadcasts create command', () => {
     expect(output).toContain('invalid_options');
   });
 
-  test('--text-file - passes stdin to readFile', async () => {
+  it('--text-file - passes stdin to readFile', async () => {
     spies = setupOutputSpies();
     readFileSpy = vi
       .spyOn(files, 'readFile')
@@ -670,7 +670,7 @@ describe('broadcasts create command', () => {
     expect(args.text).toBe('stdin text content');
   });
 
-  test('creates broadcast with --react-email flag', async () => {
+  it('creates broadcast with --react-email flag', async () => {
     spies = setupOutputSpies();
 
     const { createBroadcastCommand } = await import(
@@ -698,7 +698,7 @@ describe('broadcasts create command', () => {
     expect(args.html).toBe('<html><body>Rendered</body></html>');
   });
 
-  test('errors with invalid_options when --react-email and --html used together', async () => {
+  it('errors with invalid_options when --react-email and --html used together', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -728,7 +728,7 @@ describe('broadcasts create command', () => {
     expect(output).toContain('invalid_options');
   });
 
-  test('errors with file_read_error when --html-file path is unreadable', async () => {
+  it('errors with file_read_error when --html-file path is unreadable', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = vi
