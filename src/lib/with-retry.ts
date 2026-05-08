@@ -1,4 +1,4 @@
-type RetryableResponse<T> = {
+type SdkResponse<T> = {
   data: T | null;
   error: { message: string; name?: string } | null;
   headers?: Record<string, string> | null;
@@ -20,6 +20,7 @@ const parseRetryDelay = (
     return seconds;
   }
 
+  // Retry-After is RFC 9110: usually delta-seconds, but spec allows HTTP-date.
   const dateMs = Date.parse(value);
   if (!Number.isNaN(dateMs)) {
     const delta = (dateMs - Date.now()) / 1000;
@@ -33,9 +34,10 @@ const sleep = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
 const withRetry = async <T>(
-  call: () => Promise<RetryableResponse<T>>,
+  call: () => Promise<SdkResponse<T>>,
+  onRateLimited?: (attempt: number, delaySeconds: number) => void,
   attempt = 0,
-): Promise<RetryableResponse<T>> => {
+): Promise<SdkResponse<T>> => {
   const response = await call();
   if (
     response.error &&
@@ -44,11 +46,12 @@ const withRetry = async <T>(
   ) {
     const delay =
       parseRetryDelay(response.headers) ?? DEFAULT_RETRY_DELAYS[attempt];
+    onRateLimited?.(attempt, delay);
     await sleep(delay * 1000);
-    return withRetry(call, attempt + 1);
+    return withRetry(call, onRateLimited, attempt + 1);
   }
   return response;
 };
 
-export type { RetryableResponse };
+export type { SdkResponse };
 export { withRetry };

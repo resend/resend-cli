@@ -163,4 +163,102 @@ describe('withRetry', () => {
     expect(result.data).toEqual({ id: '1' });
     expect(call).toHaveBeenCalledTimes(2);
   });
+
+  it('falls back to default backoff for unparseable retry-after', async () => {
+    vi.useFakeTimers();
+
+    const rateLimitError = {
+      data: null,
+      error: { message: 'Rate limited', name: 'rate_limit_exceeded' },
+      headers: { 'retry-after': 'soon' },
+    };
+    const success = { data: { id: '1' }, error: null, headers: null };
+
+    const call = vi
+      .fn()
+      .mockResolvedValueOnce(rateLimitError)
+      .mockResolvedValueOnce(success);
+
+    const resultPromise = withRetry(call);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(call).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(1000);
+    const result = await resultPromise;
+    expect(result.data).toEqual({ id: '1' });
+    expect(call).toHaveBeenCalledTimes(2);
+  });
+
+  it('retries immediately when retry-after is "0"', async () => {
+    vi.useFakeTimers();
+
+    const rateLimitError = {
+      data: null,
+      error: { message: 'Rate limited', name: 'rate_limit_exceeded' },
+      headers: { 'retry-after': '0' },
+    };
+    const success = { data: { id: '1' }, error: null, headers: null };
+
+    const call = vi
+      .fn()
+      .mockResolvedValueOnce(rateLimitError)
+      .mockResolvedValueOnce(success);
+
+    const resultPromise = withRetry(call);
+    await vi.advanceTimersByTimeAsync(0);
+
+    const result = await resultPromise;
+    expect(result.data).toEqual({ id: '1' });
+    expect(call).toHaveBeenCalledTimes(2);
+  });
+
+  it('falls back to default backoff when retry-after header is missing', async () => {
+    vi.useFakeTimers();
+
+    const rateLimitError = {
+      data: null,
+      error: { message: 'Rate limited', name: 'rate_limit_exceeded' },
+      headers: {},
+    };
+    const success = { data: { id: '1' }, error: null, headers: null };
+
+    const call = vi
+      .fn()
+      .mockResolvedValueOnce(rateLimitError)
+      .mockResolvedValueOnce(success);
+
+    const resultPromise = withRetry(call);
+    await vi.advanceTimersByTimeAsync(1000);
+
+    const result = await resultPromise;
+    expect(result.data).toEqual({ id: '1' });
+    expect(call).toHaveBeenCalledTimes(2);
+  });
+
+  it('invokes onRateLimited with attempt and delay', async () => {
+    vi.useFakeTimers();
+
+    const rateLimitError = {
+      data: null,
+      error: { message: 'Rate limited', name: 'rate_limit_exceeded' },
+      headers: { 'retry-after': '3' },
+    };
+    const success = { data: { id: '1' }, error: null, headers: null };
+
+    const call = vi
+      .fn()
+      .mockResolvedValueOnce(rateLimitError)
+      .mockResolvedValueOnce(rateLimitError)
+      .mockResolvedValueOnce(success);
+
+    const onRateLimited = vi.fn();
+    const resultPromise = withRetry(call, onRateLimited);
+    await vi.advanceTimersByTimeAsync(3000);
+    await vi.advanceTimersByTimeAsync(3000);
+    await resultPromise;
+
+    expect(onRateLimited).toHaveBeenCalledTimes(2);
+    expect(onRateLimited).toHaveBeenNthCalledWith(1, 0, 3);
+    expect(onRateLimited).toHaveBeenNthCalledWith(2, 1, 3);
+  });
 });
