@@ -13,6 +13,10 @@ import { withRetry } from '../../../lib/with-retry';
 import { type BoundedSet, createBoundedSet } from '../../../utils/bounded-set';
 
 const PAGE_SIZE = 100;
+// Bounds the per-tick request count so a backlog (especially the first poll
+// after startup, which seeds with limit:1) can't fan out into hundreds of
+// requests. Bursts larger than PAGE_SIZE * MAX_PAGES_PER_POLL are deferred
+// to the next poll; the user is warned when this cap is hit.
 const MAX_PAGES_PER_POLL = 5;
 
 const timestamp = (): string =>
@@ -197,10 +201,26 @@ Ctrl+C exits cleanly.`,
       }
 
       const nextCursor = data.data[data.data.length - 1]?.id;
+      if (!nextCursor) {
+        // Empty page with has_more: true would cause the next call to omit
+        // `after` and re-fetch from the head. Bail instead.
+        return { emails: allEmails, hasMore: true };
+      }
       return fetchPages(nextCursor, allEmails, pagesLeft - 1);
     };
 
     let timeoutHandle: ReturnType<typeof setTimeout>;
+
+    const warnPageCapHit = (): void => {
+      const message = `Hit page cap of ${MAX_PAGES_PER_POLL * PAGE_SIZE} emails this poll; remaining will be picked up next tick.`;
+      if (jsonMode) {
+        console.log(JSON.stringify({ warning: 'page_cap_reached', message }));
+      } else {
+        process.stderr.write(
+          `${pc.dim(`[${timestamp()}]`)} ${pc.yellow('Warning:')} ${message}\n`,
+        );
+      }
+    };
 
     const poll = async (): Promise<void> => {
       try {
@@ -208,6 +228,10 @@ Ctrl+C exits cleanly.`,
 
         if (result.error) {
           handlePollError(result.error);
+        }
+
+        if (result.hasMore) {
+          warnPageCapHit();
         }
 
         if (result.emails.length > 0) {
