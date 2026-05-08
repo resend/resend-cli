@@ -159,6 +159,7 @@ export const updateTemplateCommand = new Command('update')
           }),
         errorCode: 'update_error',
         successMsg: `Template updated: ${id}`,
+        retryTransient: true,
       },
       globalOpts,
     );

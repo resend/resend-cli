@@ -23,25 +23,40 @@ const SPINNER_FRAMES = [
 ];
 const SPINNER_INTERVAL = 80;
 
+type WithSpinnerOptions = {
+  retryTransient?: boolean;
+};
+
 /**
  * Wraps an SDK call with a loading spinner and unified error handling.
  *
  * The spinner is purely a loading indicator — it clears itself when the call
  * completes. Callers are responsible for printing success output.
  *
- * Automatically retries on rate_limit_exceeded errors (HTTP 429) up to 3 times
- * via withRetry, using retry-after when available or 1s/2s/4s backoff.
+ * Always retries rate_limit_exceeded (HTTP 429) up to 3 times via withRetry,
+ * with retry-after when available or 1s/2s/4s backoff. When `retryTransient`
+ * is set, also retries transient 5xx errors (internal_server_error,
+ * service_unavailable, gateway_timeout) with the same schedule. Callers
+ * should opt into transient retry only for idempotent operations.
  */
 export async function withSpinner<T>(
   loading: string,
   call: () => Promise<SdkResponse<T>>,
   errorCode: string,
   globalOpts: GlobalOpts,
+  options: WithSpinnerOptions = {},
 ): Promise<T> {
   const spinner = createSpinner(loading, globalOpts.quiet);
   try {
-    const { data, error } = await withRetry(call, (_attempt, delay) => {
-      spinner.update(`Rate limited, retrying in ${delay}s...`);
+    const { data, error } = await withRetry(call, {
+      retryTransient: options.retryTransient,
+      onRetry: (_attempt, delay, errorName) => {
+        spinner.update(
+          errorName === 'rate_limit_exceeded'
+            ? `Rate limited, retrying in ${delay}s...`
+            : `Server error, retrying in ${delay}s...`,
+        );
+      },
     });
     if (error) {
       spinner.stop();

@@ -83,6 +83,7 @@ The fallback value is used in broadcast template interpolation when a contact ha
         () => resend.contactProperties.get(id),
         'fetch_error',
         globalOpts,
+        { retryTransient: true },
       );
 
       if (property.type === 'number') {

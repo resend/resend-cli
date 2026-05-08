@@ -235,7 +235,7 @@ describe('withRetry', () => {
     expect(call).toHaveBeenCalledTimes(2);
   });
 
-  it('invokes onRateLimited with attempt and delay', async () => {
+  it('invokes onRetry with attempt, delay, and error name', async () => {
     vi.useFakeTimers();
 
     const rateLimitError = {
@@ -251,14 +251,174 @@ describe('withRetry', () => {
       .mockResolvedValueOnce(rateLimitError)
       .mockResolvedValueOnce(success);
 
-    const onRateLimited = vi.fn();
-    const resultPromise = withRetry(call, onRateLimited);
+    const onRetry = vi.fn();
+    const resultPromise = withRetry(call, { onRetry });
     await vi.advanceTimersByTimeAsync(3000);
     await vi.advanceTimersByTimeAsync(3000);
     await resultPromise;
 
-    expect(onRateLimited).toHaveBeenCalledTimes(2);
-    expect(onRateLimited).toHaveBeenNthCalledWith(1, 0, 3);
-    expect(onRateLimited).toHaveBeenNthCalledWith(2, 1, 3);
+    expect(onRetry).toHaveBeenCalledTimes(2);
+    expect(onRetry).toHaveBeenNthCalledWith(1, 0, 3, 'rate_limit_exceeded');
+    expect(onRetry).toHaveBeenNthCalledWith(2, 1, 3, 'rate_limit_exceeded');
+  });
+});
+
+describe('withRetry transient 5xx', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const transientError = (name: string) => ({
+    data: null,
+    error: { message: 'Server error', name },
+    headers: null,
+  });
+  const success = { data: { id: '1' }, error: null, headers: null };
+
+  it.each([
+    'internal_server_error',
+    'service_unavailable',
+    'gateway_timeout',
+  ])('retries %s when retryTransient is true', async (name) => {
+    vi.useFakeTimers();
+
+    const call = vi
+      .fn()
+      .mockResolvedValueOnce(transientError(name))
+      .mockResolvedValueOnce(success);
+
+    const resultPromise = withRetry(call, { retryTransient: true });
+    await vi.advanceTimersByTimeAsync(1000);
+
+    const result = await resultPromise;
+    expect(result.data).toEqual({ id: '1' });
+    expect(call).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not retry transient errors when retryTransient is false', async () => {
+    const call = vi
+      .fn()
+      .mockResolvedValue(transientError('internal_server_error'));
+
+    const result = await withRetry(call);
+
+    expect(result.error?.name).toBe('internal_server_error');
+    expect(call).toHaveBeenCalledTimes(1);
+  });
+
+  it('exhausts transient retries after max attempts', async () => {
+    vi.useFakeTimers();
+
+    const call = vi.fn().mockResolvedValue(transientError('gateway_timeout'));
+
+    const resultPromise = withRetry(call, { retryTransient: true });
+    await vi.advanceTimersByTimeAsync(1000);
+    await vi.advanceTimersByTimeAsync(2000);
+    await vi.advanceTimersByTimeAsync(4000);
+
+    const result = await resultPromise;
+    expect(result.error?.name).toBe('gateway_timeout');
+    expect(call).toHaveBeenCalledTimes(4);
+  });
+
+  it('uses retry-after header for transient errors', async () => {
+    vi.useFakeTimers();
+
+    const call = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ...transientError('service_unavailable'),
+        headers: { 'retry-after': '3' },
+      })
+      .mockResolvedValueOnce(success);
+
+    const resultPromise = withRetry(call, { retryTransient: true });
+    await vi.advanceTimersByTimeAsync(3000);
+
+    const result = await resultPromise;
+    expect(result.data).toEqual({ id: '1' });
+    expect(call).toHaveBeenCalledTimes(2);
+  });
+
+  it('uses default backoff for transient errors without retry-after', async () => {
+    vi.useFakeTimers();
+
+    const call = vi
+      .fn()
+      .mockResolvedValueOnce(transientError('internal_server_error'))
+      .mockResolvedValueOnce(success);
+
+    const resultPromise = withRetry(call, { retryTransient: true });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(call).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(1000);
+    const result = await resultPromise;
+    expect(result.data).toEqual({ id: '1' });
+    expect(call).toHaveBeenCalledTimes(2);
+  });
+
+  it('shares retry counter across rate-limit and transient errors', async () => {
+    vi.useFakeTimers();
+
+    const call = vi
+      .fn()
+      .mockResolvedValueOnce({
+        data: null,
+        error: { message: 'Rate limited', name: 'rate_limit_exceeded' },
+        headers: null,
+      })
+      .mockResolvedValueOnce(transientError('internal_server_error'))
+      .mockResolvedValueOnce(success);
+
+    const resultPromise = withRetry(call, { retryTransient: true });
+    await vi.advanceTimersByTimeAsync(1000);
+    await vi.advanceTimersByTimeAsync(2000);
+
+    const result = await resultPromise;
+    expect(result.data).toEqual({ id: '1' });
+    expect(call).toHaveBeenCalledTimes(3);
+  });
+
+  it('passes transient error name to onRetry', async () => {
+    vi.useFakeTimers();
+
+    const call = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ...transientError('gateway_timeout'),
+        headers: { 'retry-after': '2' },
+      })
+      .mockResolvedValueOnce(success);
+
+    const onRetry = vi.fn();
+    const resultPromise = withRetry(call, {
+      retryTransient: true,
+      onRetry,
+    });
+    await vi.advanceTimersByTimeAsync(2000);
+    await resultPromise;
+
+    expect(onRetry).toHaveBeenCalledWith(0, 2, 'gateway_timeout');
+  });
+
+  it('still retries rate_limit_exceeded even without retryTransient', async () => {
+    vi.useFakeTimers();
+
+    const call = vi
+      .fn()
+      .mockResolvedValueOnce({
+        data: null,
+        error: { message: 'Rate limited', name: 'rate_limit_exceeded' },
+        headers: null,
+      })
+      .mockResolvedValueOnce(success);
+
+    const resultPromise = withRetry(call);
+    await vi.advanceTimersByTimeAsync(1000);
+
+    const result = await resultPromise;
+    expect(result.data).toEqual({ id: '1' });
+    expect(call).toHaveBeenCalledTimes(2);
   });
 });
