@@ -47,6 +47,10 @@ export function statusIndicator(status: string): string {
       return '⏳ Pending';
     case 'not_started':
       return '○ Not started';
+    case 'partially_verified':
+      return '◐ Partially verified';
+    case 'partially_failed':
+      return '◐ Partially failed';
     case 'failed':
     case 'temporary_failure':
       return '✗ Failed';

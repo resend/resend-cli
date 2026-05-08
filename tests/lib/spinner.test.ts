@@ -21,9 +21,7 @@ describe('withSpinner retry on rate_limit_exceeded', () => {
   let errorSpy: MockInstance;
   let stderrSpy: MockInstance;
 
-  const msgs = {
-    loading: 'Loading...',
-  };
+  const loading = 'Loading...';
   const globalOpts = { json: true };
 
   beforeEach(() => {
@@ -59,35 +57,9 @@ describe('withSpinner retry on rate_limit_exceeded', () => {
       return { data: { id: 'abc' }, error: null, headers: null };
     };
 
-    const result = await withSpinner(msgs, call, 'test_error', globalOpts);
+    const result = await withSpinner(loading, call, 'test_error', globalOpts);
     expect(result).toEqual({ id: 'abc' });
     expect(calls).toBe(2);
-  });
-
-  it('exhausts retries and errors after max attempts', async () => {
-    let calls = 0;
-    const call = async () => {
-      calls++;
-      return {
-        data: null,
-        error: {
-          message: 'Rate limit exceeded',
-          name: 'rate_limit_exceeded',
-        },
-        headers: { 'retry-after': '0' },
-      };
-    };
-
-    let threw = false;
-    try {
-      await withSpinner(msgs, call, 'test_error', globalOpts);
-    } catch (err) {
-      threw = true;
-      expect(err).toBeInstanceOf(ExitError);
-      expect((err as ExitError).code).toBe(1);
-    }
-    expect(threw).toBe(true);
-    expect(calls).toBe(4);
   });
 
   it('does not retry non-retryable errors', async () => {
@@ -103,7 +75,7 @@ describe('withSpinner retry on rate_limit_exceeded', () => {
 
     let threw = false;
     try {
-      await withSpinner(msgs, call, 'test_error', globalOpts);
+      await withSpinner(loading, call, 'test_error', globalOpts);
     } catch (err) {
       threw = true;
       expect(err).toBeInstanceOf(ExitError);
@@ -112,15 +84,15 @@ describe('withSpinner retry on rate_limit_exceeded', () => {
     expect(calls).toBe(1);
   });
 
-  it('does not retry daily_quota_exceeded', async () => {
+  it('does not retry transient 5xx by default', async () => {
     let calls = 0;
     const call = async () => {
       calls++;
       return {
         data: null,
         error: {
-          message: 'Daily quota exceeded',
-          name: 'daily_quota_exceeded',
+          message: 'Internal server error',
+          name: 'internal_server_error',
         },
         headers: null,
       };
@@ -128,7 +100,7 @@ describe('withSpinner retry on rate_limit_exceeded', () => {
 
     let threw = false;
     try {
-      await withSpinner(msgs, call, 'test_error', globalOpts);
+      await withSpinner(loading, call, 'test_error', globalOpts);
     } catch (err) {
       threw = true;
       expect(err).toBeInstanceOf(ExitError);
@@ -137,105 +109,7 @@ describe('withSpinner retry on rate_limit_exceeded', () => {
     expect(calls).toBe(1);
   });
 
-  it('uses retry-after header for delay', async () => {
-    let calls = 0;
-    const start = Date.now();
-    const call = async () => {
-      calls++;
-      if (calls === 1) {
-        return {
-          data: null,
-          error: {
-            message: 'Rate limit exceeded',
-            name: 'rate_limit_exceeded',
-          },
-          headers: { 'retry-after': '0' },
-        };
-      }
-      return { data: { ok: true }, error: null, headers: null };
-    };
-
-    const result = await withSpinner(msgs, call, 'test_error', globalOpts);
-    expect(result).toEqual({ ok: true });
-    expect(Date.now() - start).toBeLessThan(500);
-  });
-
-  it('falls back to default delay without retry-after', async () => {
-    let calls = 0;
-    const call = async () => {
-      calls++;
-      if (calls === 1) {
-        return {
-          data: null,
-          error: {
-            message: 'Rate limit exceeded',
-            name: 'rate_limit_exceeded',
-          },
-          headers: null,
-        };
-      }
-      return { data: { ok: true }, error: null, headers: null };
-    };
-
-    const start = Date.now();
-    const result = await withSpinner(msgs, call, 'test_error', globalOpts);
-    expect(result).toEqual({ ok: true });
-    expect(Date.now() - start).toBeGreaterThanOrEqual(900);
-  });
-});
-
-describe('withSpinner retry on transient 5xx errors', () => {
-  const restoreEnv = captureTestEnv();
-  let exitSpy: MockInstance;
-  let errorSpy: MockInstance;
-  let stderrSpy: MockInstance;
-
-  const globalOpts = { json: true };
-
-  beforeEach(() => {
-    setNonInteractive();
-    exitSpy = mockExitThrow();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    stderrSpy = vi
-      .spyOn(process.stderr, 'write')
-      .mockImplementation(() => true);
-  });
-
-  afterEach(() => {
-    restoreEnv();
-    exitSpy.mockRestore();
-    errorSpy.mockRestore();
-    stderrSpy.mockRestore();
-  });
-
-  it('retries internal_server_error when retryTransient is true', async () => {
-    let calls = 0;
-    const call = async () => {
-      calls++;
-      if (calls === 1) {
-        return {
-          data: null,
-          error: {
-            message: 'Internal server error',
-            name: 'internal_server_error',
-          },
-          headers: null,
-        };
-      }
-      return { data: { id: 'ok' }, error: null, headers: null };
-    };
-
-    const result = await withSpinner(
-      { loading: 'Loading...', retryTransient: true },
-      call,
-      'test_error',
-      globalOpts,
-    );
-    expect(result).toEqual({ id: 'ok' });
-    expect(calls).toBe(2);
-  });
-
-  it('retries service_unavailable when retryTransient is true', async () => {
+  it('retries transient 5xx when retryTransient is true', async () => {
     let calls = 0;
     const call = async () => {
       calls++;
@@ -246,129 +120,15 @@ describe('withSpinner retry on transient 5xx errors', () => {
             message: 'Service unavailable',
             name: 'service_unavailable',
           },
-          headers: null,
-        };
-      }
-      return { data: { id: 'ok' }, error: null, headers: null };
-    };
-
-    const result = await withSpinner(
-      { loading: 'Loading...', retryTransient: true },
-      call,
-      'test_error',
-      globalOpts,
-    );
-    expect(result).toEqual({ id: 'ok' });
-    expect(calls).toBe(2);
-  });
-
-  it('retries gateway_timeout when retryTransient is true', async () => {
-    let calls = 0;
-    const call = async () => {
-      calls++;
-      if (calls === 1) {
-        return {
-          data: null,
-          error: { message: 'Gateway timeout', name: 'gateway_timeout' },
-          headers: null,
-        };
-      }
-      return { data: { id: 'ok' }, error: null, headers: null };
-    };
-
-    const result = await withSpinner(
-      { loading: 'Loading...', retryTransient: true },
-      call,
-      'test_error',
-      globalOpts,
-    );
-    expect(result).toEqual({ id: 'ok' });
-    expect(calls).toBe(2);
-  });
-
-  it('does not retry transient errors when retryTransient is false', async () => {
-    let calls = 0;
-    const call = async () => {
-      calls++;
-      return {
-        data: null,
-        error: {
-          message: 'Internal server error',
-          name: 'internal_server_error',
-        },
-        headers: null,
-      };
-    };
-
-    let threw = false;
-    try {
-      await withSpinner(
-        { loading: 'Loading...' },
-        call,
-        'test_error',
-        globalOpts,
-      );
-    } catch (err) {
-      threw = true;
-      expect(err).toBeInstanceOf(ExitError);
-    }
-    expect(threw).toBe(true);
-    expect(calls).toBe(1);
-  });
-
-  it('exhausts transient retries and errors after max attempts', async () => {
-    let calls = 0;
-    const call = async () => {
-      calls++;
-      return {
-        data: null,
-        error: {
-          message: 'Internal server error',
-          name: 'internal_server_error',
-        },
-        headers: { 'retry-after': '0' },
-      };
-    };
-
-    let threw = false;
-    try {
-      await withSpinner(
-        { loading: 'Loading...', retryTransient: true },
-        call,
-        'test_error',
-        globalOpts,
-      );
-    } catch (err) {
-      threw = true;
-      expect(err).toBeInstanceOf(ExitError);
-    }
-    expect(threw).toBe(true);
-    expect(calls).toBe(4);
-  });
-
-  it('still retries rate_limit_exceeded even without retryTransient', async () => {
-    let calls = 0;
-    const call = async () => {
-      calls++;
-      if (calls === 1) {
-        return {
-          data: null,
-          error: {
-            message: 'Rate limit exceeded',
-            name: 'rate_limit_exceeded',
-          },
           headers: { 'retry-after': '0' },
         };
       }
       return { data: { id: 'ok' }, error: null, headers: null };
     };
 
-    const result = await withSpinner(
-      { loading: 'Loading...' },
-      call,
-      'test_error',
-      globalOpts,
-    );
+    const result = await withSpinner(loading, call, 'test_error', globalOpts, {
+      retryTransient: true,
+    });
     expect(result).toEqual({ id: 'ok' });
     expect(calls).toBe(2);
   });

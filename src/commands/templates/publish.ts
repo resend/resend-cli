@@ -31,6 +31,9 @@ Publishing an already-published template re-publishes it with the latest draft c
         sdkCall: (resend) => resend.templates.publish(id),
         errorCode: 'publish_error',
         successMsg: `Template published: ${id}`,
+        // Republishing on transient retry promotes the same draft snapshot —
+        // safe in normal use; only a concurrent draft edit between attempts
+        // would change what gets shipped.
         retryTransient: true,
       },
       globalOpts,

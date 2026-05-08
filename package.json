@@ -1,6 +1,6 @@
 {
   "name": "resend-cli",
-  "version": "2.1.0",
+  "version": "2.2.1",
   "description": "The official CLI for Resend",
   "license": "MIT",
   "repository": {
@@ -18,7 +18,7 @@
   "engines": {
     "node": ">=20"
   },
-  "packageManager": "pnpm@10.33.0",
+  "packageManager": "pnpm@10.33.4",
   "files": [
     "dist/cli.cjs",
     "skills/"
@@ -40,13 +40,13 @@
     "prepack": "pnpm install && pnpm build && node scripts/verify-bundle.mjs"
   },
   "dependencies": {
-    "@clack/prompts": "1.2.0",
+    "@clack/prompts": "1.3.0",
     "@commander-js/extra-typings": "14.0.0",
     "commander": "14.0.3",
     "esbuild": "0.28.0",
     "esbuild-wasm": "0.28.0",
     "picocolors": "1.1.1",
-    "resend": "6.12.0"
+    "resend": "6.12.3"
   },
   "pkg": {
     "scripts": [
@@ -66,10 +66,10 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.11",
-    "@types/node": "24.12.2",
-    "@yao-pkg/pkg": "6.15.0",
+    "@types/node": "24.12.3",
+    "@yao-pkg/pkg": "6.19.0",
     "tsx": "4.21.0",
     "typescript": "5.9.3",
-    "vitest": "4.1.4"
+    "vitest": "4.1.5"
   }
 }

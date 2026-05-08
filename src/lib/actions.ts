@@ -26,10 +26,11 @@ export async function runGet<T>(
     : undefined;
   const resend = await requireClient(globalOpts, clientOpts);
   const data = await withSpinner(
-    { loading: config.loading, retryTransient: true },
+    config.loading,
     () => config.sdkCall(resend),
     'fetch_error',
     globalOpts,
+    { retryTransient: true },
   );
   if (!globalOpts.json && isInteractive()) {
     config.onInteractive(deepSanitize(data));
@@ -59,7 +60,7 @@ export async function runDelete(
     await confirmDelete(id, config.confirmMessage, globalOpts);
   }
   await withSpinner(
-    { loading: config.loading },
+    config.loading,
     () => config.sdkCall(resend),
     'delete_error',
     globalOpts,
@@ -88,7 +89,7 @@ export async function runCreate<T>(
     : undefined;
   const resend = await requireClient(globalOpts, clientOpts);
   const data = await withSpinner(
-    { loading: config.loading },
+    config.loading,
     () => config.sdkCall(resend),
     'create_error',
     globalOpts,
@@ -116,10 +117,11 @@ export async function runWrite<T>(
     : undefined;
   const resend = await requireClient(globalOpts, clientOpts);
   const data = await withSpinner(
-    { loading: config.loading, retryTransient: config.retryTransient },
+    config.loading,
     () => config.sdkCall(resend),
     config.errorCode,
     globalOpts,
+    { retryTransient: config.retryTransient },
   );
   if (!globalOpts.json && isInteractive()) {
     console.log(config.successMsg);
@@ -142,10 +144,11 @@ export async function runList<T>(
     : undefined;
   const resend = await requireClient(globalOpts, clientOpts);
   const result = await withSpinner(
-    { loading: config.loading, retryTransient: true },
+    config.loading,
     () => config.sdkCall(resend),
     'list_error',
     globalOpts,
+    { retryTransient: true },
   );
   if (!globalOpts.json && isInteractive()) {
     config.onInteractive(deepSanitize(result));

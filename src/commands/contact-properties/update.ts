@@ -79,10 +79,11 @@ The fallback value is used in broadcast template interpolation when a contact ha
     if (typeof fallbackValue === 'string') {
       const resend = await requireClient(globalOpts);
       const property = await withSpinner(
-        { loading: 'Fetching contact property...', retryTransient: true },
+        'Fetching contact property...',
         () => resend.contactProperties.get(id),
         'fetch_error',
         globalOpts,
+        { retryTransient: true },
       );
 
       if (property.type === 'number') {

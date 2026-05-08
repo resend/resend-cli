@@ -396,9 +396,7 @@ export const sendCommand = new Command('send')
     });
 
     const data = await withSpinner(
-      {
-        loading: opts.scheduledAt ? 'Scheduling email...' : 'Sending email...',
-      },
+      opts.scheduledAt ? 'Scheduling email...' : 'Sending email...',
       () =>
         resend.emails.send(
           payload,
