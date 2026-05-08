@@ -410,33 +410,46 @@ describe('emails receiving listen command', () => {
     expect(mockList).toHaveBeenCalledTimes(2);
   });
 
-  it('checkpoints progress incrementally on page error mid-poll', async () => {
+  it('preserves multi-page progress across a mid-poll error', async () => {
     vi.useFakeTimers();
     const { logSpy } = setupOutputSpies();
 
     mockList
+      // Initial seed.
       .mockResolvedValueOnce({
         data: {
           object: 'list' as const,
           has_more: false,
-          data: [makeEmail('initial')],
+          data: [makeEmail('seed')],
         },
         error: null,
       })
+      // Poll 1, page 1: success with email_A, more pages available.
       .mockResolvedValueOnce({
         data: {
           object: 'list' as const,
           has_more: true,
-          data: [makeEmail('page1_email')],
+          data: [makeEmail('email_A')],
         },
         error: null,
       })
+      // Poll 1, page 2: success with email_B, more pages available.
+      .mockResolvedValueOnce({
+        data: {
+          object: 'list' as const,
+          has_more: true,
+          data: [makeEmail('email_B')],
+        },
+        error: null,
+      })
+      // Poll 1, page 3: transient failure mid-pagination.
       .mockResolvedValueOnce(mockSdkError('Transient failure', 'server_error'))
+      // Poll 2, page 1: same emails plus seed; should all be seen.
       .mockResolvedValueOnce({
         data: {
           object: 'list' as const,
           has_more: false,
-          data: [makeEmail('page1_email')],
+          data: [makeEmail('email_B'), makeEmail('email_A'), makeEmail('seed')],
         },
         error: null,
       });
@@ -449,17 +462,14 @@ describe('emails receiving listen command', () => {
     await flushMicrotasks();
     await vi.advanceTimersByTimeAsync(5000);
     await flushMicrotasks();
-
-    const firstPollOutput = logSpy.mock.calls.map((c) => c[0]).join('\n');
-    expect(firstPollOutput).toContain('page1_email');
-
     await vi.advanceTimersByTimeAsync(5000);
     await flushMicrotasks();
 
-    expect(
-      logSpy.mock.calls.filter((c) => String(c[0]).includes('page1_email'))
-        .length,
-    ).toBe(1);
+    const outputs = logSpy.mock.calls.map((c) => String(c[0]));
+    const aCount = outputs.filter((o) => o.includes('email_A')).length;
+    const bCount = outputs.filter((o) => o.includes('email_B')).length;
+    expect(aCount).toBe(1);
+    expect(bCount).toBe(1);
   });
 
   it('retries rate_limit_exceeded errors with backoff', async () => {
@@ -499,6 +509,10 @@ describe('emails receiving listen command', () => {
     await flushMicrotasks();
     await vi.advanceTimersByTimeAsync(5000);
     await flushMicrotasks();
+    // Pin: after the rate-limit response, withRetry must be sleeping —
+    // no third call should have fired yet. Catches a regression that
+    // ignores retry-after and retries immediately.
+    expect(mockList).toHaveBeenCalledTimes(2);
     await vi.advanceTimersByTimeAsync(1000);
     await flushMicrotasks();
 

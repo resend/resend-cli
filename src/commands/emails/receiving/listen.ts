@@ -189,11 +189,6 @@ Ctrl+C exits cleanly.`,
       }
 
       const { newEmails, foundSeen } = extractNewEmails(data.data, seenIds);
-
-      for (const email of newEmails) {
-        seenIds.add(email.id);
-      }
-
       const allEmails = [...accumulated, ...newEmails];
 
       if (foundSeen || !data.has_more) {
@@ -234,9 +229,18 @@ Ctrl+C exits cleanly.`,
           warnPageCapHit();
         }
 
+        // Commit progress to seenIds in chronological order so newest IDs
+        // land at the tail of the LRU and are evicted last. This runs even
+        // on partial-pagination errors, so a transient mid-poll failure
+        // doesn't cause already-displayed emails to redisplay next tick.
+        const chronological = result.emails.toReversed();
+        for (const email of chronological) {
+          seenIds.add(email.id);
+        }
+
         if (result.emails.length > 0) {
           consecutiveErrors = 0;
-          for (const email of result.emails.toReversed()) {
+          for (const email of chronological) {
             displayEmail(email, jsonMode);
           }
         } else if (!result.error) {
