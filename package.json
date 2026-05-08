@@ -66,7 +66,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.11",
-    "@types/node": "24.12.2",
+    "@types/node": "24.12.3",
     "@yao-pkg/pkg": "6.15.0",
     "tsx": "4.21.0",
     "typescript": "5.9.3",
