@@ -38,12 +38,54 @@ const mockList = vi.fn(async () => ({
   error: null,
 }));
 
+const defaultMockResponse = () =>
+  Promise.resolve({
+    data: {
+      object: 'list' as const,
+      has_more: false,
+      data: [
+        {
+          id: 'rcv_abc123',
+          to: ['inbox@yourdomain.com'],
+          from: 'sender@external.com',
+          subject: 'Hello from outside',
+          created_at: '2026-02-18T12:00:00.000Z',
+          message_id: '<hello@external.com>',
+          bcc: null,
+          cc: null,
+          reply_to: null,
+          attachments: [],
+        },
+      ],
+    },
+    error: null,
+  });
+
 vi.mock('resend', () => ({
   Resend: class MockResend {
     constructor(public key: string) {}
     emails = { receiving: { list: mockList } };
   },
 }));
+
+const makeEmail = (id: string, subject = `Subject ${id}`) => ({
+  id,
+  to: ['inbox@yourdomain.com'],
+  from: 'sender@external.com',
+  subject,
+  created_at: '2026-02-18T12:00:00.000Z',
+  message_id: `<${id}@external.com>`,
+  bcc: null,
+  cc: null,
+  reply_to: null,
+  attachments: [],
+});
+
+const flushMicrotasks = async () => {
+  for (const _ of Array(20)) {
+    await vi.advanceTimersByTimeAsync(0);
+  }
+};
 
 describe('emails receiving listen command', () => {
   const restoreEnv = captureTestEnv();
@@ -52,8 +94,10 @@ describe('emails receiving listen command', () => {
   let exitSpy: MockInstance | undefined;
 
   beforeEach(() => {
+    vi.resetModules();
     process.env.RESEND_API_KEY = 're_test_key';
-    mockList.mockClear();
+    mockList.mockReset();
+    mockList.mockImplementation(defaultMockResponse);
   });
 
   afterEach(() => {
@@ -134,11 +178,391 @@ describe('emails receiving listen command', () => {
     );
 
     listenReceivingCommand.parseAsync([], { from: 'user' }).catch(() => {});
-    // Flush microtasks so the initial SDK call resolves
     await vi.advanceTimersByTimeAsync(0);
 
     expect(mockList).toHaveBeenCalledTimes(1);
     const args = mockList.mock.calls[0][0] as Record<string, unknown>;
     expect(args.limit).toBe(1);
+  });
+
+  it('paginates through multiple pages and stops at seen email', async () => {
+    vi.useFakeTimers();
+    const { logSpy } = setupOutputSpies();
+
+    mockList
+      .mockResolvedValueOnce({
+        data: {
+          object: 'list' as const,
+          has_more: false,
+          data: [makeEmail('seen_1')],
+        },
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: {
+          object: 'list' as const,
+          has_more: true,
+          data: [makeEmail('new_2'), makeEmail('new_1')],
+        },
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: {
+          object: 'list' as const,
+          has_more: false,
+          data: [makeEmail('seen_1')],
+        },
+        error: null,
+      });
+
+    const { listenReceivingCommand } = await import(
+      '../../../../src/commands/emails/receiving/listen'
+    );
+
+    listenReceivingCommand.parseAsync([], { from: 'user' }).catch(() => {});
+    await flushMicrotasks();
+    await vi.advanceTimersByTimeAsync(5000);
+    await flushMicrotasks();
+
+    expect(mockList).toHaveBeenCalledTimes(3);
+    const output = logSpy.mock.calls.map((c) => c[0]).join('\n');
+    expect(output).toContain('new_1');
+    expect(output).toContain('new_2');
+  });
+
+  it('caps pages per poll at MAX_PAGES_PER_POLL', async () => {
+    vi.useFakeTimers();
+    setupOutputSpies();
+
+    const makePage = (pageNum: number) => ({
+      data: {
+        object: 'list' as const,
+        has_more: true,
+        data: Array.from({ length: 100 }, (_, i) =>
+          makeEmail(`p${pageNum}_${i}`),
+        ),
+      },
+      error: null,
+    });
+
+    mockList
+      .mockResolvedValueOnce({
+        data: {
+          object: 'list' as const,
+          has_more: false,
+          data: [makeEmail('initial_seen')],
+        },
+        error: null,
+      })
+      .mockResolvedValueOnce(makePage(1))
+      .mockResolvedValueOnce(makePage(2))
+      .mockResolvedValueOnce(makePage(3))
+      .mockResolvedValueOnce(makePage(4))
+      .mockResolvedValueOnce(makePage(5))
+      .mockResolvedValueOnce(makePage(6))
+      .mockResolvedValueOnce(makePage(7));
+
+    const { listenReceivingCommand } = await import(
+      '../../../../src/commands/emails/receiving/listen'
+    );
+
+    listenReceivingCommand.parseAsync([], { from: 'user' }).catch(() => {});
+    await flushMicrotasks();
+    await vi.advanceTimersByTimeAsync(5000);
+    await flushMicrotasks();
+
+    expect(mockList).toHaveBeenCalledTimes(6);
+  });
+
+  it('emits a page_cap_reached warning when MAX_PAGES_PER_POLL is hit', async () => {
+    vi.useFakeTimers();
+    const { logSpy } = setupOutputSpies();
+
+    const makePage = (pageNum: number) => ({
+      data: {
+        object: 'list' as const,
+        has_more: true,
+        data: Array.from({ length: 100 }, (_, i) =>
+          makeEmail(`p${pageNum}_${i}`),
+        ),
+      },
+      error: null,
+    });
+
+    mockList
+      .mockResolvedValueOnce({
+        data: {
+          object: 'list' as const,
+          has_more: false,
+          data: [makeEmail('initial_seen')],
+        },
+        error: null,
+      })
+      .mockResolvedValueOnce(makePage(1))
+      .mockResolvedValueOnce(makePage(2))
+      .mockResolvedValueOnce(makePage(3))
+      .mockResolvedValueOnce(makePage(4))
+      .mockResolvedValueOnce(makePage(5));
+
+    const { listenReceivingCommand } = await import(
+      '../../../../src/commands/emails/receiving/listen'
+    );
+
+    listenReceivingCommand.parseAsync([], { from: 'user' }).catch(() => {});
+    await flushMicrotasks();
+    await vi.advanceTimersByTimeAsync(5000);
+    await flushMicrotasks();
+
+    const warningCall = logSpy.mock.calls.find((c) =>
+      String(c[0]).includes('page_cap_reached'),
+    );
+    expect(warningCall).toBeDefined();
+    const parsed = JSON.parse(String(warningCall?.[0]));
+    expect(parsed.warning).toBe('page_cap_reached');
+  });
+
+  it('continues fetching on the next poll after the cap is hit', async () => {
+    vi.useFakeTimers();
+    const { logSpy } = setupOutputSpies();
+
+    const makePage = (pageNum: number) => ({
+      data: {
+        object: 'list' as const,
+        has_more: true,
+        data: Array.from({ length: 100 }, (_, i) =>
+          makeEmail(`p${pageNum}_${i}`),
+        ),
+      },
+      error: null,
+    });
+
+    mockList
+      .mockResolvedValueOnce({
+        data: {
+          object: 'list' as const,
+          has_more: false,
+          data: [makeEmail('initial_seen')],
+        },
+        error: null,
+      })
+      .mockResolvedValueOnce(makePage(1))
+      .mockResolvedValueOnce(makePage(2))
+      .mockResolvedValueOnce(makePage(3))
+      .mockResolvedValueOnce(makePage(4))
+      .mockResolvedValueOnce(makePage(5))
+      // Next poll: a fresh email arrives that wasn't in any of the capped pages.
+      .mockResolvedValueOnce({
+        data: {
+          object: 'list' as const,
+          has_more: false,
+          data: [makeEmail('post_cap_email'), makeEmail('p1_0')],
+        },
+        error: null,
+      });
+
+    const { listenReceivingCommand } = await import(
+      '../../../../src/commands/emails/receiving/listen'
+    );
+
+    listenReceivingCommand.parseAsync([], { from: 'user' }).catch(() => {});
+    await flushMicrotasks();
+    await vi.advanceTimersByTimeAsync(5000);
+    await flushMicrotasks();
+    await vi.advanceTimersByTimeAsync(5000);
+    await flushMicrotasks();
+
+    expect(mockList).toHaveBeenCalledTimes(7);
+    const allOutput = logSpy.mock.calls.map((c) => String(c[0])).join('\n');
+    expect(allOutput).toContain('post_cap_email');
+  });
+
+  it('does not infinite-loop on empty page with has_more: true', async () => {
+    vi.useFakeTimers();
+    setupOutputSpies();
+
+    mockList
+      .mockResolvedValueOnce({
+        data: {
+          object: 'list' as const,
+          has_more: false,
+          data: [makeEmail('initial_seen')],
+        },
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: {
+          object: 'list' as const,
+          has_more: true,
+          data: [],
+        },
+        error: null,
+      });
+
+    const { listenReceivingCommand } = await import(
+      '../../../../src/commands/emails/receiving/listen'
+    );
+
+    listenReceivingCommand.parseAsync([], { from: 'user' }).catch(() => {});
+    await flushMicrotasks();
+    await vi.advanceTimersByTimeAsync(5000);
+    await flushMicrotasks();
+
+    expect(mockList).toHaveBeenCalledTimes(2);
+  });
+
+  it('preserves multi-page progress across a mid-poll error', async () => {
+    vi.useFakeTimers();
+    const { logSpy } = setupOutputSpies();
+
+    mockList
+      // Initial seed.
+      .mockResolvedValueOnce({
+        data: {
+          object: 'list' as const,
+          has_more: false,
+          data: [makeEmail('seed')],
+        },
+        error: null,
+      })
+      // Poll 1, page 1: success with email_A, more pages available.
+      .mockResolvedValueOnce({
+        data: {
+          object: 'list' as const,
+          has_more: true,
+          data: [makeEmail('email_A')],
+        },
+        error: null,
+      })
+      // Poll 1, page 2: success with email_B, more pages available.
+      .mockResolvedValueOnce({
+        data: {
+          object: 'list' as const,
+          has_more: true,
+          data: [makeEmail('email_B')],
+        },
+        error: null,
+      })
+      // Poll 1, page 3: transient failure mid-pagination.
+      .mockResolvedValueOnce(mockSdkError('Transient failure', 'server_error'))
+      // Poll 2, page 1: same emails plus seed; should all be seen.
+      .mockResolvedValueOnce({
+        data: {
+          object: 'list' as const,
+          has_more: false,
+          data: [makeEmail('email_B'), makeEmail('email_A'), makeEmail('seed')],
+        },
+        error: null,
+      });
+
+    const { listenReceivingCommand } = await import(
+      '../../../../src/commands/emails/receiving/listen'
+    );
+
+    listenReceivingCommand.parseAsync([], { from: 'user' }).catch(() => {});
+    await flushMicrotasks();
+    await vi.advanceTimersByTimeAsync(5000);
+    await flushMicrotasks();
+    await vi.advanceTimersByTimeAsync(5000);
+    await flushMicrotasks();
+
+    const outputs = logSpy.mock.calls.map((c) => String(c[0]));
+    const aCount = outputs.filter((o) => o.includes('email_A')).length;
+    const bCount = outputs.filter((o) => o.includes('email_B')).length;
+    expect(aCount).toBe(1);
+    expect(bCount).toBe(1);
+  });
+
+  it('retries rate_limit_exceeded errors with backoff', async () => {
+    vi.useFakeTimers();
+    setupOutputSpies();
+
+    const rateLimitResponse = {
+      data: null,
+      error: { message: 'Rate limited', name: 'rate_limit_exceeded' },
+      headers: { 'retry-after': '1' },
+    };
+
+    mockList
+      .mockResolvedValueOnce({
+        data: {
+          object: 'list' as const,
+          has_more: false,
+          data: [makeEmail('initial')],
+        },
+        error: null,
+      })
+      .mockResolvedValueOnce(rateLimitResponse)
+      .mockResolvedValueOnce({
+        data: {
+          object: 'list' as const,
+          has_more: false,
+          data: [makeEmail('initial')],
+        },
+        error: null,
+      });
+
+    const { listenReceivingCommand } = await import(
+      '../../../../src/commands/emails/receiving/listen'
+    );
+
+    listenReceivingCommand.parseAsync([], { from: 'user' }).catch(() => {});
+    await flushMicrotasks();
+    await vi.advanceTimersByTimeAsync(5000);
+    await flushMicrotasks();
+    // Pin: after the rate-limit response, withRetry must be sleeping —
+    // no third call should have fired yet. Catches a regression that
+    // ignores retry-after and retries immediately.
+    expect(mockList).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(1000);
+    await flushMicrotasks();
+
+    expect(mockList).toHaveBeenCalledTimes(3);
+  });
+
+  it('displays emails in chronological order (oldest first)', async () => {
+    vi.useFakeTimers();
+    const { logSpy } = setupOutputSpies();
+
+    mockList
+      .mockResolvedValueOnce({
+        data: {
+          object: 'list' as const,
+          has_more: false,
+          data: [makeEmail('seen')],
+        },
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: {
+          object: 'list' as const,
+          has_more: true,
+          data: [makeEmail('newest'), makeEmail('middle')],
+        },
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: {
+          object: 'list' as const,
+          has_more: false,
+          data: [makeEmail('oldest'), makeEmail('seen')],
+        },
+        error: null,
+      });
+
+    const { listenReceivingCommand } = await import(
+      '../../../../src/commands/emails/receiving/listen'
+    );
+
+    listenReceivingCommand.parseAsync([], { from: 'user' }).catch(() => {});
+    await flushMicrotasks();
+    await vi.advanceTimersByTimeAsync(5000);
+    await flushMicrotasks();
+
+    const outputs = logSpy.mock.calls.map((c) => String(c[0]));
+    const oldestIdx = outputs.findIndex((o) => o.includes('oldest'));
+    const newestIdx = outputs.findIndex((o) => o.includes('newest'));
+    expect(oldestIdx).toBeGreaterThanOrEqual(0);
+    expect(newestIdx).toBeGreaterThanOrEqual(0);
+    expect(oldestIdx).toBeLessThan(newestIdx);
   });
 });
