@@ -34,14 +34,26 @@ describe('getConfigDir', () => {
 
   it('respects XDG_CONFIG_HOME', () => {
     process.env.XDG_CONFIG_HOME = '/custom/config';
-    expect(getConfigDir()).toBe('/custom/config/resend');
+    expect(getConfigDir()).toBe(join('/custom/config', 'resend'));
   });
 
-  it('falls back to ~/.config/resend on non-Windows', () => {
-    delete process.env.XDG_CONFIG_HOME;
-    const dir = getConfigDir();
-    expect(dir).toMatch(/\.config\/resend$/);
-  });
+  it.skipIf(process.platform === 'win32')(
+    'falls back to ~/.config/resend on non-Windows',
+    () => {
+      delete process.env.XDG_CONFIG_HOME;
+      const dir = getConfigDir();
+      expect(dir).toMatch(/\.config[\\/]resend$/);
+    },
+  );
+
+  it.runIf(process.platform === 'win32')(
+    'falls back to %APPDATA%\\resend on Windows',
+    () => {
+      delete process.env.XDG_CONFIG_HOME;
+      const dir = getConfigDir();
+      expect(dir).toMatch(/AppData[\\/]Roaming[\\/]resend$/);
+    },
+  );
 });
 
 describe('resolveApiKey', () => {
