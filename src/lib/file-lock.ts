@@ -5,15 +5,29 @@ const LOCK_STALE_MS = 10_000;
 const LOCK_RETRY_INTERVAL_MS = 50;
 const LOCK_MAX_RETRIES = 200;
 
-export const withFileLock = <T>(lockPath: string, fn: () => T): T => {
+export function withFileLock<T>(lockPath: string, fn: () => T): T;
+export function withFileLock<T>(
+  lockPath: string,
+  fn: () => Promise<T>,
+): Promise<T>;
+export function withFileLock<T>(
+  lockPath: string,
+  fn: () => T | Promise<T>,
+): T | Promise<T> {
   mkdirSync(dirname(lockPath), { recursive: true });
   acquireLock(lockPath);
   try {
-    return fn();
-  } finally {
+    const result = fn();
+    if (result instanceof Promise) {
+      return result.finally(() => releaseLock(lockPath));
+    }
     releaseLock(lockPath);
+    return result;
+  } catch (err) {
+    releaseLock(lockPath);
+    throw err;
   }
-};
+}
 
 const acquireLock = (lockPath: string): void => {
   for (let attempt = 0; attempt < LOCK_MAX_RETRIES; attempt++) {
