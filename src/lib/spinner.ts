@@ -2,7 +2,7 @@ import pc from 'picocolors';
 import type { GlobalOpts } from './client';
 import { errorMessage, outputError } from './output';
 import { isInteractive, isUnicodeSupported } from './tty';
-import { REQUEST_TIMEOUT_MS, withTimeout } from './with-timeout';
+import { type SdkResponse, withRetry } from './with-retry';
 
 // Status symbols generated via String.fromCodePoint() — never literal Unicode in
 // source — to prevent UTF-8 → Latin-1 corruption when the npm package is bundled.
@@ -23,32 +23,9 @@ const SPINNER_FRAMES = [
 ];
 const SPINNER_INTERVAL = 80;
 
-const DEFAULT_RETRY_DELAYS = [1, 2, 4];
-const MAX_RETRIES = DEFAULT_RETRY_DELAYS.length;
-
-type SdkResponse<T> = {
-  data: T | null;
-  error: { message: string; name?: string } | null;
-  headers?: Record<string, string> | null;
+type WithSpinnerOptions = {
+  retryTransient?: boolean;
 };
-
-function parseRetryDelay(
-  headers?: Record<string, string> | null,
-): number | undefined {
-  const value = headers?.['retry-after'];
-  if (!value) {
-    return undefined;
-  }
-  const seconds = Number(value);
-  if (Number.isFinite(seconds) && seconds >= 0) {
-    return seconds;
-  }
-  return undefined;
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 /**
  * Wraps an SDK call with a loading spinner and unified error handling.
@@ -56,47 +33,47 @@ function sleep(ms: number): Promise<void> {
  * The spinner is purely a loading indicator — it clears itself when the call
  * completes. Callers are responsible for printing success output.
  *
- * Automatically retries on rate_limit_exceeded errors (HTTP 429) up to 3 times,
- * using the retry-after header when available or exponential backoff (1s, 2s, 4s).
+ * Always retries rate_limit_exceeded (HTTP 429) up to 3 times via withRetry,
+ * with retry-after when available or 1s/2s/4s backoff. When `retryTransient`
+ * is set, also retries transient 5xx errors (internal_server_error,
+ * service_unavailable, gateway_timeout) with the same schedule. Callers
+ * should opt into transient retry only for idempotent operations.
  */
 export async function withSpinner<T>(
   loading: string,
   call: () => Promise<SdkResponse<T>>,
   errorCode: string,
   globalOpts: GlobalOpts,
+  options: WithSpinnerOptions = {},
 ): Promise<T> {
   const spinner = createSpinner(loading, globalOpts.quiet);
   try {
-    for (let attempt = 0; ; attempt++) {
-      const { data, error, headers } = await withTimeout(
-        call(),
-        REQUEST_TIMEOUT_MS,
-      );
-      if (error) {
-        if (attempt < MAX_RETRIES && error.name === 'rate_limit_exceeded') {
-          const delay =
-            parseRetryDelay(headers) ?? DEFAULT_RETRY_DELAYS[attempt];
-          spinner.update(`Rate limited, retrying in ${delay}s...`);
-          await sleep(delay * 1000);
-          spinner.update(loading);
-          continue;
-        }
-        spinner.stop();
-        outputError(
-          { message: error.message, code: errorCode },
-          { json: globalOpts.json },
+    const { data, error } = await withRetry(call, {
+      retryTransient: options.retryTransient,
+      onRetry: (_attempt, delay, errorName) => {
+        spinner.update(
+          errorName === 'rate_limit_exceeded'
+            ? `Rate limited, retrying in ${delay}s...`
+            : `Server error, retrying in ${delay}s...`,
         );
-      }
-      if (data === null) {
-        spinner.stop();
-        outputError(
-          { message: 'Unexpected empty response', code: errorCode },
-          { json: globalOpts.json },
-        );
-      }
+      },
+    });
+    if (error) {
       spinner.stop();
-      return data;
+      outputError(
+        { message: error.message, code: errorCode },
+        { json: globalOpts.json },
+      );
     }
+    if (data === null) {
+      spinner.stop();
+      outputError(
+        { message: 'Unexpected empty response', code: errorCode },
+        { json: globalOpts.json },
+      );
+    }
+    spinner.stop();
+    return data;
   } catch (err) {
     spinner.stop();
     return outputError(

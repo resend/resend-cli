@@ -6,7 +6,7 @@ on:
   pull_request:
 jobs:
   pin-dependencies-check:
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04
     container:
       image: node:24
     steps:
