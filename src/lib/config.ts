@@ -36,9 +36,6 @@ export type CredentialsFile = {
   profiles: Record<string, Profile>;
 };
 
-/** @deprecated Use `Profile` instead */
-export type TeamProfile = Profile;
-
 export function getConfigDir(): string {
   if (process.env.XDG_CONFIG_HOME) {
     return join(process.env.XDG_CONFIG_HOME, 'resend');
@@ -127,7 +124,7 @@ export function resolveProfileName(flagValue?: string): string {
     return flagValue;
   }
 
-  const envProfile = process.env.RESEND_PROFILE || process.env.RESEND_TEAM;
+  const envProfile = process.env.RESEND_PROFILE;
   if (envProfile) {
     return envProfile;
   }
@@ -139,9 +136,6 @@ export function resolveProfileName(flagValue?: string): string {
 
   return 'default';
 }
-
-/** @deprecated Use `resolveProfileName` instead */
-export const resolveTeamName = resolveProfileName;
 
 export function resolveApiKey(
   flagValue?: string,
@@ -271,9 +265,6 @@ export function setActiveProfile(profileName: string): void {
   });
 }
 
-/** @deprecated Use `setActiveProfile` instead */
-export const setActiveTeam = setActiveProfile;
-
 export function listProfiles(): Array<{ name: string; active: boolean }> {
   const creds = readCredentials();
   if (!creds) {
@@ -284,9 +275,6 @@ export function listProfiles(): Array<{ name: string; active: boolean }> {
     active: name === creds.active_profile,
   }));
 }
-
-/** @deprecated Use `listProfiles` instead */
-export const listTeams = listProfiles;
 
 export function validateProfileName(name: string): string | undefined {
   if (!name || name.length === 0) {
@@ -300,9 +288,6 @@ export function validateProfileName(name: string): string | undefined {
   }
   return undefined;
 }
-
-/** @deprecated Use `validateProfileName` instead */
-export const validateTeamName = validateProfileName;
 
 export function renameProfile(oldName: string, newName: string): void {
   if (oldName === newName) {
@@ -362,11 +347,10 @@ export async function resolveApiKeyAsync(
   const profile =
     profileName ||
     process.env.RESEND_PROFILE ||
-    process.env.RESEND_TEAM ||
     creds?.active_profile ||
     'default';
 
-  if (creds?.storage === 'secure_storage') {
+  if (creds?.storage === 'secure_storage' && creds.profiles[profile]) {
     const backend = await getCredentialBackend();
     const key = await backend.get(SERVICE_NAME, profile);
     if (key) {
@@ -378,32 +362,6 @@ export async function resolveApiKeyAsync(
   if (creds) {
     const entry = creds.profiles[profile];
     if (entry?.api_key) {
-      const backend = await getCredentialBackend();
-      if (backend.isSecure) {
-        try {
-          await backend.set(SERVICE_NAME, profile, entry.api_key);
-          withFileLock(getCredentialsLockPath(), () => {
-            const freshCreds = readCredentials();
-            if (freshCreds) {
-              const { api_key: _, ...rest } =
-                freshCreds.profiles[profile] ?? {};
-              writeCredentials({
-                ...freshCreds,
-                storage: 'secure_storage',
-                profiles: {
-                  ...freshCreds.profiles,
-                  [profile]: rest,
-                },
-              });
-            }
-          });
-          process.stderr.write(
-            `Notice: API key for profile "${profile}" has been moved to ${backend.name}\n`,
-          );
-        } catch {
-          /* non-fatal */
-        }
-      }
       return {
         key: entry.api_key,
         source: 'config',
@@ -466,14 +424,26 @@ export async function removeApiKeyAsync(profileName?: string): Promise<string> {
   const profile =
     profileName ||
     process.env.RESEND_PROFILE ||
-    process.env.RESEND_TEAM ||
     creds?.active_profile ||
     'default';
 
-  if (creds?.storage === 'secure_storage') {
+  if (!creds?.profiles[profile]) {
+    throw new Error(
+      creds
+        ? `Profile "${profile}" not found. Available profiles: ${Object.keys(creds.profiles).join(', ')}`
+        : 'No credentials file found.',
+    );
+  }
+
+  if (creds.storage === 'secure_storage') {
     const backend = await getCredentialBackend();
     if (backend.isSecure) {
-      await backend.delete(SERVICE_NAME, profile);
+      const deleted = await backend.delete(SERVICE_NAME, profile);
+      if (!deleted) {
+        throw new Error(
+          `Failed to remove API key for profile "${profile}" from ${backend.name}. Credential may still exist in secure storage.`,
+        );
+      }
     }
   }
 
@@ -487,11 +457,27 @@ export async function removeAllApiKeysAsync(): Promise<string> {
   if (creds?.storage === 'secure_storage') {
     const backend = await getCredentialBackend();
     if (backend.isSecure) {
-      await Promise.all(
-        Object.keys(creds.profiles).map((profile) =>
-          backend.delete(SERVICE_NAME, profile),
-        ),
+      const profileNames = Object.keys(creds.profiles);
+      const results = await Promise.all(
+        profileNames.map((profile) => backend.delete(SERVICE_NAME, profile)),
       );
+      const failed = profileNames.filter((_, i) => !results[i]);
+      if (failed.length > 0) {
+        // Remove successfully-deleted profiles from the file so retries
+        // only re-attempt the ones that actually failed.
+        const succeeded = profileNames.filter((_, i) => results[i]);
+        for (const name of succeeded) {
+          delete creds.profiles[name];
+        }
+        if (creds.active_profile && !creds.profiles[creds.active_profile]) {
+          const remaining = Object.keys(creds.profiles);
+          creds.active_profile = remaining[0] || 'default';
+        }
+        writeCredentials(creds);
+        throw new Error(
+          `Failed to remove API keys from ${backend.name} for profiles: ${failed.join(', ')}. Credentials may still exist in secure storage.`,
+        );
+      }
     }
   }
 
@@ -513,7 +499,15 @@ export async function renameProfileAsync(
       const key = await backend.get(SERVICE_NAME, oldName);
       if (key) {
         await backend.set(SERVICE_NAME, newName, key);
-        await backend.delete(SERVICE_NAME, oldName);
+        const deleted = await backend.delete(SERVICE_NAME, oldName);
+        if (!deleted) {
+          const rolledBack = await backend.delete(SERVICE_NAME, newName);
+          throw new Error(
+            rolledBack
+              ? `Failed to remove old credential "${oldName}" from ${backend.name} during rename. The rename has been rolled back.`
+              : `Failed to remove old credential "${oldName}" from ${backend.name} during rename. Rollback also failed — credential "${newName}" may still exist in secure storage.`,
+          );
+        }
       }
     }
   }

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as browser from '../../../src/lib/browser';
 
 describe('broadcasts open command', () => {
@@ -10,7 +10,7 @@ describe('broadcasts open command', () => {
     vi.restoreAllMocks();
   });
 
-  test('with no args opens broadcasts list', async () => {
+  it('with no args opens broadcasts list', async () => {
     const { openBroadcastCommand } = await import(
       '../../../src/commands/broadcasts/open'
     );
@@ -23,7 +23,7 @@ describe('broadcasts open command', () => {
     );
   });
 
-  test('with id opens broadcast URL', async () => {
+  it('with id opens broadcast URL', async () => {
     const { openBroadcastCommand } = await import(
       '../../../src/commands/broadcasts/open'
     );

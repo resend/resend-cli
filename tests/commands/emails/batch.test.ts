@@ -7,8 +7,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import * as files from '../../../src/lib/files';
@@ -100,7 +100,7 @@ describe('batch command', () => {
     return path;
   }
 
-  test('sends emails from a JSON file', async () => {
+  it('sends emails from a JSON file', async () => {
     spies = setupOutputSpies();
 
     const file = await writeTmpJson(VALID_EMAILS);
@@ -112,7 +112,7 @@ describe('batch command', () => {
     expect(emails).toHaveLength(2);
   });
 
-  test('outputs array of IDs on success in JSON mode', async () => {
+  it('outputs array of IDs on success in JSON mode', async () => {
     // Non-interactive mode (no TTY) automatically triggers JSON output via outputResult
     spies = setupOutputSpies();
 
@@ -125,7 +125,7 @@ describe('batch command', () => {
     expect(parsed).toEqual([{ id: 'abc123' }, { id: 'def456' }]);
   });
 
-  test('errors with missing_file when no --file in non-interactive mode', async () => {
+  it('errors with missing_file when no --file in non-interactive mode', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -137,7 +137,7 @@ describe('batch command', () => {
     expect(output).toContain('missing_file');
   });
 
-  test('errors with file_read_error when file does not exist', async () => {
+  it('errors with file_read_error when file does not exist', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -154,7 +154,7 @@ describe('batch command', () => {
     expect(output).toContain('file_read_error');
   });
 
-  test('errors with invalid_json when file is not valid JSON', async () => {
+  it('errors with invalid_json when file is not valid JSON', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -175,7 +175,7 @@ describe('batch command', () => {
     expect(output).toContain('invalid_json');
   });
 
-  test('errors with invalid_format when file content is not an array', async () => {
+  it('errors with invalid_format when file content is not an array', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -196,7 +196,7 @@ describe('batch command', () => {
     expect(output).not.toContain('invalid_json');
   });
 
-  test('errors with invalid_format when an entry is not an object', async () => {
+  it('errors with invalid_format when an entry is not an object', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -212,7 +212,7 @@ describe('batch command', () => {
     expect(output).toContain('Email at index 0 must be a JSON object.');
   });
 
-  test('rejects entries with attachments', async () => {
+  it('rejects entries with attachments', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -233,7 +233,7 @@ describe('batch command', () => {
     expect(output).toContain('attachments');
   });
 
-  test('rejects entries with scheduled_at', async () => {
+  it('rejects entries with scheduled_at', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -251,7 +251,7 @@ describe('batch command', () => {
     expect(output).toContain('scheduled_at');
   });
 
-  test('warns but continues when array length exceeds 100', async () => {
+  it('warns but continues when array length exceeds 100', async () => {
     spies = setupOutputSpies();
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
@@ -270,7 +270,7 @@ describe('batch command', () => {
     warnSpy.mockRestore();
   });
 
-  test('passes idempotency key to batch.send', async () => {
+  it('passes idempotency key to batch.send', async () => {
     spies = setupOutputSpies();
 
     const file = await writeTmpJson(VALID_EMAILS);
@@ -285,7 +285,7 @@ describe('batch command', () => {
     expect(opts?.idempotencyKey).toBe('my-key-123');
   });
 
-  test('passes batchValidation to batch.send options', async () => {
+  it('passes batchValidation to batch.send options', async () => {
     spies = setupOutputSpies();
 
     const file = await writeTmpJson(VALID_EMAILS);
@@ -300,7 +300,7 @@ describe('batch command', () => {
     expect(opts?.batchValidation).toBe('permissive');
   });
 
-  test('errors with auth_error when no API key in non-interactive mode', async () => {
+  it('errors with auth_error when no API key in non-interactive mode', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = join(
@@ -320,7 +320,7 @@ describe('batch command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('outputs human-readable summary in terminal mode', async () => {
+  it('outputs human-readable summary in terminal mode', async () => {
     // Make it look like a TTY so outputResult uses human-readable format
     Object.defineProperty(process.stdin, 'isTTY', {
       value: true,
@@ -347,7 +347,7 @@ describe('batch command', () => {
     logSpy.mockRestore();
   });
 
-  test('surfaces partial errors in permissive mode (JSON output)', async () => {
+  it('surfaces partial errors in permissive mode (JSON output)', async () => {
     spies = setupOutputSpies();
 
     mockBatchSend.mockImplementationOnce(async () => ({
@@ -373,7 +373,7 @@ describe('batch command', () => {
     ]);
   });
 
-  test('does not include errors key in JSON output when no batch errors', async () => {
+  it('does not include errors key in JSON output when no batch errors', async () => {
     spies = setupOutputSpies();
 
     const file = await writeTmpJson(VALID_EMAILS);
@@ -387,7 +387,7 @@ describe('batch command', () => {
     expect(parsed).toEqual([{ id: 'abc123' }, { id: 'def456' }]);
   });
 
-  test('--file - passes stdin to readFile', async () => {
+  it('--file - passes stdin to readFile', async () => {
     spies = setupOutputSpies();
     readFileSpy = vi
       .spyOn(files, 'readFile')
@@ -400,7 +400,7 @@ describe('batch command', () => {
     expect(mockBatchSend).toHaveBeenCalledTimes(1);
   });
 
-  test('injects rendered HTML from --react-email into all batch emails', async () => {
+  it('injects rendered HTML from --react-email into all batch emails', async () => {
     spies = setupOutputSpies();
 
     const emailsWithoutHtml = [
@@ -435,7 +435,7 @@ describe('batch command', () => {
     }
   });
 
-  test('errors with batch_error when SDK returns an error', async () => {
+  it('errors with batch_error when SDK returns an error', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = vi

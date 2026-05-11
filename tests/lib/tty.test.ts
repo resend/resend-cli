@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { captureTestEnv } from '../helpers';
 
 // We need to import the module fresh per test to pick up env changes,
@@ -26,7 +26,7 @@ describe('isInteractive', () => {
     });
   }
 
-  test('returns true when stdin and stdout are TTY and no CI env', async () => {
+  it('returns true when stdin and stdout are TTY and no CI env', async () => {
     setTTY(true, true);
     delete process.env.CI;
     delete process.env.GITHUB_ACTIONS;
@@ -36,7 +36,7 @@ describe('isInteractive', () => {
     expect(isInteractive()).toBe(true);
   });
 
-  test('returns false when stdin is not TTY', async () => {
+  it('returns false when stdin is not TTY', async () => {
     setTTY(false, true);
     delete process.env.CI;
 
@@ -44,7 +44,7 @@ describe('isInteractive', () => {
     expect(isInteractive()).toBe(false);
   });
 
-  test('returns false when stdout is not TTY', async () => {
+  it('returns false when stdout is not TTY', async () => {
     setTTY(true, false);
     delete process.env.CI;
 
@@ -52,7 +52,7 @@ describe('isInteractive', () => {
     expect(isInteractive()).toBe(false);
   });
 
-  test('returns false when CI=true', async () => {
+  it('returns false when CI=true', async () => {
     setTTY(true, true);
     process.env.CI = 'true';
 
@@ -60,7 +60,7 @@ describe('isInteractive', () => {
     expect(isInteractive()).toBe(false);
   });
 
-  test('returns false when CI=1', async () => {
+  it('returns false when CI=1', async () => {
     setTTY(true, true);
     process.env.CI = '1';
 
@@ -68,7 +68,7 @@ describe('isInteractive', () => {
     expect(isInteractive()).toBe(false);
   });
 
-  test('returns false when GITHUB_ACTIONS is set', async () => {
+  it('returns false when GITHUB_ACTIONS is set', async () => {
     setTTY(true, true);
     delete process.env.CI;
     process.env.GITHUB_ACTIONS = 'true';
@@ -77,7 +77,7 @@ describe('isInteractive', () => {
     expect(isInteractive()).toBe(false);
   });
 
-  test('returns false when TERM=dumb', async () => {
+  it('returns false when TERM=dumb', async () => {
     setTTY(true, true);
     delete process.env.CI;
     delete process.env.GITHUB_ACTIONS;

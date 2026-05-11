@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -33,6 +33,7 @@ const mockList = vi.fn(async () => ({
         last_used_at: null,
       },
     ],
+    has_more: false,
   },
   error: null,
 }));
@@ -67,7 +68,15 @@ describe('api-keys list command', () => {
     exitSpy = undefined;
   });
 
-  test('calls SDK list with no arguments', async () => {
+  function getFirstCallArgs(): unknown {
+    const firstCall = mockList.mock.calls.at(0);
+    if (!firstCall) {
+      throw new Error('Expected mockList to be called at least once');
+    }
+    return firstCall[0];
+  }
+
+  it('uses default limit of 10 when not specified', async () => {
     spies = setupOutputSpies();
 
     const { listApiKeysCommand } = await import(
@@ -76,9 +85,10 @@ describe('api-keys list command', () => {
     await listApiKeysCommand.parseAsync([], { from: 'user' });
 
     expect(mockList).toHaveBeenCalledTimes(1);
+    expect(getFirstCallArgs()).toMatchObject({ limit: 10 });
   });
 
-  test('outputs JSON list when non-interactive', async () => {
+  it('outputs JSON list when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { listApiKeysCommand } = await import(
@@ -94,7 +104,68 @@ describe('api-keys list command', () => {
     expect(parsed.data[0].name).toBe('Production Key');
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('passes limit to SDK', async () => {
+    spies = setupOutputSpies();
+
+    const { listApiKeysCommand } = await import(
+      '../../../src/commands/api-keys/list'
+    );
+    await listApiKeysCommand.parseAsync(['--limit', '25'], { from: 'user' });
+
+    expect(getFirstCallArgs()).toMatchObject({ limit: 25 });
+  });
+
+  it('passes after cursor to SDK', async () => {
+    spies = setupOutputSpies();
+
+    const { listApiKeysCommand } = await import(
+      '../../../src/commands/api-keys/list'
+    );
+    await listApiKeysCommand.parseAsync(['--after', 'some-cursor'], {
+      from: 'user',
+    });
+
+    expect(getFirstCallArgs()).toMatchObject({
+      after: 'some-cursor',
+    });
+  });
+
+  it('passes before cursor to SDK', async () => {
+    spies = setupOutputSpies();
+
+    const { listApiKeysCommand } = await import(
+      '../../../src/commands/api-keys/list'
+    );
+    await listApiKeysCommand.parseAsync(['--before', 'some-cursor'], {
+      from: 'user',
+    });
+
+    expect(getFirstCallArgs()).toMatchObject({
+      before: 'some-cursor',
+    });
+  });
+
+  it('errors when both after and before cursors are provided', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { listApiKeysCommand } = await import(
+      '../../../src/commands/api-keys/list'
+    );
+    await expectExit1(() =>
+      listApiKeysCommand.parseAsync(
+        ['--after', 'cursor_after', '--before', 'cursor_before'],
+        { from: 'user' },
+      ),
+    );
+
+    expect(mockList).not.toHaveBeenCalled();
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_pagination');
+  });
+
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -112,7 +183,7 @@ describe('api-keys list command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with list_error when SDK returns an error', async () => {
+  it('errors with list_error when SDK returns an error', async () => {
     setNonInteractive();
     mockList.mockResolvedValueOnce(
       mockSdkError('Unauthorized', 'unauthorized'),

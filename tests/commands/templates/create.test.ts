@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import * as files from '../../../src/lib/files';
@@ -69,7 +69,7 @@ describe('templates create command', () => {
     }
   });
 
-  test('creates template with required flags', async () => {
+  it('creates template with required flags', async () => {
     spies = setupOutputSpies();
 
     const { createTemplateCommand } = await import(
@@ -86,7 +86,7 @@ describe('templates create command', () => {
     expect(args.html).toBe('<h1>Hello</h1>');
   });
 
-  test('outputs JSON result when non-interactive', async () => {
+  it('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { createTemplateCommand } = await import(
@@ -102,7 +102,7 @@ describe('templates create command', () => {
     expect(parsed.id).toBe('tmpl_abc123');
   });
 
-  test('errors with missing_name when --name absent in non-interactive mode', async () => {
+  it('errors with missing_name when --name absent in non-interactive mode', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -120,7 +120,7 @@ describe('templates create command', () => {
     expect(output).toContain('missing_name');
   });
 
-  test('errors with missing_body when no body flag in non-interactive mode', async () => {
+  it('errors with missing_body when no body flag in non-interactive mode', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -138,7 +138,7 @@ describe('templates create command', () => {
     expect(output).toContain('missing_body');
   });
 
-  test('errors with missing_name when --json is set even in TTY', async () => {
+  it('errors with missing_name when --json is set even in TTY', async () => {
     Object.defineProperty(process.stdin, 'isTTY', {
       value: true,
       writable: true,
@@ -173,7 +173,7 @@ describe('templates create command', () => {
     expect(output).toContain('missing_name');
   });
 
-  test('reads text body from --text-file and passes it to SDK', async () => {
+  it('reads text body from --text-file and passes it to SDK', async () => {
     spies = setupOutputSpies();
     readFileSpy = vi
       .spyOn(files, 'readFile')
@@ -202,7 +202,7 @@ describe('templates create command', () => {
     expect(args.text).toBe('Plain text from file');
   });
 
-  test('warns to stderr when --text and --text-file both provided, text-file wins', async () => {
+  it('warns to stderr when --text and --text-file both provided, text-file wins', async () => {
     spies = setupOutputSpies();
     readFileSpy = vi.spyOn(files, 'readFile').mockReturnValue('From file');
 
@@ -229,7 +229,7 @@ describe('templates create command', () => {
     expect(args.text).toBe('From file');
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -250,7 +250,7 @@ describe('templates create command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('creates template with --react-email flag', async () => {
+  it('creates template with --react-email flag', async () => {
     spies = setupOutputSpies();
 
     const { createTemplateCommand } = await import(
@@ -269,7 +269,7 @@ describe('templates create command', () => {
     expect(args.html).toBe('<html><body>Rendered</body></html>');
   });
 
-  test('errors with invalid_options when --react-email and --html used together', async () => {
+  it('errors with invalid_options when --react-email and --html used together', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -295,7 +295,7 @@ describe('templates create command', () => {
     expect(output).toContain('invalid_options');
   });
 
-  test('errors with create_error when SDK returns an error', async () => {
+  it('errors with create_error when SDK returns an error', async () => {
     setNonInteractive();
     mockCreate.mockResolvedValueOnce(
       mockSdkError('Template name taken', 'validation_error'),

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as browser from '../../src/lib/browser';
 
 describe('resend docs command', () => {
@@ -10,7 +10,7 @@ describe('resend docs command', () => {
     vi.restoreAllMocks();
   });
 
-  test('opens documentation URL in browser', async () => {
+  it('opens documentation URL in browser', async () => {
     const { docsCommand } = await import('../../src/commands/docs');
 
     await docsCommand.parseAsync([], { from: 'user' });

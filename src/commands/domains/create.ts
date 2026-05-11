@@ -22,6 +22,10 @@ export const createDomainCommand = new Command('create')
       'enforced',
     ] as const),
   )
+  .option(
+    '--tracking-subdomain <subdomain>',
+    'Subdomain for click and open tracking (e.g. track)',
+  )
   .option('--sending', 'Enable sending capability (default: enabled)')
   .option('--receiving', 'Enable receiving capability (default: disabled)')
   .addHelpText(
@@ -35,6 +39,7 @@ export const createDomainCommand = new Command('create')
       examples: [
         'resend domains create --name example.com',
         'resend domains create --name example.com --region eu-west-1 --tls enforced',
+        'resend domains create --name example.com --tracking-subdomain track',
         'resend domains create --name example.com --receiving --json',
         'resend domains create --name example.com --sending --receiving --json',
       ],
@@ -58,6 +63,9 @@ export const createDomainCommand = new Command('create')
             name,
             ...(opts.region && { region: opts.region }),
             ...(opts.tls && { tls: opts.tls }),
+            ...(opts.trackingSubdomain && {
+              trackingSubdomain: opts.trackingSubdomain,
+            }),
             ...((opts.sending || opts.receiving) && {
               capabilities: {
                 ...(opts.sending && { sending: 'enabled' as const }),

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as browser from '../../../src/lib/browser';
 
 describe('logs open command', () => {
@@ -10,7 +10,7 @@ describe('logs open command', () => {
     vi.restoreAllMocks();
   });
 
-  test('with no args opens logs list', async () => {
+  it('with no args opens logs list', async () => {
     const { openLogsCommand } = await import('../../../src/commands/logs/open');
     await openLogsCommand.parseAsync([], { from: 'user' });
 
@@ -21,7 +21,7 @@ describe('logs open command', () => {
     );
   });
 
-  test('with id opens log detail URL', async () => {
+  it('with id opens log detail URL', async () => {
     const { openLogsCommand } = await import('../../../src/commands/logs/open');
     await openLogsCommand.parseAsync(['3d4a472d-bc6d-4dd2-aa9d-d3d11b549e55'], {
       from: 'user',

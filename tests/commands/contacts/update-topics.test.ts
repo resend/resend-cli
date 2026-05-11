@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -58,7 +58,7 @@ describe('contacts update-topics command', () => {
     }
   });
 
-  test('updates topics by contact ID', async () => {
+  it('updates topics by contact ID', async () => {
     spies = setupOutputSpies();
 
     const { updateContactTopicsCommand } = await import(
@@ -79,7 +79,7 @@ describe('contacts update-topics command', () => {
     expect(args.topics).toEqual([{ id: 'topic_abc', subscription: 'opt_in' }]);
   });
 
-  test('updates topics by contact email', async () => {
+  it('updates topics by contact email', async () => {
     spies = setupOutputSpies();
 
     const { updateContactTopicsCommand } = await import(
@@ -99,7 +99,7 @@ describe('contacts update-topics command', () => {
     expect(args.topics[0].subscription).toBe('opt_out');
   });
 
-  test('passes multiple topics in array', async () => {
+  it('passes multiple topics in array', async () => {
     spies = setupOutputSpies();
 
     const { updateContactTopicsCommand } = await import(
@@ -118,7 +118,7 @@ describe('contacts update-topics command', () => {
     expect(args.topics).toHaveLength(2);
   });
 
-  test('outputs JSON result when non-interactive', async () => {
+  it('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { updateContactTopicsCommand } = await import(
@@ -138,7 +138,7 @@ describe('contacts update-topics command', () => {
     expect(parsed.id).toBe('a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
   });
 
-  test('errors with missing_topics when --topics absent in non-interactive mode', async () => {
+  it('errors with missing_topics when --topics absent in non-interactive mode', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -159,7 +159,7 @@ describe('contacts update-topics command', () => {
     expect(output).toContain('missing_topics');
   });
 
-  test('errors with missing_topics when --json is set even in TTY', async () => {
+  it('errors with missing_topics when --json is set even in TTY', async () => {
     Object.defineProperty(process.stdin, 'isTTY', {
       value: true,
       writable: true,
@@ -195,7 +195,7 @@ describe('contacts update-topics command', () => {
     expect(output).toContain('missing_topics');
   });
 
-  test('errors with invalid_topics when --topics is not valid JSON', async () => {
+  it('errors with invalid_topics when --topics is not valid JSON', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -214,7 +214,7 @@ describe('contacts update-topics command', () => {
     expect(output).toContain('invalid_topics');
   });
 
-  test('errors with invalid_topics when --topics is not an array', async () => {
+  it('errors with invalid_topics when --topics is not an array', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -233,7 +233,7 @@ describe('contacts update-topics command', () => {
     expect(output).toContain('invalid_topics');
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -258,7 +258,7 @@ describe('contacts update-topics command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with update_topics_error when SDK returns an error', async () => {
+  it('errors with update_topics_error when SDK returns an error', async () => {
     setNonInteractive();
     mockUpdateTopics.mockResolvedValueOnce(
       mockSdkError('Topic not found', 'not_found'),

@@ -1,5 +1,5 @@
 import { Command, Option } from '@commander-js/extra-typings';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   type CommandNode,
   collectCommandTree,
@@ -48,7 +48,7 @@ function buildTestProgram(): Command {
 }
 
 describe('collectCommandTree', () => {
-  test('collects commands and subcommands', () => {
+  it('collects commands and subcommands', () => {
     const tree = collectCommandTree(buildTestProgram());
     expect(tree.name).toBe('myapp');
     const names = tree.subcommands.map((s) => s.name);
@@ -56,13 +56,13 @@ describe('collectCommandTree', () => {
     expect(names).toContain('domains');
   });
 
-  test('excludes hidden commands', () => {
+  it('excludes hidden commands', () => {
     const tree = collectCommandTree(buildTestProgram());
     const names = tree.subcommands.map((s) => s.name);
     expect(names).not.toContain('secret');
   });
 
-  test('collects aliases', () => {
+  it('collects aliases', () => {
     const tree = collectCommandTree(buildTestProgram());
     const emails = tree.subcommands.find((s) => s.name === 'emails');
     expect(emails).toBeDefined();
@@ -71,7 +71,7 @@ describe('collectCommandTree', () => {
     expect(list?.aliases).toContain('ls');
   });
 
-  test('collects options with choices', () => {
+  it('collects options with choices', () => {
     const tree = collectCommandTree(buildTestProgram());
     const emails = tree.subcommands.find((s) => s.name === 'emails');
     expect(emails).toBeDefined();
@@ -83,14 +83,14 @@ describe('collectCommandTree', () => {
     expect(priority?.takesValue).toBe(true);
   });
 
-  test('collects global options', () => {
+  it('collects global options', () => {
     const tree = collectCommandTree(buildTestProgram());
     const verbose = tree.options.find((o) => o.long === '--verbose');
     expect(verbose).toBeDefined();
     expect(verbose?.takesValue).toBe(false);
   });
 
-  test('excludes hidden options', () => {
+  it('excludes hidden options', () => {
     const program = new Command('test').description('Test');
     const hiddenOpt = new Option('--secret', 'Hidden option');
     hiddenOpt.hidden = true;
@@ -109,36 +109,36 @@ function getTestTree(): CommandNode {
 }
 
 describe('generateBashCompletion', () => {
-  test('outputs valid bash completion script', () => {
+  it('outputs valid bash completion script', () => {
     const output = generateBashCompletion(getTestTree());
     expect(output).toContain('_myapp_completions');
     expect(output).toContain('complete -o default -F _myapp_completions myapp');
   });
 
-  test('includes top-level commands', () => {
+  it('includes top-level commands', () => {
     const output = generateBashCompletion(getTestTree());
     expect(output).toContain('emails');
     expect(output).toContain('domains');
   });
 
-  test('excludes hidden commands', () => {
+  it('excludes hidden commands', () => {
     const output = generateBashCompletion(getTestTree());
     expect(output).not.toContain('secret');
   });
 
-  test('includes subcommands', () => {
+  it('includes subcommands', () => {
     const output = generateBashCompletion(getTestTree());
     expect(output).toContain('send');
     expect(output).toContain('list');
   });
 
-  test('includes aliases', () => {
+  it('includes aliases', () => {
     const output = generateBashCompletion(getTestTree());
     expect(output).toMatch(/\bls\b/);
     expect(output).toMatch(/\brm\b/);
   });
 
-  test('includes option choices', () => {
+  it('includes option choices', () => {
     const output = generateBashCompletion(getTestTree());
     expect(output).toContain('low');
     expect(output).toContain('normal');
@@ -146,19 +146,19 @@ describe('generateBashCompletion', () => {
     expect(output).toContain('--priority');
   });
 
-  test('includes global options', () => {
+  it('includes global options', () => {
     const output = generateBashCompletion(getTestTree());
     expect(output).toContain('--verbose');
     expect(output).toContain('--profile');
   });
 
-  test('skips option values when building cmd_path', () => {
+  it('skips option values when building cmd_path', () => {
     const output = generateBashCompletion(getTestTree());
     expect(output).toContain('--profile|-p|--from|--to|--priority)');
     expect(output).toContain('i=$((i + 1)) ;;');
   });
 
-  test('falls back to file completion for value flags without choices', () => {
+  it('falls back to file completion for value flags without choices', () => {
     const output = generateBashCompletion(getTestTree());
     expect(output).toContain('--from|--to) return ;;');
     expect(output).toContain('--profile|-p) return ;;');
@@ -166,32 +166,32 @@ describe('generateBashCompletion', () => {
 });
 
 describe('generateZshCompletion', () => {
-  test('outputs valid zsh completion script', () => {
+  it('outputs valid zsh completion script', () => {
     const output = generateZshCompletion(getTestTree());
     expect(output).toContain('#compdef myapp');
     expect(output).toContain('compdef _myapp myapp');
     expect(output).toContain('_myapp()');
   });
 
-  test('includes commands and options', () => {
+  it('includes commands and options', () => {
     const output = generateZshCompletion(getTestTree());
     expect(output).toContain('emails');
     expect(output).toContain('--verbose');
     expect(output).toContain('--priority');
   });
 
-  test('excludes hidden commands', () => {
+  it('excludes hidden commands', () => {
     const output = generateZshCompletion(getTestTree());
     expect(output).not.toContain('secret');
   });
 
-  test('falls back to _files for value flags without choices', () => {
+  it('falls back to _files for value flags without choices', () => {
     const output = generateZshCompletion(getTestTree());
     expect(output).toContain('--from|--to) _files; return ;;');
     expect(output).toContain('--profile|-p) _files; return ;;');
   });
 
-  test('falls back to _files for leaf commands without subcommands', () => {
+  it('falls back to _files for leaf commands without subcommands', () => {
     const output = generateZshCompletion(getTestTree());
     const lines = output.split('\n');
     const start = lines.findIndex((l) => l.includes('"emails send")'));
@@ -203,58 +203,58 @@ describe('generateZshCompletion', () => {
 });
 
 describe('generateFishCompletion', () => {
-  test('outputs fish completion commands', () => {
+  it('outputs fish completion commands', () => {
     const output = generateFishCompletion(getTestTree());
     expect(output).toContain('complete -c myapp');
     expect(output).toContain('__fish_use_subcommand');
   });
 
-  test('includes subcommand completions', () => {
+  it('includes subcommand completions', () => {
     const output = generateFishCompletion(getTestTree());
     expect(output).toContain('__fish_seen_subcommand_from');
     expect(output).toContain('send');
   });
 
-  test('includes option choices', () => {
+  it('includes option choices', () => {
     const output = generateFishCompletion(getTestTree());
     expect(output).toContain('low normal high');
   });
 
-  test('excludes hidden commands', () => {
+  it('excludes hidden commands', () => {
     const output = generateFishCompletion(getTestTree());
     expect(output).not.toContain('secret');
   });
 });
 
 describe('generatePowerShellCompletion', () => {
-  test('outputs PowerShell completion script', () => {
+  it('outputs PowerShell completion script', () => {
     const output = generatePowerShellCompletion(getTestTree());
     expect(output).toContain('Register-ArgumentCompleter');
     expect(output).toContain('-CommandName myapp');
   });
 
-  test('includes commands and options', () => {
+  it('includes commands and options', () => {
     const output = generatePowerShellCompletion(getTestTree());
     expect(output).toContain('"emails"');
     expect(output).toContain('"--verbose"');
   });
 
-  test('excludes hidden commands', () => {
+  it('excludes hidden commands', () => {
     const output = generatePowerShellCompletion(getTestTree());
     expect(output).not.toContain('secret');
   });
 
-  test('groups choice values per flag in switch', () => {
+  it('groups choice values per flag in switch', () => {
     const output = generatePowerShellCompletion(getTestTree());
     expect(output).toContain('"--priority" { @("low", "normal", "high")');
   });
 
-  test('skips option values when building cmdPath', () => {
+  it('skips option values when building cmdPath', () => {
     const output = generatePowerShellCompletion(getTestTree());
     expect(output).toContain('$valueFlags -contains $words[$i]');
   });
 
-  test('falls back to default completion for value flags without choices', () => {
+  it('falls back to default completion for value flags without choices', () => {
     const output = generatePowerShellCompletion(getTestTree());
     expect(output).toContain('{ $_ -in @("--from", "--to") } { return }');
   });

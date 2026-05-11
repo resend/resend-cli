@@ -12,8 +12,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -72,7 +72,7 @@ describe('login command', () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  test('rejects key that fails API validation', async () => {
+  it('rejects key that fails API validation', async () => {
     mockDomainListResult = {
       data: null,
       error: {
@@ -101,7 +101,7 @@ describe('login command', () => {
     expect(existsSync(configPath)).toBe(false);
   });
 
-  test('rejects key not starting with re_', async () => {
+  it('rejects key not starting with re_', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -115,7 +115,7 @@ describe('login command', () => {
     expect(output).toContain('invalid_key_format');
   });
 
-  test('rejects empty or whitespace-only key with missing_key in non-interactive', async () => {
+  it('rejects empty or whitespace-only key with missing_key in non-interactive', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -129,7 +129,7 @@ describe('login command', () => {
     expect(output).toContain('missing_key');
   });
 
-  test('trims API key before storing', async () => {
+  it('trims API key before storing', async () => {
     setNonInteractive();
 
     const { loginCommand } = await import('../../../src/commands/auth/login');
@@ -142,7 +142,7 @@ describe('login command', () => {
     expect(data.profiles.default.api_key).toBe('re_trimmed_key_456');
   });
 
-  test('stores valid key to credentials.json and sets active_profile', async () => {
+  it('stores valid key to credentials.json and sets active_profile', async () => {
     setupOutputSpies();
 
     const { loginCommand } = await import('../../../src/commands/auth/login');
@@ -156,7 +156,7 @@ describe('login command', () => {
     expect(data.active_profile).toBe('default');
   });
 
-  test('requires --key in non-interactive mode', async () => {
+  it('requires --key in non-interactive mode', async () => {
     setupOutputSpies();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -169,7 +169,7 @@ describe('login command', () => {
     expect(output).toContain('missing_key');
   });
 
-  test('errors with missing_key when --json is set but --key is omitted even in TTY', async () => {
+  it('errors with missing_key when --json is set but --key is omitted even in TTY', async () => {
     Object.defineProperty(process.stdin, 'isTTY', {
       value: true,
       writable: true,
@@ -201,7 +201,7 @@ describe('login command', () => {
     loginCommand.parent = null;
   });
 
-  test('non-interactive login stores as default when profiles exist', async () => {
+  it('non-interactive login stores as default when profiles exist', async () => {
     // Pre-populate credentials with an existing profile
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
@@ -228,7 +228,7 @@ describe('login command', () => {
     expect(data.active_profile).toBe('production');
   });
 
-  test('auto-switches to profile specified via --profile flag', async () => {
+  it('auto-switches to profile specified via --profile flag', async () => {
     setupOutputSpies();
 
     const { Command } = await import('@commander-js/extra-typings');
@@ -263,31 +263,7 @@ describe('login command', () => {
     expect(data.profiles.staging.api_key).toBe('re_staging_key_123');
   });
 
-  test('deprecated --team alias works like --profile', async () => {
-    setupOutputSpies();
-
-    const { Command } = await import('@commander-js/extra-typings');
-    const { loginCommand } = await import('../../../src/commands/auth/login');
-    const program = new Command()
-      .option('--profile <name>')
-      .option('--team <name>')
-      .option('--json')
-      .option('--api-key <key>')
-      .option('-q, --quiet')
-      .addCommand(loginCommand);
-
-    await program.parseAsync(
-      ['login', '--key', 're_team_alias_key_123', '--team', 'legacy'],
-      { from: 'user' },
-    );
-
-    const configPath = join(tmpDir, 'resend', 'credentials.json');
-    const data = JSON.parse(readFileSync(configPath, 'utf-8'));
-    expect(data.active_profile).toBe('legacy');
-    expect(data.profiles.legacy.api_key).toBe('re_team_alias_key_123');
-  });
-
-  test('rejects invalid profile name with invalid_profile_name', async () => {
+  it('rejects invalid profile name with invalid_profile_name', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -312,7 +288,7 @@ describe('login command', () => {
     expect(output).toContain('invalid_profile_name');
   });
 
-  test('trims --profile before storing', async () => {
+  it('trims --profile before storing', async () => {
     setupOutputSpies();
 
     const { Command } = await import('@commander-js/extra-typings');
@@ -337,7 +313,7 @@ describe('login command', () => {
     expect(data.active_profile).toBe('myprofile');
   });
 
-  test('--json output includes success, config_path, and profile', async () => {
+  it('--json output includes success, config_path, and profile', async () => {
     setupOutputSpies();
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
@@ -363,7 +339,7 @@ describe('login command', () => {
     expect(parsed.profile).toBe('prod');
   });
 
-  test('accepts sending-only key and stores permission', async () => {
+  it('accepts sending-only key and stores permission', async () => {
     mockDomainListResult = {
       data: null,
       error: {
@@ -386,7 +362,7 @@ describe('login command', () => {
     expect(data.profiles.default.permission).toBe('sending_access');
   });
 
-  test('stores full_access permission for valid full access key', async () => {
+  it('stores full_access permission for valid full access key', async () => {
     setupOutputSpies();
 
     const { loginCommand } = await import('../../../src/commands/auth/login');
@@ -400,7 +376,7 @@ describe('login command', () => {
     expect(data.profiles.default.permission).toBe('full_access');
   });
 
-  test('--json output includes permission for sending-only key', async () => {
+  it('--json output includes permission for sending-only key', async () => {
     mockDomainListResult = {
       data: null,
       error: {

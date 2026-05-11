@@ -7,8 +7,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -72,7 +72,7 @@ describe('send command', () => {
     exitSpy = undefined;
   });
 
-  test('sends email with all flags provided', async () => {
+  it('sends email with all flags provided', async () => {
     spies = setupOutputSpies();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -98,7 +98,7 @@ describe('send command', () => {
     expect(callArgs.text).toBe('Hello');
   });
 
-  test('dry-run does not call API and prints request summary', async () => {
+  it('dry-run does not call API and prints request summary', async () => {
     spies = setupOutputSpies();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -125,7 +125,7 @@ describe('send command', () => {
     expect(out.request.to).toEqual(['b@test.com']);
   });
 
-  test('dry-run does not require API key or call domains API', async () => {
+  it('dry-run does not require API key or call domains API', async () => {
     spies = setupOutputSpies();
     delete process.env.RESEND_API_KEY;
 
@@ -151,7 +151,7 @@ describe('send command', () => {
     expect(out.dryRun).toBe(true);
   });
 
-  test('outputs JSON with email ID on success', async () => {
+  it('outputs JSON with email ID on success', async () => {
     spies = setupOutputSpies();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -174,7 +174,7 @@ describe('send command', () => {
     expect(parsed.id).toBe('test-email-id-123');
   });
 
-  test('sends HTML email when --html provided', async () => {
+  it('sends HTML email when --html provided', async () => {
     spies = setupOutputSpies();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -197,7 +197,7 @@ describe('send command', () => {
     expect(callArgs.text).toBeUndefined();
   });
 
-  test('supports multiple --to addresses', async () => {
+  it('supports multiple --to addresses', async () => {
     spies = setupOutputSpies();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -220,7 +220,7 @@ describe('send command', () => {
     expect(callArgs.to).toEqual(['b@test.com', 'c@test.com']);
   });
 
-  test('errors when no API key and non-interactive', async () => {
+  it('errors when no API key and non-interactive', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = join(
@@ -248,7 +248,7 @@ describe('send command', () => {
     );
   });
 
-  test('errors listing missing flags in non-interactive mode', async () => {
+  it('errors listing missing flags in non-interactive mode', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -263,7 +263,7 @@ describe('send command', () => {
     expect(allErrors).toContain('--subject');
   });
 
-  test('errors when no body and non-interactive', async () => {
+  it('errors when no body and non-interactive', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -277,7 +277,7 @@ describe('send command', () => {
     );
   });
 
-  test('reads HTML body from --html-file', async () => {
+  it('reads HTML body from --html-file', async () => {
     spies = setupOutputSpies();
 
     const tmpFile = join(
@@ -309,7 +309,7 @@ describe('send command', () => {
     }
   });
 
-  test('passes cc, bcc, reply-to when provided', async () => {
+  it('passes cc, bcc, reply-to when provided', async () => {
     spies = setupOutputSpies();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -339,7 +339,7 @@ describe('send command', () => {
     expect(callArgs.replyTo).toBe('reply@test.com');
   });
 
-  test('does not call domains.list when --from is provided', async () => {
+  it('does not call domains.list when --from is provided', async () => {
     spies = setupOutputSpies();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -361,7 +361,7 @@ describe('send command', () => {
     expect(mockSend).toHaveBeenCalledTimes(1);
   });
 
-  test('passes scheduledAt to SDK when --scheduled-at provided', async () => {
+  it('passes scheduledAt to SDK when --scheduled-at provided', async () => {
     spies = setupOutputSpies();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -385,7 +385,7 @@ describe('send command', () => {
     expect(callArgs.scheduledAt).toBe('2024-08-05T11:52:01.858Z');
   });
 
-  test('reads attachment file and passes filename and content to SDK', async () => {
+  it('reads attachment file and passes filename and content to SDK', async () => {
     spies = setupOutputSpies();
 
     const tmpFile = join(
@@ -425,7 +425,7 @@ describe('send command', () => {
     }
   });
 
-  test('errors with file_read_error for missing attachment', async () => {
+  it('errors with file_read_error for missing attachment', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -453,7 +453,7 @@ describe('send command', () => {
     expect(output).toContain('file_read_error');
   });
 
-  test('parses key=value headers correctly', async () => {
+  it('parses key=value headers correctly', async () => {
     spies = setupOutputSpies();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -481,7 +481,7 @@ describe('send command', () => {
     });
   });
 
-  test('errors with invalid_header for malformed header', async () => {
+  it('errors with invalid_header for malformed header', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -509,7 +509,7 @@ describe('send command', () => {
     expect(output).toContain('invalid_header');
   });
 
-  test('parses name=value tags correctly', async () => {
+  it('parses name=value tags correctly', async () => {
     spies = setupOutputSpies();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -537,7 +537,7 @@ describe('send command', () => {
     ]);
   });
 
-  test('errors with invalid_tag for malformed tag', async () => {
+  it('errors with invalid_tag for malformed tag', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -565,7 +565,7 @@ describe('send command', () => {
     expect(output).toContain('invalid_tag');
   });
 
-  test('passes idempotencyKey as second arg to emails.send', async () => {
+  it('passes idempotencyKey as second arg to emails.send', async () => {
     spies = setupOutputSpies();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -590,7 +590,7 @@ describe('send command', () => {
     expect(opts?.idempotencyKey).toBe('my-key-123');
   });
 
-  test('errors with missing_flags when --json is set and --from is missing', async () => {
+  it('errors with missing_flags when --json is set and --from is missing', async () => {
     Object.defineProperty(process.stdin, 'isTTY', {
       value: true,
       writable: true,
@@ -635,7 +635,7 @@ describe('send command', () => {
     sendCommand.parent = null;
   });
 
-  test('reads plain text body from --text-file', async () => {
+  it('reads plain text body from --text-file', async () => {
     spies = setupOutputSpies();
 
     const tmpFile = join(
@@ -667,7 +667,7 @@ describe('send command', () => {
     }
   });
 
-  test('--text-file - reads from stdin', async () => {
+  it('--text-file - reads from stdin', async () => {
     spies = setupOutputSpies();
 
     const files = await import('../../../src/lib/files');
@@ -699,7 +699,7 @@ describe('send command', () => {
     }
   });
 
-  test('--html-file - reads from stdin', async () => {
+  it('--html-file - reads from stdin', async () => {
     spies = setupOutputSpies();
 
     const files = await import('../../../src/lib/files');
@@ -731,7 +731,7 @@ describe('send command', () => {
     }
   });
 
-  test('sends both html and text when both provided', async () => {
+  it('sends both html and text when both provided', async () => {
     spies = setupOutputSpies();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -756,7 +756,7 @@ describe('send command', () => {
     expect(callArgs.text).toBe('Hello');
   });
 
-  test('warns to stderr when --html and --html-file both provided', async () => {
+  it('warns to stderr when --html and --html-file both provided', async () => {
     spies = setupOutputSpies();
 
     const tmpFile = join(
@@ -792,7 +792,7 @@ describe('send command', () => {
     }
   });
 
-  test('warns to stderr when --text and --text-file both provided', async () => {
+  it('warns to stderr when --text and --text-file both provided', async () => {
     spies = setupOutputSpies();
 
     const tmpFile = join(
@@ -828,7 +828,7 @@ describe('send command', () => {
     }
   });
 
-  test('errors when --html-file - and --text-file - both read stdin', async () => {
+  it('errors when --html-file - and --text-file - both read stdin', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -856,7 +856,7 @@ describe('send command', () => {
     expect(output).toContain('invalid_options');
   });
 
-  test('errors with invalid_options when --subject is empty string', async () => {
+  it('errors with invalid_options when --subject is empty string', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -882,7 +882,7 @@ describe('send command', () => {
     expect(output).toContain('invalid_options');
   });
 
-  test('errors with invalid_options when --from is empty string', async () => {
+  it('errors with invalid_options when --from is empty string', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -908,7 +908,7 @@ describe('send command', () => {
     expect(output).toContain('invalid_options');
   });
 
-  test('sends with --template and --to only', async () => {
+  it('sends with --template and --to only', async () => {
     spies = setupOutputSpies();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -927,7 +927,7 @@ describe('send command', () => {
     expect(callArgs.text).toBeUndefined();
   });
 
-  test('sends with --template and --var key=value pairs', async () => {
+  it('sends with --template and --var key=value pairs', async () => {
     spies = setupOutputSpies();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -952,7 +952,7 @@ describe('send command', () => {
     });
   });
 
-  test('preserves leading zeros in --var values', async () => {
+  it('preserves leading zeros in --var values', async () => {
     spies = setupOutputSpies();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -969,7 +969,7 @@ describe('send command', () => {
     });
   });
 
-  test('preserves large numeric strings beyond MAX_SAFE_INTEGER in --var values', async () => {
+  it('preserves large numeric strings beyond MAX_SAFE_INTEGER in --var values', async () => {
     spies = setupOutputSpies();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -993,7 +993,7 @@ describe('send command', () => {
     });
   });
 
-  test('preserves scientific notation strings in --var values', async () => {
+  it('preserves scientific notation strings in --var values', async () => {
     spies = setupOutputSpies();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -1010,7 +1010,7 @@ describe('send command', () => {
     });
   });
 
-  test('sends with --template plus --from and --subject overrides', async () => {
+  it('sends with --template plus --from and --subject overrides', async () => {
     spies = setupOutputSpies();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -1035,7 +1035,7 @@ describe('send command', () => {
     expect(callArgs.subject).toBe('Override');
   });
 
-  test('errors with invalid_var when --var used without --template', async () => {
+  it('errors with invalid_var when --var used without --template', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -1064,7 +1064,7 @@ describe('send command', () => {
     expect(output).toContain('--template');
   });
 
-  test('errors with invalid_var for malformed --var', async () => {
+  it('errors with invalid_var for malformed --var', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -1081,7 +1081,7 @@ describe('send command', () => {
     expect(output).toContain('invalid_var');
   });
 
-  test('errors with template_body_conflict when --template and --html used together', async () => {
+  it('errors with template_body_conflict when --template and --html used together', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -1105,7 +1105,7 @@ describe('send command', () => {
     expect(output).toContain('template_body_conflict');
   });
 
-  test('errors with template_body_conflict when --template and --html-file used together', async () => {
+  it('errors with template_body_conflict when --template and --html-file used together', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -1129,7 +1129,7 @@ describe('send command', () => {
     expect(output).toContain('template_body_conflict');
   });
 
-  test('errors with template_body_conflict when --template and --text used together', async () => {
+  it('errors with template_body_conflict when --template and --text used together', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -1146,7 +1146,7 @@ describe('send command', () => {
     expect(output).toContain('template_body_conflict');
   });
 
-  test('errors with template_body_conflict when --template and --text-file used together', async () => {
+  it('errors with template_body_conflict when --template and --text-file used together', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -1170,7 +1170,7 @@ describe('send command', () => {
     expect(output).toContain('template_body_conflict');
   });
 
-  test('errors with template_attachment_conflict when --template and --attachment used together', async () => {
+  it('errors with template_attachment_conflict when --template and --attachment used together', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -1194,7 +1194,7 @@ describe('send command', () => {
     expect(output).toContain('template_attachment_conflict');
   });
 
-  test('sends email with --react-email flag', async () => {
+  it('sends email with --react-email flag', async () => {
     spies = setupOutputSpies();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -1221,7 +1221,7 @@ describe('send command', () => {
     expect(callArgs.html).toBe('<html><body>Rendered</body></html>');
   });
 
-  test('errors with invalid_options when --react-email and --html used together', async () => {
+  it('errors with invalid_options when --react-email and --html used together', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -1249,7 +1249,7 @@ describe('send command', () => {
     expect(output).toContain('invalid_options');
   });
 
-  test('errors with invalid_options when --react-email and --html-file used together', async () => {
+  it('errors with invalid_options when --react-email and --html-file used together', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -1277,7 +1277,7 @@ describe('send command', () => {
     expect(output).toContain('invalid_options');
   });
 
-  test('allows --react-email with --text for plain-text fallback', async () => {
+  it('allows --react-email with --text for plain-text fallback', async () => {
     spies = setupOutputSpies();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
@@ -1303,7 +1303,7 @@ describe('send command', () => {
     expect(callArgs.text).toBe('Plain text fallback');
   });
 
-  test('errors with invalid_options when --react-email and --template used together', async () => {
+  it('errors with invalid_options when --react-email and --template used together', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -1327,7 +1327,7 @@ describe('send command', () => {
     expect(output).toContain('invalid_options');
   });
 
-  test('exits when buildReactEmailHtml fails', async () => {
+  it('exits when buildReactEmailHtml fails', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = vi
@@ -1353,7 +1353,7 @@ describe('send command', () => {
     );
   });
 
-  test('degrades gracefully when domain fetch fails', async () => {
+  it('degrades gracefully when domain fetch fails', async () => {
     const { fetchVerifiedDomains } = await import('../../../src/lib/domains');
     const failingResend = {
       domains: {

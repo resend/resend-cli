@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import * as files from '../../../src/lib/files';
@@ -64,7 +64,7 @@ describe('broadcasts update command', () => {
     readFileSpy = undefined;
   });
 
-  test('updates broadcast subject', async () => {
+  it('updates broadcast subject', async () => {
     spies = setupOutputSpies();
 
     const { updateBroadcastCommand } = await import(
@@ -83,7 +83,7 @@ describe('broadcasts update command', () => {
     expect(payload.subject).toBe('Updated Subject');
   });
 
-  test('passes all update flags to SDK', async () => {
+  it('passes all update flags to SDK', async () => {
     spies = setupOutputSpies();
 
     const { updateBroadcastCommand } = await import(
@@ -111,7 +111,7 @@ describe('broadcasts update command', () => {
     expect(payload.name).toBe('New Label');
   });
 
-  test('passes explicit empty text to the SDK', async () => {
+  it('passes explicit empty text to the SDK', async () => {
     spies = setupOutputSpies();
 
     const { updateBroadcastCommand } = await import(
@@ -126,7 +126,7 @@ describe('broadcasts update command', () => {
     expect(payload.text).toBe('');
   });
 
-  test('passes explicit empty html to the SDK', async () => {
+  it('passes explicit empty html to the SDK', async () => {
     spies = setupOutputSpies();
 
     const { updateBroadcastCommand } = await import(
@@ -141,7 +141,7 @@ describe('broadcasts update command', () => {
     expect(payload.html).toBe('');
   });
 
-  test('outputs JSON id when non-interactive', async () => {
+  it('outputs JSON id when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { updateBroadcastCommand } = await import(
@@ -157,7 +157,7 @@ describe('broadcasts update command', () => {
     expect(parsed.id).toBe('d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
   });
 
-  test('omits undefined fields from SDK payload', async () => {
+  it('omits undefined fields from SDK payload', async () => {
     spies = setupOutputSpies();
 
     const { updateBroadcastCommand } = await import(
@@ -174,7 +174,7 @@ describe('broadcasts update command', () => {
     expect(payload.subject).toBeUndefined();
   });
 
-  test('errors with no_changes when no flags are provided', async () => {
+  it('errors with no_changes when no flags are provided', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -193,7 +193,7 @@ describe('broadcasts update command', () => {
     expect(output).toContain('no_changes');
   });
 
-  test('does not call SDK when no_changes error is raised', async () => {
+  it('does not call SDK when no_changes error is raised', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -211,7 +211,7 @@ describe('broadcasts update command', () => {
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -234,7 +234,7 @@ describe('broadcasts update command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with update_error when SDK returns an error', async () => {
+  it('errors with update_error when SDK returns an error', async () => {
     setNonInteractive();
     mockUpdate.mockResolvedValueOnce(
       mockSdkError('Cannot update sent broadcast', 'validation_error'),
@@ -261,7 +261,7 @@ describe('broadcasts update command', () => {
     expect(output).toContain('update_error');
   });
 
-  test('reads html body from --html-file and passes it to SDK', async () => {
+  it('reads html body from --html-file and passes it to SDK', async () => {
     spies = setupOutputSpies();
     readFileSpy = vi
       .spyOn(files, 'readFile')
@@ -284,7 +284,7 @@ describe('broadcasts update command', () => {
     expect(payload.html).toBe('<p>Updated from file</p>');
   });
 
-  test('treats empty --html-file as a provided file input', async () => {
+  it('treats empty --html-file as a provided file input', async () => {
     spies = setupOutputSpies();
     readFileSpy = vi
       .spyOn(files, 'readFile')
@@ -303,7 +303,7 @@ describe('broadcasts update command', () => {
     expect(payload.html).toBe('<p>From empty path</p>');
   });
 
-  test('reads text body from --text-file and passes it to SDK', async () => {
+  it('reads text body from --text-file and passes it to SDK', async () => {
     spies = setupOutputSpies();
     readFileSpy = vi
       .spyOn(files, 'readFile')
@@ -322,7 +322,7 @@ describe('broadcasts update command', () => {
     expect(payload.text).toBe('Updated text from file');
   });
 
-  test('treats empty --text-file as a provided file input', async () => {
+  it('treats empty --text-file as a provided file input', async () => {
     spies = setupOutputSpies();
     readFileSpy = vi
       .spyOn(files, 'readFile')
@@ -341,7 +341,7 @@ describe('broadcasts update command', () => {
     expect(payload.text).toBe('Text from empty path');
   });
 
-  test('errors with invalid_options when --html and --html-file both provided', async () => {
+  it('errors with invalid_options when --html and --html-file both provided', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -368,7 +368,7 @@ describe('broadcasts update command', () => {
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 
-  test('errors with invalid_options when --text and --text-file both provided', async () => {
+  it('errors with invalid_options when --text and --text-file both provided', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -395,7 +395,7 @@ describe('broadcasts update command', () => {
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 
-  test('errors with invalid_options when --html-file - and --text-file - both read stdin', async () => {
+  it('errors with invalid_options when --html-file - and --text-file - both read stdin', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -420,7 +420,7 @@ describe('broadcasts update command', () => {
     expect(output).toContain('invalid_options');
   });
 
-  test('updates broadcast html with --react-email flag', async () => {
+  it('updates broadcast html with --react-email flag', async () => {
     spies = setupOutputSpies();
 
     const { updateBroadcastCommand } = await import(
@@ -443,7 +443,7 @@ describe('broadcasts update command', () => {
     expect(payload.html).toBe('<html><body>Rendered</body></html>');
   });
 
-  test('errors with react_email_build_error when --react-email is empty', async () => {
+  it('errors with react_email_build_error when --react-email is empty', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -480,7 +480,7 @@ describe('broadcasts update command', () => {
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 
-  test('errors with invalid_options when --react-email and --html used together', async () => {
+  it('errors with invalid_options when --react-email and --html used together', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -505,7 +505,7 @@ describe('broadcasts update command', () => {
     expect(output).toContain('invalid_options');
   });
 
-  test('errors with file_read_error when --html-file path is unreadable', async () => {
+  it('errors with file_read_error when --html-file path is unreadable', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = vi

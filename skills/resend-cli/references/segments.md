@@ -37,3 +37,17 @@ Detailed flag specifications for `resend segments` commands.
 | `--yes` | boolean | Yes (non-interactive) | Skip confirmation |
 
 Deleting a segment does NOT delete its contacts.
+
+---
+
+## segments contacts
+
+**Argument:** `[segmentId]` — Segment UUID (interactive picker if omitted)
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--limit <n>` | number | 10 | Max results (1-100) |
+| `--after <cursor>` | string | — | Forward pagination |
+| `--before <cursor>` | string | — | Backward pagination |
+
+Lists contacts belonging to a segment. Uses `resend.contacts.list({ segmentId })` which maps to `GET /segments/:segment_id/contacts`.

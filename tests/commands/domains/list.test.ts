@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -80,7 +80,7 @@ describe('domains list command', () => {
     return firstCall[0];
   }
 
-  test('calls SDK list and outputs domains as JSON', async () => {
+  it('calls SDK list and outputs domains as JSON', async () => {
     spies = setupOutputSpies();
 
     const { listDomainsCommand } = await import(
@@ -95,7 +95,7 @@ describe('domains list command', () => {
     expect(parsed.data).toHaveLength(2);
   });
 
-  test('passes limit to SDK', async () => {
+  it('passes limit to SDK', async () => {
     spies = setupOutputSpies();
 
     const { listDomainsCommand } = await import(
@@ -106,7 +106,7 @@ describe('domains list command', () => {
     expect(getFirstCallArgs()).toMatchObject({ limit: 25 });
   });
 
-  test('passes after cursor to SDK', async () => {
+  it('passes after cursor to SDK', async () => {
     spies = setupOutputSpies();
 
     const { listDomainsCommand } = await import(
@@ -121,7 +121,7 @@ describe('domains list command', () => {
     });
   });
 
-  test('passes before cursor to SDK', async () => {
+  it('passes before cursor to SDK', async () => {
     spies = setupOutputSpies();
 
     const { listDomainsCommand } = await import(
@@ -136,7 +136,7 @@ describe('domains list command', () => {
     });
   });
 
-  test('errors when both after and before cursors are provided', async () => {
+  it('errors when both after and before cursors are provided', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -156,7 +156,7 @@ describe('domains list command', () => {
     expect(output).toContain('invalid_pagination');
   });
 
-  test('uses default limit of 10 when not specified', async () => {
+  it('uses default limit of 10 when not specified', async () => {
     spies = setupOutputSpies();
 
     const { listDomainsCommand } = await import(
@@ -167,7 +167,7 @@ describe('domains list command', () => {
     expect(getFirstCallArgs()).toMatchObject({ limit: 10 });
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -185,7 +185,7 @@ describe('domains list command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with list_error when SDK returns an error', async () => {
+  it('errors with list_error when SDK returns an error', async () => {
     setNonInteractive();
     mockList.mockResolvedValueOnce(mockSdkError('Unauthorized', 'auth_error'));
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});

@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -53,7 +53,7 @@ describe('contacts remove-segment command', () => {
     exitSpy = undefined;
   });
 
-  test('removes contact from segment by contact ID', async () => {
+  it('removes contact from segment by contact ID', async () => {
     spies = setupOutputSpies();
 
     const { removeContactSegmentCommand } = await import(
@@ -73,7 +73,7 @@ describe('contacts remove-segment command', () => {
     expect(args.segmentId).toBe('7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d');
   });
 
-  test('removes contact from segment by email', async () => {
+  it('removes contact from segment by email', async () => {
     spies = setupOutputSpies();
 
     const { removeContactSegmentCommand } = await import(
@@ -89,7 +89,7 @@ describe('contacts remove-segment command', () => {
     expect(args.segmentId).toBe('7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d');
   });
 
-  test('outputs JSON result when non-interactive', async () => {
+  it('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { removeContactSegmentCommand } = await import(
@@ -109,7 +109,7 @@ describe('contacts remove-segment command', () => {
     expect(parsed.deleted).toBe(true);
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -135,7 +135,7 @@ describe('contacts remove-segment command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with remove_segment_error when SDK returns an error', async () => {
+  it('errors with remove_segment_error when SDK returns an error', async () => {
     setNonInteractive();
     mockRemoveSegment.mockResolvedValueOnce(
       mockSdkError('Not found', 'not_found'),

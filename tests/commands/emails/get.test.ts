@@ -5,8 +5,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -67,7 +67,7 @@ describe('emails get command', () => {
     exitSpy = undefined;
   });
 
-  test('calls SDK get with the provided id', async () => {
+  it('calls SDK get with the provided id', async () => {
     spies = setupOutputSpies();
 
     const { getEmailCommand } = await import(
@@ -78,7 +78,7 @@ describe('emails get command', () => {
     expect(mockGet).toHaveBeenCalledWith('email_abc123');
   });
 
-  test('outputs JSON with full email fields when non-interactive', async () => {
+  it('outputs JSON with full email fields when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { getEmailCommand } = await import(
@@ -94,7 +94,7 @@ describe('emails get command', () => {
     expect(parsed.last_event).toBe('delivered');
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = join(
@@ -115,7 +115,7 @@ describe('emails get command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with fetch_error when SDK returns an error', async () => {
+  it('errors with fetch_error when SDK returns an error', async () => {
     setNonInteractive();
     mockGet.mockResolvedValueOnce(mockSdkError('Not found', 'not_found'));
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});

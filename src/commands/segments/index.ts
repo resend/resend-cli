@@ -1,5 +1,6 @@
 import { Command } from '@commander-js/extra-typings';
 import { buildHelpText } from '../../lib/help-text';
+import { segmentContactsCommand } from './contacts';
 import { createSegmentCommand } from './create';
 import { deleteSegmentCommand } from './delete';
 import { getSegmentCommand } from './get';
@@ -24,10 +25,12 @@ There is no "update" endpoint — to rename a segment, delete it and recreate.`,
         'resend segments list',
         'resend segments create --name "Newsletter Subscribers"',
         'resend segments get 78261eea-8f8b-4381-83c6-79fa7120f1cf',
+        'resend segments contacts 78261eea-8f8b-4381-83c6-79fa7120f1cf',
         'resend segments delete 78261eea-8f8b-4381-83c6-79fa7120f1cf --yes',
       ],
     }),
   )
+  .addCommand(segmentContactsCommand)
   .addCommand(createSegmentCommand)
   .addCommand(getSegmentCommand)
   .addCommand(listSegmentsCommand, { isDefault: true })

@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -55,7 +55,7 @@ describe('broadcasts delete command', () => {
     exitSpy = undefined;
   });
 
-  test('deletes broadcast with --yes flag', async () => {
+  it('deletes broadcast with --yes flag', async () => {
     spies = setupOutputSpies();
 
     const { deleteBroadcastCommand } = await import(
@@ -74,7 +74,7 @@ describe('broadcasts delete command', () => {
     );
   });
 
-  test('outputs JSON result when non-interactive', async () => {
+  it('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { deleteBroadcastCommand } = await import(
@@ -94,7 +94,7 @@ describe('broadcasts delete command', () => {
     expect(parsed.object).toBe('broadcast');
   });
 
-  test('errors with confirmation_required when --yes absent in non-interactive mode', async () => {
+  it('errors with confirmation_required when --yes absent in non-interactive mode', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -113,7 +113,7 @@ describe('broadcasts delete command', () => {
     expect(output).toContain('confirmation_required');
   });
 
-  test('does not call SDK when confirmation_required error is raised', async () => {
+  it('does not call SDK when confirmation_required error is raised', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -131,7 +131,7 @@ describe('broadcasts delete command', () => {
     expect(mockRemove).not.toHaveBeenCalled();
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -154,7 +154,7 @@ describe('broadcasts delete command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with delete_error when SDK returns an error', async () => {
+  it('errors with delete_error when SDK returns an error', async () => {
     setNonInteractive();
     mockRemove.mockResolvedValueOnce(
       mockSdkError('Cannot delete sent broadcast', 'validation_error'),

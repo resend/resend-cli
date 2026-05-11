@@ -7,8 +7,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import { storeApiKey } from '../../../src/lib/config';
@@ -54,7 +54,7 @@ describe('auth remove command', () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  test('removes profile in JSON mode', async () => {
+  it('removes profile in JSON mode', async () => {
     spies = setupOutputSpies();
     storeApiKey('re_default', 'default');
     storeApiKey('re_staging', 'staging');
@@ -69,7 +69,7 @@ describe('auth remove command', () => {
     expect(output.removed_profile).toBe('staging');
   });
 
-  test('deletes credentials file when last profile removed', async () => {
+  it('deletes credentials file when last profile removed', async () => {
     spies = setupOutputSpies();
     storeApiKey('re_only', 'only');
 
@@ -80,7 +80,7 @@ describe('auth remove command', () => {
     expect(existsSync(configPath)).toBe(false);
   });
 
-  test('errors when name omitted in non-interactive mode', async () => {
+  it('errors when name omitted in non-interactive mode', async () => {
     spies = setupOutputSpies();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -95,7 +95,7 @@ describe('auth remove command', () => {
     expect(output.error.code).toBe('missing_name');
   });
 
-  test('errors with missing_name when --json is set even in TTY', async () => {
+  it('errors with missing_name when --json is set even in TTY', async () => {
     Object.defineProperty(process.stdin, 'isTTY', {
       value: true,
       writable: true,
@@ -117,7 +117,7 @@ describe('auth remove command', () => {
     expect(output.error.code).toBe('missing_name');
   });
 
-  test('errors when profile does not exist', async () => {
+  it('errors when profile does not exist', async () => {
     spies = setupOutputSpies();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();

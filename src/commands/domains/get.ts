@@ -18,7 +18,7 @@ export const getDomainCommand = new Command('get')
     'after',
     buildHelpText({
       output:
-        '  Full domain object including records array and current status.\n\nDomain status values: not_started | pending | verified | failed | temporary_failure',
+        '  Full domain object including records array and current status.\n\nDomain status values: not_started | pending | verified | failed | partially_verified | partially_failed',
       errorCodes: ['auth_error', 'fetch_error'],
       examples: [
         'resend domains get 4dd369bc-aa82-4ff3-97de-514ae3000ee0',
@@ -38,6 +38,19 @@ export const getDomainCommand = new Command('get')
           console.log(`ID: ${d.id}`);
           console.log(`Region: ${d.region}`);
           console.log(`Created: ${d.created_at}`);
+          if (d.open_tracking !== undefined) {
+            console.log(
+              `Open tracking: ${d.open_tracking ? 'enabled' : 'disabled'}`,
+            );
+          }
+          if (d.click_tracking !== undefined) {
+            console.log(
+              `Click tracking: ${d.click_tracking ? 'enabled' : 'disabled'}`,
+            );
+          }
+          if (d.tracking_subdomain) {
+            console.log(`Tracking subdomain: ${d.tracking_subdomain}`);
+          }
           if (d.records.length > 0) {
             console.log('\nDNS Records:');
             console.log(renderDnsRecordsTable(d.records, d.name));

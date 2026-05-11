@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -54,7 +54,7 @@ describe('contacts update command', () => {
     exitSpy = undefined;
   });
 
-  test('updates contact by ID with --unsubscribed', async () => {
+  it('updates contact by ID with --unsubscribed', async () => {
     spies = setupOutputSpies();
 
     const { updateContactCommand } = await import(
@@ -71,7 +71,7 @@ describe('contacts update command', () => {
     expect(args.unsubscribed).toBe(true);
   });
 
-  test('updates contact by email with --no-unsubscribed', async () => {
+  it('updates contact by email with --no-unsubscribed', async () => {
     spies = setupOutputSpies();
 
     const { updateContactCommand } = await import(
@@ -87,7 +87,7 @@ describe('contacts update command', () => {
     expect(args.unsubscribed).toBe(false);
   });
 
-  test('parses --properties JSON and passes to SDK', async () => {
+  it('parses --properties JSON and passes to SDK', async () => {
     spies = setupOutputSpies();
 
     const { updateContactCommand } = await import(
@@ -106,7 +106,7 @@ describe('contacts update command', () => {
     expect(args.properties).toEqual({ plan: 'pro' });
   });
 
-  test('does not include unsubscribed when neither flag is passed', async () => {
+  it('does not include unsubscribed when neither flag is passed', async () => {
     spies = setupOutputSpies();
 
     const { updateContactCommand } = await import(
@@ -121,7 +121,7 @@ describe('contacts update command', () => {
     expect(args.unsubscribed).toBeUndefined();
   });
 
-  test('outputs JSON result when non-interactive', async () => {
+  it('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { updateContactCommand } = await import(
@@ -138,7 +138,7 @@ describe('contacts update command', () => {
     expect(parsed.object).toBe('contact');
   });
 
-  test('errors with invalid_properties when --properties is not valid JSON', async () => {
+  it('errors with invalid_properties when --properties is not valid JSON', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -157,7 +157,7 @@ describe('contacts update command', () => {
     expect(output).toContain('invalid_properties');
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -180,7 +180,7 @@ describe('contacts update command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with update_error when SDK returns an error', async () => {
+  it('errors with update_error when SDK returns an error', async () => {
     setNonInteractive();
     mockUpdate.mockResolvedValueOnce(
       mockSdkError('Contact not found', 'not_found'),

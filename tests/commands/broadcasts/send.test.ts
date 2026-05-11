@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -51,7 +51,7 @@ describe('broadcasts send command', () => {
     exitSpy = undefined;
   });
 
-  test('sends broadcast by id', async () => {
+  it('sends broadcast by id', async () => {
     spies = setupOutputSpies();
 
     const { sendBroadcastCommand } = await import(
@@ -68,7 +68,7 @@ describe('broadcasts send command', () => {
     );
   });
 
-  test('outputs JSON id when non-interactive', async () => {
+  it('outputs JSON id when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { sendBroadcastCommand } = await import(
@@ -84,7 +84,7 @@ describe('broadcasts send command', () => {
     expect(parsed.id).toBe('d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6');
   });
 
-  test('passes --scheduled-at to SDK', async () => {
+  it('passes --scheduled-at to SDK', async () => {
     spies = setupOutputSpies();
 
     const { sendBroadcastCommand } = await import(
@@ -99,7 +99,7 @@ describe('broadcasts send command', () => {
     expect(payload.scheduledAt).toBe('in 1 hour');
   });
 
-  test('does not pass scheduledAt when flag absent', async () => {
+  it('does not pass scheduledAt when flag absent', async () => {
     spies = setupOutputSpies();
 
     const { sendBroadcastCommand } = await import(
@@ -114,7 +114,7 @@ describe('broadcasts send command', () => {
     expect(payload.scheduledAt).toBeUndefined();
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -135,7 +135,7 @@ describe('broadcasts send command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with send_error when SDK returns an error', async () => {
+  it('errors with send_error when SDK returns an error', async () => {
     setNonInteractive();
     mockSend.mockResolvedValueOnce(
       mockSdkError('Broadcast not found', 'not_found'),

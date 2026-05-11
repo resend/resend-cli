@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -58,7 +58,7 @@ describe('contact-properties get command', () => {
     exitSpy = undefined;
   });
 
-  test('calls SDK with the given ID', async () => {
+  it('calls SDK with the given ID', async () => {
     spies = setupOutputSpies();
 
     const { getContactPropertyCommand } = await import(
@@ -77,7 +77,7 @@ describe('contact-properties get command', () => {
     );
   });
 
-  test('outputs JSON when non-interactive', async () => {
+  it('outputs JSON when non-interactive', async () => {
     spies = setupOutputSpies();
 
     const { getContactPropertyCommand } = await import(
@@ -98,7 +98,7 @@ describe('contact-properties get command', () => {
     expect(parsed.type).toBe('string');
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -119,7 +119,7 @@ describe('contact-properties get command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with fetch_error when SDK returns an error', async () => {
+  it('errors with fetch_error when SDK returns an error', async () => {
     setNonInteractive();
     mockGet.mockResolvedValueOnce(
       mockSdkError('Property not found', 'not_found'),

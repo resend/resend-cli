@@ -7,11 +7,8 @@ export const apiKeyPickerConfig: PickerConfig<{
 }> = {
   resource: 'API key',
   resourcePlural: 'API keys',
-  fetchItems: (resend) =>
-    resend.apiKeys.list().then((r) => ({
-      ...r,
-      data: r.data ? { data: r.data.data, has_more: false } : null,
-    })),
+  fetchItems: (resend, { limit, after }) =>
+    resend.apiKeys.list({ limit, ...(after && { after }) }),
   display: (k) => ({ label: k.name, hint: k.id }),
 };
 

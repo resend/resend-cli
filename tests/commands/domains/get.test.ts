@@ -3,8 +3,8 @@ import {
   beforeEach,
   describe,
   expect,
+  it,
   type MockInstance,
-  test,
   vi,
 } from 'vitest';
 import {
@@ -70,7 +70,7 @@ describe('domains get command', () => {
     exitSpy = undefined;
   });
 
-  test('calls SDK get with correct id', async () => {
+  it('calls SDK get with correct id', async () => {
     spies = setupOutputSpies();
 
     const { getDomainCommand } = await import(
@@ -81,7 +81,7 @@ describe('domains get command', () => {
     expect(mockGet).toHaveBeenCalledWith('test-domain-id');
   });
 
-  test('outputs full domain JSON in non-interactive mode', async () => {
+  it('outputs full domain JSON in non-interactive mode', async () => {
     spies = setupOutputSpies();
 
     const { getDomainCommand } = await import(
@@ -96,7 +96,38 @@ describe('domains get command', () => {
     expect(parsed.records).toHaveLength(1);
   });
 
-  test('errors with auth_error when no API key', async () => {
+  it('includes tracking fields in JSON output', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: {
+        object: 'domain',
+        id: 'test-domain-id',
+        name: 'example.com',
+        status: 'verified',
+        created_at: '2026-01-01T00:00:00.000Z',
+        region: 'us-east-1',
+        open_tracking: true,
+        click_tracking: true,
+        tracking_subdomain: 'track',
+        records: [],
+        capabilities: { sending: 'enabled', receiving: 'disabled' },
+      },
+      error: null,
+    });
+    spies = setupOutputSpies();
+
+    const { getDomainCommand } = await import(
+      '../../../src/commands/domains/get'
+    );
+    await getDomainCommand.parseAsync(['test-domain-id'], { from: 'user' });
+
+    const output = spies.logSpy.mock.calls[0][0] as string;
+    const parsed = JSON.parse(output);
+    expect(parsed.open_tracking).toBe(true);
+    expect(parsed.click_tracking).toBe(true);
+    expect(parsed.tracking_subdomain).toBe('track');
+  });
+
+  it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
@@ -114,7 +145,7 @@ describe('domains get command', () => {
     expect(output).toContain('auth_error');
   });
 
-  test('errors with fetch_error when SDK returns an error', async () => {
+  it('errors with fetch_error when SDK returns an error', async () => {
     setNonInteractive();
     mockGet.mockResolvedValueOnce(
       mockSdkError('Domain not found', 'not_found'),
