@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import {
   closeSync,
   fsyncSync,
@@ -13,7 +14,7 @@ export const writeFileAtomic = (
   data: string,
   mode: number,
 ): void => {
-  const tmpPath = `${filePath}.tmp.${process.pid}`;
+  const tmpPath = `${filePath}.tmp.${process.pid}.${randomUUID()}`;
 
   try {
     const fd = openSync(tmpPath, 'w', mode);

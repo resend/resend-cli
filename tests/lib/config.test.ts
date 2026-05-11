@@ -411,6 +411,7 @@ describe('renameProfile', () => {
   let tmpDir: string;
 
   beforeEach(() => {
+    delete process.env.RESEND_API_KEY;
     tmpDir = join(
       tmpdir(),
       `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
