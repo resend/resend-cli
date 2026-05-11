@@ -8,6 +8,7 @@ import {
   vi,
 } from 'vitest';
 import { withSpinner } from '../../src/lib/spinner';
+import { REQUEST_TIMEOUT_MS } from '../../src/lib/with-timeout';
 import {
   captureTestEnv,
   ExitError,
@@ -131,6 +132,23 @@ describe('withSpinner retry on rate_limit_exceeded', () => {
     });
     expect(result).toEqual({ id: 'ok' });
     expect(calls).toBe(2);
+  });
+
+  it('exits with timeout error when the call hangs past the deadline', async () => {
+    vi.useFakeTimers();
+    try {
+      const hang = () => new Promise<never>(() => {});
+      const promise = withSpinner(loading, hang, 'test_error', globalOpts);
+      const settled = promise.catch((err) => err);
+      await vi.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS + 1);
+      const err = await settled;
+      expect(err).toBeInstanceOf(ExitError);
+      expect((err as ExitError).code).toBe(1);
+      const errOutput = errorSpy.mock.calls.flat().join(' ');
+      expect(errOutput).toContain('timed out');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 
