@@ -53,6 +53,18 @@ export function getCredentialsPath(): string {
 export const getCredentialsLockPath = (): string =>
   join(getConfigDir(), 'credentials.json.lock');
 
+// Best-effort read: returns null on any failure (corruption, EISDIR, EACCES,
+// etc). Callers that intend to delete the file regardless of contents (e.g.
+// "logout all") use this so the CLI stays usable even when the file is
+// unreadable.
+export function tryReadCredentials(): CredentialsFile | null {
+  try {
+    return readCredentials();
+  } catch {
+    return null;
+  }
+}
+
 export function readCredentials(): CredentialsFile | null {
   const configPath = getCredentialsPath();
 
@@ -472,7 +484,11 @@ export async function removeApiKeyAsync(profileName?: string): Promise<string> {
 
 export async function removeAllApiKeysAsync(): Promise<string> {
   return withFileLock(getCredentialsLockPath(), async () => {
-    const creds = readCredentials();
+    // Tolerate corruption: the user is asking to nuke everything, so a
+    // corrupted file should still be removable via the CLI. Orphaned
+    // secure-storage entries are harmless and can be cleaned up from the
+    // system keychain UI if the user cares.
+    const creds = tryReadCredentials();
     const configPath = getCredentialsPath();
 
     if (creds?.storage === 'secure_storage') {

@@ -3,25 +3,15 @@ import * as p from '@clack/prompts';
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import {
-  type CredentialsFile,
   getCredentialsPath,
-  readCredentials,
   removeAllApiKeysAsync,
   removeApiKeyAsync,
-  resolveProfileName,
+  tryReadCredentials,
 } from '../../lib/config';
 import { buildHelpText } from '../../lib/help-text';
 import { errorMessage, outputError, outputResult } from '../../lib/output';
 import { cancelAndExit } from '../../lib/prompts';
 import { isInteractive } from '../../lib/tty';
-
-const tryReadCredentials = (): CredentialsFile | null => {
-  try {
-    return readCredentials();
-  } catch {
-    return null;
-  }
-};
 
 export const logoutCommand = new Command('logout')
   .description('Remove your saved Resend API key')
@@ -65,12 +55,19 @@ If no credentials file exists, exits cleanly with no error.`,
 
     const profileFlag = globalOpts.profile;
     const logoutAll = !profileFlag;
-    const profileLabel = profileFlag || resolveProfileName();
+    // For logoutAll we don't need a specific profile; for single-profile
+    // removal, the user-supplied flag is the source of truth. We deliberately
+    // avoid resolveProfileName() so a corrupted credentials file doesn't
+    // crash the "logout all" path.
+    const profileLabel = profileFlag ?? 'all';
 
-    if (!logoutAll && !creds?.profiles[profileLabel]) {
+    // Only validate profile existence when we can actually read the file.
+    // If creds is null because the file is corrupted, fall through and let
+    // removeApiKeyAsync surface the corruption error to the user.
+    if (!logoutAll && creds && !creds.profiles[profileLabel]) {
       outputError(
         {
-          message: `Profile "${profileLabel}" not found. Available profiles: ${Object.keys(creds?.profiles ?? {}).join(', ')}`,
+          message: `Profile "${profileLabel}" not found. Available profiles: ${Object.keys(creds.profiles).join(', ')}`,
           code: 'remove_failed',
         },
         { json: globalOpts.json },
