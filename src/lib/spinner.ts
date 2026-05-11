@@ -3,6 +3,7 @@ import type { GlobalOpts } from './client';
 import { errorMessage, outputError } from './output';
 import { isInteractive, isUnicodeSupported } from './tty';
 import { type SdkResponse, withRetry } from './with-retry';
+import { REQUEST_TIMEOUT_MS, withTimeout } from './with-timeout';
 
 // Status symbols generated via String.fromCodePoint() — never literal Unicode in
 // source — to prevent UTF-8 → Latin-1 corruption when the npm package is bundled.
@@ -38,6 +39,9 @@ type WithSpinnerOptions = {
  * is set, also retries transient 5xx errors (internal_server_error,
  * service_unavailable, gateway_timeout) with the same schedule. Callers
  * should opt into transient retry only for idempotent operations.
+ *
+ * Each attempt is bounded by REQUEST_TIMEOUT_MS (30s); a timeout rejects
+ * the call and is not retried.
  */
 export async function withSpinner<T>(
   loading: string,
@@ -48,16 +52,19 @@ export async function withSpinner<T>(
 ): Promise<T> {
   const spinner = createSpinner(loading, globalOpts.quiet);
   try {
-    const { data, error } = await withRetry(call, {
-      retryTransient: options.retryTransient,
-      onRetry: (_attempt, delay, errorName) => {
-        spinner.update(
-          errorName === 'rate_limit_exceeded'
-            ? `Rate limited, retrying in ${delay}s...`
-            : `Server error, retrying in ${delay}s...`,
-        );
+    const { data, error } = await withRetry(
+      () => withTimeout(call(), REQUEST_TIMEOUT_MS),
+      {
+        retryTransient: options.retryTransient,
+        onRetry: (_attempt, delay, errorName) => {
+          spinner.update(
+            errorName === 'rate_limit_exceeded'
+              ? `Rate limited, retrying in ${delay}s...`
+              : `Server error, retrying in ${delay}s...`,
+          );
+        },
       },
-    });
+    );
     if (error) {
       spinner.stop();
       outputError(

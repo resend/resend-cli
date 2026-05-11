@@ -5,6 +5,7 @@ const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> =>
     const timer = setTimeout(() => {
       reject(new Error(`Request timed out after ${ms / 1000}s`));
     }, ms);
+    // Don't keep the event loop alive once the wrapped promise settles.
     timer.unref();
     promise.then(
       (val) => {

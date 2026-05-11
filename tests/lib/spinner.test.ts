@@ -8,7 +8,7 @@ import {
   vi,
 } from 'vitest';
 import { withSpinner } from '../../src/lib/spinner';
-import * as timeoutModule from '../../src/lib/with-timeout';
+import { REQUEST_TIMEOUT_MS } from '../../src/lib/with-timeout';
 import {
   captureTestEnv,
   ExitError,
@@ -134,27 +134,21 @@ describe('withSpinner retry on rate_limit_exceeded', () => {
     expect(calls).toBe(2);
   });
 
-  it('exits with error when request times out', async () => {
-    vi.spyOn(timeoutModule, 'withTimeout').mockRejectedValue(
-      new Error('Request timed out after 30s'),
-    );
-
-    let threw = false;
+  it('exits with timeout error when the call hangs past the deadline', async () => {
+    vi.useFakeTimers();
     try {
-      await withSpinner(
-        msgs,
-        async () => ({ data: null, error: null, headers: null }),
-        'test_error',
-        globalOpts,
-      );
-    } catch (err) {
-      threw = true;
+      const hang = () => new Promise<never>(() => {});
+      const promise = withSpinner(loading, hang, 'test_error', globalOpts);
+      const settled = promise.catch((err) => err);
+      await vi.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS + 1);
+      const err = await settled;
       expect(err).toBeInstanceOf(ExitError);
       expect((err as ExitError).code).toBe(1);
+      const errOutput = errorSpy.mock.calls.flat().join(' ');
+      expect(errOutput).toContain('timed out');
+    } finally {
+      vi.useRealTimers();
     }
-    expect(threw).toBe(true);
-    const errOutput = errorSpy.mock.calls.flat().join(' ');
-    expect(errOutput).toContain('timed out');
   });
 });
 

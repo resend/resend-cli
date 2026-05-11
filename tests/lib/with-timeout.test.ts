@@ -1,7 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { withTimeout } from '../../src/lib/with-timeout';
 
 describe('withTimeout', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('resolves when the promise completes before the deadline', async () => {
     const result = await withTimeout(Promise.resolve(42), 1000);
     expect(result).toBe(42);
@@ -19,5 +23,11 @@ describe('withTimeout', () => {
   it('forwards the original rejection when the promise fails before the deadline', async () => {
     const failing = Promise.reject(new Error('boom'));
     await expect(withTimeout(failing, 1000)).rejects.toThrow('boom');
+  });
+
+  it('clears the timeout once the wrapped promise settles', async () => {
+    vi.useFakeTimers();
+    await withTimeout(Promise.resolve(1), 1000);
+    expect(vi.getTimerCount()).toBe(0);
   });
 });
