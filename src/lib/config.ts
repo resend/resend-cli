@@ -394,31 +394,28 @@ export async function storeApiKeyAsync(
     return { configPath, backend };
   }
 
-  const configPath = await withFileLock(
-    getCredentialsLockPath(),
-    async () => {
-      await backend.set(SERVICE_NAME, profile, apiKey);
+  const configPath = await withFileLock(getCredentialsLockPath(), async () => {
+    await backend.set(SERVICE_NAME, profile, apiKey);
 
-      const creds = readCredentials() || {
-        active_profile: 'default',
-        profiles: {},
-      };
+    const creds = readCredentials() || {
+      active_profile: 'default',
+      profiles: {},
+    };
 
-      const updatedProfiles = {
-        ...creds.profiles,
-        [profile]: { ...(permission && { permission }) },
-      };
+    const updatedProfiles = {
+      ...creds.profiles,
+      [profile]: { ...(permission && { permission }) },
+    };
 
-      return writeCredentials({
-        ...creds,
-        storage: 'secure_storage',
-        profiles: updatedProfiles,
-        ...(Object.keys(updatedProfiles).length === 1
-          ? { active_profile: profile }
-          : {}),
-      });
-    },
-  );
+    return writeCredentials({
+      ...creds,
+      storage: 'secure_storage',
+      profiles: updatedProfiles,
+      ...(Object.keys(updatedProfiles).length === 1
+        ? { active_profile: profile }
+        : {}),
+    });
+  });
 
   return { configPath, backend };
 }
