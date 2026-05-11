@@ -4,15 +4,17 @@ import {
   mkdirSync,
   readFileSync,
   unlinkSync,
-  writeFileSync,
 } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { CorruptedCredentialsError } from './corrupted-credentials-error';
 import {
   type CredentialBackend,
   getCredentialBackend,
   SERVICE_NAME,
 } from './credential-store';
+import { withFileLock } from './file-lock';
+import { writeFileAtomic } from './write-file-atomic';
 
 export type ApiKeyPermission = 'full_access' | 'sending_access';
 
@@ -48,20 +50,74 @@ export function getCredentialsPath(): string {
   return join(getConfigDir(), 'credentials.json');
 }
 
-export function readCredentials(): CredentialsFile | null {
+export const getCredentialsLockPath = (): string =>
+  join(getConfigDir(), 'credentials.json.lock');
+
+// Best-effort read: returns null on any failure (corruption, EISDIR, EACCES,
+// etc). Callers that intend to delete the file regardless of contents (e.g.
+// "logout all") use this so the CLI stays usable even when the file is
+// unreadable.
+export function tryReadCredentials(): CredentialsFile | null {
   try {
-    const data = JSON.parse(readFileSync(getCredentialsPath(), 'utf-8'));
-    if (data.profiles) {
-      return {
-        active_profile: data.active_profile ?? 'default',
-        ...(data.storage ? { storage: data.storage } : {}),
-        profiles: data.profiles,
-      };
-    }
-    return null;
+    return readCredentials();
   } catch {
     return null;
   }
+}
+
+export function readCredentials(): CredentialsFile | null {
+  const configPath = getCredentialsPath();
+
+  if (!existsSync(configPath)) {
+    return null;
+  }
+
+  const raw = readFileSync(configPath, 'utf-8');
+
+  if (raw.trim().length === 0) {
+    return null;
+  }
+
+  let data: Record<string, unknown>;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    throw new CorruptedCredentialsError(configPath);
+  }
+
+  if (
+    typeof data === 'object' &&
+    data !== null &&
+    'api_key' in data &&
+    !('profiles' in data) &&
+    !('teams' in data)
+  ) {
+    return {
+      active_profile: 'default',
+      profiles: {
+        default: { api_key: data.api_key as string },
+      },
+    };
+  }
+
+  if ('profiles' in data) {
+    const storage =
+      data.storage === 'keychain' ? 'secure_storage' : data.storage;
+    return {
+      active_profile: (data.active_profile as string) ?? 'default',
+      ...(storage ? { storage: storage as CredentialStorage } : {}),
+      profiles: data.profiles as Record<string, Profile>,
+    };
+  }
+
+  if ('teams' in data) {
+    return {
+      active_profile: (data.active_team as string) ?? 'default',
+      profiles: data.teams as Record<string, Profile>,
+    };
+  }
+
+  return null;
 }
 
 export function writeCredentials(creds: CredentialsFile): string {
@@ -69,9 +125,7 @@ export function writeCredentials(creds: CredentialsFile): string {
   mkdirSync(configDir, { recursive: true, mode: 0o700 });
 
   const configPath = getCredentialsPath();
-  writeFileSync(configPath, `${JSON.stringify(creds, null, 2)}\n`, {
-    mode: 0o600,
-  });
+  writeFileAtomic(configPath, `${JSON.stringify(creds, null, 2)}\n`, 0o600);
   chmodSync(configPath, 0o600);
 
   return configPath;
@@ -135,64 +189,74 @@ export function storeApiKey(
   if (validationError) {
     throw new Error(validationError);
   }
-  const creds = readCredentials() || {
-    active_profile: 'default',
-    profiles: {},
-  };
 
-  creds.profiles[profile] = {
-    api_key: apiKey,
-    ...(permission && { permission }),
-  };
+  return withFileLock(getCredentialsLockPath(), () => {
+    const creds = readCredentials() || {
+      active_profile: 'default',
+      profiles: {},
+    };
 
-  // If this is the first profile, set it as active
-  if (Object.keys(creds.profiles).length === 1) {
-    creds.active_profile = profile;
-  }
+    const updatedProfiles = {
+      ...creds.profiles,
+      [profile]: {
+        api_key: apiKey,
+        ...(permission && { permission }),
+      },
+    };
 
-  return writeCredentials(creds);
+    const updatedCreds: CredentialsFile = {
+      ...creds,
+      profiles: updatedProfiles,
+      ...(Object.keys(updatedProfiles).length === 1
+        ? { active_profile: profile }
+        : {}),
+    };
+
+    return writeCredentials(updatedCreds);
+  });
 }
 
 export function removeAllApiKeys(): string {
-  const configPath = getCredentialsPath();
-  unlinkSync(configPath);
-  return configPath;
+  return withFileLock(getCredentialsLockPath(), () => {
+    const configPath = getCredentialsPath();
+    unlinkSync(configPath);
+    return configPath;
+  });
 }
 
 export function removeApiKey(profileName?: string): string {
-  const creds = readCredentials();
-  if (!creds) {
-    const configPath = getCredentialsPath();
-    if (!existsSync(configPath)) {
+  return withFileLock(getCredentialsLockPath(), () => {
+    const creds = readCredentials();
+    if (!creds) {
       throw new Error('No credentials file found.');
     }
-    // File exists but is not valid credentials — delete it
-    unlinkSync(configPath);
-    return configPath;
-  }
 
-  const profile = profileName || resolveProfileName();
-  if (!creds.profiles[profile]) {
-    throw new Error(
-      `Profile "${profile}" not found. Available profiles: ${Object.keys(creds.profiles).join(', ')}`,
-    );
-  }
-  delete creds.profiles[profile];
+    const profile = profileName || resolveProfileName();
+    if (!creds.profiles[profile]) {
+      throw new Error(
+        `Profile "${profile}" not found. Available profiles: ${Object.keys(creds.profiles).join(', ')}`,
+      );
+    }
 
-  // If we removed the active profile, switch to first available or "default"
-  if (creds.active_profile === profile) {
-    const remaining = Object.keys(creds.profiles);
-    creds.active_profile = remaining[0] || 'default';
-  }
+    const { [profile]: _, ...remainingProfiles } = creds.profiles;
 
-  // If no profiles left, delete the file
-  if (Object.keys(creds.profiles).length === 0) {
-    const configPath = getCredentialsPath();
-    unlinkSync(configPath);
-    return configPath;
-  }
+    if (Object.keys(remainingProfiles).length === 0) {
+      const configPath = getCredentialsPath();
+      unlinkSync(configPath);
+      return configPath;
+    }
 
-  return writeCredentials(creds);
+    const updatedActiveProfile =
+      creds.active_profile === profile
+        ? Object.keys(remainingProfiles)[0] || 'default'
+        : creds.active_profile;
+
+    return writeCredentials({
+      ...creds,
+      active_profile: updatedActiveProfile,
+      profiles: remainingProfiles,
+    });
+  });
 }
 
 export function setActiveProfile(profileName: string): void {
@@ -200,17 +264,19 @@ export function setActiveProfile(profileName: string): void {
   if (validationError) {
     throw new Error(validationError);
   }
-  const creds = readCredentials();
-  if (!creds) {
-    throw new Error('No credentials file found. Run: resend login');
-  }
-  if (!creds.profiles[profileName]) {
-    throw new Error(
-      `Profile "${profileName}" not found. Available profiles: ${Object.keys(creds.profiles).join(', ')}`,
-    );
-  }
-  creds.active_profile = profileName;
-  writeCredentials(creds);
+
+  withFileLock(getCredentialsLockPath(), () => {
+    const creds = readCredentials();
+    if (!creds) {
+      throw new Error('No credentials file found. Run: resend login');
+    }
+    if (!creds.profiles[profileName]) {
+      throw new Error(
+        `Profile "${profileName}" not found. Available profiles: ${Object.keys(creds.profiles).join(', ')}`,
+      );
+    }
+    writeCredentials({ ...creds, active_profile: profileName });
+  });
 }
 
 export function listProfiles(): Array<{ name: string; active: boolean }> {
@@ -245,24 +311,30 @@ export function renameProfile(oldName: string, newName: string): void {
   if (validationError) {
     throw new Error(validationError);
   }
-  const creds = readCredentials();
-  if (!creds) {
-    throw new Error('No credentials file found. Run: resend login');
-  }
-  if (!creds.profiles[oldName]) {
-    throw new Error(
-      `Profile "${oldName}" not found. Available profiles: ${Object.keys(creds.profiles).join(', ')}`,
-    );
-  }
-  if (oldName !== newName && creds.profiles[newName]) {
-    throw new Error(`Profile "${newName}" already exists.`);
-  }
-  creds.profiles[newName] = creds.profiles[oldName];
-  delete creds.profiles[oldName];
-  if (creds.active_profile === oldName) {
-    creds.active_profile = newName;
-  }
-  writeCredentials(creds);
+
+  withFileLock(getCredentialsLockPath(), () => {
+    const creds = readCredentials();
+    if (!creds) {
+      throw new Error('No credentials file found. Run: resend login');
+    }
+    if (!creds.profiles[oldName]) {
+      throw new Error(
+        `Profile "${oldName}" not found. Available profiles: ${Object.keys(creds.profiles).join(', ')}`,
+      );
+    }
+    if (creds.profiles[newName]) {
+      throw new Error(`Profile "${newName}" already exists.`);
+    }
+
+    const { [oldName]: oldProfile, ...rest } = creds.profiles;
+
+    writeCredentials({
+      ...creds,
+      active_profile:
+        creds.active_profile === oldName ? newName : creds.active_profile,
+      profiles: { ...rest, [newName]: oldProfile },
+    });
+  });
 }
 
 export function maskKey(key: string): string {
@@ -271,8 +343,6 @@ export function maskKey(key: string): string {
   }
   return `${key.slice(0, 3)}...${key.slice(-4)}`;
 }
-
-// --- Async variants that route through the credential backend ---
 
 export async function resolveApiKeyAsync(
   flagValue?: string,
@@ -303,7 +373,6 @@ export async function resolveApiKeyAsync(
     }
   }
 
-  // File-based storage
   if (creds) {
     const entry = creds.profiles[profile];
     if (entry?.api_key) {
@@ -331,128 +400,187 @@ export async function storeApiKeyAsync(
   }
 
   const backend = await getCredentialBackend();
-  const isFileBackend = !backend.isSecure;
 
-  if (isFileBackend) {
-    // Do NOT clear a pre-existing `storage: 'secure_storage'` marker here.
-    // Other profiles may still have their keys in secure storage.
-    // resolveApiKeyAsync already falls through from secure storage to file-based
-    // lookup, so keeping the marker is safe and avoids orphaning those profiles.
+  if (!backend.isSecure) {
     const configPath = storeApiKey(apiKey, profile, permission);
     return { configPath, backend };
   }
 
-  // Store in secure backend
-  await backend.set(SERVICE_NAME, profile, apiKey);
+  const configPath = await withFileLock(getCredentialsLockPath(), async () => {
+    await backend.set(SERVICE_NAME, profile, apiKey);
 
-  // Update credentials file: mark storage as secure, keep profile entry (without api_key)
-  const creds = readCredentials() || {
-    active_profile: 'default',
-    profiles: {},
-  };
-  creds.storage = 'secure_storage';
-  creds.profiles[profile] = { ...(permission && { permission }) };
+    const creds = readCredentials() || {
+      active_profile: 'default',
+      profiles: {},
+    };
 
-  if (Object.keys(creds.profiles).length === 1) {
-    creds.active_profile = profile;
-  }
+    const updatedProfiles = {
+      ...creds.profiles,
+      [profile]: { ...(permission && { permission }) },
+    };
 
-  const configPath = writeCredentials(creds);
+    return writeCredentials({
+      ...creds,
+      storage: 'secure_storage',
+      profiles: updatedProfiles,
+      ...(Object.keys(updatedProfiles).length === 1
+        ? { active_profile: profile }
+        : {}),
+    });
+  });
+
   return { configPath, backend };
 }
 
 export async function removeApiKeyAsync(profileName?: string): Promise<string> {
-  const creds = readCredentials();
-  const profile =
-    profileName ||
-    process.env.RESEND_PROFILE ||
-    creds?.active_profile ||
-    'default';
+  return withFileLock(getCredentialsLockPath(), async () => {
+    const creds = readCredentials();
+    const profile =
+      profileName ||
+      process.env.RESEND_PROFILE ||
+      creds?.active_profile ||
+      'default';
 
-  if (!creds?.profiles[profile]) {
-    throw new Error(
-      creds
-        ? `Profile "${profile}" not found. Available profiles: ${Object.keys(creds.profiles).join(', ')}`
-        : 'No credentials file found.',
-    );
-  }
+    if (!creds?.profiles[profile]) {
+      throw new Error(
+        creds
+          ? `Profile "${profile}" not found. Available profiles: ${Object.keys(creds.profiles).join(', ')}`
+          : 'No credentials file found.',
+      );
+    }
 
-  if (creds.storage === 'secure_storage') {
-    const backend = await getCredentialBackend();
-    if (backend.isSecure) {
-      const deleted = await backend.delete(SERVICE_NAME, profile);
-      if (!deleted) {
-        throw new Error(
-          `Failed to remove API key for profile "${profile}" from ${backend.name}. Credential may still exist in secure storage.`,
-        );
+    if (creds.storage === 'secure_storage') {
+      const backend = await getCredentialBackend();
+      if (backend.isSecure) {
+        const deleted = await backend.delete(SERVICE_NAME, profile);
+        if (!deleted) {
+          throw new Error(
+            `Failed to remove API key for profile "${profile}" from ${backend.name}. Credential may still exist in secure storage.`,
+          );
+        }
       }
     }
-  }
 
-  return removeApiKey(profile);
+    const { [profile]: _, ...remainingProfiles } = creds.profiles;
+
+    if (Object.keys(remainingProfiles).length === 0) {
+      const configPath = getCredentialsPath();
+      unlinkSync(configPath);
+      return configPath;
+    }
+
+    const updatedActiveProfile =
+      creds.active_profile === profile
+        ? Object.keys(remainingProfiles)[0] || 'default'
+        : creds.active_profile;
+
+    return writeCredentials({
+      ...creds,
+      active_profile: updatedActiveProfile,
+      profiles: remainingProfiles,
+    });
+  });
 }
 
 export async function removeAllApiKeysAsync(): Promise<string> {
-  const creds = readCredentials();
-  const configPath = getCredentialsPath();
+  return withFileLock(getCredentialsLockPath(), async () => {
+    // Tolerate corruption: the user is asking to nuke everything, so a
+    // corrupted file should still be removable via the CLI. Orphaned
+    // secure-storage entries are harmless and can be cleaned up from the
+    // system keychain UI if the user cares.
+    const creds = tryReadCredentials();
+    const configPath = getCredentialsPath();
 
-  if (creds?.storage === 'secure_storage') {
-    const backend = await getCredentialBackend();
-    if (backend.isSecure) {
-      const profileNames = Object.keys(creds.profiles);
-      const results = await Promise.all(
-        profileNames.map((profile) => backend.delete(SERVICE_NAME, profile)),
-      );
-      const failed = profileNames.filter((_, i) => !results[i]);
-      if (failed.length > 0) {
-        // Remove successfully-deleted profiles from the file so retries
-        // only re-attempt the ones that actually failed.
-        const succeeded = profileNames.filter((_, i) => results[i]);
-        for (const name of succeeded) {
-          delete creds.profiles[name];
-        }
-        if (creds.active_profile && !creds.profiles[creds.active_profile]) {
-          const remaining = Object.keys(creds.profiles);
-          creds.active_profile = remaining[0] || 'default';
-        }
-        writeCredentials(creds);
-        throw new Error(
-          `Failed to remove API keys from ${backend.name} for profiles: ${failed.join(', ')}. Credentials may still exist in secure storage.`,
+    if (creds?.storage === 'secure_storage') {
+      const backend = await getCredentialBackend();
+      if (backend.isSecure) {
+        const profileNames = Object.keys(creds.profiles);
+        const results = await Promise.all(
+          profileNames.map((profile) => backend.delete(SERVICE_NAME, profile)),
         );
+        const failed = profileNames.filter((_, i) => !results[i]);
+        if (failed.length > 0) {
+          // Persist partial-deletion progress so retries only re-attempt
+          // the profiles that actually failed.
+          const remainingProfiles = Object.fromEntries(
+            Object.entries(creds.profiles).filter(
+              ([name]) => !results[profileNames.indexOf(name)],
+            ),
+          );
+          const remainingNames = Object.keys(remainingProfiles);
+          writeCredentials({
+            ...creds,
+            active_profile:
+              creds.active_profile && remainingProfiles[creds.active_profile]
+                ? creds.active_profile
+                : (remainingNames[0] ?? 'default'),
+            profiles: remainingProfiles,
+          });
+          throw new Error(
+            `Failed to remove API keys from ${backend.name} for profiles: ${failed.join(', ')}. Credentials may still exist in secure storage.`,
+          );
+        }
       }
     }
-  }
 
-  if (existsSync(configPath)) {
-    unlinkSync(configPath);
-  }
-  return configPath;
+    if (existsSync(configPath)) {
+      unlinkSync(configPath);
+    }
+    return configPath;
+  });
 }
 
 export async function renameProfileAsync(
   oldName: string,
   newName: string,
 ): Promise<void> {
-  const creds = readCredentials();
+  if (oldName === newName) {
+    return;
+  }
+  const validationError = validateProfileName(newName);
+  if (validationError) {
+    throw new Error(validationError);
+  }
 
-  if (creds?.storage === 'secure_storage') {
-    const backend = await getCredentialBackend();
-    if (backend.isSecure) {
-      const key = await backend.get(SERVICE_NAME, oldName);
-      if (key) {
-        await backend.set(SERVICE_NAME, newName, key);
-        const deleted = await backend.delete(SERVICE_NAME, oldName);
-        if (!deleted) {
-          const rolledBack = await backend.delete(SERVICE_NAME, newName);
-          throw new Error(
-            rolledBack
-              ? `Failed to remove old credential "${oldName}" from ${backend.name} during rename. The rename has been rolled back.`
-              : `Failed to remove old credential "${oldName}" from ${backend.name} during rename. Rollback also failed — credential "${newName}" may still exist in secure storage.`,
-          );
+  await withFileLock(getCredentialsLockPath(), async () => {
+    const creds = readCredentials();
+    if (!creds) {
+      throw new Error('No credentials file found. Run: resend login');
+    }
+    if (!creds.profiles[oldName]) {
+      throw new Error(
+        `Profile "${oldName}" not found. Available profiles: ${Object.keys(creds.profiles).join(', ')}`,
+      );
+    }
+    if (creds.profiles[newName]) {
+      throw new Error(`Profile "${newName}" already exists.`);
+    }
+
+    if (creds.storage === 'secure_storage') {
+      const backend = await getCredentialBackend();
+      if (backend.isSecure) {
+        const key = await backend.get(SERVICE_NAME, oldName);
+        if (key) {
+          await backend.set(SERVICE_NAME, newName, key);
+          const deleted = await backend.delete(SERVICE_NAME, oldName);
+          if (!deleted) {
+            const rolledBack = await backend.delete(SERVICE_NAME, newName);
+            throw new Error(
+              rolledBack
+                ? `Failed to remove old credential "${oldName}" from ${backend.name} during rename. The rename has been rolled back.`
+                : `Failed to remove old credential "${oldName}" from ${backend.name} during rename. Rollback also failed — credential "${newName}" may still exist in secure storage.`,
+            );
+          }
         }
       }
     }
-  }
 
-  renameProfile(oldName, newName);
+    const { [oldName]: oldProfile, ...rest } = creds.profiles;
+    writeCredentials({
+      ...creds,
+      active_profile:
+        creds.active_profile === oldName ? newName : creds.active_profile,
+      profiles: { ...rest, [newName]: oldProfile },
+    });
+  });
 }

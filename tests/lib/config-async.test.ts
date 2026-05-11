@@ -496,6 +496,19 @@ describe('removeAllApiKeysAsync', () => {
     expect(creds?.profiles.staging).toBeDefined();
     expect(creds?.profiles.prod).toBeUndefined();
   });
+
+  it('removes a corrupted credentials file instead of failing closed', async () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    const configPath = join(configDir, 'credentials.json');
+    writeFileSync(configPath, '{"truncated');
+
+    const { removeAllApiKeysAsync } = await import('../../src/lib/config');
+    const result = await removeAllApiKeysAsync();
+
+    expect(result).toBe(configPath);
+    expect(existsSync(configPath)).toBe(false);
+  });
 });
 
 describe('renameProfileAsync', () => {

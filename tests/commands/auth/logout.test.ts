@@ -151,4 +151,56 @@ describe('logout command', () => {
     const output = JSON.parse(errorSpy?.mock.calls[0][0] as string);
     expect(output.error.code).toBe('remove_failed');
   });
+
+  it('removes a corrupted credentials file when no --profile is given', async () => {
+    spies = setupOutputSpies();
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    const configPath = join(configDir, 'credentials.json');
+    writeFileSync(configPath, '{"truncated');
+
+    // Use a fresh Command wrapper so we don't inherit cached --profile
+    // option values from earlier tests (commander caches parsed opts on
+    // the parent program).
+    const { Command } = await import('@commander-js/extra-typings');
+    const { logoutCommand } = await import('../../../src/commands/auth/logout');
+    const program = new Command()
+      .option('--profile <name>')
+      .option('--json')
+      .addCommand(logoutCommand);
+
+    await program.parseAsync(['logout'], { from: 'user' });
+
+    expect(existsSync(configPath)).toBe(false);
+    const output = JSON.parse(spies.logSpy.mock.calls[0][0] as string);
+    expect(output.success).toBe(true);
+    expect(output.profile).toBe('all');
+  });
+
+  it('fails closed when removing a specific profile from a corrupted file', async () => {
+    spies = setupOutputSpies();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    const configPath = join(configDir, 'credentials.json');
+    writeFileSync(configPath, '{"truncated');
+
+    const { Command } = await import('@commander-js/extra-typings');
+    const { logoutCommand } = await import('../../../src/commands/auth/logout');
+    const program = new Command()
+      .option('--profile <name>')
+      .option('--json')
+      .addCommand(logoutCommand);
+
+    await expectExit1(() =>
+      program.parseAsync(['logout', '--profile', 'prod'], { from: 'user' }),
+    );
+
+    // File is preserved for manual inspection.
+    expect(existsSync(configPath)).toBe(true);
+    const output = JSON.parse(errorSpy?.mock.calls[0][0] as string);
+    expect(output.error.code).toBe('remove_failed');
+    expect(output.error.message).toMatch(/corrupted|invalid JSON/i);
+  });
 });
