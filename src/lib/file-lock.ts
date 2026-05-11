@@ -1,10 +1,12 @@
+import { randomUUID } from 'node:crypto';
 import {
   closeSync,
-  fstatSync,
   mkdirSync,
   openSync,
+  readFileSync,
   statSync,
   unlinkSync,
+  writeSync,
 } from 'node:fs';
 import { dirname } from 'node:path';
 
@@ -22,29 +24,31 @@ export function withFileLock<T>(
   fn: () => T | Promise<T>,
 ): T | Promise<T> {
   mkdirSync(dirname(lockPath), { recursive: true });
-  const ownedIno = acquireLock(lockPath);
+  const token = acquireLock(lockPath);
   try {
     const result = fn();
     if (result instanceof Promise) {
-      return result.finally(() => releaseLock(lockPath, ownedIno));
+      return result.finally(() => releaseLock(lockPath, token));
     }
-    releaseLock(lockPath, ownedIno);
+    releaseLock(lockPath, token);
     return result;
   } catch (err) {
-    releaseLock(lockPath, ownedIno);
+    releaseLock(lockPath, token);
     throw err;
   }
 }
 
-const acquireLock = (lockPath: string): number => {
+const acquireLock = (lockPath: string): string => {
+  const token = randomUUID();
   for (let attempt = 0; attempt < LOCK_MAX_RETRIES; attempt++) {
     try {
       const fd = openSync(lockPath, 'wx');
       try {
-        return fstatSync(fd).ino;
+        writeSync(fd, token);
       } finally {
         closeSync(fd);
       }
+      return token;
     } catch (err: unknown) {
       if ((err as NodeJS.ErrnoException).code !== 'EEXIST') {
         throw err;
@@ -66,12 +70,14 @@ const acquireLock = (lockPath: string): number => {
   );
 };
 
-// Only unlink the lock file we created. If our lock was stolen via stale
-// detection by another process, its inode will differ and we leave it alone.
-const releaseLock = (lockPath: string, ownedIno: number): void => {
+// Only unlink the lock file we own. We identify ownership by the token we
+// wrote on acquire — inode comparison is unreliable because Linux reuses
+// inodes immediately after unlink, so a stolen lock at the same path can
+// share our original inode.
+const releaseLock = (lockPath: string, token: string): void => {
   try {
-    const stat = statSync(lockPath);
-    if (stat.ino !== ownedIno) {
+    const contents = readFileSync(lockPath, 'utf-8');
+    if (contents !== token) {
       return;
     }
     unlinkSync(lockPath);
