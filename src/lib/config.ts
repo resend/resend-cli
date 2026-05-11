@@ -205,9 +205,11 @@ export function storeApiKey(
 }
 
 export function removeAllApiKeys(): string {
-  const configPath = getCredentialsPath();
-  unlinkSync(configPath);
-  return configPath;
+  return withFileLock(getCredentialsLockPath(), () => {
+    const configPath = getCredentialsPath();
+    unlinkSync(configPath);
+    return configPath;
+  });
 }
 
 export function removeApiKey(profileName?: string): string {
