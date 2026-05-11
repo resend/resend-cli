@@ -12,6 +12,8 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { writeFileAtomic } from '../../src/lib/write-file-atomic';
 
+const isWindows = process.platform === 'win32';
+
 describe('writeFileAtomic', () => {
   let tmpDir: string;
 
@@ -27,11 +29,16 @@ describe('writeFileAtomic', () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it('writes the file with the requested content and mode', () => {
+  it('writes the file with the requested content', () => {
     const target = join(tmpDir, 'creds.json');
     writeFileAtomic(target, '{"hello":"world"}\n', 0o600);
-
     expect(readFileSync(target, 'utf-8')).toBe('{"hello":"world"}\n');
+  });
+
+  // Unix permission bits are a no-op on Windows.
+  it.skipIf(isWindows)('applies the requested file mode', () => {
+    const target = join(tmpDir, 'creds.json');
+    writeFileAtomic(target, '{"hello":"world"}\n', 0o600);
     expect(statSync(target).mode & 0o777).toBe(0o600);
   });
 
@@ -56,9 +63,11 @@ describe('writeFileAtomic', () => {
     expect(readdirSync(tmpDir)).toEqual([]);
   });
 
-  it('does not leak a tmp file when rename fails', () => {
-    // Make the directory read-only after creating it, so openSync succeeds
-    // but renameSync fails on the existing destination.
+  // chmod is the easiest way to force a rename failure under POSIX. On
+  // Windows the Unix mode bits are ignored, so we skip this test there;
+  // the "tmp file cleanup on rename failure" path is otherwise hard to
+  // trigger without a more elaborate setup.
+  it.skipIf(isWindows)('does not leak a tmp file when rename fails', () => {
     const target = join(tmpDir, 'creds.json');
     writeFileSync(target, 'existing');
     chmodSync(tmpDir, 0o500);

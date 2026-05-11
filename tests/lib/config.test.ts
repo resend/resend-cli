@@ -251,12 +251,15 @@ describe('storeApiKey', () => {
     expect(stat.isDirectory()).toBe(true);
   });
 
-  it('sets file permissions to 0600', () => {
-    const configPath = storeApiKey('re_test_key');
-    const stat = statSync(configPath);
-    const mode = stat.mode & 0o777;
-    expect(mode).toBe(0o600);
-  });
+  it.skipIf(process.platform === 'win32')(
+    'sets file permissions to 0600',
+    () => {
+      const configPath = storeApiKey('re_test_key');
+      const stat = statSync(configPath);
+      const mode = stat.mode & 0o777;
+      expect(mode).toBe(0o600);
+    },
+  );
 
   it('overwrites existing profile key', () => {
     storeApiKey('re_first_key');
