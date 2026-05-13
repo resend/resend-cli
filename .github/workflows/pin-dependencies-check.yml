@@ -4,9 +4,15 @@ on:
     branches:
       - main
   pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: pin-dependencies-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   pin-dependencies-check:
     runs-on: depot-ubuntu-24.04
+    timeout-minutes: 10
     container:
       image: node:24
     steps:

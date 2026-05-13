@@ -9,9 +9,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: sync-skills-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   sync:
     runs-on: depot-ubuntu-24.04
+    timeout-minutes: 15
     steps:
       - name: Trigger sync on resend-skills
         env:

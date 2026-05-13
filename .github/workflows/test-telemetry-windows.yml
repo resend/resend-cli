@@ -1,9 +1,15 @@
 name: Test Telemetry (Windows)
 on:
   workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: test-telemetry-windows-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   test:
     runs-on: windows-latest
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - uses: pnpm/action-setup@8912a9102ac27614460f54aedde9e1e7f9aec20d # v6

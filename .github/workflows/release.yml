@@ -1,4 +1,7 @@
 name: Release
+permissions:
+  contents: read
+
 on:
   push:
     tags:
@@ -10,6 +13,7 @@ concurrency:
 jobs:
   preflight:
     runs-on: depot-ubuntu-24.04
+    timeout-minutes: 5
     steps:
       - name: Verify PostHog key is configured
         run: |
@@ -19,6 +23,7 @@ jobs:
           fi
   test-binary:
     needs: preflight
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -54,6 +59,7 @@ jobs:
           ${{ matrix.binary }} --help
   test-binary-linux-arm64:
     needs: preflight
+    timeout-minutes: 45
     runs-on: depot-ubuntu-24.04-4
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -82,6 +88,7 @@ jobs:
             sh -c "resend --version && resend --help"
   build-macos:
     needs: [test-binary, test-binary-linux-arm64]
+    timeout-minutes: 45
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -122,6 +129,7 @@ jobs:
             dist/resend-darwin-x64.tar.gz
   build-linux-windows:
     needs: [test-binary, test-binary-linux-arm64]
+    timeout-minutes: 45
     runs-on: depot-ubuntu-24.04-4
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -169,9 +177,11 @@ jobs:
   release:
     if: github.event_name != 'workflow_dispatch'
     needs: [build-macos, build-linux-windows]
+    environment: release
     permissions:
       contents: write
     runs-on: depot-ubuntu-24.04
+    timeout-minutes: 30
     outputs:
       prerelease: ${{ steps.meta.outputs.prerelease }}
     steps:
@@ -235,6 +245,8 @@ jobs:
     if: github.event_name != 'workflow_dispatch'
     needs: release
     runs-on: ubuntu-latest
+    environment: release
+    timeout-minutes: 30
     permissions:
       contents: read
       id-token: write
@@ -267,6 +279,8 @@ jobs:
     name: Trigger Homebrew Tap Update
     needs: release
     runs-on: depot-ubuntu-24.04
+    environment: release
+    timeout-minutes: 15
     permissions:
       contents: read
     steps:
