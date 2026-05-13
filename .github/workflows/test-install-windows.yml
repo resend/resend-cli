@@ -5,9 +5,15 @@ on:
       - install.ps1
       - .github/workflows/test-install-windows.yml
   workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: test-install-windows-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   test-install:
     runs-on: windows-latest
+    timeout-minutes: 20
     strategy:
       matrix:
         shell: [pwsh, powershell]
@@ -46,6 +52,7 @@ jobs:
           Write-Host "PATH correctly updated"
   test-error-path:
     runs-on: windows-latest
+    timeout-minutes: 15
     strategy:
       matrix:
         shell: [pwsh, powershell]

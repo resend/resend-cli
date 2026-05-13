@@ -4,8 +4,14 @@ on:
     paths:
       - install.sh
   workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: test-install-unix-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   test:
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:

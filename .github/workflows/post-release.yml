@@ -3,9 +3,15 @@ on:
   workflow_run:
     workflows: [Release]
     types: [completed]
+permissions:
+  contents: read
+concurrency:
+  group: post-release-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
 jobs:
   verify-install-unix:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -21,6 +27,7 @@ jobs:
   verify-install-windows:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: windows-latest
+    timeout-minutes: 20
     steps:
       - name: Install via install.ps1
         shell: pwsh
@@ -34,6 +41,7 @@ jobs:
   verify-npx:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: depot-ubuntu-24.04
+    timeout-minutes: 20
     steps:
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:

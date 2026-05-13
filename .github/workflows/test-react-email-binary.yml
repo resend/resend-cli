@@ -8,11 +8,14 @@ on:
       - 'package.json'
       - 'pnpm-lock.yaml'
       - '.github/workflows/test-react-email-binary.yml'
+permissions:
+  contents: read
 concurrency:
   group: test-react-email-binary-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   test:
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
