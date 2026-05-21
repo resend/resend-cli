@@ -16,9 +16,9 @@
     "tanstack-intent"
   ],
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
-  "packageManager": "pnpm@10.33.4",
+  "packageManager": "pnpm@11.2.2",
   "files": [
     "dist/cli.cjs",
     "skills/"
@@ -56,12 +56,6 @@
     ],
     "assets": [
       "node_modules/esbuild-wasm/esbuild.wasm"
-    ]
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "@biomejs/biome"
     ]
   },
   "devDependencies": {
