@@ -5,8 +5,6 @@ on:
     paths:
       - 'src/lib/react-email*.ts'
       - 'src/lib/esbuild/**'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
       - '.github/workflows/test-react-email-binary.yml'
 permissions:
   contents: read
