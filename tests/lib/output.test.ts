@@ -227,7 +227,7 @@ describe('outputError', () => {
     });
   });
 
-  it('does not append TTY hint line when statusCode is absent', () => {
+  it('does not append TTY hint line when no HTTP context is provided', () => {
     Object.defineProperty(process.stdout, 'isTTY', {
       value: true,
       writable: true,
@@ -242,5 +242,27 @@ describe('outputError', () => {
     expect(errorSpy).toHaveBeenCalledTimes(1);
     const output = errorSpy.mock.calls[0][0] as string;
     expect(output).not.toMatch(/HTTP/);
+  });
+
+  it('appends a headers-only TTY hint when headers are present without statusCode', () => {
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = vi
+      .spyOn(process, 'exit')
+      .mockImplementation(() => undefined as never);
+
+    outputError({
+      message: 'something off',
+      headers: { 'x-trace-id': 'abc123', 'content-type': 'text/plain' },
+    });
+
+    expect(errorSpy).toHaveBeenCalledTimes(2);
+    const hintLine = errorSpy.mock.calls[1][0] as string;
+    expect(hintLine).not.toMatch(/HTTP/);
+    expect(hintLine).toMatch(/x-trace-id: abc123/);
+    expect(hintLine).toMatch(/content-type: text\/plain/);
   });
 });

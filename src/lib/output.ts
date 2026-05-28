@@ -92,13 +92,16 @@ export function outputError(
     console.error(JSON.stringify({ error: envelope }, null, 2));
   } else {
     console.error(`${pc.red('Error:')} ${error.message}`);
+    const parts: string[] = [];
     if (typeof error.statusCode === 'number') {
-      const parts = [`HTTP ${error.statusCode}`];
-      if (hasFilteredHeaders) {
-        for (const [k, v] of Object.entries(filteredHeaders)) {
-          parts.push(`${k}: ${v}`);
-        }
+      parts.push(`HTTP ${error.statusCode}`);
+    }
+    if (hasFilteredHeaders) {
+      for (const [k, v] of Object.entries(filteredHeaders)) {
+        parts.push(`${k}: ${v}`);
       }
+    }
+    if (parts.length > 0) {
       console.error(pc.dim(`[${parts.join('; ')}]`));
     }
   }
