@@ -52,7 +52,7 @@ export async function withSpinner<T>(
 ): Promise<T> {
   const spinner = createSpinner(loading, globalOpts.quiet);
   try {
-    const { data, error } = await withRetry(
+    const { data, error, headers } = await withRetry(
       () => withTimeout(call(), REQUEST_TIMEOUT_MS),
       {
         retryTransient: options.retryTransient,
@@ -68,14 +68,23 @@ export async function withSpinner<T>(
     if (error) {
       spinner.stop();
       outputError(
-        { message: error.message, code: errorCode },
+        {
+          message: error.message,
+          code: errorCode,
+          statusCode: error.statusCode,
+          headers,
+        },
         { json: globalOpts.json },
       );
     }
     if (data === null) {
       spinner.stop();
       outputError(
-        { message: 'Unexpected empty response', code: errorCode },
+        {
+          message: 'Unexpected empty response',
+          code: errorCode,
+          headers,
+        },
         { json: globalOpts.json },
       );
     }
