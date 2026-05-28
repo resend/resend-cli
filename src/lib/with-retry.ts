@@ -1,6 +1,10 @@
 type SdkResponse<T> = {
   data: T | null;
-  error: { message: string; name?: string } | null;
+  error: {
+    message: string;
+    name?: string;
+    statusCode?: number | null;
+  } | null;
   headers?: Record<string, string> | null;
 };
 

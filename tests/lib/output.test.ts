@@ -126,4 +126,121 @@ describe('outputError', () => {
     const parsed = JSON.parse(output);
     expect(parsed.error.code).toBe('unknown');
   });
+
+  it('surfaces statusCode, headers and body in JSON mode when provided', () => {
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = vi
+      .spyOn(process, 'exit')
+      .mockImplementation(() => undefined as never);
+
+    outputError(
+      {
+        message:
+          'Internal server error. We are unable to process your request right now, please try again later.',
+        code: 'send_error',
+        statusCode: 403,
+        headers: {
+          'content-type': 'text/plain',
+          'x-deny-reason': 'host_not_allowed',
+        },
+        body: 'Host not in allowlist',
+      },
+      { json: true },
+    );
+
+    const output = errorSpy.mock.calls[0][0] as string;
+    const parsed = JSON.parse(output);
+    expect(parsed.error.statusCode).toBe(403);
+    expect(parsed.error.headers).toEqual({
+      'content-type': 'text/plain',
+      'x-deny-reason': 'host_not_allowed',
+    });
+    expect(parsed.error.body).toBe('Host not in allowlist');
+  });
+
+  it('appends a status/header hint to TTY error output when provided', () => {
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = vi
+      .spyOn(process, 'exit')
+      .mockImplementation(() => undefined as never);
+
+    outputError({
+      message:
+        'Internal server error. We are unable to process your request right now, please try again later.',
+      code: 'send_error',
+      statusCode: 403,
+      headers: { 'x-deny-reason': 'host_not_allowed' },
+    });
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join('\n');
+    expect(output).toMatch(/HTTP 403/);
+    expect(output).toMatch(/x-deny-reason: host_not_allowed/);
+  });
+
+  it('filters non-diagnostic headers from JSON output', () => {
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = vi
+      .spyOn(process, 'exit')
+      .mockImplementation(() => undefined as never);
+
+    outputError(
+      {
+        message: 'denied',
+        code: 'send_error',
+        statusCode: 403,
+        headers: {
+          'set-cookie': 'session=secret',
+          date: 'Thu, 28 May 2026 13:35:05 GMT',
+          server: 'nginx',
+          'content-type': 'text/plain',
+          'x-deny-reason': 'host_not_allowed',
+        },
+      },
+      { json: true },
+    );
+
+    const parsed = JSON.parse(errorSpy.mock.calls[0][0] as string);
+    expect(parsed.error.headers).toEqual({
+      'content-type': 'text/plain',
+      'x-deny-reason': 'host_not_allowed',
+    });
+  });
+
+  it('omits statusCode/headers/body keys when not provided', () => {
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = vi
+      .spyOn(process, 'exit')
+      .mockImplementation(() => undefined as never);
+
+    outputError(
+      { message: 'bad input', code: 'invalid_options' },
+      { json: true },
+    );
+
+    const parsed = JSON.parse(errorSpy.mock.calls[0][0] as string);
+    expect(parsed).toEqual({
+      error: { message: 'bad input', code: 'invalid_options' },
+    });
+  });
+
+  it('does not append TTY hint line when statusCode is absent', () => {
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = vi
+      .spyOn(process, 'exit')
+      .mockImplementation(() => undefined as never);
+
+    outputError({ message: 'bad input', code: 'invalid_options' });
+
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    const output = errorSpy.mock.calls[0][0] as string;
+    expect(output).not.toMatch(/HTTP/);
+  });
 });
