@@ -3,6 +3,7 @@ import { runGet } from '../../../lib/actions';
 import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { pickId } from '../../../lib/prompts';
+import { safeTerminalText } from '../../../lib/safe-terminal-text';
 import {
   receivedAttachmentPickerConfig,
   receivedEmailPickerConfig,
@@ -47,7 +48,7 @@ export const getAttachmentCommand = new Command('attachment')
             id: attachmentId,
           }),
         onInteractive: (data) => {
-          console.log(`${data.filename ?? '(unnamed)'}`);
+          console.log(`${safeTerminalText(data.filename ?? '(unnamed)')}`);
           console.log(`ID:           ${data.id}`);
           console.log(`Content-Type: ${data.content_type}`);
           console.log(`Size:         ${data.size} bytes`);
