@@ -232,7 +232,8 @@ export async function promptForMissing<
 // ─── Item picker ──────────────────────────────────────────────────────────────
 
 const PICKER_PAGE_SIZE = 20;
-const FETCH_MORE = '__fetch_more__';
+const NEXT_PAGE = '__next_page__';
+const PREV_PAGE = '__prev_page__';
 const NONE = '__none__';
 
 export type PickerConfig<T extends { id: string }> = {
@@ -285,14 +286,16 @@ export async function pickItem<T extends { id: string }>(
   }
 
   const resend = await requireClient(globalOpts);
-  const allFetched: T[] = [];
 
-  for (;;) {
-    const cursor = allFetched.at(-1)?.id;
+  const fetchPage = async (
+    cursors: readonly (string | undefined)[],
+    pageIndex: number,
+  ): Promise<PickedItem | undefined> => {
+    const cursor = cursors[pageIndex];
     const spinner = createSpinner(
-      allFetched.length === 0
+      pageIndex === 0
         ? `Fetching ${config.resourcePlural}...`
-        : `Fetching more ${config.resourcePlural}...`,
+        : `Fetching ${config.resourcePlural} (page ${pageIndex + 1})...`,
       globalOpts.quiet,
     );
 
@@ -307,7 +310,7 @@ export async function pickItem<T extends { id: string }>(
         return undefined;
       }
       spinner.fail(`Failed to fetch ${config.resourcePlural}`);
-      outputError(
+      return outputError(
         {
           message: result.error?.message ?? 'Unexpected empty response',
           code: 'list_error',
@@ -316,27 +319,31 @@ export async function pickItem<T extends { id: string }>(
       );
     }
 
-    allFetched.push(...result.data.data);
+    const pageItems = result.data.data;
     const hasMore = result.data.has_more ?? false;
 
-    const displayItems = config.filter
-      ? allFetched.filter(config.filter)
-      : allFetched;
+    const nextCursors =
+      hasMore && cursors.length === pageIndex + 1
+        ? (() => {
+            const lastItem = pageItems.at(-1);
+            return lastItem ? [...cursors, lastItem.id] : cursors;
+          })()
+        : cursors;
 
-    if (displayItems.length === 0 && !hasMore && optional) {
+    const displayItems = config.filter
+      ? pageItems.filter(config.filter)
+      : pageItems;
+
+    if (displayItems.length === 0 && !hasMore && pageIndex === 0 && optional) {
       spinner.clear();
       return undefined;
     }
 
-    spinner.stop(
-      allFetched.length === displayItems.length
-        ? `${config.resourcePlural} fetched`
-        : `More ${config.resourcePlural} fetched`,
-    );
+    spinner.stop(`${config.resourcePlural} fetched`);
 
-    if (displayItems.length === 0 && !hasMore) {
+    if (displayItems.length === 0 && !hasMore && pageIndex === 0) {
       p.log.warn(`No ${config.resourcePlural} found.`);
-      outputError(
+      return outputError(
         {
           message: `No ${config.resourcePlural} found.`,
           code: 'no_items',
@@ -345,8 +352,8 @@ export async function pickItem<T extends { id: string }>(
       );
     }
 
-    if (displayItems.length === 0 && hasMore && !optional) {
-      continue;
+    if (displayItems.length === 0 && config.filter) {
+      p.log.info(`No matching ${config.resourcePlural} on this page.`);
     }
 
     const itemOptions = displayItems.map((item) => ({
@@ -354,20 +361,18 @@ export async function pickItem<T extends { id: string }>(
       ...config.display(item),
     }));
 
-    const options: { value: string; label: string; hint?: string }[] =
-      itemOptions.map(({ item, label, hint }) => ({
+    const options: { value: string; label: string; hint?: string }[] = [
+      ...(pageIndex > 0
+        ? [{ value: PREV_PAGE, label: '\u2190 Previous page' }]
+        : []),
+      ...(optional ? [{ value: NONE, label: 'None' }] : []),
+      ...itemOptions.map(({ item, label, hint }) => ({
         value: item.id,
         label,
         hint,
-      }));
-
-    if (optional) {
-      options.unshift({ value: NONE, label: 'None' });
-    }
-
-    if (hasMore) {
-      options.push({ value: FETCH_MORE, label: 'Fetch more...' });
-    }
+      })),
+      ...(hasMore ? [{ value: NEXT_PAGE, label: 'Next page \u2192' }] : []),
+    ];
 
     const selected = await p.select({
       message: `Select a ${config.resource}`,
@@ -382,11 +387,19 @@ export async function pickItem<T extends { id: string }>(
       return undefined;
     }
 
-    if (selected !== FETCH_MORE) {
-      const match = itemOptions.find(({ item }) => item.id === selected);
-      return { id: selected, label: match?.label ?? selected };
+    if (selected === NEXT_PAGE) {
+      return fetchPage(nextCursors, pageIndex + 1);
     }
-  }
+
+    if (selected === PREV_PAGE) {
+      return fetchPage(nextCursors, pageIndex - 1);
+    }
+
+    const match = itemOptions.find(({ item }) => item.id === selected);
+    return { id: selected, label: match?.label ?? selected };
+  };
+
+  return fetchPage([undefined], 0);
 }
 
 export async function pickId<T extends { id: string }>(
