@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import './lib/fetch-timeout';
 import { Command } from '@commander-js/extra-typings';
 import pc from 'picocolors';
 import { apiKeysCommand } from './commands/api-keys/index';
