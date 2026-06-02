@@ -5,6 +5,7 @@ import {
   getConfigDir,
   listProfiles,
   maskKey,
+  readOAuthProfileMetadata,
   resolveApiKeyAsync,
   resolveProfileName,
 } from '../lib/config';
@@ -32,6 +33,39 @@ Shows which profile is active and where the API key comes from.`,
   .action(async (_opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const profileFlag = globalOpts.profile;
+
+    // For OAuth profiles, read metadata directly (no token refresh, no network calls)
+    if (!globalOpts.apiKey && !process.env.RESEND_API_KEY) {
+      const oauthMeta = readOAuthProfileMetadata(profileFlag);
+      if (oauthMeta) {
+        const configPath = join(getConfigDir(), 'credentials.json');
+        if (globalOpts.json || !isInteractive()) {
+          outputResult(
+            {
+              authenticated: true,
+              profile: oauthMeta.profileName,
+              auth_type: 'oauth',
+              client_id: oauthMeta.clientId,
+              scope: oauthMeta.scope,
+              base_url: oauthMeta.baseUrl,
+              config_path: configPath,
+            },
+            { json: globalOpts.json },
+          );
+        } else {
+          console.log('');
+          console.log(`  Profile:  ${oauthMeta.profileName}`);
+          console.log(`  Auth:     OAuth 2.1`);
+          console.log(`  Client:   ${oauthMeta.clientId}`);
+          console.log(`  Scope:    ${oauthMeta.scope}`);
+          console.log(`  Base URL: ${oauthMeta.baseUrl}`);
+          console.log(`  Config:   ${configPath}`);
+          console.log('');
+        }
+        return;
+      }
+    }
+
     const resolved = await resolveApiKeyAsync(globalOpts.apiKey, profileFlag);
 
     if (!resolved) {

@@ -9,19 +9,287 @@ import {
   SENDING_KEY_MESSAGE,
   setActiveProfile,
   storeApiKeyAsync,
+  storeOAuthProfile,
   validateProfileName,
 } from '../../lib/config';
 import { buildHelpText } from '../../lib/help-text';
+import {
+  exchangeCode,
+  generatePKCE,
+  registerClient,
+  startCallbackServer,
+} from '../../lib/oauth';
 import { errorMessage, outputError, outputResult } from '../../lib/output';
 import { cancelAndExit, promptRenameIfInvalid } from '../../lib/prompts';
 import { createSpinner } from '../../lib/spinner';
 import { isInteractive } from '../../lib/tty';
 
 const RESEND_API_KEYS_URL = 'https://resend.com/api-keys?new=true';
+const OAUTH_DEFAULT_BASE_URL = 'https://api.resend-staging.com';
+const OAUTH_DEFAULT_SCOPE = 'full_access';
+
+async function handleOAuthLogin(
+  globalOpts: GlobalOpts,
+  baseUrl: string,
+  scope: string,
+): Promise<void> {
+  if (!isInteractive() || globalOpts.json) {
+    outputError(
+      {
+        message:
+          'OAuth login requires an interactive terminal with a browser. Use --key for non-interactive authentication.',
+        code: 'oauth_non_interactive',
+      },
+      { json: globalOpts.json },
+    );
+    return;
+  }
+
+  p.intro('Resend OAuth Authentication (staging)');
+  p.log.info(
+    `Authenticating against ${baseUrl}\nScope: ${scope}`,
+  );
+
+  const spinner = createSpinner('Starting local callback server...', globalOpts.quiet);
+  let callbackServer: Awaited<ReturnType<typeof startCallbackServer>>;
+  try {
+    callbackServer = await startCallbackServer();
+    spinner.stop(`Callback server listening on port ${callbackServer.port}`);
+  } catch (err) {
+    spinner.fail('Failed to start callback server');
+    outputError(
+      {
+        message: errorMessage(err, 'Failed to start callback server'),
+        code: 'oauth_server_error',
+      },
+      { json: globalOpts.json },
+    );
+    return;
+  }
+
+  const { codeVerifier, codeChallenge, state } = generatePKCE();
+
+  const registerSpinner = createSpinner('Registering OAuth client...', globalOpts.quiet);
+  let clientId: string;
+  try {
+    // Register with the exact port-specific URI; staging requires an exact match
+    const { client_id } = await registerClient(
+      baseUrl,
+      scope,
+      callbackServer.redirectUri,
+    );
+    clientId = client_id;
+    registerSpinner.stop(`Client registered: ${clientId}`);
+  } catch (err) {
+    registerSpinner.fail('Client registration failed');
+    callbackServer.close();
+    outputError(
+      {
+        message: errorMessage(err, 'Failed to register OAuth client'),
+        code: 'oauth_registration_error',
+      },
+      { json: globalOpts.json },
+    );
+    return;
+  }
+
+  const authUrl = new URL(`${baseUrl}/oauth/authorize`);
+  authUrl.search = new URLSearchParams({
+    client_id: clientId,
+    response_type: 'code',
+    redirect_uri: callbackServer.redirectUri,
+    scope,
+    state,
+    code_challenge: codeChallenge,
+    code_challenge_method: 'S256',
+  }).toString();
+
+  const opened = await openInBrowser(authUrl.toString());
+  if (opened) {
+    p.log.info(`Opened browser for authorization. Waiting for callback...`);
+  } else {
+    p.log.warn(
+      `Could not open browser. Visit this URL to authorize:\n${authUrl.toString()}`,
+    );
+  }
+
+  let callbackCode: string;
+  let callbackState: string;
+  try {
+    const result = await callbackServer.waitForCallback();
+    callbackCode = result.code;
+    callbackState = result.state;
+  } catch (err) {
+    callbackServer.close();
+    outputError(
+      {
+        message: errorMessage(err, 'OAuth authorization failed'),
+        code: 'oauth_callback_error',
+      },
+      { json: globalOpts.json },
+    );
+    return;
+  }
+
+  if (callbackState !== state) {
+    outputError(
+      {
+        message:
+          'OAuth state mismatch — possible CSRF attempt. Authorization aborted.',
+        code: 'oauth_state_mismatch',
+      },
+      { json: globalOpts.json },
+    );
+    return;
+  }
+
+  const exchangeSpinner = createSpinner('Exchanging authorization code...', globalOpts.quiet);
+  let accessToken: string;
+  let refreshToken: string;
+  let grantedScope: string;
+  try {
+    const tokens = await exchangeCode({
+      baseUrl,
+      clientId,
+      code: callbackCode,
+      redirectUri: callbackServer.redirectUri,
+      codeVerifier,
+    });
+    accessToken = tokens.accessToken;
+    refreshToken = tokens.refreshToken;
+    grantedScope = tokens.scope;
+    exchangeSpinner.stop('Tokens received');
+  } catch (err) {
+    exchangeSpinner.fail('Token exchange failed');
+    outputError(
+      {
+        message: errorMessage(err, 'Failed to exchange authorization code'),
+        code: 'oauth_token_error',
+      },
+      { json: globalOpts.json },
+    );
+    return;
+  }
+
+  // Suppress unused variable warning — accessToken is only needed to confirm success
+  void accessToken;
+
+  let profileName = globalOpts.profile?.trim() || undefined;
+
+  if (profileName) {
+    const profileError = validateProfileName(profileName);
+    if (profileError) {
+      outputError(
+        { message: profileError, code: 'invalid_profile_name' },
+        { json: globalOpts.json },
+      );
+      return;
+    }
+  }
+
+  if (!profileName) {
+    const existingProfiles = listProfiles();
+    if (existingProfiles.length > 0) {
+      const options = [
+        ...existingProfiles.map((t) => ({
+          value: t.name,
+          label: `${t.name} (overwrite)`,
+        })),
+        { value: '__new__' as const, label: '+ Create new profile' },
+      ];
+
+      const choice = await p.select({
+        message: 'Save OAuth credentials to which profile?',
+        options,
+      });
+
+      if (p.isCancel(choice)) {
+        cancelAndExit('Login cancelled.');
+        return;
+      }
+
+      if (choice === '__new__') {
+        const newName = await p.text({
+          message: 'Enter a name for the new profile:',
+          placeholder: 'staging',
+          validate: (v) => validateProfileName((v ?? '').trim()),
+        });
+        if (p.isCancel(newName)) {
+          cancelAndExit('Login cancelled.');
+          return;
+        }
+        profileName = (newName ?? '').trim() || 'staging';
+      } else {
+        profileName = choice;
+      }
+    } else {
+      profileName = 'staging';
+    }
+  }
+
+  const storeSpinner = createSpinner('Storing credentials...', globalOpts.quiet);
+  let configPath: string;
+  let backend: Awaited<ReturnType<typeof storeOAuthProfile>>['backend'];
+  try {
+    ({ configPath, backend } = await storeOAuthProfile(profileName, {
+      clientId,
+      refreshToken,
+      scope: grantedScope,
+      baseUrl,
+    }));
+    storeSpinner.stop('Credentials stored');
+  } catch (err) {
+    storeSpinner.fail('Failed to store credentials');
+    outputError(
+      {
+        message: errorMessage(err, 'Failed to store OAuth credentials'),
+        code: 'write_failed',
+      },
+      { json: globalOpts.json },
+    );
+    return;
+  }
+
+  try {
+    setActiveProfile(profileName);
+  } catch {
+    // non-fatal
+  }
+
+  if (globalOpts.json) {
+    outputResult(
+      {
+        success: true,
+        config_path: configPath,
+        profile: profileName,
+        storage: backend.name,
+        auth_type: 'oauth',
+        client_id: clientId,
+        scope: grantedScope,
+        base_url: baseUrl,
+      },
+      { json: true },
+    );
+  } else {
+    const storageInfo = !backend.isSecure
+      ? `at ${configPath}`
+      : `in ${backend.name}`;
+    p.outro(
+      `OAuth credentials stored for profile '${profileName}' ${storageInfo}\nClient ID: ${clientId}  Scope: ${grantedScope}`,
+    );
+  }
+}
 
 export const loginCommand = new Command('login')
   .description('Save a Resend API key')
   .option('--key <key>', 'API key to store (required in non-interactive mode)')
+  .option('--oauth', 'Authenticate via OAuth 2.1 browser flow (staging only)')
+  .option(
+    '--base-url <url>',
+    'OAuth authorization server base URL',
+    OAUTH_DEFAULT_BASE_URL,
+  )
+  .option('--scope <scope>', 'OAuth scope to request', OAUTH_DEFAULT_SCOPE)
   .addHelpText(
     'after',
     buildHelpText({
@@ -40,12 +308,23 @@ export const loginCommand = new Command('login')
       examples: [
         'resend login --key re_123456789',
         'resend login                      (interactive — prompts and opens browser)',
+        'resend login --oauth              (OAuth browser flow against staging)',
         'RESEND_API_KEY=re_123 resend emails send ...  (skip login; use env var directly)',
       ],
     }),
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+
+    if (opts.oauth) {
+      await handleOAuthLogin(
+        globalOpts,
+        opts.baseUrl ?? OAUTH_DEFAULT_BASE_URL,
+        opts.scope ?? OAUTH_DEFAULT_SCOPE,
+      );
+      return;
+    }
+
     let apiKey = typeof opts.key === 'string' ? opts.key.trim() : opts.key;
 
     if (!apiKey) {

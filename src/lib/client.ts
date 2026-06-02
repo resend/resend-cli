@@ -8,6 +8,70 @@ import {
 } from './config';
 import { errorMessage, outputError } from './output';
 
+// The Resend SDK reads RESEND_BASE_URL at module-load time, so we patch
+// fetchRequest on each instance when an OAuth profile targets a custom base URL.
+function patchClientBaseUrl(client: Resend, customBaseUrl: string): void {
+  (client as unknown as Record<string, unknown>).fetchRequest = async function <T>(
+    path: string,
+    options: RequestInit = {},
+  ): Promise<{ data: T | null; error: unknown | null; headers: Record<string, string> | null }> {
+    try {
+      const response = await fetch(`${customBaseUrl}${path}`, options);
+      if (!response.ok) {
+        try {
+          const rawError = await response.text();
+          return {
+            data: null,
+            error: JSON.parse(rawError),
+            headers: Object.fromEntries(response.headers.entries()),
+          };
+        } catch (err) {
+          if (err instanceof SyntaxError) {
+            return {
+              data: null,
+              error: {
+                name: 'application_error',
+                statusCode: response.status,
+                message:
+                  'Internal server error. We are unable to process your request right now, please try again later.',
+              },
+              headers: Object.fromEntries(response.headers.entries()),
+            };
+          }
+          const error = {
+            message: response.statusText,
+            statusCode: response.status,
+            name: 'application_error',
+          };
+          if (err instanceof Error) {
+            return {
+              data: null,
+              error: { ...error, message: err.message },
+              headers: Object.fromEntries(response.headers.entries()),
+            };
+          }
+          return { data: null, error, headers: Object.fromEntries(response.headers.entries()) };
+        }
+      }
+      return {
+        data: (await response.json()) as T,
+        error: null,
+        headers: Object.fromEntries(response.headers.entries()),
+      };
+    } catch {
+      return {
+        data: null,
+        error: {
+          name: 'application_error',
+          statusCode: null,
+          message: 'Unable to fetch data. The request could not be resolved.',
+        },
+        headers: null,
+      };
+    }
+  };
+}
+
 export type GlobalOpts = {
   apiKey?: string;
   json?: boolean;
@@ -50,7 +114,11 @@ export async function createClient(
       'No API key found. Set RESEND_API_KEY, use --api-key, or run: resend login',
     );
   }
-  return new Resend(resolved.key);
+  const client = new Resend(resolved.key);
+  if (resolved.oauthBaseUrl) {
+    patchClientBaseUrl(client, resolved.oauthBaseUrl);
+  }
+  return client;
 }
 
 export async function requireClient(
@@ -89,7 +157,11 @@ export async function requireClient(
       }
     }
 
-    return new Resend(resolved.key);
+    const client = new Resend(resolved.key);
+    if (resolved.oauthBaseUrl) {
+      patchClientBaseUrl(client, resolved.oauthBaseUrl);
+    }
+    return client;
   } catch (err) {
     outputError(
       {

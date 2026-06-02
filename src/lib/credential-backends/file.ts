@@ -14,7 +14,10 @@ export class FileBackend implements CredentialBackend {
     if (!creds) {
       return null;
     }
-    return creds.profiles[account]?.api_key ?? null;
+    const profile = creds.profiles[account];
+    if (!profile) return null;
+    // OAuth profiles store the refresh_token in a dedicated field; api_key only exists on ApiKeyProfile
+    return ('api_key' in profile ? profile.api_key : null) ?? null;
   }
 
   async set(_service: string, account: string, secret: string): Promise<void> {

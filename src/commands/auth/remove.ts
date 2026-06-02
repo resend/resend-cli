@@ -1,7 +1,17 @@
 import * as p from '@clack/prompts';
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
-import { listProfiles, removeApiKeyAsync } from '../../lib/config';
+import {
+  isOAuthProfile,
+  listProfiles,
+  readCredentials,
+  removeApiKeyAsync,
+} from '../../lib/config';
+import {
+  getCredentialBackend,
+  SERVICE_NAME,
+} from '../../lib/credential-store';
+import { revokeToken } from '../../lib/oauth';
 import { errorMessage, outputError, outputResult } from '../../lib/output';
 import { cancelAndExit } from '../../lib/prompts';
 import { isInteractive } from '../../lib/tty';
@@ -61,6 +71,25 @@ export async function removeAction(
     if (p.isCancel(confirmed) || !confirmed) {
       cancelAndExit('Remove cancelled.');
     }
+  }
+
+  // Best-effort revocation for OAuth profiles before removing credentials
+  try {
+    const creds = readCredentials();
+    if (creds && profileName) {
+      const profile = creds.profiles[profileName];
+      if (profile && isOAuthProfile(profile)) {
+        const backend = await getCredentialBackend();
+        const refreshToken = creds.storage === 'secure_storage'
+          ? await backend.get(SERVICE_NAME, profileName)
+          : profile.refresh_token;
+        if (refreshToken) {
+          await revokeToken({ baseUrl: profile.base_url, clientId: profile.client_id, token: refreshToken });
+        }
+      }
+    }
+  } catch {
+    // revocation is best-effort
   }
 
   try {

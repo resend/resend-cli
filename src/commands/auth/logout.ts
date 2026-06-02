@@ -4,10 +4,16 @@ import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import {
   getCredentialsPath,
+  isOAuthProfile,
   removeAllApiKeysAsync,
   removeApiKeyAsync,
   tryReadCredentials,
 } from '../../lib/config';
+import {
+  getCredentialBackend,
+  SERVICE_NAME,
+} from '../../lib/credential-store';
+import { revokeToken } from '../../lib/oauth';
 import { buildHelpText } from '../../lib/help-text';
 import { errorMessage, outputError, outputResult } from '../../lib/output';
 import { cancelAndExit } from '../../lib/prompts';
@@ -83,6 +89,36 @@ If no credentials file exists, exits cleanly with no error.`,
 
       if (p.isCancel(confirmed) || !confirmed) {
         cancelAndExit('Logout cancelled.');
+      }
+    }
+
+    // Best-effort revocation for OAuth profiles before removing credentials
+    if (creds) {
+      try {
+        const backend = await getCredentialBackend();
+        if (logoutAll) {
+          for (const [name, profile] of Object.entries(creds.profiles)) {
+            if (!isOAuthProfile(profile)) continue;
+            const refreshToken = creds.storage === 'secure_storage'
+              ? await backend.get(SERVICE_NAME, name)
+              : profile.refresh_token;
+            if (refreshToken) {
+              await revokeToken({ baseUrl: profile.base_url, clientId: profile.client_id, token: refreshToken });
+            }
+          }
+        } else {
+          const profile = creds.profiles[profileLabel];
+          if (profile && isOAuthProfile(profile)) {
+            const refreshToken = creds.storage === 'secure_storage'
+              ? await backend.get(SERVICE_NAME, profileLabel)
+              : profile.refresh_token;
+            if (refreshToken) {
+              await revokeToken({ baseUrl: profile.base_url, clientId: profile.client_id, token: refreshToken });
+            }
+          }
+        }
+      } catch {
+        // revocation is best-effort
       }
     }
 

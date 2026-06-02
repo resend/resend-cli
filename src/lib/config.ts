@@ -14,6 +14,7 @@ import {
   SERVICE_NAME,
 } from './credential-store';
 import { withFileLock } from './file-lock';
+import { refreshAccessToken } from './oauth';
 import { writeFileAtomic } from './write-file-atomic';
 
 export type ApiKeyPermission = 'full_access' | 'sending_access';
@@ -26,9 +27,30 @@ export type ResolvedKey = {
   source: ApiKeySource;
   profile?: string;
   permission?: ApiKeyPermission;
+  oauthClientId?: string;
+  oauthScope?: string;
+  oauthBaseUrl?: string;
 };
 
-export type Profile = { api_key?: string; permission?: ApiKeyPermission };
+export type ApiKeyProfile = { type?: 'api_key'; api_key?: string; permission?: ApiKeyPermission };
+export type OAuthProfile = {
+  type: 'oauth';
+  client_id: string;
+  scope: string;
+  base_url: string;
+  refresh_token?: string; // set only in file storage mode
+};
+export type Profile = ApiKeyProfile | OAuthProfile;
+
+export function isOAuthProfile(profile: Profile): profile is OAuthProfile {
+  return (profile as OAuthProfile).type === 'oauth';
+}
+
+export function scopeToPermission(scope: string): ApiKeyPermission | undefined {
+  if (scope === 'full_access') return 'full_access';
+  if (scope === 'emails:send') return 'sending_access';
+  return undefined;
+}
 export type CredentialStorage = 'secure_storage' | 'file';
 export type CredentialsFile = {
   active_profile: string;
@@ -166,7 +188,7 @@ export function resolveApiKey(
   if (creds) {
     const profile = resolveProfileName(profileName);
     const entry = creds.profiles[profile];
-    if (entry?.api_key) {
+    if (entry && !isOAuthProfile(entry) && entry.api_key) {
       return {
         key: entry.api_key,
         source: 'config',
@@ -365,17 +387,49 @@ export async function resolveApiKeyAsync(
     'default';
 
   if (creds?.storage === 'secure_storage' && creds.profiles[profile]) {
+    const profileData = creds.profiles[profile];
     const backend = await getCredentialBackend();
-    const key = await backend.get(SERVICE_NAME, profile);
-    if (key) {
-      const permission = creds.profiles[profile]?.permission;
-      return { key, source: 'secure_storage', profile, permission };
+    const secret = await backend.get(SERVICE_NAME, profile);
+    if (secret) {
+      if (isOAuthProfile(profileData)) {
+        return resolveOAuthAccessToken(
+          profile,
+          profileData,
+          secret,
+          'secure_storage',
+          async (newRefreshToken) => {
+            await backend.set(SERVICE_NAME, profile, newRefreshToken);
+          },
+        );
+      }
+      const permission = (profileData as ApiKeyProfile).permission;
+      return { key: secret, source: 'secure_storage', profile, permission };
     }
   }
 
   if (creds) {
     const entry = creds.profiles[profile];
-    if (entry?.api_key) {
+    if (entry && isOAuthProfile(entry)) {
+      const refreshToken = entry.refresh_token;
+      if (refreshToken) {
+        return resolveOAuthAccessToken(
+          profile,
+          entry,
+          refreshToken,
+          'config',
+          async (newRefreshToken) => {
+            await withFileLock(getCredentialsLockPath(), async () => {
+              const updated = readCredentials();
+              if (updated?.profiles[profile] && isOAuthProfile(updated.profiles[profile])) {
+                (updated.profiles[profile] as OAuthProfile).refresh_token =
+                  newRefreshToken;
+                writeCredentials(updated);
+              }
+            });
+          },
+        );
+      }
+    } else if (entry && !isOAuthProfile(entry) && entry.api_key) {
       return {
         key: entry.api_key,
         source: 'config',
@@ -386,6 +440,116 @@ export async function resolveApiKeyAsync(
   }
 
   return null;
+}
+
+async function resolveOAuthAccessToken(
+  profile: string,
+  profileData: OAuthProfile,
+  refreshToken: string,
+  source: 'secure_storage' | 'config',
+  storeRefreshToken: (newToken: string) => Promise<void>,
+): Promise<ResolvedKey> {
+  try {
+    const { accessToken, refreshToken: newRefreshToken } =
+      await refreshAccessToken({
+        baseUrl: profileData.base_url,
+        clientId: profileData.client_id,
+        refreshToken,
+      });
+    await storeRefreshToken(newRefreshToken);
+    return {
+      key: accessToken,
+      source,
+      profile,
+      permission: scopeToPermission(profileData.scope),
+      oauthClientId: profileData.client_id,
+      oauthScope: profileData.scope,
+      oauthBaseUrl: profileData.base_url,
+    };
+  } catch (err) {
+    throw new Error(
+      `OAuth session expired or invalid. Run: resend login --oauth\n(${err instanceof Error ? err.message : String(err)})`,
+    );
+  }
+}
+
+export async function storeOAuthProfile(
+  profileName: string,
+  opts: {
+    clientId: string;
+    refreshToken: string;
+    scope: string;
+    baseUrl: string;
+  },
+): Promise<{ configPath: string; backend: CredentialBackend }> {
+  const profile = profileName || 'default';
+  const validationError = validateProfileName(profile);
+  if (validationError) {
+    throw new Error(validationError);
+  }
+
+  const backend = await getCredentialBackend();
+
+  const configPath = await withFileLock(getCredentialsLockPath(), async () => {
+    if (backend.isSecure) {
+      await backend.set(SERVICE_NAME, profile, opts.refreshToken);
+    }
+
+    const creds = readCredentials() || {
+      active_profile: 'default',
+      profiles: {},
+    };
+
+    const profileData: OAuthProfile = {
+      type: 'oauth',
+      client_id: opts.clientId,
+      scope: opts.scope,
+      base_url: opts.baseUrl,
+      ...(backend.isSecure ? {} : { refresh_token: opts.refreshToken }),
+    };
+
+    const updatedProfiles = {
+      ...creds.profiles,
+      [profile]: profileData,
+    };
+
+    return writeCredentials({
+      ...creds,
+      ...(backend.isSecure ? { storage: 'secure_storage' as const } : {}),
+      profiles: updatedProfiles,
+      ...(Object.keys(updatedProfiles).length === 1
+        ? { active_profile: profile }
+        : {}),
+    });
+  });
+
+  return { configPath, backend };
+}
+
+export type OAuthProfileMetadata = {
+  profileName: string;
+  clientId: string;
+  scope: string;
+  baseUrl: string;
+};
+
+export function readOAuthProfileMetadata(
+  profileName?: string,
+): OAuthProfileMetadata | null {
+  const creds = readCredentials();
+  if (!creds) return null;
+
+  const profile = profileName || resolveProfileName(profileName);
+  const entry = creds.profiles[profile];
+
+  if (!entry || !isOAuthProfile(entry)) return null;
+
+  return {
+    profileName: profile,
+    clientId: entry.client_id,
+    scope: entry.scope,
+    baseUrl: entry.base_url,
+  };
 }
 
 export async function storeApiKeyAsync(
