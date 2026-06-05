@@ -14,6 +14,7 @@ import {
   SERVICE_NAME,
 } from './credential-store';
 import { withFileLock } from './file-lock';
+import { refreshOAuthGrant } from './oauth';
 import { writeFileAtomic } from './write-file-atomic';
 
 export type ApiKeyPermission = 'full_access' | 'sending_access';
@@ -398,75 +399,6 @@ export function maskKey(key: string): string {
   return `${key.slice(0, 3)}...${key.slice(-4)}`;
 }
 
-export const OAUTH_CLIENT_ID = '7136aa0b-625c-4c9c-8820-e9784c8eb141';
-const OAUTH_BASE_URL = 'https://api.resend.com';
-
-function getJwtExp(token: string): number {
-  const payload = token.split('.')[1];
-  const decoded = JSON.parse(
-    Buffer.from(payload, 'base64url').toString(),
-  ) as { exp: number };
-  return decoded.exp;
-}
-
-async function refreshOAuthGrant(
-  grant: OAuthGrant,
-  profile: string,
-): Promise<{ access_token: string; scope: string }> {
-  const nowSeconds = Math.floor(Date.now() / 1000);
-
-  if (grant.access_token_expires_at > nowSeconds) {
-    return { access_token: grant.access_token, scope: grant.scope };
-  }
-
-  if (grant.refresh_token_expires_at <= nowSeconds) {
-    throw new Error(
-      'Your session has expired. Please run `resend login` to authenticate again.',
-    );
-  }
-
-  const response = await fetch(`${OAUTH_BASE_URL}/oauth/token`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'refresh_token',
-      client_id: OAUTH_CLIENT_ID,
-      refresh_token: grant.refresh_token,
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      `Token refresh failed (${response.status}). Please run \`resend login\` again.`,
-    );
-  }
-
-  const data = (await response.json()) as {
-    access_token: string;
-    expires_in: number;
-    refresh_token: string;
-    scope: string;
-    refresh_token_expires_in?: number;
-  };
-
-  const newAccessTokenExpiresAt = getJwtExp(data.access_token);
-  const newRefreshTokenExpiresAt = data.refresh_token_expires_in
-    ? nowSeconds + data.refresh_token_expires_in
-    : grant.refresh_token_expires_at;
-
-  await storeOAuthGrant(
-    {
-      access_token: data.access_token,
-      access_token_expires_at: newAccessTokenExpiresAt,
-      refresh_token: data.refresh_token,
-      refresh_token_expires_at: newRefreshTokenExpiresAt,
-      scope: data.scope,
-    },
-    profile,
-  );
-
-  return { access_token: data.access_token, scope: data.scope };
-}
 
 export async function resolveAuthentication(
   flagValue?: string,
