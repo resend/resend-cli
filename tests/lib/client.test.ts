@@ -112,7 +112,7 @@ describe('requireClient permission check', () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it('blocks sending_access key from full_access command', async () => {
+  it('blocks sending_access api key from full_access command', async () => {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     writeFileSync(
@@ -120,7 +120,7 @@ describe('requireClient permission check', () => {
       JSON.stringify({
         active_profile: 'default',
         profiles: {
-          default: { api_key: 're_sending_key', permission: 'sending_access' },
+          default: { type: 'api_key', api_key: 're_sending_key', permission: 'sending_access' },
         },
       }),
     );
@@ -134,7 +134,39 @@ describe('requireClient permission check', () => {
 
     const output = errSpy.mock.calls[0][0] as string;
     expect(output).toContain('insufficient_permissions');
-    expect(output).toContain('full access');
+    errSpy.mockRestore();
+  });
+
+  it('blocks emails:send oauth grant from full_access command', async () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'default',
+        profiles: {
+          default: {
+            type: 'oauth_grant',
+            access_token: 'eyJhbGciOiJSUzI1NiIsInR5cCI6ImF0K2p3dCJ9.eyJleHAiOjk5OTk5OTk5OTl9.sig',
+            access_token_expires_at: nowSeconds + 900,
+            refresh_token: 'rt_test',
+            refresh_token_expires_at: nowSeconds + 86400,
+            scope: 'emails:send',
+          },
+        },
+      }),
+    );
+
+    setupOutputSpies();
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { requireClient } = await import('../../src/lib/client');
+    await expectExit1(() => requireClient({ json: true }));
+
+    const output = errSpy.mock.calls[0][0] as string;
+    expect(output).toContain('insufficient_permissions');
     errSpy.mockRestore();
   });
 

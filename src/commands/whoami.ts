@@ -5,7 +5,7 @@ import {
   getConfigDir,
   listProfiles,
   maskKey,
-  resolveApiKeyAsync,
+  resolveAuthentication,
   resolveProfileName,
 } from '../lib/config';
 import { buildHelpText } from '../lib/help-text';
@@ -32,7 +32,7 @@ Shows which profile is active and where the API key comes from.`,
   .action(async (_opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const profileFlag = globalOpts.profile;
-    const resolved = await resolveApiKeyAsync(globalOpts.apiKey, profileFlag);
+    const resolved = await resolveAuthentication(globalOpts.apiKey, profileFlag);
 
     if (!resolved) {
       const requestedProfile = profileFlag
@@ -56,20 +56,25 @@ Shows which profile is active and where the API key comes from.`,
       } else {
         outputError({ message, code }, { json: false });
       }
-      return;
     }
 
     const profile = resolved.profile ?? resolveProfileName(profileFlag);
     const configPath = join(getConfigDir(), 'credentials.json');
+    const token =
+      resolved.type === 'api_key' ? resolved.key : resolved.access_token;
+    const source =
+      resolved.type === 'api_key' ? resolved.source : ('config' as const);
+    const permission =
+      resolved.type === 'api_key' ? resolved.permission : undefined;
 
     if (globalOpts.json || !isInteractive()) {
       outputResult(
         {
           authenticated: true,
           profile,
-          api_key: maskKey(resolved.key),
-          source: resolved.source,
-          ...(resolved.permission && { permission: resolved.permission }),
+          api_key: maskKey(token),
+          source,
+          ...(permission && { permission }),
           config_path: configPath,
         },
         { json: globalOpts.json },
@@ -78,24 +83,26 @@ Shows which profile is active and where the API key comes from.`,
     }
 
     const sourceLabel =
-      resolved.source === 'secure_storage'
+      source === 'secure_storage'
         ? 'secure storage'
-        : resolved.source === 'config'
-          ? 'config file'
-          : resolved.source === 'env'
+        : source === 'config'
+          ? resolved.type === 'oauth_grant'
+            ? 'config file (oauth)'
+            : 'config file'
+          : source === 'env'
             ? 'environment variable'
             : 'flag';
 
     const permissionLabel =
-      resolved.permission === 'sending_access'
+      permission === 'sending_access'
         ? 'sending access'
-        : resolved.permission === 'full_access'
+        : permission === 'full_access'
           ? 'full access'
           : undefined;
 
     console.log('');
     console.log(`  Profile: ${profile}`);
-    console.log(`  API Key: ${maskKey(resolved.key)}`);
+    console.log(`  API Key: ${maskKey(token)}`);
     console.log(`  Source:  ${sourceLabel}`);
     if (permissionLabel) {
       console.log(`  Access:  ${permissionLabel}`);
