@@ -77,7 +77,7 @@ jobs:
       - name: Build binary (no-bytecode workaround)
         run: pnpm exec pkg dist/cli.cjs --config package.json --compress Brotli --target node24-linux-arm64 --output dist/resend --no-bytecode --public-packages "*" --public
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4
+        uses: docker/setup-qemu-action@06116385d9baf250c9f4dcb4858b16962ea869c3 # v4
         with:
           platforms: arm64
       - name: Verify binary runs under arm64 emulation
