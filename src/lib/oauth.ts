@@ -52,13 +52,11 @@ export async function refreshOAuthGrant(
     expires_in: number;
     refresh_token: string;
     scope: string;
-    refresh_token_expires_in?: number;
+    refresh_token_expires_in: number;
   };
 
   const newAccessTokenExpiresAt = getJwtExp(data.access_token);
-  const newRefreshTokenExpiresAt = data.refresh_token_expires_in
-    ? nowSeconds + data.refresh_token_expires_in
-    : grant.refresh_token_expires_at;
+  const newRefreshTokenExpiresAt = nowSeconds + data.refresh_token_expires_in;
 
   await storeOAuthGrant(
     {
@@ -169,7 +167,7 @@ export async function exchangeAuthorizationCode(params: {
   expires_in: number;
   refresh_token: string;
   scope: string;
-  refresh_token_expires_in?: number;
+  refresh_token_expires_in: number;
 }> {
   const response = await fetch(`${params.baseUrl}/oauth/token`, {
     method: 'POST',
@@ -205,6 +203,6 @@ export async function exchangeAuthorizationCode(params: {
     expires_in: number;
     refresh_token: string;
     scope: string;
-    refresh_token_expires_in?: number;
+    refresh_token_expires_in: number;
   }>;
 }
