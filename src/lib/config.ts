@@ -531,6 +531,24 @@ export async function storeOAuthGrant(
       profiles: {},
     };
 
+    // Overwriting a secure-storage API key with an OAuth grant: delete the old
+    // keychain secret. Otherwise it lingers and shadows the new grant, since
+    // resolveAuthentication checks the keychain before inline oauth_grant entries.
+    if (
+      creds.storage === 'secure_storage' &&
+      creds.profiles[profile]?.type === 'api_key'
+    ) {
+      const backend = await getCredentialBackend();
+      if (backend.isSecure) {
+        const deleted = await backend.delete(SERVICE_NAME, profile);
+        if (!deleted) {
+          throw new Error(
+            `Failed to remove the previous API key for profile "${profile}" from ${backend.name}. The old credential may still exist in secure storage.`,
+          );
+        }
+      }
+    }
+
     const updatedProfiles = {
       ...creds.profiles,
       [profile]: { type: 'oauth_grant' as const, ...grant },
