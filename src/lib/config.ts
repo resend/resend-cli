@@ -28,7 +28,22 @@ export type ResolvedKey = {
   permission?: ApiKeyPermission;
 };
 
-export type Profile = { api_key?: string; permission?: ApiKeyPermission };
+export type ApiKeyCredential = {
+  type: 'api_key';
+  api_key?: string; // absent when stored in OS keychain via secure_storage
+  permission?: ApiKeyPermission;
+};
+
+export type OAuthGrant = {
+  type: 'oauth_grant';
+  access_token: string;
+  access_token_expires_at: number; // unix seconds, decoded from JWT exp claim
+  refresh_token: string;
+  refresh_token_expires_at: number; // unix seconds, from token response
+};
+
+export type Credential = ApiKeyCredential | OAuthGrant;
+export type Profile = Credential;
 export type CredentialStorage = 'secure_storage' | 'file';
 export type CredentialsFile = {
   active_profile: string;
@@ -52,6 +67,19 @@ export function getCredentialsPath(): string {
 
 export const getCredentialsLockPath = (): string =>
   join(getConfigDir(), 'credentials.json.lock');
+
+function migrateRawProfile(raw: Record<string, unknown>): Profile {
+  if (raw.type === 'oauth_grant') {
+    return raw as OAuthGrant;
+  }
+  return {
+    type: 'api_key',
+    ...(raw.api_key !== undefined ? { api_key: raw.api_key as string } : {}),
+    ...(raw.permission
+      ? { permission: raw.permission as ApiKeyPermission }
+      : {}),
+  };
+}
 
 // Best-effort read: returns null on any failure (corruption, EISDIR, EACCES,
 // etc). Callers that intend to delete the file regardless of contents (e.g.
@@ -95,7 +123,7 @@ export function readCredentials(): CredentialsFile | null {
     return {
       active_profile: 'default',
       profiles: {
-        default: { api_key: data.api_key as string },
+        default: { type: 'api_key', api_key: data.api_key as string },
       },
     };
   }
@@ -103,17 +131,29 @@ export function readCredentials(): CredentialsFile | null {
   if ('profiles' in data) {
     const storage =
       data.storage === 'keychain' ? 'secure_storage' : data.storage;
+    const rawProfiles = data.profiles as Record<string, Record<string, unknown>>;
     return {
       active_profile: (data.active_profile as string) ?? 'default',
       ...(storage ? { storage: storage as CredentialStorage } : {}),
-      profiles: data.profiles as Record<string, Profile>,
+      profiles: Object.fromEntries(
+        Object.entries(rawProfiles).map(([name, raw]) => [
+          name,
+          migrateRawProfile(raw),
+        ]),
+      ),
     };
   }
 
   if ('teams' in data) {
+    const rawTeams = data.teams as Record<string, Record<string, unknown>>;
     return {
       active_profile: (data.active_team as string) ?? 'default',
-      profiles: data.teams as Record<string, Profile>,
+      profiles: Object.fromEntries(
+        Object.entries(rawTeams).map(([name, raw]) => [
+          name,
+          migrateRawProfile(raw),
+        ]),
+      ),
     };
   }
 
@@ -166,7 +206,7 @@ export function resolveApiKey(
   if (creds) {
     const profile = resolveProfileName(profileName);
     const entry = creds.profiles[profile];
-    if (entry?.api_key) {
+    if (entry?.type === 'api_key' && entry.api_key) {
       return {
         key: entry.api_key,
         source: 'config',
@@ -199,6 +239,7 @@ export function storeApiKey(
     const updatedProfiles = {
       ...creds.profiles,
       [profile]: {
+        type: 'api_key' as const,
         api_key: apiKey,
         ...(permission && { permission }),
       },
@@ -368,14 +409,16 @@ export async function resolveApiKeyAsync(
     const backend = await getCredentialBackend();
     const key = await backend.get(SERVICE_NAME, profile);
     if (key) {
-      const permission = creds.profiles[profile]?.permission;
+      const credential = creds.profiles[profile];
+      const permission =
+        credential?.type === 'api_key' ? credential.permission : undefined;
       return { key, source: 'secure_storage', profile, permission };
     }
   }
 
   if (creds) {
     const entry = creds.profiles[profile];
-    if (entry?.api_key) {
+    if (entry?.type === 'api_key' && entry.api_key) {
       return {
         key: entry.api_key,
         source: 'config',
@@ -416,7 +459,7 @@ export async function storeApiKeyAsync(
 
     const updatedProfiles = {
       ...creds.profiles,
-      [profile]: { ...(permission && { permission }) },
+      [profile]: { type: 'api_key' as const, ...(permission && { permission }) },
     };
 
     return writeCredentials({
@@ -430,6 +473,37 @@ export async function storeApiKeyAsync(
   });
 
   return { configPath, backend };
+}
+
+export async function storeOAuthGrant(
+  grant: Omit<OAuthGrant, 'type'>,
+  profileName?: string,
+): Promise<string> {
+  const profile = profileName || 'default';
+  const validationError = validateProfileName(profile);
+  if (validationError) {
+    throw new Error(validationError);
+  }
+
+  return withFileLock(getCredentialsLockPath(), async () => {
+    const creds = readCredentials() || {
+      active_profile: 'default',
+      profiles: {},
+    };
+
+    const updatedProfiles = {
+      ...creds.profiles,
+      [profile]: { type: 'oauth_grant' as const, ...grant },
+    };
+
+    return writeCredentials({
+      ...creds,
+      profiles: updatedProfiles,
+      ...(Object.keys(updatedProfiles).length === 1
+        ? { active_profile: profile }
+        : {}),
+    });
+  });
 }
 
 export async function removeApiKeyAsync(profileName?: string): Promise<string> {
