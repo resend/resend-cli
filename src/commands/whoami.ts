@@ -35,6 +35,7 @@ Shows which profile is active and where the API key comes from.`,
     const resolved = await resolveAuthentication(
       globalOpts.apiKey,
       profileFlag,
+      { refresh: false },
     );
 
     if (!resolved) {
