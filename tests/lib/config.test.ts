@@ -76,13 +76,21 @@ describe('resolveApiKey', () => {
   it('flag value takes highest priority', () => {
     process.env.RESEND_API_KEY = 're_env_key';
     const result = resolveApiKey('re_flag_key');
-    expect(result).toEqual({ key: 're_flag_key', source: 'flag' });
+    expect(result).toEqual({
+      type: 'api_key',
+      key: 're_flag_key',
+      source: 'flag',
+    });
   });
 
   it('env var is second priority', () => {
     process.env.RESEND_API_KEY = 're_env_key';
     const result = resolveApiKey();
-    expect(result).toEqual({ key: 're_env_key', source: 'env' });
+    expect(result).toEqual({
+      type: 'api_key',
+      key: 're_env_key',
+      source: 'env',
+    });
   });
 
   it('config file is third priority (new format)', () => {
@@ -100,9 +108,11 @@ describe('resolveApiKey', () => {
 
     const result = resolveApiKey();
     expect(result).toEqual({
+      type: 'api_key',
       key: 're_config_key',
       source: 'config',
       profile: 'default',
+      permission: undefined,
     });
   });
 
@@ -124,9 +134,11 @@ describe('resolveApiKey', () => {
 
     const result = resolveApiKey(undefined, 'staging');
     expect(result).toEqual({
+      type: 'api_key',
       key: 're_staging',
       source: 'config',
       profile: 'staging',
+      permission: undefined,
     });
   });
 
@@ -477,7 +489,9 @@ describe('renameProfile', () => {
     // Simulate a legacy profile created before validation was added
     writeCredentials({
       active_profile: 'my team',
-      profiles: { 'my team': { api_key: 're_legacy' } },
+      profiles: {
+        'my team': { type: 'api_key' as const, api_key: 're_legacy' },
+      },
     });
 
     renameProfile('my team', 'my-team');
@@ -592,7 +606,7 @@ describe('writeCredentials (atomic)', () => {
   it('produces valid JSON after write', () => {
     const configPath = writeCredentials({
       active_profile: 'default',
-      profiles: { default: { api_key: 're_test' } },
+      profiles: { default: { type: 'api_key' as const, api_key: 're_test' } },
     });
     const data = JSON.parse(readFileSync(configPath, 'utf-8'));
     expect(data.profiles.default.api_key).toBe('re_test');
@@ -601,7 +615,7 @@ describe('writeCredentials (atomic)', () => {
   it('does not leave tmp files on success', () => {
     writeCredentials({
       active_profile: 'default',
-      profiles: { default: { api_key: 're_test' } },
+      profiles: { default: { type: 'api_key' as const, api_key: 're_test' } },
     });
     const configDir = join(tmpDir, 'resend');
     const files = require('node:fs').readdirSync(configDir) as string[];

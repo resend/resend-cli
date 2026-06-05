@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { captureTestEnv } from '../helpers';
 
-describe('resolveApiKeyAsync', () => {
+describe('resolveAuthentication', () => {
   const restoreEnv = captureTestEnv();
   let tmpDir: string;
 
@@ -27,16 +27,24 @@ describe('resolveApiKeyAsync', () => {
   });
 
   it('returns flag value without touching backend', async () => {
-    const { resolveApiKeyAsync } = await import('../../src/lib/config');
-    const result = await resolveApiKeyAsync('re_flag_key');
-    expect(result).toEqual({ key: 're_flag_key', source: 'flag' });
+    const { resolveAuthentication } = await import('../../src/lib/config');
+    const result = await resolveAuthentication('re_flag_key');
+    expect(result).toEqual({
+      type: 'api_key',
+      key: 're_flag_key',
+      source: 'flag',
+    });
   });
 
   it('returns env value without touching backend', async () => {
     process.env.RESEND_API_KEY = 're_env_key';
-    const { resolveApiKeyAsync } = await import('../../src/lib/config');
-    const result = await resolveApiKeyAsync();
-    expect(result).toEqual({ key: 're_env_key', source: 'env' });
+    const { resolveAuthentication } = await import('../../src/lib/config');
+    const result = await resolveAuthentication();
+    expect(result).toEqual({
+      type: 'api_key',
+      key: 're_env_key',
+      source: 'env',
+    });
   });
 
   it('reads from file when storage is not secure_storage', async () => {
@@ -50,9 +58,10 @@ describe('resolveApiKeyAsync', () => {
       }),
     );
 
-    const { resolveApiKeyAsync } = await import('../../src/lib/config');
-    const result = await resolveApiKeyAsync();
+    const { resolveAuthentication } = await import('../../src/lib/config');
+    const result = await resolveAuthentication();
     expect(result).toEqual({
+      type: 'api_key',
       key: 're_file_key',
       source: 'config',
       profile: 'default',
@@ -87,9 +96,10 @@ describe('resolveApiKeyAsync', () => {
       resetCredentialBackend: vi.fn(),
     }));
 
-    const { resolveApiKeyAsync } = await import('../../src/lib/config');
-    const result = await resolveApiKeyAsync();
+    const { resolveAuthentication } = await import('../../src/lib/config');
+    const result = await resolveAuthentication();
     expect(result).toEqual({
+      type: 'api_key',
       key: 're_keychain_key',
       source: 'secure_storage',
       profile: 'default',
@@ -125,9 +135,10 @@ describe('resolveApiKeyAsync', () => {
       resetCredentialBackend: vi.fn(),
     }));
 
-    const { resolveApiKeyAsync } = await import('../../src/lib/config');
-    const result = await resolveApiKeyAsync();
+    const { resolveAuthentication } = await import('../../src/lib/config');
+    const result = await resolveAuthentication();
     expect(result).toEqual({
+      type: 'api_key',
       key: 're_unmigrated_key',
       source: 'config',
       profile: 'default',
@@ -162,8 +173,8 @@ describe('resolveApiKeyAsync', () => {
       resetCredentialBackend: vi.fn(),
     }));
 
-    const { resolveApiKeyAsync } = await import('../../src/lib/config');
-    const result = await resolveApiKeyAsync();
+    const { resolveAuthentication } = await import('../../src/lib/config');
+    const result = await resolveAuthentication();
     expect(result).toBeNull();
   });
 
@@ -195,8 +206,8 @@ describe('resolveApiKeyAsync', () => {
       resetCredentialBackend: vi.fn(),
     }));
 
-    const { resolveApiKeyAsync } = await import('../../src/lib/config');
-    const result = await resolveApiKeyAsync(undefined, 'removed-profile');
+    const { resolveAuthentication } = await import('../../src/lib/config');
+    const result = await resolveAuthentication(undefined, 'removed-profile');
     expect(result).toBeNull();
     expect(mockBackend.get).not.toHaveBeenCalled();
   });
@@ -612,7 +623,10 @@ describe('renameProfileAsync', () => {
     expect(mockBackend.set).not.toHaveBeenCalled();
     expect(mockBackend.delete).not.toHaveBeenCalled();
     const creds = readCredentials();
-    expect(creds?.profiles['new-name']).toEqual({ api_key: 're_file_key' });
+    expect(creds?.profiles['new-name']).toEqual({
+      type: 'api_key',
+      api_key: 're_file_key',
+    });
     expect(creds?.profiles['old-name']).toBeUndefined();
   });
 
