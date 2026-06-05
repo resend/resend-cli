@@ -112,13 +112,19 @@ export function createCallbackServer(): Promise<{
       const state = url.searchParams.get('state');
       const error = url.searchParams.get('error');
 
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.writeHead(200, {
+        'Content-Type': 'text/html; charset=utf-8',
+        Connection: 'close',
+      });
       res.end(
         '<!doctype html><html><head><title>Resend CLI</title></head>' +
           '<body style="font-family:system-ui;text-align:center;padding:2rem">' +
           '<h2>Authentication complete</h2>' +
           '<p>You can close this tab and return to your terminal.</p>' +
           '</body></html>',
+        () => {
+          req.socket.destroy();
+        },
       );
 
       server.close();
