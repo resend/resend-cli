@@ -18,7 +18,6 @@ import {
   exchangeAuthorizationCode,
   generatePKCE,
   getJwtExp,
-  OAUTH_BASE_URL,
   OAUTH_CLIENT_ID,
 } from '../../lib/oauth';
 import { errorMessage, outputError, outputResult } from '../../lib/output';
@@ -126,8 +125,9 @@ async function handleOAuthLogin(globalOpts: GlobalOpts): Promise<void> {
   }
 
   const redirectUri = `http://127.0.0.1:${port}/oauth/callback`;
+  const resendBaseUrl = process.env.RESEND_BASE_URL ?? 'https://api.resend.com';
 
-  const authUrl = new URL(`${OAUTH_BASE_URL}/oauth/authorize`);
+  const authUrl = new URL(`${resendBaseUrl}/oauth/authorize`);
   authUrl.search = new URLSearchParams({
     client_id: OAUTH_CLIENT_ID,
     response_type: 'code',
@@ -191,7 +191,7 @@ async function handleOAuthLogin(globalOpts: GlobalOpts): Promise<void> {
       codeVerifier,
       redirectUri,
       clientId: OAUTH_CLIENT_ID,
-      baseUrl: OAUTH_BASE_URL,
+      baseUrl: resendBaseUrl,
     });
   } catch (err) {
     exchangeSpinner.fail('Token exchange failed');
