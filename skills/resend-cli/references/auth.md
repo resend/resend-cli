@@ -10,6 +10,8 @@ Detailed flag specifications for `resend auth` and utility commands.
 |------|------|----------|-------------|
 | `--key <key>` | string | Yes (non-interactive) | API key (must start with `re_`) |
 
+Pass the key from an environment variable (e.g. `--key "$RESEND_API_KEY"`) or a secret manager — never as a literal, which would persist in shell history and logs.
+
 ---
 
 ## auth logout
