@@ -144,7 +144,10 @@ export function readCredentials(): CredentialsFile | null {
   if ('profiles' in data) {
     const storage =
       data.storage === 'keychain' ? 'secure_storage' : data.storage;
-    const rawProfiles = data.profiles as Record<string, Record<string, unknown>>;
+    const rawProfiles = data.profiles as Record<
+      string,
+      Record<string, unknown>
+    >;
     return {
       active_profile: (data.active_profile as string) ?? 'default',
       ...(storage ? { storage: storage as CredentialStorage } : {}),
@@ -399,7 +402,6 @@ export function maskKey(key: string): string {
   return `${key.slice(0, 3)}...${key.slice(-4)}`;
 }
 
-
 export async function resolveAuthentication(
   flagValue?: string,
   profileName?: string,
@@ -427,7 +429,13 @@ export async function resolveAuthentication(
       const credential = creds.profiles[profile];
       const permission =
         credential?.type === 'api_key' ? credential.permission : undefined;
-      return { type: 'api_key', key, source: 'secure_storage', profile, permission };
+      return {
+        type: 'api_key',
+        key,
+        source: 'secure_storage',
+        profile,
+        permission,
+      };
     }
   }
 
@@ -479,7 +487,10 @@ export async function storeApiKeyAsync(
 
     const updatedProfiles = {
       ...creds.profiles,
-      [profile]: { type: 'api_key' as const, ...(permission && { permission }) },
+      [profile]: {
+        type: 'api_key' as const,
+        ...(permission && { permission }),
+      },
     };
 
     return writeCredentials({
