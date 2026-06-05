@@ -76,13 +76,21 @@ describe('resolveApiKey', () => {
   it('flag value takes highest priority', () => {
     process.env.RESEND_API_KEY = 're_env_key';
     const result = resolveApiKey('re_flag_key');
-    expect(result).toEqual({ type: 'api_key', key: 're_flag_key', source: 'flag' });
+    expect(result).toEqual({
+      type: 'api_key',
+      key: 're_flag_key',
+      source: 'flag',
+    });
   });
 
   it('env var is second priority', () => {
     process.env.RESEND_API_KEY = 're_env_key';
     const result = resolveApiKey();
-    expect(result).toEqual({ type: 'api_key', key: 're_env_key', source: 'env' });
+    expect(result).toEqual({
+      type: 'api_key',
+      key: 're_env_key',
+      source: 'env',
+    });
   });
 
   it('config file is third priority (new format)', () => {
@@ -481,7 +489,9 @@ describe('renameProfile', () => {
     // Simulate a legacy profile created before validation was added
     writeCredentials({
       active_profile: 'my team',
-      profiles: { 'my team': { type: 'api_key' as const, api_key: 're_legacy' } },
+      profiles: {
+        'my team': { type: 'api_key' as const, api_key: 're_legacy' },
+      },
     });
 
     renameProfile('my team', 'my-team');

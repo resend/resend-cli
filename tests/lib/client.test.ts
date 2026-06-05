@@ -120,7 +120,11 @@ describe('requireClient permission check', () => {
       JSON.stringify({
         active_profile: 'default',
         profiles: {
-          default: { type: 'api_key', api_key: 're_sending_key', permission: 'sending_access' },
+          default: {
+            type: 'api_key',
+            api_key: 're_sending_key',
+            permission: 'sending_access',
+          },
         },
       }),
     );
@@ -148,7 +152,8 @@ describe('requireClient permission check', () => {
         profiles: {
           default: {
             type: 'oauth_grant',
-            access_token: 'eyJhbGciOiJSUzI1NiIsInR5cCI6ImF0K2p3dCJ9.eyJleHAiOjk5OTk5OTk5OTl9.sig',
+            access_token:
+              'eyJhbGciOiJSUzI1NiIsInR5cCI6ImF0K2p3dCJ9.eyJleHAiOjk5OTk5OTk5OTl9.sig',
             access_token_expires_at: nowSeconds + 900,
             refresh_token: 'rt_test',
             refresh_token_expires_at: nowSeconds + 86400,

@@ -8,9 +8,9 @@ export const OAUTH_CLIENT_ID = '7136aa0b-625c-4c9c-8820-e9784c8eb141';
 
 export function getJwtExp(token: string): number {
   const payload = token.split('.')[1];
-  const decoded = JSON.parse(
-    Buffer.from(payload, 'base64url').toString(),
-  ) as { exp: number };
+  const decoded = JSON.parse(Buffer.from(payload, 'base64url').toString()) as {
+    exp: number;
+  };
   return decoded.exp;
 }
 
@@ -139,12 +139,15 @@ export function createCallbackServer(): Promise<{
       }
     });
 
-    const timeout = setTimeout(() => {
-      server.close();
-      rejectCallback(
-        new Error('OAuth login timed out after 5 minutes. Please try again.'),
-      );
-    }, 5 * 60 * 1000);
+    const timeout = setTimeout(
+      () => {
+        server.close();
+        rejectCallback(
+          new Error('OAuth login timed out after 5 minutes. Please try again.'),
+        );
+      },
+      5 * 60 * 1000,
+    );
 
     server.listen(0, '127.0.0.1', () => {
       const { port } = server.address() as AddressInfo;
