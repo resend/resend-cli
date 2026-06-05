@@ -37,8 +37,8 @@ importers:
         specifier: 24.12.4
         version: 24.12.4
       '@yao-pkg/pkg':
-        specifier: 6.19.0
-        version: 6.19.0
+        specifier: 6.20.0
+        version: 6.20.0
       tsx:
         specifier: 4.22.3
         version: 4.22.3
@@ -832,12 +832,12 @@ packages:
   '@vitest/utils@4.1.7':
     resolution: {integrity: sha512-T532WBu791cBxJlCl6SO+J14l81DQx6uQHm1bQbmCDY7nqlEIgkza/UFnSBNaUtSf41unldDFjdOBYEQC4b5Hw==}
 
-  '@yao-pkg/pkg-fetch@3.5.33':
-    resolution: {integrity: sha512-j2UoH+eP4VobfovQg1gkWwDoB4O/tv8rlLnEjUEEHuWXJ5eBLNUIrobMSEp773/2pgUJUfqqPUFIhS1pN8OZuQ==}
+  '@yao-pkg/pkg-fetch@3.6.3':
+    resolution: {integrity: sha512-EAOgiH5viuZP//ZJ2vQMgkAId2GERx1A7ccjXtlpEbXlqAtXAmnvh6IQ1I7HeJSNBQ+dKq32lqDgz5N2oAsjkA==}
     hasBin: true
 
-  '@yao-pkg/pkg@6.19.0':
-    resolution: {integrity: sha512-Ys9Fn/F44C3nOTlNyhwviLyMxydgFzsB13jAAXKxEuIR7aAz8PrFlUpxTUlwaXUU847nlmg5mnaGIyOJpnVtRw==}
+  '@yao-pkg/pkg@6.20.0':
+    resolution: {integrity: sha512-RyYHHA1GmU2kEpNXUlknxekLftROewApqky6KpJK7ErreyMK8ysdkLmJOyo7XmuRhedVL+iuvmzYxfwgEYyAsA==}
     engines: {node: '>=22.0.0'}
     hasBin: true
 
@@ -1985,7 +1985,7 @@ snapshots:
       convert-source-map: 2.0.0
       tinyrainbow: 3.1.0
 
-  '@yao-pkg/pkg-fetch@3.5.33':
+  '@yao-pkg/pkg-fetch@3.6.3':
     dependencies:
       https-proxy-agent: 5.0.1
       node-fetch: 2.7.0
@@ -2001,14 +2001,14 @@ snapshots:
       - react-native-b4a
       - supports-color
 
-  '@yao-pkg/pkg@6.19.0':
+  '@yao-pkg/pkg@6.20.0':
     dependencies:
       '@babel/generator': 7.29.1
       '@babel/parser': 7.29.0
       '@babel/traverse': 7.29.0
       '@babel/types': 7.29.0
       '@roberts_lando/vfs': 0.3.3
-      '@yao-pkg/pkg-fetch': 3.5.33
+      '@yao-pkg/pkg-fetch': 3.6.3
       esbuild: 0.27.4
       into-stream: 9.1.0
       multistream: 4.1.0
