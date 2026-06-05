@@ -31,9 +31,10 @@ async function selectProfile(
   globalOpts: GlobalOpts,
   promptLabel: string,
 ): Promise<string | undefined> {
-  let profileName = globalOpts.profile?.trim() || undefined;
+  let profileName =
+    globalOpts.profile !== undefined ? globalOpts.profile.trim() : undefined;
 
-  if (profileName) {
+  if (profileName !== undefined) {
     const profileError = validateProfileName(profileName);
     if (profileError) {
       outputError(
