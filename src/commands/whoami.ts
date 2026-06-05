@@ -32,7 +32,10 @@ Shows which profile is active and where the API key comes from.`,
   .action(async (_opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const profileFlag = globalOpts.profile;
-    const resolved = await resolveAuthentication(globalOpts.apiKey, profileFlag);
+    const resolved = await resolveAuthentication(
+      globalOpts.apiKey,
+      profileFlag,
+    );
 
     if (!resolved) {
       const requestedProfile = profileFlag

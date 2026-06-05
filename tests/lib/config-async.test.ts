@@ -29,14 +29,22 @@ describe('resolveAuthentication', () => {
   it('returns flag value without touching backend', async () => {
     const { resolveAuthentication } = await import('../../src/lib/config');
     const result = await resolveAuthentication('re_flag_key');
-    expect(result).toEqual({ type: 'api_key', key: 're_flag_key', source: 'flag' });
+    expect(result).toEqual({
+      type: 'api_key',
+      key: 're_flag_key',
+      source: 'flag',
+    });
   });
 
   it('returns env value without touching backend', async () => {
     process.env.RESEND_API_KEY = 're_env_key';
     const { resolveAuthentication } = await import('../../src/lib/config');
     const result = await resolveAuthentication();
-    expect(result).toEqual({ type: 'api_key', key: 're_env_key', source: 'env' });
+    expect(result).toEqual({
+      type: 'api_key',
+      key: 're_env_key',
+      source: 'env',
+    });
   });
 
   it('reads from file when storage is not secure_storage', async () => {
@@ -615,7 +623,10 @@ describe('renameProfileAsync', () => {
     expect(mockBackend.set).not.toHaveBeenCalled();
     expect(mockBackend.delete).not.toHaveBeenCalled();
     const creds = readCredentials();
-    expect(creds?.profiles['new-name']).toEqual({ type: 'api_key', api_key: 're_file_key' });
+    expect(creds?.profiles['new-name']).toEqual({
+      type: 'api_key',
+      api_key: 're_file_key',
+    });
     expect(creds?.profiles['old-name']).toBeUndefined();
   });
 
