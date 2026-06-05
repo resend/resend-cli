@@ -612,7 +612,7 @@ describe('renameProfileAsync', () => {
     expect(mockBackend.set).not.toHaveBeenCalled();
     expect(mockBackend.delete).not.toHaveBeenCalled();
     const creds = readCredentials();
-    expect(creds?.profiles['new-name']).toEqual({ api_key: 're_file_key' });
+    expect(creds?.profiles['new-name']).toEqual({ type: 'api_key', api_key: 're_file_key' });
     expect(creds?.profiles['old-name']).toBeUndefined();
   });
 
