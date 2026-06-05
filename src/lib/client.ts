@@ -78,14 +78,17 @@ export async function requireClient(
       );
     }
 
-    const storedPermission: ApiKeyPermission | undefined =
-      resolved.type === 'api_key'
-        ? resolved.permission
-        : resolved.scope === 'full_access'
-          ? 'full_access'
-          : resolved.scope.includes('emails:send')
-            ? 'sending_access'
-            : undefined;
+    let storedPermission: ApiKeyPermission | undefined;
+    if (resolved.type === 'api_key') {
+      storedPermission = resolved.permission;
+    } else {
+      const scopes = resolved.scope.split(' ').filter(Boolean);
+      storedPermission = scopes.includes('full_access')
+        ? 'full_access'
+        : scopes.includes('emails:send')
+          ? 'sending_access'
+          : undefined;
+    }
 
     if (storedPermission) {
       const required = clientOpts?.permission ?? 'full_access';
