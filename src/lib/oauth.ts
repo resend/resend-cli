@@ -5,7 +5,6 @@ import type { OAuthGrant } from './config';
 import { storeOAuthGrant } from './config';
 
 export const OAUTH_CLIENT_ID = '7136aa0b-625c-4c9c-8820-e9784c8eb141';
-export const OAUTH_BASE_URL = 'https://api.resend.com';
 
 export function getJwtExp(token: string): number {
   const payload = token.split('.')[1];
@@ -31,7 +30,8 @@ export async function refreshOAuthGrant(
     );
   }
 
-  const response = await fetch(`${OAUTH_BASE_URL}/oauth/token`, {
+  const baseUrl = process.env.RESEND_BASE_URL ?? 'https://api.resend.com';
+  const response = await fetch(`${baseUrl}/oauth/token`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
