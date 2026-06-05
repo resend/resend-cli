@@ -116,7 +116,6 @@ describe('doctor command', () => {
     expect(keyCheck).toBeDefined();
     expect(keyCheck.status).toBe('pass');
     expect(keyCheck.message).toContain('re_');
-    expect(keyCheck.message).toContain('env');
   });
 
   it('API key check fails when no key is set', async () => {

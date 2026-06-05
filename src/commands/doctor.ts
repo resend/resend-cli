@@ -4,7 +4,7 @@ import type { GlobalOpts } from '../lib/client';
 import {
   maskKey,
   readCredentials,
-  resolveApiKeyAsync,
+  resolveAuthentication,
   SENDING_KEY_MESSAGE,
 } from '../lib/config';
 import { getCredentialBackend } from '../lib/credential-store';
@@ -76,7 +76,7 @@ async function checkCliVersion(): Promise<CheckResult> {
 }
 
 async function checkApiKeyPresence(flagValue?: string): Promise<CheckResult> {
-  const resolved = await resolveApiKeyAsync(flagValue);
+  const resolved = await resolveAuthentication(flagValue);
   if (!resolved) {
     return {
       name: 'API Key',
@@ -85,18 +85,22 @@ async function checkApiKeyPresence(flagValue?: string): Promise<CheckResult> {
       detail: 'Run: resend login',
     };
   }
+  const token =
+    resolved.type === 'api_key' ? resolved.key : resolved.access_token;
   const profileInfo = resolved.profile ? `, profile: ${resolved.profile}` : '';
+  const source =
+    resolved.type === 'api_key' ? resolved.source : 'config (oauth)';
   return {
     name: 'API Key',
     status: 'pass',
-    message: `${maskKey(resolved.key)} (source: ${resolved.source}${profileInfo})`,
+    message: `${maskKey(token)} (source: ${source}${profileInfo})`,
   };
 }
 
 async function checkApiValidationAndDomains(
   flagValue?: string,
 ): Promise<CheckResult> {
-  const resolved = await resolveApiKeyAsync(flagValue);
+  const resolved = await resolveAuthentication(flagValue);
   if (!resolved) {
     return {
       name: 'API Validation',
@@ -105,8 +109,10 @@ async function checkApiValidationAndDomains(
     };
   }
 
+  const token =
+    resolved.type === 'api_key' ? resolved.key : resolved.access_token;
   try {
-    const resend = new Resend(resolved.key);
+    const resend = new Resend(token);
     const { data, error } = await withTimeout(
       resend.domains.list(),
       API_TIMEOUT_MS,
