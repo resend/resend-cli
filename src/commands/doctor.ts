@@ -109,8 +109,15 @@ async function checkApiValidationAndDomains(
     };
   }
 
-  const token =
-    resolved.type === 'api_key' ? resolved.key : resolved.access_token;
+  if (resolved.type === 'oauth_grant') {
+    return {
+      name: 'API Validation',
+      status: 'pass',
+      message: `OAuth grant (scope: ${resolved.scope})`,
+    };
+  }
+
+  const token = resolved.key;
   try {
     const resend = new Resend(token);
     const { data, error } = await withTimeout(
