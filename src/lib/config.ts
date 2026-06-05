@@ -405,6 +405,7 @@ export function maskKey(key: string): string {
 export async function resolveAuthentication(
   flagValue?: string,
   profileName?: string,
+  options?: { refresh?: boolean },
 ): Promise<ResolvedAuthentication | null> {
   if (flagValue) {
     return { type: 'api_key', key: flagValue, source: 'flag' };
@@ -451,6 +452,14 @@ export async function resolveAuthentication(
       };
     }
     if (entry?.type === 'oauth_grant') {
+      if (options?.refresh === false) {
+        return {
+          type: 'oauth_grant',
+          access_token: entry.access_token,
+          profile,
+          scope: entry.scope,
+        };
+      }
       const { access_token, scope } = await refreshOAuthGrant(entry, profile);
       return { type: 'oauth_grant', access_token, profile, scope };
     }
