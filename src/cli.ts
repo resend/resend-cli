@@ -25,6 +25,7 @@ import { updateCommand } from './commands/update';
 import { webhooksCommand } from './commands/webhooks/index';
 import { whoamiCommand } from './commands/whoami';
 import { setupCliExitHandler } from './lib/cli-exit';
+import { installCommandSuggestions } from './lib/command-suggestions';
 import { printBannerPlain } from './lib/logo';
 import { errorMessage, outputError } from './lib/output';
 import { trackCommand } from './lib/telemetry';
@@ -163,6 +164,7 @@ telemetryCommand
   });
 
 program.addCommand(telemetryCommand, { hidden: true });
+installCommandSuggestions(program);
 
 program
   .parseAsync()
