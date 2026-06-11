@@ -17,8 +17,6 @@ type CommandSuggestion = {
   suggestions: string[];
 }
 
-type OutputConfiguration = ReturnType<Command['configureOutput']>;
-
 export function installCommandSuggestions(
   root: Command,
   opts: InstallOptions = {},
@@ -26,7 +24,7 @@ export function installCommandSuggestions(
   const getArgv = opts.getArgv ?? (() => process.argv.slice(2));
 
   for (const command of walkCommands(root)) {
-    const output = command.configureOutput() as OutputConfiguration;
+    const output = command.configureOutput();
     const outputError = output.outputError ?? ((str, write) => write(str));
 
     command.configureOutput({
