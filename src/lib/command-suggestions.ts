@@ -121,7 +121,7 @@ export function getCommandSuggestion(
       } else {
         const next = argv[index + 1];
 
-        if (option.optional && (!next || next.startsWith('-'))) {
+        if (option.optional && (next === undefined || next.startsWith('-'))) {
           nextIndex = index + 1;
         } else {
           nextIndex = Math.min(index + 2, argv.length);

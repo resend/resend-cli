@@ -105,6 +105,18 @@ describe('enhanceCommandError', () => {
     );
   });
 
+  it('consumes empty-string optional option values before suggesting commands', () => {
+    expect(
+      enhanceCommandError(EXCESS_ARGS, buildProgram(), [
+        '--profile',
+        '',
+        'contatcs',
+      ]),
+    ).toBe(
+      "error: unknown command 'contatcs'\n(Did you mean resend contacts?)\n",
+    );
+  });
+
   it('uses aliases to find suggestions but prints canonical command names', () => {
     expect(
       enhanceCommandError(EXCESS_ARGS, buildProgram(), ['contacts', 'sl']),
