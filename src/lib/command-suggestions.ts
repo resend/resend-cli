@@ -235,7 +235,7 @@ function suggestCommands(unknown: string, commands: Command[]): Command[] {
           continue;
         }
 
-        const distance = editDistance(unknown, name);
+        const distance = editDistance(unknown, name, MAX_DISTANCE);
         const length = Math.max(unknown.length, name.length);
         const similarity = (length - distance) / length;
 
@@ -264,8 +264,12 @@ function suggestCommands(unknown: string, commands: Command[]): Command[] {
     .map((match) => match.command);
 }
 
-function editDistance(a: string, b: string): number {
-  if (Math.abs(a.length - b.length) > MAX_DISTANCE) {
+export function editDistance(
+  a: string,
+  b: string,
+  maxLengthDifference = Number.POSITIVE_INFINITY,
+): number {
+  if (Math.abs(a.length - b.length) > maxLengthDifference) {
     return Math.max(a.length, b.length);
   }
 
