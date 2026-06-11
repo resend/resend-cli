@@ -15,7 +15,7 @@ type InstallOptions = {
 type CommandSuggestion = {
   unknownCommand: string;
   suggestions: string[];
-}
+};
 
 export function installCommandSuggestions(
   root: Command,
@@ -23,7 +23,23 @@ export function installCommandSuggestions(
 ): void {
   const getArgv = opts.getArgv ?? (() => process.argv.slice(2));
 
-  for (const command of walkCommands(root)) {
+  const commands: Command[] = [];
+  const stack = [root];
+
+  while (stack.length > 0) {
+    const command = stack.pop();
+    if (!command) {
+      break;
+    }
+
+    commands.push(command);
+
+    for (const subcommand of (command as InternalCommand).commands) {
+      stack.push(subcommand);
+    }
+  }
+
+  for (const command of commands) {
     const output = command.configureOutput();
     const outputError = output.outputError ?? ((str, write) => write(str));
 
@@ -66,7 +82,53 @@ export function getCommandSuggestion(
       return undefined;
     }
 
-    const nextIndex = skipOption(argv, index, current);
+    let nextIndex: number | undefined = index;
+
+    if (token.startsWith('-') && token !== '-') {
+      const flag = token.startsWith('--')
+        ? token.split('=', 1)[0]
+        : token.length > 2
+          ? token.slice(0, 2)
+          : token;
+
+      let option: Option | undefined;
+
+      for (const command of commandAndAncestors(current)) {
+        for (const visibleOption of command
+          .createHelp()
+          .visibleOptions(command)) {
+          if (visibleOption.long === flag || visibleOption.short === flag) {
+            option = visibleOption;
+            break;
+          }
+        }
+
+        if (option) {
+          break;
+        }
+      }
+
+      if (!option) {
+        nextIndex = undefined;
+      } else if (!option.required && !option.optional) {
+        nextIndex = index + 1;
+      } else if (option.variadic) {
+        nextIndex = argv.length;
+      } else if (token.startsWith('--') && token.includes('=')) {
+        nextIndex = index + 1;
+      } else if (!token.startsWith('--') && token.length > 2) {
+        nextIndex = index + 1;
+      } else {
+        const next = argv[index + 1];
+
+        if (option.optional && (!next || next.startsWith('-'))) {
+          nextIndex = index + 1;
+        } else {
+          nextIndex = Math.min(index + 2, argv.length);
+        }
+      }
+    }
+
     if (nextIndex === undefined) {
       return undefined;
     }
@@ -79,7 +141,9 @@ export function getCommandSuggestion(
       return undefined;
     }
 
-    const exact = findCommand(current, token);
+    const exact = subcommands(current).find((command) =>
+      commandNames(command).has(token),
+    );
     if (exact) {
       current = exact;
       path.push(exact.name());
@@ -124,78 +188,6 @@ function formatSuggestion(
   return `error: unknown command '${suggestion.unknownCommand}'\n(${didYouMean})${trailingNewline}`;
 }
 
-function walkCommands(root: Command): Command[] {
-  const commands: Command[] = [root];
-
-  for (const subcommand of (root as InternalCommand).commands) {
-    commands.push(...walkCommands(subcommand));
-  }
-
-  return commands;
-}
-
-function skipOption(
-  argv: string[],
-  index: number,
-  current: Command,
-): number | undefined {
-  const token = argv[index];
-
-  if (!token.startsWith('-') || token === '-') {
-    return index;
-  }
-
-  const option = findOption(current, token);
-  if (!option) {
-    return undefined;
-  }
-
-  if (!option.required && !option.optional) {
-    return index + 1;
-  }
-
-  if (option.variadic) {
-    return argv.length;
-  }
-
-  if (token.startsWith('--') && token.includes('=')) {
-    return index + 1;
-  }
-
-  if (!token.startsWith('--') && token.length > 2) {
-    return index + 1;
-  }
-
-  const next = argv[index + 1];
-  if (option.optional && (!next || next.startsWith('-'))) {
-    return index + 1;
-  }
-
-  return Math.min(index + 2, argv.length);
-}
-
-function findOption(current: Command, token: string): Option | undefined {
-  const flag = optionFlag(token);
-
-  for (const command of commandAndAncestors(current)) {
-    for (const option of command.createHelp().visibleOptions(command)) {
-      if (option.long === flag || option.short === flag) {
-        return option;
-      }
-    }
-  }
-
-  return undefined;
-}
-
-function optionFlag(token: string): string {
-  if (token.startsWith('--')) {
-    return token.split('=', 1)[0];
-  }
-
-  return token.length > 2 ? token.slice(0, 2) : token;
-}
-
 function commandAndAncestors(command: Command): Command[] {
   const commands: Command[] = [];
 
@@ -208,10 +200,6 @@ function commandAndAncestors(command: Command): Command[] {
   }
 
   return commands;
-}
-
-function findCommand(parent: Command, name: string): Command | undefined {
-  return subcommands(parent).find((command) => commandNames(command).has(name));
 }
 
 function visibleSubcommands(parent: Command): Command[] {
