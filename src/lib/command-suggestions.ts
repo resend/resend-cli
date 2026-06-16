@@ -179,13 +179,12 @@ function formatSuggestion(
   suggestion: CommandSuggestion,
 ): string {
   const trailingNewline = errorText.endsWith('\n') ? '\n' : '';
-  const suggestions = suggestion.suggestions;
-  const didYouMean =
-    suggestions.length === 1
-      ? `Did you mean ${suggestions[0]}?`
-      : `Did you mean one of ${suggestions.join(', ')}?`;
+  const { suggestions } = suggestion;
+  const header =
+    suggestions.length === 1 ? 'Did you mean this?' : 'Did you mean one of these?';
+  const list = suggestions.map((s) => `\t${s}`).join('\n');
 
-  return `error: unknown command '${suggestion.unknownCommand}'\n(${didYouMean})${trailingNewline}`;
+  return `error: unknown command '${suggestion.unknownCommand}'\n\n${header}\n${list}${trailingNewline}`;
 }
 
 function commandAndAncestors(command: Command): Command[] {

@@ -69,7 +69,7 @@ function plainLevenshteinDistance(a: string, b: string): number {
 describe('enhanceCommandError', () => {
   it('suggests a top-level command for a singular typo', () => {
     expect(enhanceCommandError(EXCESS_ARGS, buildProgram(), ['contact'])).toBe(
-      "error: unknown command 'contact'\n(Did you mean resend contacts?)\n",
+      "error: unknown command 'contact'\n\nDid you mean this?\n\tresend contacts\n",
     );
   });
 
@@ -77,7 +77,7 @@ describe('enhanceCommandError', () => {
     expect(
       enhanceCommandError(EXCESS_ARGS, buildProgram(), ['contacts', 'lsti']),
     ).toBe(
-      "error: unknown command 'lsti'\n(Did you mean resend contacts list?)\n",
+      "error: unknown command 'lsti'\n\nDid you mean this?\n\tresend contacts list\n",
     );
   });
 
@@ -89,7 +89,7 @@ describe('enhanceCommandError', () => {
         'attchments',
       ]),
     ).toBe(
-      "error: unknown command 'attchments'\n(Did you mean resend emails receiving attachments?)\n",
+      "error: unknown command 'attchments'\n\nDid you mean this?\n\tresend emails receiving attachments\n",
     );
   });
 
@@ -101,7 +101,7 @@ describe('enhanceCommandError', () => {
         'contatcs',
       ]),
     ).toBe(
-      "error: unknown command 'contatcs'\n(Did you mean resend contacts?)\n",
+      "error: unknown command 'contatcs'\n\nDid you mean this?\n\tresend contacts\n",
     );
   });
 
@@ -113,7 +113,7 @@ describe('enhanceCommandError', () => {
         'contatcs',
       ]),
     ).toBe(
-      "error: unknown command 'contatcs'\n(Did you mean resend contacts?)\n",
+      "error: unknown command 'contatcs'\n\nDid you mean this?\n\tresend contacts\n",
     );
   });
 
@@ -121,7 +121,7 @@ describe('enhanceCommandError', () => {
     expect(
       enhanceCommandError(EXCESS_ARGS, buildProgram(), ['contacts', 'sl']),
     ).toBe(
-      "error: unknown command 'sl'\n(Did you mean resend contacts list?)\n",
+      "error: unknown command 'sl'\n\nDid you mean this?\n\tresend contacts list\n",
     );
   });
 
