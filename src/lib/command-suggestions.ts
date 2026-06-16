@@ -181,7 +181,9 @@ function formatSuggestion(
   const trailingNewline = errorText.endsWith('\n') ? '\n' : '';
   const { suggestions } = suggestion;
   const header =
-    suggestions.length === 1 ? 'Did you mean this?' : 'Did you mean one of these?';
+    suggestions.length === 1
+      ? 'Did you mean this?'
+      : 'Did you mean one of these?';
   const list = suggestions.map((s) => `\t${s}`).join('\n');
 
   return `error: unknown command '${suggestion.unknownCommand}'\n\n${header}\n${list}${trailingNewline}`;
