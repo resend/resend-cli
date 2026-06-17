@@ -1,5 +1,6 @@
 import { Command } from '@commander-js/extra-typings';
 import { buildHelpText } from '../../lib/help-text';
+import { claimCommand } from './claim';
 import { createDomainCommand } from './create';
 import { deleteDomainCommand } from './delete';
 import { getDomainCommand } from './get';
@@ -24,6 +25,7 @@ export const domainsCommand = new Command('domains')
         'resend domains get 4dd369bc-aa82-4ff3-97de-514ae3000ee0',
         'resend domains update <id> --tls enforced --open-tracking',
         'resend domains delete <id> --yes',
+        'resend domains claim create --name example.com',
       ],
     }),
   )
@@ -32,4 +34,5 @@ export const domainsCommand = new Command('domains')
   .addCommand(getDomainCommand)
   .addCommand(listDomainsCommand, { isDefault: true })
   .addCommand(updateDomainCommand)
-  .addCommand(deleteDomainCommand);
+  .addCommand(deleteDomainCommand)
+  .addCommand(claimCommand);
