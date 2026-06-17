@@ -139,7 +139,7 @@ Auth resolves: `--api-key` flag > `RESEND_API_KEY` env > config file (`resend lo
 |--------------|-------------|
 | `emails` | send, get, list, batch, cancel, update |
 | `emails receiving` | list, get, attachments, forward, listen |
-| `domains` | create, verify, claim, update, delete, list |
+| `domains` | create, verify, get, claim, update, delete, list |
 | `logs` | list, get, open |
 | `api-keys` | create, list, delete |
 | `automations` | create, get, list, update, delete, stop, open, runs |

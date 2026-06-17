@@ -51,7 +51,7 @@ export const claimCreateCommand = new Command('create')
           resend.domains.claims.create({
             name,
             ...(opts.region && { region: opts.region }),
-            ...(opts.trackingSubdomain && {
+            ...(opts.trackingSubdomain !== undefined && {
               trackingSubdomain: opts.trackingSubdomain,
             }),
           }),

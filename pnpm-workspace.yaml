@@ -1,5 +1,3 @@
 allowBuilds:
   esbuild: true
   '@biomejs/biome': true
-minimumReleaseAgeExclude:
-  - resend@6.14.0
