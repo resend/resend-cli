@@ -1,0 +1,23 @@
+package.json
+  s_a6cd714394bc21::t_e409ad41640b33 49
+pnpm-workspace.yaml
+  s_a6cd714394bc21::t_8f174ede54233b 4-5
+pnpm-lock.yaml
+  s_a6cd714394bc21::t_c35c16d8dde15d 30-31,1229-1230,2434,2437
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "d592c07476c17133d8b9f127303bdc5356d76341",
+  "prompts": {},
+  "sessions": {
+    "s_a6cd714394bc21": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a62b2e71-32c2-4f96-be76-1e3903e0a2b0",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "João Melo <jopcmelo@gmail.com>"
+    }
+  }
+}
