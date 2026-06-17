@@ -79,3 +79,40 @@ At least one option required.
 | `--yes` | boolean | Yes (non-interactive) | Skip confirmation |
 
 **Alias:** `rm`
+
+---
+
+## domains claim
+
+Claim a domain that **another Resend account has already verified**. The domain transfers to your account as a brand-new domain with fresh DKIM keys, so the previous account's DNS records can't be reused.
+
+**Lifecycle:**
+1. `resend domains claim create --name example.com` — returns the TXT record to add
+2. Add the TXT record at your DNS provider
+3. `resend domains claim verify <domain-id>` — trigger verification + transfer
+4. `resend domains claim get <domain-id>` — poll until `completed`
+5. The transferred domain has NEW DKIM records — run `resend domains get <domain-id>` for the records, update DNS, then `resend domains verify <domain-id>`
+
+Claim status values: `pending` | `verified` | `completed` | `blocked` | `expired` | `superseded` | `canceled` | `failed`.
+
+### domains claim create
+
+| Flag | Type | Required | Description |
+|------|------|----------|-------------|
+| `--name <domain>` | string | Yes (non-interactive) | Domain name to claim (e.g., `example.com`) |
+| `--region <region>` | string | No | `us-east-1` \| `eu-west-1` \| `sa-east-1` \| `ap-northeast-1` |
+| `--tracking-subdomain <subdomain>` | string | No | Subdomain for click and open tracking (e.g., `track`) |
+
+**Output:** `domain_claim` object with `domain_id` (the placeholder domain) and a TXT `record` to add to DNS.
+
+### domains claim get
+
+**Argument:** `<id>` — Domain ID (the placeholder domain created by the claim)
+
+**Output:** `domain_claim` with `status`, `domain_id`, the TXT `record`, `blocked_reason`, `expires_at`.
+
+### domains claim verify
+
+**Argument:** `<id>` — Domain ID (the placeholder domain created by the claim)
+
+Triggers async verification + transfer. Poll `domains claim get <id>` for status. After `completed`, fetch the new DKIM records with `domains get <id>`, update DNS, then run `domains verify <id>`.
