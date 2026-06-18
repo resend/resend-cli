@@ -19,6 +19,14 @@ export const claimCreateCommand = new Command('create')
     '--tracking-subdomain <subdomain>',
     'Subdomain for click and open tracking (e.g. track)',
   )
+  .option(
+    '--custom-return-path <subdomain>',
+    'Subdomain for the Return-Path address (e.g. bounce)',
+  )
+  .option('--open-tracking', 'Enable open tracking')
+  .option('--no-open-tracking', 'Disable open tracking')
+  .option('--click-tracking', 'Enable click tracking')
+  .option('--no-click-tracking', 'Disable click tracking')
   .addHelpText(
     'after',
     buildHelpText({
@@ -51,6 +59,15 @@ export const claimCreateCommand = new Command('create')
           resend.domains.claims.create({
             name,
             ...(opts.region && { region: opts.region }),
+            ...(opts.customReturnPath !== undefined && {
+              customReturnPath: opts.customReturnPath,
+            }),
+            ...(opts.openTracking !== undefined && {
+              openTracking: opts.openTracking,
+            }),
+            ...(opts.clickTracking !== undefined && {
+              clickTracking: opts.clickTracking,
+            }),
             ...(opts.trackingSubdomain !== undefined && {
               trackingSubdomain: opts.trackingSubdomain,
             }),

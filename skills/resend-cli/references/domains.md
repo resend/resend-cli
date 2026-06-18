@@ -102,6 +102,9 @@ Claim status values: `pending` | `verified` | `completed` | `blocked` | `expired
 | `--name <domain>` | string | Yes (non-interactive) | Domain name to claim (e.g., `example.com`) |
 | `--region <region>` | string | No | `us-east-1` \| `eu-west-1` \| `sa-east-1` \| `ap-northeast-1` |
 | `--tracking-subdomain <subdomain>` | string | No | Subdomain for click and open tracking (e.g., `track`) |
+| `--custom-return-path <subdomain>` | string | No | Subdomain for the Return-Path address (e.g., `bounce`) |
+| `--open-tracking` / `--no-open-tracking` | boolean | No | Enable/disable open tracking |
+| `--click-tracking` / `--no-click-tracking` | boolean | No | Enable/disable click tracking |
 
 **Output:** `domain_claim` object with `domain_id` (the placeholder domain) and a TXT `record` to add to DNS.
 
