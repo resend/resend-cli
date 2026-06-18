@@ -102,6 +102,66 @@ describe('domains claim create command', () => {
     expect(output).toContain('missing_name');
   });
 
+  it('passes customReturnPath when --custom-return-path is set', async () => {
+    spies = setupOutputSpies();
+    const { claimCreateCommand } = await import(
+      '../../../../src/commands/domains/claim/create'
+    );
+    await claimCreateCommand.parseAsync(
+      ['--name', 'example.com', '--custom-return-path', 'bounce'],
+      { from: 'user' },
+    );
+    expect(mockCreate).toHaveBeenCalledWith({
+      name: 'example.com',
+      customReturnPath: 'bounce',
+    });
+  });
+
+  it('passes openTracking=true with --open-tracking', async () => {
+    spies = setupOutputSpies();
+    const { claimCreateCommand } = await import(
+      '../../../../src/commands/domains/claim/create'
+    );
+    await claimCreateCommand.parseAsync(
+      ['--name', 'example.com', '--open-tracking'],
+      { from: 'user' },
+    );
+    expect(mockCreate).toHaveBeenCalledWith({
+      name: 'example.com',
+      openTracking: true,
+    });
+  });
+
+  it('passes openTracking=false with --no-open-tracking', async () => {
+    spies = setupOutputSpies();
+    const { claimCreateCommand } = await import(
+      '../../../../src/commands/domains/claim/create'
+    );
+    await claimCreateCommand.parseAsync(
+      ['--name', 'example.com', '--no-open-tracking'],
+      { from: 'user' },
+    );
+    expect(mockCreate).toHaveBeenCalledWith({
+      name: 'example.com',
+      openTracking: false,
+    });
+  });
+
+  it('passes clickTracking=true with --click-tracking', async () => {
+    spies = setupOutputSpies();
+    const { claimCreateCommand } = await import(
+      '../../../../src/commands/domains/claim/create'
+    );
+    await claimCreateCommand.parseAsync(
+      ['--name', 'example.com', '--click-tracking'],
+      { from: 'user' },
+    );
+    expect(mockCreate).toHaveBeenCalledWith({
+      name: 'example.com',
+      clickTracking: true,
+    });
+  });
+
   it('errors with create_error when the SDK returns an error', async () => {
     setNonInteractive();
     mockCreate.mockResolvedValueOnce(
