@@ -162,6 +162,21 @@ describe('domains claim create command', () => {
     });
   });
 
+  it('passes clickTracking=false with --no-click-tracking', async () => {
+    spies = setupOutputSpies();
+    const { claimCreateCommand } = await import(
+      '../../../../src/commands/domains/claim/create'
+    );
+    await claimCreateCommand.parseAsync(
+      ['--name', 'example.com', '--no-click-tracking'],
+      { from: 'user' },
+    );
+    expect(mockCreate).toHaveBeenCalledWith({
+      name: 'example.com',
+      clickTracking: false,
+    });
+  });
+
   it('errors with create_error when the SDK returns an error', async () => {
     setNonInteractive();
     mockCreate.mockResolvedValueOnce(
