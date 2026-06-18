@@ -1,0 +1,21 @@
+skills/resend-cli/references/domains.md
+  s_a6cd714394bc21::t_d1ab2c5ef1998c 105-107
+skills/resend-cli/SKILL.md
+  s_a6cd714394bc21::t_af5b78d400e39a 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "ca6e3ff4ecdf886990817eee2d33fc9765fffe02",
+  "prompts": {},
+  "sessions": {
+    "s_a6cd714394bc21": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a62b2e71-32c2-4f96-be76-1e3903e0a2b0",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "João Melo <jopcmelo@gmail.com>"
+    }
+  }
+}
