@@ -1,6 +1,7 @@
 import type { GlobalOpts } from './client';
 import { maskKey } from './config';
 import { outputError } from './output';
+import { shQuote } from './sh-quote';
 
 export function parseLimitOpt(raw: string, globalOpts: GlobalOpts): number {
   const limit = parseInt(raw, 10);
@@ -59,10 +60,12 @@ export function printPaginationHint(
     : list.data[list.data.length - 1].id;
   const flag = backward ? '--before' : '--after';
   const limitFlag = opts.limit ? ` --limit ${opts.limit}` : '';
-  const apiKeyFlag = opts.apiKey ? ` --api-key ${maskKey(opts.apiKey)}` : '';
-  const profileFlag = opts.profile ? ` --profile ${opts.profile}` : '';
+  const apiKeyFlag = opts.apiKey
+    ? ` --api-key ${shQuote(maskKey(opts.apiKey))}`
+    : '';
+  const profileFlag = opts.profile ? ` --profile ${shQuote(opts.profile)}` : '';
 
   console.log(
-    `\nFetch the next page:\n$ resend ${command} ${flag} ${cursor}${limitFlag}${apiKeyFlag}${profileFlag}`,
+    `\nFetch the next page:\n$ resend ${command} ${flag} ${shQuote(cursor)}${limitFlag}${apiKeyFlag}${profileFlag}`,
   );
 }
