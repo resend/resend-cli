@@ -4,6 +4,7 @@ import { addContactSegmentCommand } from './add-segment';
 import { createContactCommand } from './create';
 import { deleteContactCommand } from './delete';
 import { getContactCommand } from './get';
+import { contactImportsCommand } from './imports';
 import { listContactsCommand } from './list';
 import { removeContactSegmentCommand } from './remove-segment';
 import { listContactSegmentsCommand } from './segments';
@@ -30,7 +31,10 @@ Subscription:
 
 Segments:
   Contacts can belong to multiple segments. Segments determine which contacts receive a broadcast.
-  Manage membership with "resend contacts add-segment" and "resend contacts remove-segment".`,
+  Manage membership with "resend contacts add-segment" and "resend contacts remove-segment".
+
+Imports:
+  Bulk-import contacts from a CSV file with "resend contacts imports create --file <path>".`,
       examples: [
         'resend contacts list',
         'resend contacts create --email steve.wozniak@gmail.com --first-name Steve',
@@ -43,6 +47,7 @@ Segments:
         'resend contacts remove-segment steve.wozniak@gmail.com 78261eea-8f8b-4381-83c6-79fa7120f1cf',
         'resend contacts topics steve.wozniak@gmail.com',
         `resend contacts update-topics steve.wozniak@gmail.com --topics '[{"id":"b6d24b8e-af0b-4c3c-be0c-359bbd97381e","subscription":"opt_in"}]'`,
+        'resend contacts imports create --file ./contacts.csv',
       ],
     }),
   )
@@ -55,4 +60,5 @@ Segments:
   .addCommand(addContactSegmentCommand)
   .addCommand(removeContactSegmentCommand)
   .addCommand(listContactTopicsCommand)
-  .addCommand(updateContactTopicsCommand);
+  .addCommand(updateContactTopicsCommand)
+  .addCommand(contactImportsCommand);
