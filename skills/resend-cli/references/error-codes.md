@@ -32,6 +32,7 @@ All errors exit with code `1` and output JSON to **stderr**:
 | `missing_file` | `contacts imports create` called non-interactively without `--file` | Pass `--file <path>` to the CSV to import |
 | `invalid_column_map` | `--column-map` is not valid JSON, or is not an object | Pass a JSON object mapping contact fields to CSV headers, e.g. `{"email":"Email"}` |
 | `invalid_topics` | `--topics` is not valid JSON, or is not an array | Pass a JSON array of `{id, subscription}` objects |
+| `create_error` | Resend API rejected the import (e.g. CSV missing the required `email` column, or file over 100MB) | Ensure the CSV has an `email` column (or map it with `--column-map`) and is under 100MB |
 
 ## Domain Errors
 

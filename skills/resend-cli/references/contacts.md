@@ -115,6 +115,8 @@ Bulk-import contacts from a local CSV file. The file is uploaded as multipart fo
 
 Mappable contact fields: `email`, `firstName`, `lastName`, `unsubscribed`, `properties`.
 
+Without `--column-map`, columns are matched by the lowercase names `email` (required), `first_name`, `last_name` — matching is **case-sensitive**, so a CSV with `Email`/`First Name` headers fails with `create_error` (422 "missing required email column"). Use `--column-map` to import such a file.
+
 ---
 
 ## contacts imports get
