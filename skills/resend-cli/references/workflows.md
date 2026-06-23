@@ -414,3 +414,33 @@ resend emails receiving listen --interval 10
 # Stream as NDJSON (for scripting)
 resend emails receiving listen --json | head -3
 ```
+
+---
+
+## 13. Bulk Import Contacts from CSV
+
+```bash
+# 1. Prepare a CSV file with a header row
+cat > contacts.csv << 'EOF'
+Email,First Name,Last Name
+ada@example.com,Ada,Lovelace
+alan@example.com,Alan,Turing
+EOF
+
+# 2. Start the import (returns an import id immediately; runs async)
+resend contacts imports create --file ./contacts.csv
+
+# Map non-standard CSV headers to contact fields, set a conflict strategy,
+# and add imported contacts to a segment in one call
+resend contacts imports create \
+  --file ./contacts.csv \
+  --column-map '{"email":"Email","firstName":"First Name","lastName":"Last Name"}' \
+  --on-conflict upsert \
+  --segment-id <segment-id>
+
+# 3. Poll status until "completed" (or "failed")
+resend contacts imports get <import-id>
+
+# 4. Review past imports (filter by status)
+resend contacts imports list --status completed
+```

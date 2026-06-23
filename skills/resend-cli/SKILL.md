@@ -11,6 +11,8 @@ description: >
 license: MIT
 metadata:
   author: resend
+  # Skill version is independent from the CLI/package.json version —
+  # bump it on skill content changes, not CLI releases.
   version: "2.3.0"
   homepage: https://resend.com/docs/cli-agents
   source: https://github.com/resend/resend-cli
@@ -145,7 +147,7 @@ Auth resolves: `--api-key` flag > `RESEND_API_KEY` env > config file (`resend lo
 | `automations` | create, get, list, update, delete, stop, open, runs |
 | `events` | create, get, list, update, delete, send, open |
 | `broadcasts` | create, send, update, delete, list |
-| `contacts` | create, update, delete, segments, topics |
+| `contacts` | create, update, delete, segments, topics, imports |
 | `contact-properties` | create, update, delete, list |
 | `segments` | create, get, list, delete, contacts |
 | `templates` | create, publish, duplicate, delete, list |
