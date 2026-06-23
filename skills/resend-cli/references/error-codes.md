@@ -22,8 +22,17 @@ All errors exit with code `1` and output JSON to **stderr**:
 | `missing_body` | None of `--text`, `--html`, `--html-file`, or `--react-email` provided | Provide at least one body flag |
 | `react_email_build_error` | Failed to bundle a React Email `.tsx` template with esbuild | Check the template compiles; ensure `react` and one of `react-email` (6.0+), `@react-email/components` (5.x), or `@react-email/render` are installed in the project |
 | `react_email_render_error` | Bundled template failed during `render()` | Check the component exports a default function and renders valid React Email markup |
-| `file_read_error` | Could not read file from `--html-file` path | Check file path exists and is readable |
+| `file_read_error` | Could not read file from a `--file`/`--html-file`/`--text-file` path | Check file path exists and is readable |
 | `send_error` | Resend API rejected the send request | Check from address is on a verified domain; check recipient is valid |
+
+## Contact Import Errors
+
+| Code | Cause | Resolution |
+|------|-------|------------|
+| `missing_file` | `contacts imports create` called non-interactively without `--file` | Pass `--file <path>` to the CSV to import |
+| `invalid_column_map` | `--column-map` is not valid JSON, or is not an object | Pass a JSON object mapping contact fields to CSV headers, e.g. `{"email":"Email"}` |
+| `invalid_topics` | `--topics` is not valid JSON, or is not an array | Pass a JSON array of `{id, subscription}` objects |
+| `create_error` | Resend API rejected the import (e.g. CSV missing the required `email` column, or file over 100MB) | Ensure the CSV has an `email` column (or map it with `--column-map`) and is under 100MB |
 
 ## Domain Errors
 

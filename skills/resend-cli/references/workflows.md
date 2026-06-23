@@ -414,3 +414,40 @@ resend emails receiving listen --interval 10
 # Stream as NDJSON (for scripting)
 resend emails receiving listen --json | head -3
 ```
+
+---
+
+## 13. Bulk Import Contacts from CSV
+
+```bash
+# 1. Prepare a CSV. Without --column-map, columns are matched by the lowercase
+#    names email (required), first_name, last_name — matching is CASE-SENSITIVE,
+#    so headers like "Email" or "First Name" will NOT match (import fails with a
+#    422 "missing required email column"). Map those with --column-map instead.
+cat > contacts.csv << 'EOF'
+email,first_name,last_name
+ada@example.com,Ada,Lovelace
+alan@example.com,Alan,Turing
+EOF
+
+# 2. Start the import (returns an import id immediately; runs async)
+resend contacts imports create --file ./contacts.csv
+
+# If your CSV uses different header names, map them with --column-map.
+# You can also set a conflict strategy and add contacts to a segment:
+cat > contacts-custom.csv << 'EOF'
+Email,First Name,Last Name
+ada@example.com,Ada,Lovelace
+EOF
+resend contacts imports create \
+  --file ./contacts-custom.csv \
+  --column-map '{"email":"Email","firstName":"First Name","lastName":"Last Name"}' \
+  --on-conflict upsert \
+  --segment-id <segment-id>
+
+# 3. Poll status until "completed" (or "failed")
+resend contacts imports get <import-id>
+
+# 4. Review past imports (filter by status)
+resend contacts imports list --status completed
+```
