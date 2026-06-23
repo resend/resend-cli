@@ -38,6 +38,10 @@ export const createContactImportCommand = new Command('create')
 
 The CSV file is uploaded as multipart form data (max 100MB).
 
+Without --column-map, columns are matched case-sensitively by the lowercase names
+  email (required), first_name, last_name. A CSV with headers like "Email" or
+  "First Name" fails unless mapped with --column-map.
+
 Column map: pass a JSON object to --column-map that maps CSV column headers to contact
   fields (email, firstName, lastName, unsubscribed, properties). Example:
   '{"email":"Email","firstName":"First Name","properties":{"plan":{"column":"Plan","type":"string"}}}'
