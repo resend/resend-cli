@@ -92,9 +92,10 @@ Topics: pass a JSON array of {id, subscription} objects (subscription is "opt_in
 
     const columnMap = parseColumnMapJson(opts.columnMap, globalOpts);
     const segments = (opts.segmentId ?? []).map((id) => ({ id }));
-    const topics = opts.topics
-      ? parseTopicsJson(opts.topics, globalOpts)
-      : undefined;
+    const topics =
+      opts.topics !== undefined
+        ? parseTopicsJson(opts.topics, globalOpts)
+        : undefined;
 
     await runCreate<CreateContactImportResponseSuccess>(
       {
