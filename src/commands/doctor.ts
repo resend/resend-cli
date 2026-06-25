@@ -80,8 +80,7 @@ async function checkApiKeyPresence(flagValue?: string): Promise<CheckResult> {
   try {
     resolved = await resolveAuthentication(flagValue);
   } catch (err) {
-    // Refreshing an OAuth grant can throw (expired/failed refresh). Surface it as
-    // a failed check with a login hint instead of crashing the whole command.
+    // Refresh can throw (expired/failed); report it as a failed check, don't crash.
     return {
       name: 'API Key',
       status: 'fail',

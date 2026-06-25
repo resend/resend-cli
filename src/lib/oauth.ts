@@ -33,11 +33,8 @@ export function getJwtExp(token: string): number {
   return (decoded as { exp: number }).exp;
 }
 
-// Shape of the /oauth/token response (see apps/public-api token.ts). The server
-// returns access_token, token_type, expires_in, refresh_token and scope — it does
-// NOT return a refresh-token expiry; that lives server-side only. expires_in /
-// token_type are returned but unused here (access-token expiry comes from the JWT
-// exp claim).
+// /oauth/token response. token_type/expires_in are returned but unused (access
+// expiry comes from the JWT exp); there is deliberately no refresh-token expiry.
 export type TokenResponse = {
   access_token: string;
   refresh_token: string;
@@ -46,9 +43,8 @@ export type TokenResponse = {
   expires_in?: number;
 };
 
-// The /oauth/token endpoint can return 200 with a body that does not match what
-// we expect (proxy error pages, partial payloads). Validate the fields we rely on
-// before trusting it so callers never persist a malformed grant.
+// A 200 can still carry a non-token body (proxy/error pages); validate the fields
+// we depend on before persisting a grant.
 export function parseTokenResponse(json: unknown): TokenResponse {
   const invalid = new Error(
     'Received an unexpected response from Resend while authenticating. Please run `resend login` again.',
@@ -74,9 +70,8 @@ export function parseTokenResponse(json: unknown): TokenResponse {
 
 const TOKEN_REQUEST_TIMEOUT_MS = 30_000;
 
-// Direct fetch calls have no timeout by default, so a hung connection would make
-// the CLI wait forever. Mirror our other direct fetches by aborting after 30s and
-// surfacing a clear network/timeout message.
+// fetch has no default timeout; abort after 30s so a hung connection can't hang
+// the CLI.
 async function fetchOAuthToken(
   url: string,
   body: URLSearchParams,
@@ -114,9 +109,8 @@ export async function refreshOAuthGrant(
     return { access_token: grant.access_token, scope: grant.scope };
   }
 
-  // The server does not expose the refresh-token expiry, so we can't pre-check it.
-  // Attempt the refresh; a non-OK response below means the refresh token is no
-  // longer valid and the user must log in again.
+  // The refresh-token expiry isn't known client-side, so we can't pre-check it:
+  // attempt the refresh and treat a non-OK response below as "log in again".
   const baseUrl = process.env.RESEND_BASE_URL ?? 'https://api.resend.com';
   const response = await fetchOAuthToken(
     `${baseUrl}/oauth/token`,
