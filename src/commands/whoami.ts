@@ -2,6 +2,8 @@ import { join } from 'node:path';
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../lib/client';
 import {
+  type ApiKeyPermission,
+  type ApiKeySource,
   getConfigDir,
   listProfiles,
   maskKey,
@@ -11,6 +13,18 @@ import {
 import { buildHelpText } from '../lib/help-text';
 import { outputError, outputResult } from '../lib/output';
 import { isInteractive } from '../lib/tty';
+
+const SOURCE_LABELS: Record<ApiKeySource, string> = {
+  flag: 'flag',
+  env: 'environment variable',
+  config: 'config file',
+  secure_storage: 'secure storage',
+};
+
+const PERMISSION_LABELS: Record<ApiKeyPermission, string> = {
+  full_access: 'full access',
+  sending_access: 'sending access',
+};
 
 export const whoamiCommand = new Command('whoami')
   .description('Show current authentication status')
@@ -87,22 +101,13 @@ Shows which profile is active and where the active credential comes from.`,
     }
 
     const sourceLabel =
-      source === 'secure_storage'
-        ? 'secure storage'
-        : source === 'config'
-          ? resolved.type === 'oauth_grant'
-            ? 'config file (oauth)'
-            : 'config file'
-          : source === 'env'
-            ? 'environment variable'
-            : 'flag';
+      source === 'config' && resolved.type === 'oauth_grant'
+        ? 'config file (oauth)'
+        : SOURCE_LABELS[source];
 
-    const permissionLabel =
-      permission === 'sending_access'
-        ? 'sending access'
-        : permission === 'full_access'
-          ? 'full access'
-          : undefined;
+    const permissionLabel = permission
+      ? PERMISSION_LABELS[permission]
+      : undefined;
 
     console.log('');
     console.log(`  Profile: ${profile}`);
