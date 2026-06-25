@@ -76,7 +76,19 @@ async function checkCliVersion(): Promise<CheckResult> {
 }
 
 async function checkApiKeyPresence(flagValue?: string): Promise<CheckResult> {
-  const resolved = await resolveAuthentication(flagValue);
+  let resolved: Awaited<ReturnType<typeof resolveAuthentication>>;
+  try {
+    resolved = await resolveAuthentication(flagValue);
+  } catch (err) {
+    // Refreshing an OAuth grant can throw (expired/failed refresh). Surface it as
+    // a failed check with a login hint instead of crashing the whole command.
+    return {
+      name: 'API Key',
+      status: 'fail',
+      message: errorMessage(err, 'Authentication failed'),
+      detail: 'Run: resend login',
+    };
+  }
   if (!resolved) {
     return {
       name: 'API Key',
@@ -100,7 +112,17 @@ async function checkApiKeyPresence(flagValue?: string): Promise<CheckResult> {
 async function checkApiValidationAndDomains(
   flagValue?: string,
 ): Promise<CheckResult> {
-  const resolved = await resolveAuthentication(flagValue);
+  let resolved: Awaited<ReturnType<typeof resolveAuthentication>>;
+  try {
+    resolved = await resolveAuthentication(flagValue);
+  } catch (err) {
+    return {
+      name: 'API Validation',
+      status: 'fail',
+      message: errorMessage(err, 'Authentication failed'),
+      detail: 'Run: resend login',
+    };
+  }
   if (!resolved) {
     return {
       name: 'API Validation',

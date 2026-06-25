@@ -1,3 +1,5 @@
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { Command } from '@commander-js/extra-typings';
 import {
   afterEach,
@@ -60,6 +62,13 @@ describe('doctor command', () => {
       error: null,
     };
     process.env.RESEND_API_KEY = 're_test_key_for_doctor';
+    // Isolate from the developer's real ~/.config/resend/credentials.json — the
+    // Credential Storage check reads it directly. Point at a nonexistent dir so
+    // readCredentials() returns null.
+    process.env.XDG_CONFIG_HOME = join(
+      tmpdir(),
+      `resend-doctor-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
   });
 
   afterEach(() => {
@@ -244,5 +253,75 @@ describe('doctor command', () => {
     expect(apiCheck).toBeDefined();
     expect(apiCheck.status).toBe('warn');
     expect(apiCheck.message).toContain('timed out');
+  });
+});
+
+describe('doctor command — expired OAuth grant', () => {
+  const restoreEnv = captureTestEnv();
+  let spies: ReturnType<typeof setupOutputSpies> | undefined;
+  let exitSpy: MockInstance | undefined;
+  let tmpDir: string;
+
+  beforeEach(async () => {
+    const { mkdirSync, writeFileSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    tmpDir = join(
+      tmpdir(),
+      `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    delete process.env.RESEND_API_KEY;
+    process.env.XDG_CONFIG_HOME = tmpDir;
+    process.env.RESEND_CREDENTIAL_STORE = 'file';
+
+    // Inline (file-fallback) grant with both tokens already expired, so refresh
+    // throws "session expired" without any network call.
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'staging',
+        profiles: {
+          staging: {
+            type: 'oauth_grant',
+            access_token: 'header.body.sig',
+            access_token_expires_at: 1,
+            refresh_token: 'rt_expired',
+            refresh_token_expires_at: 1,
+            scope: 'full_access',
+          },
+        },
+      }),
+    );
+  });
+
+  afterEach(async () => {
+    const { rmSync } = await import('node:fs');
+    restoreEnv();
+    rmSync(tmpDir, { recursive: true, force: true });
+    spies = undefined;
+    exitSpy?.mockRestore();
+    exitSpy = undefined;
+  });
+
+  it('reports a failed check instead of crashing when refresh fails', async () => {
+    spies = setupOutputSpies();
+    exitSpy = mockExitThrow();
+
+    const program = await createDoctorProgram();
+    // Doctor exits 1 because a check failed — but it must not throw an unhandled
+    // error from the refresh.
+    await expectExit1(() =>
+      program.parseAsync(['doctor', '--json'], { from: 'user' }),
+    );
+
+    const output = spies.logSpy.mock.calls[0][0] as string;
+    const parsed = JSON.parse(output);
+    const keyCheck = parsed.checks.find(
+      (c: Record<string, unknown>) => c.name === 'API Key',
+    );
+    expect(keyCheck.status).toBe('fail');
+    expect(keyCheck.message).toContain('session has expired');
   });
 });
