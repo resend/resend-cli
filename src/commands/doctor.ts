@@ -9,6 +9,7 @@ import {
 } from '../lib/config';
 import { getCredentialBackend } from '../lib/credential-store';
 import { buildHelpText } from '../lib/help-text';
+import { OAUTH_NETWORK_ERROR_NAME } from '../lib/oauth';
 import { errorMessage, outputResult } from '../lib/output';
 import { createSpinner } from '../lib/spinner';
 import { isInteractive } from '../lib/tty';
@@ -17,6 +18,12 @@ import { VERSION } from '../lib/version';
 import { TIMEOUT_ERROR_NAME, withTimeout } from '../utils/with-timeout';
 
 const API_TIMEOUT_MS = 5000;
+
+// A timed-out/unreachable token request is transient (warn), unlike the server
+// rejecting the credential (fail) — consistent with the other network checks.
+function isTransientAuthError(err: unknown): boolean {
+  return err instanceof Error && err.name === OAUTH_NETWORK_ERROR_NAME;
+}
 
 type CheckStatus = 'pass' | 'warn' | 'fail';
 
@@ -78,9 +85,12 @@ async function checkCliVersion(): Promise<CheckResult> {
 async function checkApiKeyPresence(flagValue?: string): Promise<CheckResult> {
   let resolved: Awaited<ReturnType<typeof resolveAuthentication>>;
   try {
-    resolved = await resolveAuthentication(flagValue);
+    // Presence is a local check — don't refresh (no network). Validation below
+    // is where the credential is actually exercised.
+    resolved = await resolveAuthentication(flagValue, undefined, {
+      refresh: false,
+    });
   } catch (err) {
-    // Refresh can throw (expired/failed); report it as a failed check, don't crash.
     return {
       name: 'API Key',
       status: 'fail',
@@ -115,11 +125,14 @@ async function checkApiValidationAndDomains(
   try {
     resolved = await resolveAuthentication(flagValue);
   } catch (err) {
+    // A transient network/timeout while refreshing is a warning (like the other
+    // network checks); a server rejection means the session is really gone.
+    const transient = isTransientAuthError(err);
     return {
       name: 'API Validation',
-      status: 'fail',
+      status: transient ? 'warn' : 'fail',
       message: errorMessage(err, 'Authentication failed'),
-      detail: 'Run: resend login',
+      ...(transient ? {} : { detail: 'Run: resend login' }),
     };
   }
   if (!resolved) {
