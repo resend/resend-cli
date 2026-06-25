@@ -156,6 +156,16 @@ function base64url(input: Buffer): string {
   return input.toString('base64url');
 }
 
+function callbackPage(heading: string, message: string): string {
+  return (
+    '<!doctype html><html><head><title>Resend CLI</title></head>' +
+    '<body style="font-family:system-ui;text-align:center;padding:2rem">' +
+    `<h2>${heading}</h2>` +
+    `<p>${message}</p>` +
+    '</body></html>'
+  );
+}
+
 export function generatePKCE(): {
   codeVerifier: string;
   codeChallenge: string;
@@ -190,29 +200,36 @@ export function createCallbackServer(): Promise<{
       const state = url.searchParams.get('state');
       const error = url.searchParams.get('error');
 
+      const failure = error
+        ? `Authorization denied: ${error}`
+        : !code || !state
+          ? 'Missing code or state in OAuth callback'
+          : null;
+
+      const page = failure
+        ? callbackPage(
+            'Authentication failed',
+            `${failure}. Return to your terminal and try again.`,
+          )
+        : callbackPage(
+            'Authentication complete',
+            'You can close this tab and return to your terminal.',
+          );
+
       res.writeHead(200, {
         'Content-Type': 'text/html; charset=utf-8',
         Connection: 'close',
       });
-      res.end(
-        '<!doctype html><html><head><title>Resend CLI</title></head>' +
-          '<body style="font-family:system-ui;text-align:center;padding:2rem">' +
-          '<h2>Authentication complete</h2>' +
-          '<p>You can close this tab and return to your terminal.</p>' +
-          '</body></html>',
-        () => {
-          req.socket.destroy();
-        },
-      );
+      res.end(page, () => {
+        req.socket.destroy();
+      });
 
       server.close();
       clearTimeout(timeout);
 
-      if (error) {
-        rejectCallback(new Error(`Authorization denied: ${error}`));
-      } else if (!code || !state) {
-        rejectCallback(new Error('Missing code or state in OAuth callback'));
-      } else {
+      if (failure) {
+        rejectCallback(new Error(failure));
+      } else if (code && state) {
         resolveCallback({ code, state });
       }
     });
