@@ -19,7 +19,7 @@ export const whoamiCommand = new Command('whoami')
     buildHelpText({
       setup: true,
       context: `Local only — no network calls.
-Shows which profile is active and where the API key comes from.`,
+Shows which profile is active and where the active credential comes from.`,
       output: `  {"authenticated":true,"profile":"production","api_key":"re_...abcd","source":"config","config_path":"/Users/you/.config/resend/credentials.json"}
   {"error":{"message":"Not authenticated.\\nRun \`resend login\` to get started.","code":"not_authenticated"}}`,
       examples: [
@@ -106,7 +106,11 @@ Shows which profile is active and where the API key comes from.`,
 
     console.log('');
     console.log(`  Profile: ${profile}`);
-    console.log(`  API Key: ${maskKey(token)}`);
+    console.log(
+      resolved.type === 'oauth_grant'
+        ? `  Token:   ${maskKey(token)}`
+        : `  API Key: ${maskKey(token)}`,
+    );
     console.log(`  Source:  ${sourceLabel}`);
     if (permissionLabel) {
       console.log(`  Access:  ${permissionLabel}`);
