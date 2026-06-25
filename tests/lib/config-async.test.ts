@@ -243,6 +243,143 @@ describe('storeApiKeyAsync', () => {
   });
 });
 
+describe('storeOAuthGrant', () => {
+  const restoreEnv = captureTestEnv();
+  let tmpDir: string;
+
+  const grant = {
+    access_token: 'header.body.sig',
+    access_token_expires_at: 9999999999,
+    refresh_token: 'rt_secret',
+    refresh_token_expires_at: 9999999999,
+    scope: 'full_access',
+  };
+
+  beforeEach(() => {
+    tmpDir = join(
+      tmpdir(),
+      `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
+    mkdirSync(tmpDir, { recursive: true });
+    process.env.XDG_CONFIG_HOME = tmpDir;
+    delete process.env.RESEND_API_KEY;
+    delete process.env.RESEND_PROFILE;
+    process.env.RESEND_CREDENTIAL_STORE = 'file';
+  });
+
+  afterEach(() => {
+    restoreEnv();
+    rmSync(tmpDir, { recursive: true, force: true });
+    vi.restoreAllMocks();
+  });
+
+  it('writes the full grant inline when no secure backend is available', async () => {
+    vi.resetModules();
+    vi.doUnmock('../../src/lib/credential-store');
+    const { storeOAuthGrant, readCredentials, resolveAuthentication } =
+      await import('../../src/lib/config');
+
+    await storeOAuthGrant(grant, 'staging');
+
+    const creds = readCredentials();
+    expect(creds?.profiles.staging).toEqual({ type: 'oauth_grant', ...grant });
+
+    const resolved = await resolveAuthentication(undefined, 'staging', {
+      refresh: false,
+    });
+    expect(resolved).toEqual({
+      type: 'oauth_grant',
+      access_token: grant.access_token,
+      profile: 'staging',
+      scope: grant.scope,
+    });
+  });
+
+  it('stores secrets in the keychain and only metadata in the file when secure', async () => {
+    const store = new Map<string, string>();
+    const mockBackend = {
+      get: vi.fn(async (_s: string, a: string) => store.get(a) ?? null),
+      set: vi.fn(async (_s: string, a: string, v: string) => {
+        store.set(a, v);
+      }),
+      delete: vi.fn(async (_s: string, a: string) => store.delete(a)),
+      isAvailable: vi.fn().mockResolvedValue(true),
+      name: 'mock-backend',
+      isSecure: true,
+    };
+
+    vi.resetModules();
+    vi.doMock('../../src/lib/credential-store', () => ({
+      getCredentialBackend: vi.fn().mockResolvedValue(mockBackend),
+      SERVICE_NAME: 'resend-cli',
+      resetCredentialBackend: vi.fn(),
+    }));
+
+    const { storeOAuthGrant, readCredentials, resolveAuthentication } =
+      await import('../../src/lib/config');
+
+    await storeOAuthGrant(grant, 'staging');
+
+    // File holds only non-secret metadata; no tokens.
+    const creds = readCredentials();
+    expect(creds?.storage).toBe('secure_storage');
+    expect(creds?.profiles.staging).toEqual({
+      type: 'oauth_grant',
+      scope: 'full_access',
+    });
+    expect(mockBackend.set).toHaveBeenCalledWith(
+      'resend-cli',
+      'staging',
+      JSON.stringify(grant),
+    );
+
+    // The grant round-trips back out of the keychain blob.
+    const resolved = await resolveAuthentication(undefined, 'staging', {
+      refresh: false,
+    });
+    expect(resolved).toEqual({
+      type: 'oauth_grant',
+      access_token: grant.access_token,
+      profile: 'staging',
+      scope: grant.scope,
+    });
+  });
+
+  it('throws when the keychain blob is malformed', async () => {
+    const mockBackend = {
+      get: vi.fn().mockResolvedValue('not-json'),
+      set: vi.fn(),
+      delete: vi.fn(),
+      isAvailable: vi.fn().mockResolvedValue(true),
+      name: 'mock-backend',
+      isSecure: true,
+    };
+
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'staging',
+        storage: 'secure_storage',
+        profiles: { staging: { type: 'oauth_grant', scope: 'full_access' } },
+      }),
+    );
+
+    vi.resetModules();
+    vi.doMock('../../src/lib/credential-store', () => ({
+      getCredentialBackend: vi.fn().mockResolvedValue(mockBackend),
+      SERVICE_NAME: 'resend-cli',
+      resetCredentialBackend: vi.fn(),
+    }));
+
+    const { resolveAuthentication } = await import('../../src/lib/config');
+    await expect(
+      resolveAuthentication(undefined, 'staging', { refresh: false }),
+    ).rejects.toThrow('Stored OAuth credentials are invalid');
+  });
+});
+
 describe('removeApiKeyAsync', () => {
   const restoreEnv = captureTestEnv();
   let tmpDir: string;
