@@ -6,12 +6,31 @@ import { storeOAuthGrant } from './config';
 
 export const OAUTH_CLIENT_ID = '7136aa0b-625c-4c9c-8820-e9784c8eb141';
 
+const INVALID_TOKEN_MESSAGE =
+  'Received an invalid access token from Resend. Please run `resend login` to authenticate again.';
+
 export function getJwtExp(token: string): number {
-  const payload = token.split('.')[1];
-  const decoded = JSON.parse(Buffer.from(payload, 'base64url').toString()) as {
-    exp: number;
-  };
-  return decoded.exp;
+  const parts = token.split('.');
+  if (parts.length !== 3) {
+    throw new Error(INVALID_TOKEN_MESSAGE);
+  }
+
+  let decoded: unknown;
+  try {
+    decoded = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
+  } catch {
+    throw new Error(INVALID_TOKEN_MESSAGE);
+  }
+
+  if (
+    typeof decoded !== 'object' ||
+    decoded === null ||
+    typeof (decoded as { exp?: unknown }).exp !== 'number'
+  ) {
+    throw new Error(INVALID_TOKEN_MESSAGE);
+  }
+
+  return (decoded as { exp: number }).exp;
 }
 
 export async function refreshOAuthGrant(
