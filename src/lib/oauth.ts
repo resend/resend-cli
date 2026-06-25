@@ -33,17 +33,22 @@ export function getJwtExp(token: string): number {
   return (decoded as { exp: number }).exp;
 }
 
+// Shape of the /oauth/token response (see apps/public-api token.ts). The server
+// returns access_token, token_type, expires_in, refresh_token and scope — it does
+// NOT return a refresh-token expiry; that lives server-side only. expires_in /
+// token_type are returned but unused here (access-token expiry comes from the JWT
+// exp claim).
 export type TokenResponse = {
   access_token: string;
-  expires_in: number;
   refresh_token: string;
   scope: string;
-  refresh_token_expires_in: number;
+  token_type?: string;
+  expires_in?: number;
 };
 
 // The /oauth/token endpoint can return 200 with a body that does not match what
-// we expect (proxy error pages, partial payloads). Validate before trusting it
-// so callers never persist a malformed grant.
+// we expect (proxy error pages, partial payloads). Validate the fields we rely on
+// before trusting it so callers never persist a malformed grant.
 export function parseTokenResponse(json: unknown): TokenResponse {
   const invalid = new Error(
     'Received an unexpected response from Resend while authenticating. Please run `resend login` again.',
@@ -59,8 +64,7 @@ export function parseTokenResponse(json: unknown): TokenResponse {
     data.access_token.length === 0 ||
     typeof data.refresh_token !== 'string' ||
     data.refresh_token.length === 0 ||
-    typeof data.scope !== 'string' ||
-    typeof data.refresh_token_expires_in !== 'number'
+    typeof data.scope !== 'string'
   ) {
     throw invalid;
   }
@@ -110,12 +114,9 @@ export async function refreshOAuthGrant(
     return { access_token: grant.access_token, scope: grant.scope };
   }
 
-  if (grant.refresh_token_expires_at <= nowSeconds) {
-    throw new Error(
-      'Your session has expired. Please run `resend login` to authenticate again.',
-    );
-  }
-
+  // The server does not expose the refresh-token expiry, so we can't pre-check it.
+  // Attempt the refresh; a non-OK response below means the refresh token is no
+  // longer valid and the user must log in again.
   const baseUrl = process.env.RESEND_BASE_URL ?? 'https://api.resend.com';
   const response = await fetchOAuthToken(
     `${baseUrl}/oauth/token`,
@@ -135,15 +136,11 @@ export async function refreshOAuthGrant(
 
   const data = parseTokenResponse(await response.json());
 
-  const newAccessTokenExpiresAt = getJwtExp(data.access_token);
-  const newRefreshTokenExpiresAt = nowSeconds + data.refresh_token_expires_in;
-
   await storeOAuthGrant(
     {
       access_token: data.access_token,
-      access_token_expires_at: newAccessTokenExpiresAt,
+      access_token_expires_at: getJwtExp(data.access_token),
       refresh_token: data.refresh_token,
-      refresh_token_expires_at: newRefreshTokenExpiresAt,
       scope: data.scope,
     },
     profile,

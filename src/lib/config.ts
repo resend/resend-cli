@@ -53,8 +53,9 @@ export type OAuthGrantData = {
   access_token: string;
   access_token_expires_at: number; // unix seconds, decoded from JWT exp claim
   refresh_token: string;
-  refresh_token_expires_at: number; // unix seconds, from token response
   scope: string; // e.g. 'full_access' or 'emails:send'
+  // Note: there is no refresh-token expiry — the server does not return one; it is
+  // tracked server-side. A failed refresh is the only signal the session ended.
 };
 
 // The credentials.json representation. The secret token fields are absent when the
@@ -93,11 +94,10 @@ export const getCredentialsLockPath = (): string =>
 
 function migrateRawProfile(raw: Record<string, unknown>): Profile {
   if (raw.type === 'oauth_grant') {
-    // Keep the token fields only when they form a complete, well-typed grant (the
-    // plaintext fallback). Secure-storage entries carry none — the tokens live in
-    // the keychain. Partial or wrong-typed token data (e.g. a null expiry from an
-    // older client) is dropped rather than trusted, so a single bad grant degrades
-    // to a re-login for that profile instead of bricking the whole file.
+    // Validate the format rather than blindly casting (Felipe #5). A complete
+    // grant (plaintext fallback) and a metadata-only secure-storage entry are both
+    // kept; an incomplete grant degrades to metadata so the profile prompts a
+    // re-login instead of bricking the whole file.
     if (isCompleteOAuthGrant(raw)) {
       return { type: 'oauth_grant', ...raw };
     }
@@ -432,7 +432,6 @@ export function isCompleteOAuthGrant(value: unknown): value is OAuthGrantData {
     typeof g.access_token === 'string' &&
     typeof g.access_token_expires_at === 'number' &&
     typeof g.refresh_token === 'string' &&
-    typeof g.refresh_token_expires_at === 'number' &&
     typeof g.scope === 'string'
   );
 }
