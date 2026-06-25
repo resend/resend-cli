@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import type { OAuthGrant } from './config';
+import type { OAuthGrantData } from './config';
 import { storeOAuthGrant } from './config';
 
 export const OAUTH_CLIENT_ID = '7136aa0b-625c-4c9c-8820-e9784c8eb141';
@@ -101,7 +101,7 @@ async function fetchOAuthToken(
 }
 
 export async function refreshOAuthGrant(
-  grant: OAuthGrant,
+  grant: OAuthGrantData,
   profile: string,
 ): Promise<{ access_token: string; scope: string }> {
   const nowSeconds = Math.floor(Date.now() / 1000);

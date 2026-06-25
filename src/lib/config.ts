@@ -46,14 +46,24 @@ export type ApiKeyCredential = {
   permission?: ApiKeyPermission;
 };
 
-export type OAuthGrant = {
-  type: 'oauth_grant';
+// The complete grant as received from the token endpoint. Persisted as a unit:
+// in the OS keychain (JSON blob) when a secure backend is available, or inline in
+// credentials.json as a plaintext fallback when it is not.
+export type OAuthGrantData = {
   access_token: string;
   access_token_expires_at: number; // unix seconds, decoded from JWT exp claim
   refresh_token: string;
   refresh_token_expires_at: number; // unix seconds, from token response
   scope: string; // e.g. 'full_access' or 'emails:send'
 };
+
+// The credentials.json representation. The secret token fields are absent when the
+// grant lives in the keychain (secure storage); only the non-secret metadata stays
+// in the file. They are present only in the plaintext fallback.
+export type OAuthGrant = {
+  type: 'oauth_grant';
+  scope: string;
+} & Partial<OAuthGrantData>;
 
 export type Credential = ApiKeyCredential | OAuthGrant;
 export type Profile = Credential;
@@ -402,6 +412,43 @@ export function maskKey(key: string): string {
   return `${key.slice(0, 3)}...${key.slice(-4)}`;
 }
 
+export function isCompleteOAuthGrant(value: unknown): value is OAuthGrantData {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+  const g = value as Record<string, unknown>;
+  return (
+    typeof g.access_token === 'string' &&
+    typeof g.access_token_expires_at === 'number' &&
+    typeof g.refresh_token === 'string' &&
+    typeof g.refresh_token_expires_at === 'number' &&
+    typeof g.scope === 'string'
+  );
+}
+
+// Pull the full grant out of a credentials.json entry (plaintext fallback). Returns
+// null when token fields are absent — e.g. a secure-storage entry whose keychain
+// secret has gone missing — so the caller treats it as not-authenticated.
+function oauthGrantFromEntry(entry: OAuthGrant): OAuthGrantData | null {
+  return isCompleteOAuthGrant(entry) ? entry : null;
+}
+
+// Parse a grant blob read back from the keychain.
+function parseOAuthGrantBlob(secret: string): OAuthGrantData {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(secret);
+  } catch {
+    parsed = null;
+  }
+  if (!isCompleteOAuthGrant(parsed)) {
+    throw new Error(
+      'Stored OAuth credentials are invalid. Please run `resend login` to authenticate again.',
+    );
+  }
+  return parsed;
+}
+
 export async function resolveAuthentication(
   flagValue?: string,
   profileName?: string,
@@ -424,18 +471,20 @@ export async function resolveAuthentication(
     'default';
 
   if (creds?.storage === 'secure_storage' && creds.profiles[profile]) {
+    const credential = creds.profiles[profile];
     const backend = await getCredentialBackend();
-    const key = await backend.get(SERVICE_NAME, profile);
-    if (key) {
-      const credential = creds.profiles[profile];
-      const permission =
-        credential?.type === 'api_key' ? credential.permission : undefined;
+    const secret = await backend.get(SERVICE_NAME, profile);
+    if (secret) {
+      if (credential.type === 'oauth_grant') {
+        const grant = parseOAuthGrantBlob(secret);
+        return resolveGrant(grant, profile, options);
+      }
       return {
         type: 'api_key',
-        key,
+        key: secret,
         source: 'secure_storage',
         profile,
-        permission,
+        permission: credential.permission,
       };
     }
   }
@@ -452,20 +501,31 @@ export async function resolveAuthentication(
       };
     }
     if (entry?.type === 'oauth_grant') {
-      if (options?.refresh === false) {
-        return {
-          type: 'oauth_grant',
-          access_token: entry.access_token,
-          profile,
-          scope: entry.scope,
-        };
+      const grant = oauthGrantFromEntry(entry);
+      if (grant) {
+        return resolveGrant(grant, profile, options);
       }
-      const { access_token, scope } = await refreshOAuthGrant(entry, profile);
-      return { type: 'oauth_grant', access_token, profile, scope };
     }
   }
 
   return null;
+}
+
+async function resolveGrant(
+  grant: OAuthGrantData,
+  profile: string,
+  options?: { refresh?: boolean },
+): Promise<ResolvedOAuthGrant> {
+  if (options?.refresh === false) {
+    return {
+      type: 'oauth_grant',
+      access_token: grant.access_token,
+      profile,
+      scope: grant.scope,
+    };
+  }
+  const { access_token, scope } = await refreshOAuthGrant(grant, profile);
+  return { type: 'oauth_grant', access_token, profile, scope };
 }
 
 export async function storeApiKeyAsync(
@@ -516,7 +576,7 @@ export async function storeApiKeyAsync(
 }
 
 export async function storeOAuthGrant(
-  grant: Omit<OAuthGrant, 'type'>,
+  grant: OAuthGrantData,
   profileName?: string,
 ): Promise<string> {
   const profile = profileName || 'default';
@@ -525,37 +585,36 @@ export async function storeOAuthGrant(
     throw new Error(validationError);
   }
 
+  const backend = await getCredentialBackend();
+
   return withFileLock(getCredentialsLockPath(), async () => {
     const creds = readCredentials() || {
       active_profile: 'default',
       profiles: {},
     };
 
-    // Overwriting a secure-storage API key with an OAuth grant: delete the old
-    // keychain secret. Otherwise it lingers and shadows the new grant, since
-    // resolveAuthentication checks the keychain before inline oauth_grant entries.
-    if (
-      creds.storage === 'secure_storage' &&
-      creds.profiles[profile]?.type === 'api_key'
-    ) {
-      const backend = await getCredentialBackend();
-      if (backend.isSecure) {
-        const deleted = await backend.delete(SERVICE_NAME, profile);
-        if (!deleted) {
-          throw new Error(
-            `Failed to remove the previous API key for profile "${profile}" from ${backend.name}. The old credential may still exist in secure storage.`,
-          );
-        }
-      }
+    // When a secure backend is available, the tokens (secrets) live in the OS
+    // keychain as a JSON blob and only non-secret metadata is written to the
+    // plaintext file. backend.set overwrites whatever previously occupied the
+    // profile's slot (an API key or an older grant), so no explicit delete is
+    // needed. Without a secure backend we fall back to storing the full grant
+    // inline, mirroring how API keys degrade to the plaintext file.
+    const profileEntry: OAuthGrant = backend.isSecure
+      ? { type: 'oauth_grant', scope: grant.scope }
+      : { type: 'oauth_grant', ...grant };
+
+    if (backend.isSecure) {
+      await backend.set(SERVICE_NAME, profile, JSON.stringify(grant));
     }
 
     const updatedProfiles = {
       ...creds.profiles,
-      [profile]: { type: 'oauth_grant' as const, ...grant },
+      [profile]: profileEntry,
     };
 
     return writeCredentials({
       ...creds,
+      ...(backend.isSecure ? { storage: 'secure_storage' as const } : {}),
       profiles: updatedProfiles,
       ...(Object.keys(updatedProfiles).length === 1
         ? { active_profile: profile }
