@@ -602,20 +602,28 @@ describe('readCredentials', () => {
     });
   });
 
-  it('throws CorruptedCredentialsError when an oauth grant has no scope', () => {
+  it('reads a complete plaintext-fallback oauth grant', () => {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
+    const grant = {
+      type: 'oauth_grant',
+      access_token: 'header.body.sig',
+      access_token_expires_at: 9999999999,
+      refresh_token: 'rt_secret',
+      refresh_token_expires_at: 9999999999,
+      scope: 'full_access',
+    };
     writeFileSync(
       join(configDir, 'credentials.json'),
       JSON.stringify({
         active_profile: 'staging',
-        profiles: { staging: { type: 'oauth_grant' } },
+        profiles: { staging: grant },
       }),
     );
-    expect(() => readCredentials()).toThrow(CorruptedCredentialsError);
+    expect(readCredentials()?.profiles.staging).toEqual(grant);
   });
 
-  it('throws CorruptedCredentialsError when an oauth grant has partial tokens', () => {
+  it('drops partial/invalid token fields instead of bricking the file', () => {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     writeFileSync(
@@ -627,12 +635,25 @@ describe('readCredentials', () => {
             type: 'oauth_grant',
             scope: 'full_access',
             access_token: 'header.body.sig',
-            // missing refresh_token + expiry fields
+            access_token_expires_at: 9999999999,
+            refresh_token: 'rt_secret',
+            refresh_token_expires_at: null, // older client wrote null
           },
+          other: { api_key: 're_other_key' },
         },
       }),
     );
-    expect(() => readCredentials()).toThrow(CorruptedCredentialsError);
+    const creds = readCredentials();
+    // The bad grant degrades to metadata only — tokens are dropped...
+    expect(creds?.profiles.staging).toEqual({
+      type: 'oauth_grant',
+      scope: 'full_access',
+    });
+    // ...and the rest of the file remains readable.
+    expect(creds?.profiles.other).toEqual({
+      type: 'api_key',
+      api_key: 're_other_key',
+    });
   });
 });
 
