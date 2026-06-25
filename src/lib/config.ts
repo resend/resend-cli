@@ -93,6 +93,20 @@ export const getCredentialsLockPath = (): string =>
 
 function migrateRawProfile(raw: Record<string, unknown>): Profile {
   if (raw.type === 'oauth_grant') {
+    if (typeof raw.scope !== 'string') {
+      throw new CorruptedCredentialsError(getCredentialsPath());
+    }
+    // A plaintext-fallback grant must carry a complete, well-formed token set; a
+    // secure-storage grant carries only metadata (tokens live in the keychain).
+    // Anything in between (partial or wrong-typed token fields) is corruption.
+    const hasAnyToken =
+      raw.access_token !== undefined ||
+      raw.refresh_token !== undefined ||
+      raw.access_token_expires_at !== undefined ||
+      raw.refresh_token_expires_at !== undefined;
+    if (hasAnyToken && !isCompleteOAuthGrant(raw)) {
+      throw new CorruptedCredentialsError(getCredentialsPath());
+    }
     return raw as OAuthGrant;
   }
   return {

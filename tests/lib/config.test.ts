@@ -584,6 +584,56 @@ describe('readCredentials', () => {
 
     expect(readFileSync(credPath, 'utf-8')).toBe(corrupted);
   });
+
+  it('reads a secure-storage oauth grant (metadata only)', () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'staging',
+        storage: 'secure_storage',
+        profiles: { staging: { type: 'oauth_grant', scope: 'full_access' } },
+      }),
+    );
+    expect(readCredentials()?.profiles.staging).toEqual({
+      type: 'oauth_grant',
+      scope: 'full_access',
+    });
+  });
+
+  it('throws CorruptedCredentialsError when an oauth grant has no scope', () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'staging',
+        profiles: { staging: { type: 'oauth_grant' } },
+      }),
+    );
+    expect(() => readCredentials()).toThrow(CorruptedCredentialsError);
+  });
+
+  it('throws CorruptedCredentialsError when an oauth grant has partial tokens', () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'staging',
+        profiles: {
+          staging: {
+            type: 'oauth_grant',
+            scope: 'full_access',
+            access_token: 'header.body.sig',
+            // missing refresh_token + expiry fields
+          },
+        },
+      }),
+    );
+    expect(() => readCredentials()).toThrow(CorruptedCredentialsError);
+  });
 });
 
 describe('writeCredentials (atomic)', () => {
