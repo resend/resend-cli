@@ -615,7 +615,7 @@ export async function storeOAuthGrant(
 
     return writeCredentials({
       ...creds,
-      ...(backend.isSecure ? { storage: 'secure_storage' as const } : {}),
+      storage: backend.isSecure ? 'secure_storage' : 'file',
       profiles: updatedProfiles,
       ...(Object.keys(updatedProfiles).length === 1
         ? { active_profile: profile }
