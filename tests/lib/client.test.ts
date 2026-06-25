@@ -156,7 +156,6 @@ describe('requireClient permission check', () => {
               'eyJhbGciOiJSUzI1NiIsInR5cCI6ImF0K2p3dCJ9.eyJleHAiOjk5OTk5OTk5OTl9.sig',
             access_token_expires_at: nowSeconds + 900,
             refresh_token: 'rt_test',
-            refresh_token_expires_at: nowSeconds + 86400,
             scope: 'emails:send',
           },
         },

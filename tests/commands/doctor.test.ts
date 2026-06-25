@@ -276,8 +276,9 @@ describe('doctor command — expired OAuth grant', () => {
     process.env.XDG_CONFIG_HOME = tmpDir;
     process.env.RESEND_CREDENTIAL_STORE = 'file';
 
-    // Inline (file-fallback) grant with both tokens already expired, so refresh
-    // throws "session expired" without any network call.
+    // Inline (file-fallback) grant with an expired access token, so resolving it
+    // triggers a refresh. The server rejects an expired/invalid refresh token
+    // with a non-OK response (mocked below).
     writeFileSync(
       join(configDir, 'credentials.json'),
       JSON.stringify({
@@ -288,7 +289,6 @@ describe('doctor command — expired OAuth grant', () => {
             access_token: 'header.body.sig',
             access_token_expires_at: 1,
             refresh_token: 'rt_expired',
-            refresh_token_expires_at: 1,
             scope: 'full_access',
           },
         },
@@ -306,6 +306,15 @@ describe('doctor command — expired OAuth grant', () => {
   });
 
   it('reports a failed check instead of crashing when refresh fails', async () => {
+    // Server rejects the expired refresh token with invalid_grant (HTTP 400).
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(
+        new Response(JSON.stringify({ error: 'invalid_grant' }), {
+          status: 400,
+        }),
+      );
+
     spies = setupOutputSpies();
     exitSpy = mockExitThrow();
 
@@ -322,6 +331,8 @@ describe('doctor command — expired OAuth grant', () => {
       (c: Record<string, unknown>) => c.name === 'API Key',
     );
     expect(keyCheck.status).toBe('fail');
-    expect(keyCheck.message).toContain('session has expired');
+    expect(keyCheck.message).toContain('resend login');
+
+    fetchSpy.mockRestore();
   });
 });

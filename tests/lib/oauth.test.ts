@@ -38,15 +38,17 @@ describe('getJwtExp', () => {
 });
 
 describe('parseTokenResponse', () => {
+  // Mirrors the real /oauth/token response (apps/public-api token.ts): the server
+  // returns access_token, token_type, expires_in, refresh_token and scope.
   const valid = {
     access_token: 'header.body.sig',
+    token_type: 'Bearer',
     expires_in: 900,
     refresh_token: 'rt_abc',
     scope: 'full_access',
-    refresh_token_expires_in: 2592000,
   };
 
-  it('returns the response when all required fields are well-formed', () => {
+  it('returns the response when all fields are present', () => {
     expect(parseTokenResponse(valid)).toEqual(valid);
   });
 
@@ -56,11 +58,9 @@ describe('parseTokenResponse', () => {
     ['missing access_token', { ...valid, access_token: undefined }],
     ['empty access_token', { ...valid, access_token: '' }],
     ['missing refresh_token', { ...valid, refresh_token: undefined }],
+    ['empty refresh_token', { ...valid, refresh_token: '' }],
+    ['missing scope', { ...valid, scope: undefined }],
     ['non-string scope', { ...valid, scope: 123 }],
-    [
-      'non-number refresh_token_expires_in',
-      { ...valid, refresh_token_expires_in: '30d' },
-    ],
   ])('throws when the response is %s', (_label, input) => {
     expect(() => parseTokenResponse(input)).toThrow('unexpected response');
   });

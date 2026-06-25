@@ -213,14 +213,11 @@ async function handleOAuthLogin(globalOpts: GlobalOpts): Promise<void> {
   );
   const profileLabel = profileName || 'default';
 
-  const nowSeconds = Math.floor(Date.now() / 1000);
   const configPath = await storeOAuthGrant(
     {
       access_token: tokenResponse.access_token,
       access_token_expires_at: getJwtExp(tokenResponse.access_token),
       refresh_token: tokenResponse.refresh_token,
-      refresh_token_expires_at:
-        nowSeconds + tokenResponse.refresh_token_expires_in,
       scope: tokenResponse.scope,
     },
     profileName,

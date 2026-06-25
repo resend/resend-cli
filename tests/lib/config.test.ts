@@ -610,7 +610,6 @@ describe('readCredentials', () => {
       access_token: 'header.body.sig',
       access_token_expires_at: 9999999999,
       refresh_token: 'rt_secret',
-      refresh_token_expires_at: 9999999999,
       scope: 'full_access',
     };
     writeFileSync(
@@ -623,7 +622,7 @@ describe('readCredentials', () => {
     expect(readCredentials()?.profiles.staging).toEqual(grant);
   });
 
-  it('drops partial/invalid token fields instead of bricking the file', () => {
+  it('drops a grant missing a secret instead of bricking the file', () => {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
     writeFileSync(
@@ -636,15 +635,14 @@ describe('readCredentials', () => {
             scope: 'full_access',
             access_token: 'header.body.sig',
             access_token_expires_at: 9999999999,
-            refresh_token: 'rt_secret',
-            refresh_token_expires_at: null, // older client wrote null
+            // refresh_token (a required secret) is missing
           },
           other: { api_key: 're_other_key' },
         },
       }),
     );
     const creds = readCredentials();
-    // The bad grant degrades to metadata only — tokens are dropped...
+    // The incomplete grant degrades to metadata only — tokens are dropped...
     expect(creds?.profiles.staging).toEqual({
       type: 'oauth_grant',
       scope: 'full_access',

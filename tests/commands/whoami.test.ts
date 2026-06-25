@@ -115,7 +115,6 @@ describe('whoami command', () => {
             access_token: 'header.body.abcd',
             access_token_expires_at: nowSeconds + 900,
             refresh_token: 'rt_secret',
-            refresh_token_expires_at: nowSeconds + 86400,
             scope: 'full_access',
           },
         },

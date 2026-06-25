@@ -251,7 +251,6 @@ describe('storeOAuthGrant', () => {
     access_token: 'header.body.sig',
     access_token_expires_at: 9999999999,
     refresh_token: 'rt_secret',
-    refresh_token_expires_at: 9999999999,
     scope: 'full_access',
   };
 
