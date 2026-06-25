@@ -46,21 +46,18 @@ export type ApiKeyCredential = {
   permission?: ApiKeyPermission;
 };
 
-// The complete grant as received from the token endpoint. Persisted as a unit:
-// in the OS keychain (JSON blob) when a secure backend is available, or inline in
-// credentials.json as a plaintext fallback when it is not.
+// The full grant. Persisted as one unit: a keychain blob when secure storage is
+// available, else inline in credentials.json. No refresh-token expiry exists — the
+// server doesn't return one, so a failed refresh is the only end-of-session signal.
 export type OAuthGrantData = {
   access_token: string;
   access_token_expires_at: number; // unix seconds, decoded from JWT exp claim
   refresh_token: string;
   scope: string; // e.g. 'full_access' or 'emails:send'
-  // Note: there is no refresh-token expiry — the server does not return one; it is
-  // tracked server-side. A failed refresh is the only signal the session ended.
 };
 
-// The credentials.json representation. The secret token fields are absent when the
-// grant lives in the keychain (secure storage); only the non-secret metadata stays
-// in the file. They are present only in the plaintext fallback.
+// File representation: token fields are absent when the grant lives in the keychain
+// (secure storage), present only in the plaintext fallback.
 export type OAuthGrant = {
   type: 'oauth_grant';
   scope: string;
@@ -94,10 +91,9 @@ export const getCredentialsLockPath = (): string =>
 
 function migrateRawProfile(raw: Record<string, unknown>): Profile {
   if (raw.type === 'oauth_grant') {
-    // Validate the format rather than blindly casting (Felipe #5). A complete
-    // grant (plaintext fallback) and a metadata-only secure-storage entry are both
-    // kept; an incomplete grant degrades to metadata so the profile prompts a
-    // re-login instead of bricking the whole file.
+    // Validate rather than blindly cast: keep a complete grant or a metadata-only
+    // secure entry; drop an incomplete one to metadata so it prompts re-login
+    // instead of bricking the whole file.
     if (isCompleteOAuthGrant(raw)) {
       return { type: 'oauth_grant', ...raw };
     }
@@ -436,14 +432,12 @@ export function isCompleteOAuthGrant(value: unknown): value is OAuthGrantData {
   );
 }
 
-// Pull the full grant out of a credentials.json entry (plaintext fallback). Returns
-// null when token fields are absent — e.g. a secure-storage entry whose keychain
-// secret has gone missing — so the caller treats it as not-authenticated.
+// Returns null when token fields are absent (e.g. a secure-storage entry whose
+// keychain secret is gone) so the caller treats it as not-authenticated.
 function oauthGrantFromEntry(entry: OAuthGrant): OAuthGrantData | null {
   return isCompleteOAuthGrant(entry) ? entry : null;
 }
 
-// Parse a grant blob read back from the keychain.
 function parseOAuthGrantBlob(secret: string): OAuthGrantData {
   let parsed: unknown;
   try {
@@ -603,12 +597,9 @@ export async function storeOAuthGrant(
       profiles: {},
     };
 
-    // When a secure backend is available, the tokens (secrets) live in the OS
-    // keychain as a JSON blob and only non-secret metadata is written to the
-    // plaintext file. backend.set overwrites whatever previously occupied the
-    // profile's slot (an API key or an older grant), so no explicit delete is
-    // needed. Without a secure backend we fall back to storing the full grant
-    // inline, mirroring how API keys degrade to the plaintext file.
+    // Secure backend: secrets go to the keychain blob, only metadata to the file;
+    // backend.set overwrites any prior secret in the slot, so no explicit delete.
+    // No secure backend: store the full grant inline, like API keys degrade.
     const profileEntry: OAuthGrant = backend.isSecure
       ? { type: 'oauth_grant', scope: grant.scope }
       : { type: 'oauth_grant', ...grant };
