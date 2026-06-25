@@ -70,6 +70,10 @@ export function parseTokenResponse(json: unknown): TokenResponse {
 
 const TOKEN_REQUEST_TIMEOUT_MS = 30_000;
 
+// Marks errors from a timed-out or unreachable token request (vs. the server
+// rejecting the request), so callers can treat them as transient.
+export const OAUTH_NETWORK_ERROR_NAME = 'OAuthNetworkError';
+
 // fetch has no default timeout; abort after 30s so a hung connection can't hang
 // the CLI.
 async function fetchOAuthToken(
@@ -88,14 +92,13 @@ async function fetchOAuthToken(
       signal: AbortSignal.timeout(TOKEN_REQUEST_TIMEOUT_MS),
     });
   } catch (err) {
-    if (err instanceof Error && err.name === 'TimeoutError') {
-      throw new Error(
-        `${label} timed out after 30s. Check your connection and try again.`,
-      );
-    }
-    throw new Error(
-      'Could not reach the Resend API. Check your connection and try again.',
-    );
+    const message =
+      err instanceof Error && err.name === 'TimeoutError'
+        ? `${label} timed out after 30s. Check your connection and try again.`
+        : 'Could not reach the Resend API. Check your connection and try again.';
+    const networkError = new Error(message);
+    networkError.name = OAUTH_NETWORK_ERROR_NAME;
+    throw networkError;
   }
 }
 

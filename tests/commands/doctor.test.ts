@@ -305,7 +305,7 @@ describe('doctor command — expired OAuth grant', () => {
     exitSpy = undefined;
   });
 
-  it('reports a failed check instead of crashing when refresh fails', async () => {
+  it('fails validation (not presence) when the server rejects the refresh', async () => {
     // Server rejects the expired refresh token with invalid_grant (HTTP 400).
     const fetchSpy = vi
       .spyOn(globalThis, 'fetch')
@@ -319,20 +319,39 @@ describe('doctor command — expired OAuth grant', () => {
     exitSpy = mockExitThrow();
 
     const program = await createDoctorProgram();
-    // Doctor exits 1 because a check failed — but it must not throw an unhandled
-    // error from the refresh.
+    // A rejected session is a real failure → doctor exits 1, but never crashes.
     await expectExit1(() =>
       program.parseAsync(['doctor', '--json'], { from: 'user' }),
     );
 
-    const output = spies.logSpy.mock.calls[0][0] as string;
-    const parsed = JSON.parse(output);
-    const keyCheck = parsed.checks.find(
-      (c: Record<string, unknown>) => c.name === 'API Key',
-    );
-    expect(keyCheck.status).toBe('fail');
-    expect(keyCheck.message).toContain('resend login');
+    const checks = JSON.parse(spies.logSpy.mock.calls[0][0] as string).checks;
+    const find = (name: string) =>
+      checks.find((c: Record<string, unknown>) => c.name === name);
+    // Presence is local (no refresh) → the stored token still reads as present.
+    expect(find('API Key').status).toBe('pass');
+    // The rejection surfaces in validation as a hard failure.
+    expect(find('API Validation').status).toBe('fail');
+    expect(find('API Validation').message).toContain('resend login');
 
     fetchSpy.mockRestore();
+  });
+
+  it('warns (does not fail) on a transient network error during refresh', async () => {
+    // Network is down — fetch rejects rather than returning a rejection response.
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockRejectedValue(new Error('network down'));
+
+    spies = setupOutputSpies();
+
+    const program = await createDoctorProgram();
+    // No hard failures → doctor exits 0 and prints its report.
+    await program.parseAsync(['doctor', '--json'], { from: 'user' });
+
+    const checks = JSON.parse(spies.logSpy.mock.calls[0][0] as string).checks;
+    const validation = checks.find(
+      (c: Record<string, unknown>) => c.name === 'API Validation',
+    );
+    expect(validation.status).toBe('warn');
   });
 });
