@@ -68,6 +68,38 @@ export function parseTokenResponse(json: unknown): TokenResponse {
   return data as TokenResponse;
 }
 
+const TOKEN_REQUEST_TIMEOUT_MS = 30_000;
+
+// Direct fetch calls have no timeout by default, so a hung connection would make
+// the CLI wait forever. Mirror our other direct fetches by aborting after 30s and
+// surfacing a clear network/timeout message.
+async function fetchOAuthToken(
+  url: string,
+  body: URLSearchParams,
+  label: string,
+): Promise<Response> {
+  try {
+    return await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Accept: 'application/json',
+      },
+      body,
+      signal: AbortSignal.timeout(TOKEN_REQUEST_TIMEOUT_MS),
+    });
+  } catch (err) {
+    if (err instanceof Error && err.name === 'TimeoutError') {
+      throw new Error(
+        `${label} timed out after 30s. Check your connection and try again.`,
+      );
+    }
+    throw new Error(
+      'Could not reach the Resend API. Check your connection and try again.',
+    );
+  }
+}
+
 export async function refreshOAuthGrant(
   grant: OAuthGrant,
   profile: string,
@@ -85,15 +117,15 @@ export async function refreshOAuthGrant(
   }
 
   const baseUrl = process.env.RESEND_BASE_URL ?? 'https://api.resend.com';
-  const response = await fetch(`${baseUrl}/oauth/token`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
+  const response = await fetchOAuthToken(
+    `${baseUrl}/oauth/token`,
+    new URLSearchParams({
       grant_type: 'refresh_token',
       client_id: OAUTH_CLIENT_ID,
       refresh_token: grant.refresh_token,
     }),
-  });
+    'Token refresh',
+  );
 
   if (!response.ok) {
     throw new Error(
@@ -211,20 +243,17 @@ export async function exchangeAuthorizationCode(params: {
   clientId: string;
   baseUrl: string;
 }): Promise<TokenResponse> {
-  const response = await fetch(`${params.baseUrl}/oauth/token`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      Accept: 'application/json',
-    },
-    body: new URLSearchParams({
+  const response = await fetchOAuthToken(
+    `${params.baseUrl}/oauth/token`,
+    new URLSearchParams({
       grant_type: 'authorization_code',
       client_id: params.clientId,
       code: params.code,
       redirect_uri: params.redirectUri,
       code_verifier: params.codeVerifier,
     }),
-  });
+    'Token exchange',
+  );
 
   if (!response.ok) {
     let detail = '';
