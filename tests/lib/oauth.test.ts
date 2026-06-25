@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getJwtExp } from '../../src/lib/oauth';
+import { getJwtExp, parseTokenResponse } from '../../src/lib/oauth';
 
 function makeJwt(payload: Record<string, unknown>): string {
   const header = Buffer.from(JSON.stringify({ alg: 'none' })).toString(
@@ -34,5 +34,34 @@ describe('getJwtExp', () => {
     expect(() => getJwtExp(makeJwt({ exp: 'soon' }))).toThrow(
       'invalid access token',
     );
+  });
+});
+
+describe('parseTokenResponse', () => {
+  const valid = {
+    access_token: 'header.body.sig',
+    expires_in: 900,
+    refresh_token: 'rt_abc',
+    scope: 'full_access',
+    refresh_token_expires_in: 2592000,
+  };
+
+  it('returns the response when all required fields are well-formed', () => {
+    expect(parseTokenResponse(valid)).toEqual(valid);
+  });
+
+  it.each([
+    ['null', null],
+    ['a string', 'nope'],
+    ['missing access_token', { ...valid, access_token: undefined }],
+    ['empty access_token', { ...valid, access_token: '' }],
+    ['missing refresh_token', { ...valid, refresh_token: undefined }],
+    ['non-string scope', { ...valid, scope: 123 }],
+    [
+      'non-number refresh_token_expires_in',
+      { ...valid, refresh_token_expires_in: '30d' },
+    ],
+  ])('throws when the response is %s', (_label, input) => {
+    expect(() => parseTokenResponse(input)).toThrow('unexpected response');
   });
 });

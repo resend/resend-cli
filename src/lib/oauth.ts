@@ -33,6 +33,41 @@ export function getJwtExp(token: string): number {
   return (decoded as { exp: number }).exp;
 }
 
+export type TokenResponse = {
+  access_token: string;
+  expires_in: number;
+  refresh_token: string;
+  scope: string;
+  refresh_token_expires_in: number;
+};
+
+// The /oauth/token endpoint can return 200 with a body that does not match what
+// we expect (proxy error pages, partial payloads). Validate before trusting it
+// so callers never persist a malformed grant.
+export function parseTokenResponse(json: unknown): TokenResponse {
+  const invalid = new Error(
+    'Received an unexpected response from Resend while authenticating. Please run `resend login` again.',
+  );
+
+  if (typeof json !== 'object' || json === null) {
+    throw invalid;
+  }
+
+  const data = json as Record<string, unknown>;
+  if (
+    typeof data.access_token !== 'string' ||
+    data.access_token.length === 0 ||
+    typeof data.refresh_token !== 'string' ||
+    data.refresh_token.length === 0 ||
+    typeof data.scope !== 'string' ||
+    typeof data.refresh_token_expires_in !== 'number'
+  ) {
+    throw invalid;
+  }
+
+  return data as TokenResponse;
+}
+
 export async function refreshOAuthGrant(
   grant: OAuthGrant,
   profile: string,
@@ -66,13 +101,7 @@ export async function refreshOAuthGrant(
     );
   }
 
-  const data = (await response.json()) as {
-    access_token: string;
-    expires_in: number;
-    refresh_token: string;
-    scope: string;
-    refresh_token_expires_in: number;
-  };
+  const data = parseTokenResponse(await response.json());
 
   const newAccessTokenExpiresAt = getJwtExp(data.access_token);
   const newRefreshTokenExpiresAt = nowSeconds + data.refresh_token_expires_in;
@@ -181,13 +210,7 @@ export async function exchangeAuthorizationCode(params: {
   redirectUri: string;
   clientId: string;
   baseUrl: string;
-}): Promise<{
-  access_token: string;
-  expires_in: number;
-  refresh_token: string;
-  scope: string;
-  refresh_token_expires_in: number;
-}> {
+}): Promise<TokenResponse> {
   const response = await fetch(`${params.baseUrl}/oauth/token`, {
     method: 'POST',
     headers: {
@@ -217,11 +240,5 @@ export async function exchangeAuthorizationCode(params: {
     );
   }
 
-  return response.json() as Promise<{
-    access_token: string;
-    expires_in: number;
-    refresh_token: string;
-    scope: string;
-    refresh_token_expires_in: number;
-  }>;
+  return parseTokenResponse(await response.json());
 }
