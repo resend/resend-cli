@@ -405,7 +405,9 @@ describe('storeOAuthGrant', () => {
     }));
 
     const { storeOAuthGrant } = await import('../../src/lib/config');
-    await expect(storeOAuthGrant(grant, 'staging')).rejects.toThrow('disk full');
+    await expect(storeOAuthGrant(grant, 'staging')).rejects.toThrow(
+      'disk full',
+    );
 
     // Secret was written, then removed so the keychain and file can't disagree.
     expect(mockBackend.set).toHaveBeenCalledWith(

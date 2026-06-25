@@ -307,13 +307,11 @@ describe('doctor command — expired OAuth grant', () => {
 
   it('fails validation (not presence) when the server rejects the refresh', async () => {
     // Server rejects the expired refresh token with invalid_grant (HTTP 400).
-    const fetchSpy = vi
-      .spyOn(globalThis, 'fetch')
-      .mockResolvedValue(
-        new Response(JSON.stringify({ error: 'invalid_grant' }), {
-          status: 400,
-        }),
-      );
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ error: 'invalid_grant' }), {
+        status: 400,
+      }),
+    );
 
     spies = setupOutputSpies();
     exitSpy = mockExitThrow();
@@ -353,5 +351,7 @@ describe('doctor command — expired OAuth grant', () => {
       (c: Record<string, unknown>) => c.name === 'API Validation',
     );
     expect(validation.status).toBe('warn');
+
+    fetchSpy.mockRestore();
   });
 });
