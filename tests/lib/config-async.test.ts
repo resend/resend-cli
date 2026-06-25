@@ -270,6 +270,9 @@ describe('storeOAuthGrant', () => {
     restoreEnv();
     rmSync(tmpDir, { recursive: true, force: true });
     vi.restoreAllMocks();
+    // doMock registrations persist across tests; clear the one used below so it
+    // can't poison later suites.
+    vi.doUnmock('../../src/lib/write-file-atomic');
   });
 
   it('writes the full grant inline when no secure backend is available', async () => {
@@ -376,6 +379,41 @@ describe('storeOAuthGrant', () => {
     await expect(
       resolveAuthentication(undefined, 'staging', { refresh: false }),
     ).rejects.toThrow('Stored OAuth credentials are invalid');
+  });
+
+  it('rolls back the keychain secret when the metadata write fails', async () => {
+    const mockBackend = {
+      get: vi.fn().mockResolvedValue(null),
+      set: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValue(true),
+      isAvailable: vi.fn().mockResolvedValue(true),
+      name: 'mock-backend',
+      isSecure: true,
+    };
+
+    vi.resetModules();
+    vi.doMock('../../src/lib/credential-store', () => ({
+      getCredentialBackend: vi.fn().mockResolvedValue(mockBackend),
+      SERVICE_NAME: 'resend-cli',
+      resetCredentialBackend: vi.fn(),
+    }));
+    // Force the credentials-file write to fail after the keychain write lands.
+    vi.doMock('../../src/lib/write-file-atomic', () => ({
+      writeFileAtomic: vi.fn(() => {
+        throw new Error('disk full');
+      }),
+    }));
+
+    const { storeOAuthGrant } = await import('../../src/lib/config');
+    await expect(storeOAuthGrant(grant, 'staging')).rejects.toThrow('disk full');
+
+    // Secret was written, then removed so the keychain and file can't disagree.
+    expect(mockBackend.set).toHaveBeenCalledWith(
+      'resend-cli',
+      'staging',
+      JSON.stringify(grant),
+    );
+    expect(mockBackend.delete).toHaveBeenCalledWith('resend-cli', 'staging');
   });
 });
 

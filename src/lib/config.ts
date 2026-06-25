@@ -613,14 +613,24 @@ export async function storeOAuthGrant(
       [profile]: profileEntry,
     };
 
-    return writeCredentials({
-      ...creds,
-      storage: backend.isSecure ? 'secure_storage' : 'file',
-      profiles: updatedProfiles,
-      ...(Object.keys(updatedProfiles).length === 1
-        ? { active_profile: profile }
-        : {}),
-    });
+    try {
+      return writeCredentials({
+        ...creds,
+        storage: backend.isSecure ? 'secure_storage' : 'file',
+        profiles: updatedProfiles,
+        ...(Object.keys(updatedProfiles).length === 1
+          ? { active_profile: profile }
+          : {}),
+      });
+    } catch (err) {
+      // The secret is already in the keychain; if writing the metadata fails, drop
+      // it so the file and keychain can't disagree on the profile type — otherwise
+      // resolveAuthentication would read the OAuth blob as an API key.
+      if (backend.isSecure) {
+        await backend.delete(SERVICE_NAME, profile).catch(() => {});
+      }
+      throw err;
+    }
   });
 }
 
