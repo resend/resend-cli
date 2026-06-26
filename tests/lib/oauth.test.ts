@@ -1,9 +1,14 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   createCallbackServer,
   getJwtExp,
   parseTokenResponse,
+  refreshOAuthGrant,
 } from '../../src/lib/oauth';
+
+vi.mock('../../src/lib/config', () => ({
+  storeOAuthGrant: vi.fn().mockResolvedValue({ configPath: '', backend: {} }),
+}));
 
 function makeJwt(payload: Record<string, unknown>): string {
   const header = Buffer.from(JSON.stringify({ alg: 'none' })).toString(
@@ -67,6 +72,52 @@ describe('parseTokenResponse', () => {
     ['non-string scope', { ...valid, scope: 123 }],
   ])('throws when the response is %s', (_label, input) => {
     expect(() => parseTokenResponse(input)).toThrow('unexpected response');
+  });
+});
+
+describe('refreshOAuthGrant', () => {
+  const now = () => Math.floor(Date.now() / 1000);
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const grant = (expiresAt: number) => ({
+    access_token: 'old.token.sig',
+    access_token_expires_at: expiresAt,
+    refresh_token: 'rt_old',
+    scope: 'full_access',
+  });
+
+  it('refreshes when the token expires within the clock-skew leeway', async () => {
+    const fresh = makeJwt({ exp: now() + 900 });
+    const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          access_token: fresh,
+          refresh_token: 'rt_new',
+          scope: 'full_access',
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const result = await refreshOAuthGrant(grant(now() + 30), 'default');
+
+    expect(fetchSpy).toHaveBeenCalledOnce();
+    expect(result).toEqual({ access_token: fresh, scope: 'full_access' });
+  });
+
+  it('skips the refresh when the token is comfortably valid', async () => {
+    const fetchSpy = vi.spyOn(global, 'fetch');
+
+    const result = await refreshOAuthGrant(grant(now() + 900), 'default');
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      access_token: 'old.token.sig',
+      scope: 'full_access',
+    });
   });
 });
 
