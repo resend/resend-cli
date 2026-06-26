@@ -1,9 +1,9 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { AUTH_BACKGROUND_DATA_URI } from './oauth-background';
 import type { OAuthGrantData } from './config';
 import { storeOAuthGrant } from './config';
+import { AUTH_BACKGROUND_DATA_URI } from './oauth-background';
 
 export const OAUTH_CLIENT_ID = '7136aa0b-625c-4c9c-8820-e9784c8eb141';
 
