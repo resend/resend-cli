@@ -156,15 +156,6 @@ function base64url(input: Buffer): string {
   return input.toString('base64url');
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
 const LOGOMARK_SVG = `<svg class="logo" role="img" aria-label="Resend" fill="none" viewBox="0 0 78 78" xmlns="http://www.w3.org/2000/svg">
   <rect x="1" y="1" width="76" height="76" rx="21" stroke="#FDFDFD" stroke-opacity="0.1" stroke-width="2" />
   <path d="M43.0184 21C49.9908 21 54.1374 25.1467 54.1374 30.6513C54.1374 36.1558 49.9908 40.3025 43.0184 40.3025H39.4953L57 57H44.6329L31.3118 44.3394C30.3578 43.4587 29.9174 42.4312 29.9174 41.5506C29.9174 40.3029 30.7984 39.202 32.4864 38.7249L39.3485 36.8897C41.954 36.1925 43.7522 34.1741 43.7522 31.5319C43.7522 28.3027 41.1098 26.4312 37.8438 26.4312H21V21H43.0184Z" fill="url(#resend_cli_logo_a)" />
@@ -182,8 +173,7 @@ const LOGOMARK_SVG = `<svg class="logo" role="img" aria-label="Resend" fill="non
 </svg>`;
 
 function callbackPage(opts: { heading: string; message: string }): string {
-  const heading = escapeHtml(opts.heading);
-  const message = escapeHtml(opts.message);
+  const { heading, message } = opts;
 
   return `<!doctype html>
 <html lang="en">
