@@ -281,7 +281,9 @@ describe('storeOAuthGrant', () => {
     const { storeOAuthGrant, readCredentials, resolveAuthentication } =
       await import('../../src/lib/config');
 
-    await storeOAuthGrant(grant, 'staging');
+    const { configPath, backend } = await storeOAuthGrant(grant, 'staging');
+    expect(configPath).toContain('credentials.json');
+    expect(backend.isSecure).toBe(false);
 
     const creds = readCredentials();
     expect(creds?.profiles.staging).toEqual({ type: 'oauth_grant', ...grant });
@@ -320,7 +322,9 @@ describe('storeOAuthGrant', () => {
     const { storeOAuthGrant, readCredentials, resolveAuthentication } =
       await import('../../src/lib/config');
 
-    await storeOAuthGrant(grant, 'staging');
+    const { backend } = await storeOAuthGrant(grant, 'staging');
+    expect(backend.isSecure).toBe(true);
+    expect(backend.name).toBe('mock-backend');
 
     // File holds only non-secret metadata; no tokens.
     const creds = readCredentials();

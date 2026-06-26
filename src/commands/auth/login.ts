@@ -12,6 +12,7 @@ import {
   storeOAuthGrant,
   validateProfileName,
 } from '../../lib/config';
+import type { CredentialBackend } from '../../lib/credential-store';
 import { buildHelpText } from '../../lib/help-text';
 import {
   createCallbackServer,
@@ -100,6 +101,34 @@ async function selectProfile(
   }
 
   return profileName;
+}
+
+function reportStorageLocation(opts: {
+  noun: string;
+  profileLabel: string;
+  configPath: string;
+  backend: CredentialBackend;
+}): void {
+  const { noun, profileLabel, configPath, backend } = opts;
+  const storageInfo = backend.isSecure
+    ? `in ${backend.name}`
+    : `at ${configPath}`;
+  const msg = `${noun} stored for profile '${profileLabel}' ${storageInfo}`;
+  if (isInteractive()) {
+    p.outro(msg);
+  } else {
+    console.log(msg);
+  }
+
+  if (!backend.isSecure && process.platform === 'linux') {
+    const hint =
+      'Tip: Install libsecret-tools and a Secret Service provider (e.g. gnome-keyring) to store credentials in secure storage instead of a plaintext file.';
+    if (isInteractive()) {
+      p.log.info(hint);
+    } else {
+      console.log(hint);
+    }
+  }
 }
 
 async function handleOAuthLogin(globalOpts: GlobalOpts): Promise<void> {
@@ -213,7 +242,7 @@ async function handleOAuthLogin(globalOpts: GlobalOpts): Promise<void> {
   );
   const profileLabel = profileName || 'default';
 
-  const configPath = await storeOAuthGrant(
+  const { configPath, backend } = await storeOAuthGrant(
     {
       access_token: tokenResponse.access_token,
       access_token_expires_at: getJwtExp(tokenResponse.access_token),
@@ -243,17 +272,18 @@ async function handleOAuthLogin(globalOpts: GlobalOpts): Promise<void> {
         success: true,
         config_path: configPath,
         profile: profileLabel,
+        storage: backend.name,
         scope: tokenResponse.scope,
       },
       { json: true },
     );
   } else {
-    const msg = `Credentials stored for profile '${profileLabel}' at ${configPath}`;
-    if (isInteractive()) {
-      p.outro(msg);
-    } else {
-      console.log(msg);
-    }
+    reportStorageLocation({
+      noun: 'Credentials',
+      profileLabel,
+      configPath,
+      backend,
+    });
   }
 }
 
@@ -444,24 +474,11 @@ export const loginCommand = new Command('login')
         { json: true },
       );
     } else {
-      const storageInfo = !backend.isSecure
-        ? `at ${configPath}`
-        : `in ${backend.name}`;
-      const msg = `API key stored for profile '${profileLabel}' ${storageInfo}`;
-      if (isInteractive()) {
-        p.outro(msg);
-      } else {
-        console.log(msg);
-      }
-
-      if (!backend.isSecure && process.platform === 'linux') {
-        const hint =
-          'Tip: Install libsecret-tools and a Secret Service provider (e.g. gnome-keyring) to store keys in secure storage instead of a plaintext file.';
-        if (isInteractive()) {
-          p.log.info(hint);
-        } else {
-          console.log(hint);
-        }
-      }
+      reportStorageLocation({
+        noun: 'API key',
+        profileLabel,
+        configPath,
+        backend,
+      });
     }
   });
