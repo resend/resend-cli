@@ -70,6 +70,8 @@ export function parseTokenResponse(json: unknown): TokenResponse {
 
 const TOKEN_REQUEST_TIMEOUT_MS = 30_000;
 
+const TOKEN_EXPIRY_LEEWAY_SECONDS = 60;
+
 // Marks errors from a timed-out or unreachable token request (vs. the server
 // rejecting the request), so callers can treat them as transient.
 export const OAUTH_NETWORK_ERROR_NAME = 'OAuthNetworkError';
@@ -108,7 +110,10 @@ export async function refreshOAuthGrant(
 ): Promise<{ access_token: string; scope: string }> {
   const nowSeconds = Math.floor(Date.now() / 1000);
 
-  if (grant.access_token_expires_at > nowSeconds) {
+  if (
+    grant.access_token_expires_at >
+    nowSeconds + TOKEN_EXPIRY_LEEWAY_SECONDS
+  ) {
     return { access_token: grant.access_token, scope: grant.scope };
   }
 
