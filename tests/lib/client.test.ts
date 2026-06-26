@@ -174,6 +174,39 @@ describe('requireClient permission check', () => {
     errSpy.mockRestore();
   });
 
+  it('blocks an oauth grant whose scope maps to unknown permission', async () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'default',
+        profiles: {
+          default: {
+            type: 'oauth_grant',
+            access_token:
+              'eyJhbGciOiJSUzI1NiIsInR5cCI6ImF0K2p3dCJ9.eyJleHAiOjk5OTk5OTk5OTl9.sig',
+            access_token_expires_at: nowSeconds + 900,
+            refresh_token: 'rt_test',
+            scope: 'something:else',
+          },
+        },
+      }),
+    );
+
+    setupOutputSpies();
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { requireClient } = await import('../../src/lib/client');
+    await expectExit1(() => requireClient({ json: true }));
+
+    const output = errSpy.mock.calls[0][0] as string;
+    expect(output).toContain('unrecognized_scope');
+    errSpy.mockRestore();
+  });
+
   it('allows sending_access key for sending_access command', async () => {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
