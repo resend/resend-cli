@@ -145,15 +145,9 @@ async function checkApiValidationAndDomains(
     };
   }
 
-  if (resolved.type === 'oauth_grant') {
-    return {
-      name: 'API Validation',
-      status: 'pass',
-      message: `OAuth grant (scope: ${resolved.scope})`,
-    };
-  }
-
-  const token = resolved.key;
+  const token =
+    resolved.type === 'api_key' ? resolved.key : resolved.access_token;
+  const noun = resolved.type === 'api_key' ? 'API key' : 'credential';
   try {
     const resend = new Resend(token);
     const { data, error } = await withTimeout(
@@ -167,7 +161,7 @@ async function checkApiValidationAndDomains(
         return {
           name: 'API Validation',
           status: 'warn',
-          message: `Sending-only API key`,
+          message: `Sending-only ${noun}`,
           detail: SENDING_KEY_MESSAGE,
         };
       }
@@ -181,7 +175,7 @@ async function checkApiValidationAndDomains(
       return {
         name: 'API Validation',
         status: 'fail',
-        message: `API key invalid: ${error.message}`,
+        message: `Invalid ${noun}: ${error.message}`,
       };
     }
 
@@ -224,7 +218,7 @@ async function checkApiValidationAndDomains(
     return {
       name: 'API Validation',
       status: 'fail',
-      message: errorMessage(err, 'Failed to validate API key'),
+      message: errorMessage(err, `Failed to validate ${noun}`),
     };
   }
 }

@@ -355,3 +355,102 @@ describe('doctor command — expired OAuth grant', () => {
     fetchSpy.mockRestore();
   });
 });
+
+describe('doctor command — valid OAuth grant', () => {
+  const restoreEnv = captureTestEnv();
+  let spies: ReturnType<typeof setupOutputSpies> | undefined;
+  let exitSpy: MockInstance | undefined;
+  let tmpDir: string;
+
+  beforeEach(async () => {
+    const { mkdirSync, writeFileSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    tmpDir = join(
+      tmpdir(),
+      `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    delete process.env.RESEND_API_KEY;
+    process.env.XDG_CONFIG_HOME = tmpDir;
+    process.env.RESEND_CREDENTIAL_STORE = 'file';
+
+    // Inline grant whose access token is comfortably valid (well past the 60s
+    // refresh leeway), so resolving it makes no network call and the grant flows
+    // straight into the live domains.list() validation.
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'staging',
+        profiles: {
+          staging: {
+            type: 'oauth_grant',
+            access_token: 'header.body.sig',
+            access_token_expires_at: nowSeconds + 900,
+            refresh_token: 'rt_valid',
+            scope: 'full_access',
+          },
+        },
+      }),
+    );
+  });
+
+  afterEach(async () => {
+    const { rmSync } = await import('node:fs');
+    restoreEnv();
+    rmSync(tmpDir, { recursive: true, force: true });
+    spies = undefined;
+    exitSpy?.mockRestore();
+    exitSpy = undefined;
+  });
+
+  it('validates the grant against the API', async () => {
+    mockDomainListResult = {
+      data: { data: [{ name: 'example.com', status: 'verified' }] },
+      error: null,
+    };
+    // Stub the network so the CLI-version check can't make a real call; a valid
+    // grant needs no refresh, so this must never see a token request.
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockRejectedValue(new Error('network unavailable'));
+
+    spies = setupOutputSpies();
+
+    const program = await createDoctorProgram();
+    await program.parseAsync(['doctor', '--json'], { from: 'user' });
+
+    const checks = JSON.parse(spies.logSpy.mock.calls[0][0] as string).checks;
+    const find = (name: string) =>
+      checks.find((c: Record<string, unknown>) => c.name === name);
+    // A Domains result only exists if domains.list() was actually called — the
+    // old short-circuit produced a bare "API Validation: OAuth grant" instead.
+    expect(find('Domains')?.status).toBe('pass');
+
+    fetchSpy.mockRestore();
+  });
+
+  it('fails when the API rejects the grant', async () => {
+    mockDomainListResult = {
+      data: null,
+      error: { name: 'validation_error', message: 'Invalid token' },
+    };
+
+    spies = setupOutputSpies();
+    exitSpy = mockExitThrow();
+
+    const program = await createDoctorProgram();
+    await expectExit1(() =>
+      program.parseAsync(['doctor', '--json'], { from: 'user' }),
+    );
+
+    const checks = JSON.parse(spies.logSpy.mock.calls[0][0] as string).checks;
+    const validation = checks.find(
+      (c: Record<string, unknown>) => c.name === 'API Validation',
+    );
+    expect(validation.status).toBe('fail');
+    expect(validation.message).toContain('Invalid credential');
+  });
+});
