@@ -190,6 +190,13 @@ export function createCallbackServer(): Promise<{
 
     const server = createServer((req, res) => {
       const url = new URL(req.url ?? '/', 'http://127.0.0.1');
+
+      if (url.pathname !== '/oauth/callback') {
+        res.writeHead(404, { Connection: 'close' });
+        res.end();
+        return;
+      }
+
       const code = url.searchParams.get('code');
       const state = url.searchParams.get('state');
       const error = url.searchParams.get('error');

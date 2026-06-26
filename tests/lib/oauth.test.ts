@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { getJwtExp, parseTokenResponse } from '../../src/lib/oauth';
+import {
+  createCallbackServer,
+  getJwtExp,
+  parseTokenResponse,
+} from '../../src/lib/oauth';
 
 function makeJwt(payload: Record<string, unknown>): string {
   const header = Buffer.from(JSON.stringify({ alg: 'none' })).toString(
@@ -63,5 +67,46 @@ describe('parseTokenResponse', () => {
     ['non-string scope', { ...valid, scope: 123 }],
   ])('throws when the response is %s', (_label, input) => {
     expect(() => parseTokenResponse(input)).toThrow('unexpected response');
+  });
+});
+
+describe('createCallbackServer', () => {
+  const isPending = async (promise: Promise<unknown>): Promise<boolean> => {
+    const marker = Symbol('pending');
+    const settled = await Promise.race([
+      promise.then(
+        () => 'resolved',
+        () => 'rejected',
+      ),
+      new Promise((resolve) => setTimeout(() => resolve(marker), 50)),
+    ]);
+    return settled === marker;
+  };
+
+  it('ignores non-callback requests and keeps waiting for the real callback', async () => {
+    const { port, waitForCallback } = await createCallbackServer();
+    waitForCallback.catch(() => {});
+
+    const favicon = await fetch(`http://127.0.0.1:${port}/favicon.ico`);
+    expect(favicon.status).toBe(404);
+    await favicon.text();
+
+    expect(await isPending(waitForCallback)).toBe(true);
+
+    await fetch(`http://127.0.0.1:${port}/oauth/callback?code=c&state=s`).then(
+      (r) => r.text(),
+    );
+
+    expect(await waitForCallback).toEqual({ code: 'c', state: 's' });
+  });
+
+  it('resolves with code and state on the callback path', async () => {
+    const { port, waitForCallback } = await createCallbackServer();
+
+    await fetch(
+      `http://127.0.0.1:${port}/oauth/callback?code=abc&state=xyz`,
+    ).then((r) => r.text());
+
+    expect(await waitForCallback).toEqual({ code: 'abc', state: 'xyz' });
   });
 });
