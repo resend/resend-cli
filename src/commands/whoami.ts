@@ -2,15 +2,29 @@ import { join } from 'node:path';
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../lib/client';
 import {
+  type ApiKeyPermission,
+  type ApiKeySource,
   getConfigDir,
   listProfiles,
   maskKey,
-  resolveApiKeyAsync,
+  resolveAuthentication,
   resolveProfileName,
 } from '../lib/config';
 import { buildHelpText } from '../lib/help-text';
 import { outputError, outputResult } from '../lib/output';
 import { isInteractive } from '../lib/tty';
+
+const SOURCE_LABELS: Record<ApiKeySource, string> = {
+  flag: 'flag',
+  env: 'environment variable',
+  config: 'config file',
+  secure_storage: 'secure storage',
+};
+
+const PERMISSION_LABELS: Record<ApiKeyPermission, string> = {
+  full_access: 'full access',
+  sending_access: 'sending access',
+};
 
 export const whoamiCommand = new Command('whoami')
   .description('Show current authentication status')
@@ -19,7 +33,7 @@ export const whoamiCommand = new Command('whoami')
     buildHelpText({
       setup: true,
       context: `Local only — no network calls.
-Shows which profile is active and where the API key comes from.`,
+Shows which profile is active and where the active credential comes from.`,
       output: `  {"authenticated":true,"profile":"production","api_key":"re_...abcd","source":"config","config_path":"/Users/you/.config/resend/credentials.json"}
   {"error":{"message":"Not authenticated.\\nRun \`resend login\` to get started.","code":"not_authenticated"}}`,
       examples: [
@@ -32,7 +46,11 @@ Shows which profile is active and where the API key comes from.`,
   .action(async (_opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const profileFlag = globalOpts.profile;
-    const resolved = await resolveApiKeyAsync(globalOpts.apiKey, profileFlag);
+    const resolved = await resolveAuthentication(
+      globalOpts.apiKey,
+      profileFlag,
+      { refresh: false },
+    );
 
     if (!resolved) {
       const requestedProfile = profileFlag
@@ -56,20 +74,24 @@ Shows which profile is active and where the API key comes from.`,
       } else {
         outputError({ message, code }, { json: false });
       }
-      return;
     }
 
     const profile = resolved.profile ?? resolveProfileName(profileFlag);
     const configPath = join(getConfigDir(), 'credentials.json');
+    const token =
+      resolved.type === 'api_key' ? resolved.key : resolved.access_token;
+    const source = resolved.source;
+    const permission =
+      resolved.type === 'api_key' ? resolved.permission : undefined;
 
     if (globalOpts.json || !isInteractive()) {
       outputResult(
         {
           authenticated: true,
           profile,
-          api_key: maskKey(resolved.key),
-          source: resolved.source,
-          ...(resolved.permission && { permission: resolved.permission }),
+          api_key: maskKey(token),
+          source,
+          ...(permission && { permission }),
           config_path: configPath,
         },
         { json: globalOpts.json },
@@ -78,24 +100,21 @@ Shows which profile is active and where the API key comes from.`,
     }
 
     const sourceLabel =
-      resolved.source === 'secure_storage'
-        ? 'secure storage'
-        : resolved.source === 'config'
-          ? 'config file'
-          : resolved.source === 'env'
-            ? 'environment variable'
-            : 'flag';
+      resolved.type === 'oauth_grant'
+        ? `${SOURCE_LABELS[source]} (oauth)`
+        : SOURCE_LABELS[source];
 
-    const permissionLabel =
-      resolved.permission === 'sending_access'
-        ? 'sending access'
-        : resolved.permission === 'full_access'
-          ? 'full access'
-          : undefined;
+    const permissionLabel = permission
+      ? PERMISSION_LABELS[permission]
+      : undefined;
 
     console.log('');
     console.log(`  Profile: ${profile}`);
-    console.log(`  API Key: ${maskKey(resolved.key)}`);
+    console.log(
+      resolved.type === 'oauth_grant'
+        ? `  Token:   ${maskKey(token)}`
+        : `  API Key: ${maskKey(token)}`,
+    );
     console.log(`  Source:  ${sourceLabel}`);
     if (permissionLabel) {
       console.log(`  Access:  ${permissionLabel}`);

@@ -76,13 +76,21 @@ describe('resolveApiKey', () => {
   it('flag value takes highest priority', () => {
     process.env.RESEND_API_KEY = 're_env_key';
     const result = resolveApiKey('re_flag_key');
-    expect(result).toEqual({ key: 're_flag_key', source: 'flag' });
+    expect(result).toEqual({
+      type: 'api_key',
+      key: 're_flag_key',
+      source: 'flag',
+    });
   });
 
   it('env var is second priority', () => {
     process.env.RESEND_API_KEY = 're_env_key';
     const result = resolveApiKey();
-    expect(result).toEqual({ key: 're_env_key', source: 'env' });
+    expect(result).toEqual({
+      type: 'api_key',
+      key: 're_env_key',
+      source: 'env',
+    });
   });
 
   it('config file is third priority (new format)', () => {
@@ -100,9 +108,11 @@ describe('resolveApiKey', () => {
 
     const result = resolveApiKey();
     expect(result).toEqual({
+      type: 'api_key',
       key: 're_config_key',
       source: 'config',
       profile: 'default',
+      permission: undefined,
     });
   });
 
@@ -124,9 +134,11 @@ describe('resolveApiKey', () => {
 
     const result = resolveApiKey(undefined, 'staging');
     expect(result).toEqual({
+      type: 'api_key',
       key: 're_staging',
       source: 'config',
       profile: 'staging',
+      permission: undefined,
     });
   });
 
@@ -477,7 +489,9 @@ describe('renameProfile', () => {
     // Simulate a legacy profile created before validation was added
     writeCredentials({
       active_profile: 'my team',
-      profiles: { 'my team': { api_key: 're_legacy' } },
+      profiles: {
+        'my team': { type: 'api_key' as const, api_key: 're_legacy' },
+      },
     });
 
     renameProfile('my team', 'my-team');
@@ -570,6 +584,75 @@ describe('readCredentials', () => {
 
     expect(readFileSync(credPath, 'utf-8')).toBe(corrupted);
   });
+
+  it('reads a secure-storage oauth grant (metadata only)', () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'staging',
+        storage: 'secure_storage',
+        profiles: { staging: { type: 'oauth_grant', scope: 'full_access' } },
+      }),
+    );
+    expect(readCredentials()?.profiles.staging).toEqual({
+      type: 'oauth_grant',
+      scope: 'full_access',
+    });
+  });
+
+  it('reads a complete plaintext-fallback oauth grant', () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    const grant = {
+      type: 'oauth_grant',
+      access_token: 'header.body.sig',
+      access_token_expires_at: 9999999999,
+      refresh_token: 'rt_secret',
+      scope: 'full_access',
+    };
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'staging',
+        profiles: { staging: grant },
+      }),
+    );
+    expect(readCredentials()?.profiles.staging).toEqual(grant);
+  });
+
+  it('drops a grant missing a secret instead of bricking the file', () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'staging',
+        profiles: {
+          staging: {
+            type: 'oauth_grant',
+            scope: 'full_access',
+            access_token: 'header.body.sig',
+            access_token_expires_at: 9999999999,
+            // refresh_token (a required secret) is missing
+          },
+          other: { api_key: 're_other_key' },
+        },
+      }),
+    );
+    const creds = readCredentials();
+    // The incomplete grant degrades to metadata only — tokens are dropped...
+    expect(creds?.profiles.staging).toEqual({
+      type: 'oauth_grant',
+      scope: 'full_access',
+    });
+    // ...and the rest of the file remains readable.
+    expect(creds?.profiles.other).toEqual({
+      type: 'api_key',
+      api_key: 're_other_key',
+    });
+  });
 });
 
 describe('writeCredentials (atomic)', () => {
@@ -592,7 +675,7 @@ describe('writeCredentials (atomic)', () => {
   it('produces valid JSON after write', () => {
     const configPath = writeCredentials({
       active_profile: 'default',
-      profiles: { default: { api_key: 're_test' } },
+      profiles: { default: { type: 'api_key' as const, api_key: 're_test' } },
     });
     const data = JSON.parse(readFileSync(configPath, 'utf-8'));
     expect(data.profiles.default.api_key).toBe('re_test');
@@ -601,7 +684,7 @@ describe('writeCredentials (atomic)', () => {
   it('does not leave tmp files on success', () => {
     writeCredentials({
       active_profile: 'default',
-      profiles: { default: { api_key: 're_test' } },
+      profiles: { default: { type: 'api_key' as const, api_key: 're_test' } },
     });
     const configDir = join(tmpDir, 'resend');
     const files = require('node:fs').readdirSync(configDir) as string[];

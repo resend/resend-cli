@@ -14,6 +14,7 @@ import {
   SERVICE_NAME,
 } from './credential-store';
 import { withFileLock } from './file-lock';
+import { refreshOAuthGrant } from './oauth';
 import { writeFileAtomic } from './write-file-atomic';
 
 export type ApiKeyPermission = 'full_access' | 'sending_access';
@@ -21,14 +22,50 @@ export type ApiKeyPermission = 'full_access' | 'sending_access';
 export const SENDING_KEY_MESSAGE =
   'Sending-only keys work with: emails send, emails batch, broadcasts send.\nCreate a full access key at https://resend.com/api-keys';
 export type ApiKeySource = 'flag' | 'env' | 'config' | 'secure_storage';
-export type ResolvedKey = {
+
+export type ResolvedApiKey = {
+  type: 'api_key';
   key: string;
   source: ApiKeySource;
   profile?: string;
   permission?: ApiKeyPermission;
 };
 
-export type Profile = { api_key?: string; permission?: ApiKeyPermission };
+export type ResolvedOAuthGrant = {
+  type: 'oauth_grant';
+  access_token: string;
+  profile: string;
+  scope: string;
+  source: Extract<ApiKeySource, 'config' | 'secure_storage'>;
+};
+
+export type ResolvedAuthentication = ResolvedApiKey | ResolvedOAuthGrant;
+
+export type ApiKeyCredential = {
+  type: 'api_key';
+  api_key?: string; // absent when stored in OS keychain via secure_storage
+  permission?: ApiKeyPermission;
+};
+
+// The full grant. Persisted as one unit: a keychain blob when secure storage is
+// available, else inline in credentials.json. No refresh-token expiry exists — the
+// server doesn't return one, so a failed refresh is the only end-of-session signal.
+export type OAuthGrantData = {
+  access_token: string;
+  access_token_expires_at: number; // unix seconds, decoded from JWT exp claim
+  refresh_token: string;
+  scope: string; // e.g. 'full_access' or 'emails:send'
+};
+
+// File representation: token fields are absent when the grant lives in the keychain
+// (secure storage), present only in the plaintext fallback.
+export type OAuthGrant = {
+  type: 'oauth_grant';
+  scope: string;
+} & Partial<OAuthGrantData>;
+
+export type Credential = ApiKeyCredential | OAuthGrant;
+export type Profile = Credential;
 export type CredentialStorage = 'secure_storage' | 'file';
 export type CredentialsFile = {
   active_profile: string;
@@ -52,6 +89,28 @@ export function getCredentialsPath(): string {
 
 export const getCredentialsLockPath = (): string =>
   join(getConfigDir(), 'credentials.json.lock');
+
+function migrateRawProfile(raw: Record<string, unknown>): Profile {
+  if (raw.type === 'oauth_grant') {
+    // Validate rather than blindly cast: keep a complete grant or a metadata-only
+    // secure entry; drop an incomplete one to metadata so it prompts re-login
+    // instead of bricking the whole file.
+    if (isCompleteOAuthGrant(raw)) {
+      return { type: 'oauth_grant', ...raw };
+    }
+    return {
+      type: 'oauth_grant',
+      scope: typeof raw.scope === 'string' ? raw.scope : '',
+    };
+  }
+  return {
+    type: 'api_key',
+    ...(raw.api_key !== undefined ? { api_key: raw.api_key as string } : {}),
+    ...(raw.permission
+      ? { permission: raw.permission as ApiKeyPermission }
+      : {}),
+  };
+}
 
 // Best-effort read: returns null on any failure (corruption, EISDIR, EACCES,
 // etc). Callers that intend to delete the file regardless of contents (e.g.
@@ -95,7 +154,7 @@ export function readCredentials(): CredentialsFile | null {
     return {
       active_profile: 'default',
       profiles: {
-        default: { api_key: data.api_key as string },
+        default: { type: 'api_key', api_key: data.api_key as string },
       },
     };
   }
@@ -103,17 +162,32 @@ export function readCredentials(): CredentialsFile | null {
   if ('profiles' in data) {
     const storage =
       data.storage === 'keychain' ? 'secure_storage' : data.storage;
+    const rawProfiles = data.profiles as Record<
+      string,
+      Record<string, unknown>
+    >;
     return {
       active_profile: (data.active_profile as string) ?? 'default',
       ...(storage ? { storage: storage as CredentialStorage } : {}),
-      profiles: data.profiles as Record<string, Profile>,
+      profiles: Object.fromEntries(
+        Object.entries(rawProfiles).map(([name, raw]) => [
+          name,
+          migrateRawProfile(raw),
+        ]),
+      ),
     };
   }
 
   if ('teams' in data) {
+    const rawTeams = data.teams as Record<string, Record<string, unknown>>;
     return {
       active_profile: (data.active_team as string) ?? 'default',
-      profiles: data.teams as Record<string, Profile>,
+      profiles: Object.fromEntries(
+        Object.entries(rawTeams).map(([name, raw]) => [
+          name,
+          migrateRawProfile(raw),
+        ]),
+      ),
     };
   }
 
@@ -152,22 +226,23 @@ export function resolveProfileName(flagValue?: string): string {
 export function resolveApiKey(
   flagValue?: string,
   profileName?: string,
-): ResolvedKey | null {
+): ResolvedApiKey | null {
   if (flagValue) {
-    return { key: flagValue, source: 'flag' };
+    return { type: 'api_key', key: flagValue, source: 'flag' };
   }
 
   const envKey = process.env.RESEND_API_KEY;
   if (envKey) {
-    return { key: envKey, source: 'env' };
+    return { type: 'api_key', key: envKey, source: 'env' };
   }
 
   const creds = readCredentials();
   if (creds) {
     const profile = resolveProfileName(profileName);
     const entry = creds.profiles[profile];
-    if (entry?.api_key) {
+    if (entry?.type === 'api_key' && entry.api_key) {
       return {
+        type: 'api_key',
         key: entry.api_key,
         source: 'config',
         profile,
@@ -199,6 +274,7 @@ export function storeApiKey(
     const updatedProfiles = {
       ...creds.profiles,
       [profile]: {
+        type: 'api_key' as const,
         api_key: apiKey,
         ...(permission && { permission }),
       },
@@ -344,17 +420,52 @@ export function maskKey(key: string): string {
   return `${key.slice(0, 3)}...${key.slice(-4)}`;
 }
 
-export async function resolveApiKeyAsync(
+export function isCompleteOAuthGrant(value: unknown): value is OAuthGrantData {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+  const g = value as Record<string, unknown>;
+  return (
+    typeof g.access_token === 'string' &&
+    typeof g.access_token_expires_at === 'number' &&
+    typeof g.refresh_token === 'string' &&
+    typeof g.scope === 'string'
+  );
+}
+
+// Returns null when token fields are absent (e.g. a secure-storage entry whose
+// keychain secret is gone) so the caller treats it as not-authenticated.
+function oauthGrantFromEntry(entry: OAuthGrant): OAuthGrantData | null {
+  return isCompleteOAuthGrant(entry) ? entry : null;
+}
+
+function parseOAuthGrantBlob(secret: string): OAuthGrantData {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(secret);
+  } catch {
+    parsed = null;
+  }
+  if (!isCompleteOAuthGrant(parsed)) {
+    throw new Error(
+      'Stored OAuth credentials are invalid. Please run `resend login` to authenticate again.',
+    );
+  }
+  return parsed;
+}
+
+export async function resolveAuthentication(
   flagValue?: string,
   profileName?: string,
-): Promise<ResolvedKey | null> {
+  options?: { refresh?: boolean },
+): Promise<ResolvedAuthentication | null> {
   if (flagValue) {
-    return { key: flagValue, source: 'flag' };
+    return { type: 'api_key', key: flagValue, source: 'flag' };
   }
 
   const envKey = process.env.RESEND_API_KEY;
   if (envKey) {
-    return { key: envKey, source: 'env' };
+    return { type: 'api_key', key: envKey, source: 'env' };
   }
 
   const creds = readCredentials();
@@ -365,27 +476,63 @@ export async function resolveApiKeyAsync(
     'default';
 
   if (creds?.storage === 'secure_storage' && creds.profiles[profile]) {
+    const credential = creds.profiles[profile];
     const backend = await getCredentialBackend();
-    const key = await backend.get(SERVICE_NAME, profile);
-    if (key) {
-      const permission = creds.profiles[profile]?.permission;
-      return { key, source: 'secure_storage', profile, permission };
+    const secret = await backend.get(SERVICE_NAME, profile);
+    if (secret) {
+      if (credential.type === 'oauth_grant') {
+        const grant = parseOAuthGrantBlob(secret);
+        return resolveGrant(grant, profile, 'secure_storage', options);
+      }
+      return {
+        type: 'api_key',
+        key: secret,
+        source: 'secure_storage',
+        profile,
+        permission: credential.permission,
+      };
     }
   }
 
   if (creds) {
     const entry = creds.profiles[profile];
-    if (entry?.api_key) {
+    if (entry?.type === 'api_key' && entry.api_key) {
       return {
+        type: 'api_key',
         key: entry.api_key,
         source: 'config',
         profile,
         permission: entry.permission,
       };
     }
+    if (entry?.type === 'oauth_grant') {
+      const grant = oauthGrantFromEntry(entry);
+      if (grant) {
+        return resolveGrant(grant, profile, 'config', options);
+      }
+    }
   }
 
   return null;
+}
+
+async function resolveGrant(
+  grant: OAuthGrantData,
+  profile: string,
+  source: ResolvedOAuthGrant['source'],
+  options?: { refresh?: boolean },
+): Promise<ResolvedOAuthGrant> {
+  if (options?.refresh === false) {
+    return {
+      type: 'oauth_grant',
+      access_token: grant.access_token,
+      profile,
+      scope: grant.scope,
+      source,
+    };
+  }
+  const { access_token, scope } = await refreshOAuthGrant(grant, profile);
+  return { type: 'oauth_grant', access_token, profile, scope, source };
 }
 
 export async function storeApiKeyAsync(
@@ -416,7 +563,10 @@ export async function storeApiKeyAsync(
 
     const updatedProfiles = {
       ...creds.profiles,
-      [profile]: { ...(permission && { permission }) },
+      [profile]: {
+        type: 'api_key' as const,
+        ...(permission && { permission }),
+      },
     };
 
     return writeCredentials({
@@ -427,6 +577,63 @@ export async function storeApiKeyAsync(
         ? { active_profile: profile }
         : {}),
     });
+  });
+
+  return { configPath, backend };
+}
+
+export async function storeOAuthGrant(
+  grant: OAuthGrantData,
+  profileName?: string,
+): Promise<{ configPath: string; backend: CredentialBackend }> {
+  const profile = profileName || 'default';
+  const validationError = validateProfileName(profile);
+  if (validationError) {
+    throw new Error(validationError);
+  }
+
+  const backend = await getCredentialBackend();
+
+  const configPath = await withFileLock(getCredentialsLockPath(), async () => {
+    const creds = readCredentials() || {
+      active_profile: 'default',
+      profiles: {},
+    };
+
+    // Secure backend: secrets go to the keychain blob, only metadata to the file;
+    // backend.set overwrites any prior secret in the slot, so no explicit delete.
+    // No secure backend: store the full grant inline, like API keys degrade.
+    const profileEntry: OAuthGrant = backend.isSecure
+      ? { type: 'oauth_grant', scope: grant.scope }
+      : { type: 'oauth_grant', ...grant };
+
+    if (backend.isSecure) {
+      await backend.set(SERVICE_NAME, profile, JSON.stringify(grant));
+    }
+
+    const updatedProfiles = {
+      ...creds.profiles,
+      [profile]: profileEntry,
+    };
+
+    try {
+      return writeCredentials({
+        ...creds,
+        storage: backend.isSecure ? 'secure_storage' : 'file',
+        profiles: updatedProfiles,
+        ...(Object.keys(updatedProfiles).length === 1
+          ? { active_profile: profile }
+          : {}),
+      });
+    } catch (err) {
+      // The secret is already in the keychain; if writing the metadata fails, drop
+      // it so the file and keychain can't disagree on the profile type — otherwise
+      // resolveAuthentication would read the OAuth blob as an API key.
+      if (backend.isSecure) {
+        await backend.delete(SERVICE_NAME, profile).catch(() => {});
+      }
+      throw err;
+    }
   });
 
   return { configPath, backend };
