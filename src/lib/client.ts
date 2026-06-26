@@ -83,11 +83,19 @@ export async function requireClient(
       storedPermission = resolved.permission;
     } else {
       const scopes = resolved.scope.split(' ').filter(Boolean);
-      storedPermission = scopes.includes('full_access')
-        ? 'full_access'
-        : scopes.includes('emails:send')
-          ? 'sending_access'
-          : undefined;
+      if (scopes.includes('full_access')) {
+        storedPermission = 'full_access';
+      } else if (scopes.includes('emails:send')) {
+        storedPermission = 'sending_access';
+      } else {
+        outputError(
+          {
+            message: `Unrecognized credential scope${resolved.scope ? ` "${resolved.scope}"` : ''}. Run \`resend login\` to re-authenticate.`,
+            code: 'unrecognized_scope',
+          },
+          { json: opts.json },
+        );
+      }
     }
 
     if (storedPermission) {
