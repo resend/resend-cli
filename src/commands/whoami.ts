@@ -80,8 +80,7 @@ Shows which profile is active and where the active credential comes from.`,
     const configPath = join(getConfigDir(), 'credentials.json');
     const token =
       resolved.type === 'api_key' ? resolved.key : resolved.access_token;
-    const source =
-      resolved.type === 'api_key' ? resolved.source : ('config' as const);
+    const source = resolved.source;
     const permission =
       resolved.type === 'api_key' ? resolved.permission : undefined;
 
@@ -101,8 +100,8 @@ Shows which profile is active and where the active credential comes from.`,
     }
 
     const sourceLabel =
-      source === 'config' && resolved.type === 'oauth_grant'
-        ? 'config file (oauth)'
+      resolved.type === 'oauth_grant'
+        ? `${SOURCE_LABELS[source]} (oauth)`
         : SOURCE_LABELS[source];
 
     const permissionLabel = permission
