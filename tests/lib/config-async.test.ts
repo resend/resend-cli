@@ -296,6 +296,7 @@ describe('storeOAuthGrant', () => {
       access_token: grant.access_token,
       profile: 'staging',
       scope: grant.scope,
+      source: 'config',
     });
   });
 
@@ -348,6 +349,7 @@ describe('storeOAuthGrant', () => {
       access_token: grant.access_token,
       profile: 'staging',
       scope: grant.scope,
+      source: 'secure_storage',
     });
   });
 

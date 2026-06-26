@@ -36,6 +36,7 @@ export type ResolvedOAuthGrant = {
   access_token: string;
   profile: string;
   scope: string;
+  source: Extract<ApiKeySource, 'config' | 'secure_storage'>;
 };
 
 export type ResolvedAuthentication = ResolvedApiKey | ResolvedOAuthGrant;
@@ -481,7 +482,7 @@ export async function resolveAuthentication(
     if (secret) {
       if (credential.type === 'oauth_grant') {
         const grant = parseOAuthGrantBlob(secret);
-        return resolveGrant(grant, profile, options);
+        return resolveGrant(grant, profile, 'secure_storage', options);
       }
       return {
         type: 'api_key',
@@ -507,7 +508,7 @@ export async function resolveAuthentication(
     if (entry?.type === 'oauth_grant') {
       const grant = oauthGrantFromEntry(entry);
       if (grant) {
-        return resolveGrant(grant, profile, options);
+        return resolveGrant(grant, profile, 'config', options);
       }
     }
   }
@@ -518,6 +519,7 @@ export async function resolveAuthentication(
 async function resolveGrant(
   grant: OAuthGrantData,
   profile: string,
+  source: ResolvedOAuthGrant['source'],
   options?: { refresh?: boolean },
 ): Promise<ResolvedOAuthGrant> {
   if (options?.refresh === false) {
@@ -526,10 +528,11 @@ async function resolveGrant(
       access_token: grant.access_token,
       profile,
       scope: grant.scope,
+      source,
     };
   }
   const { access_token, scope } = await refreshOAuthGrant(grant, profile);
-  return { type: 'oauth_grant', access_token, profile, scope };
+  return { type: 'oauth_grant', access_token, profile, scope, source };
 }
 
 export async function storeApiKeyAsync(

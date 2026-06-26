@@ -110,7 +110,9 @@ async function checkApiKeyPresence(flagValue?: string): Promise<CheckResult> {
     resolved.type === 'api_key' ? resolved.key : resolved.access_token;
   const profileInfo = resolved.profile ? `, profile: ${resolved.profile}` : '';
   const source =
-    resolved.type === 'api_key' ? resolved.source : 'config (oauth)';
+    resolved.type === 'oauth_grant'
+      ? `${resolved.source} (oauth)`
+      : resolved.source;
   return {
     name: 'API Key',
     status: 'pass',
