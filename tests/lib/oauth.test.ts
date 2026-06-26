@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { storeOAuthGrant } from '../../src/lib/config';
 import {
   createCallbackServer,
   getJwtExp,
@@ -106,6 +107,35 @@ describe('refreshOAuthGrant', () => {
 
     expect(fetchSpy).toHaveBeenCalledOnce();
     expect(result).toEqual({ access_token: fresh, scope: 'full_access' });
+    expect(storeOAuthGrant).toHaveBeenCalledWith(
+      {
+        access_token: fresh,
+        access_token_expires_at: getJwtExp(fresh),
+        refresh_token: 'rt_new',
+        scope: 'full_access',
+      },
+      'default',
+    );
+  });
+
+  it('throws and does not persist when the server rejects the refresh', async () => {
+    vi.spyOn(global, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ error: 'invalid_grant' }), { status: 400 }),
+    );
+
+    await expect(
+      refreshOAuthGrant(grant(now() + 30), 'default'),
+    ).rejects.toThrow('Token refresh failed');
+    expect(storeOAuthGrant).not.toHaveBeenCalled();
+  });
+
+  it('throws a network error when the refresh request fails', async () => {
+    vi.spyOn(global, 'fetch').mockRejectedValue(new Error('boom'));
+
+    await expect(
+      refreshOAuthGrant(grant(now() + 30), 'default'),
+    ).rejects.toThrow('Could not reach the Resend API');
+    expect(storeOAuthGrant).not.toHaveBeenCalled();
   });
 
   it('skips the refresh when the token is comfortably valid', async () => {
