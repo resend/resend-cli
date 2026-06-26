@@ -582,7 +582,7 @@ export async function storeApiKeyAsync(
 export async function storeOAuthGrant(
   grant: OAuthGrantData,
   profileName?: string,
-): Promise<string> {
+): Promise<{ configPath: string; backend: CredentialBackend }> {
   const profile = profileName || 'default';
   const validationError = validateProfileName(profile);
   if (validationError) {
@@ -591,7 +591,7 @@ export async function storeOAuthGrant(
 
   const backend = await getCredentialBackend();
 
-  return withFileLock(getCredentialsLockPath(), async () => {
+  const configPath = await withFileLock(getCredentialsLockPath(), async () => {
     const creds = readCredentials() || {
       active_profile: 'default',
       profiles: {},
@@ -632,6 +632,8 @@ export async function storeOAuthGrant(
       throw err;
     }
   });
+
+  return { configPath, backend };
 }
 
 export async function removeApiKeyAsync(profileName?: string): Promise<string> {
