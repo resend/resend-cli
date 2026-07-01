@@ -4,7 +4,7 @@ import { runGet } from '../../../lib/actions';
 import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { pickId } from '../../../lib/prompts';
-import { contactImportPickerConfig } from './utils';
+import { contactImportPickerConfig, importStatusIndicator } from './utils';
 
 export const getContactImportCommand = new Command('get')
   .description('Retrieve a contact import by ID')
@@ -28,7 +28,7 @@ export const getContactImportCommand = new Command('get')
         loading: 'Fetching contact import...',
         sdkCall: (resend) => resend.contacts.imports.get(id),
         onInteractive: (imp) => {
-          console.log(`${imp.id} - ${imp.status}`);
+          console.log(`${imp.id} - ${importStatusIndicator(imp.status)}`);
           console.log(`Created: ${imp.created_at}`);
           if (imp.completed_at) {
             console.log(`Completed: ${imp.completed_at}`);

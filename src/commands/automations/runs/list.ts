@@ -8,8 +8,46 @@ import {
   printPaginationHint,
 } from '../../../lib/pagination';
 import { pickId } from '../../../lib/prompts';
-import { renderTable } from '../../../lib/table';
+import { renderTable, type StatusTone } from '../../../lib/table';
+import { isUnicodeSupported } from '../../../lib/tty';
 import { automationPickerConfig } from '../utils';
+
+// Status symbols generated via String.fromCodePoint() — never literal Unicode in
+// source — to prevent UTF-8 → Latin-1 corruption when the npm package is bundled.
+const CHECK = isUnicodeSupported ? String.fromCodePoint(0x2713) : 'v'; // ✓
+const HOURGLASS = isUnicodeSupported ? String.fromCodePoint(0x23f3) : '~'; // ⏳
+const CIRCLE = isUnicodeSupported ? String.fromCodePoint(0x25cb) : 'o'; // ○
+const CROSS_MARK = isUnicodeSupported ? String.fromCodePoint(0x2717) : 'x'; // ✗
+
+function runStatusTone(status: string): StatusTone {
+  switch (status) {
+    case 'completed':
+      return 'success';
+    case 'running':
+      return 'pending';
+    case 'failed':
+      return 'failure';
+    case 'cancelled':
+      return 'neutral';
+    default:
+      return 'neutral';
+  }
+}
+
+export function runStatusIndicator(status: string): string {
+  switch (status) {
+    case 'completed':
+      return `${CHECK} Completed`;
+    case 'running':
+      return `${HOURGLASS} Running`;
+    case 'failed':
+      return `${CROSS_MARK} Failed`;
+    case 'cancelled':
+      return `${CIRCLE} Cancelled`;
+    default:
+      return status;
+  }
+}
 
 export const listAutomationRunsCommand = new Command('list')
   .alias('ls')
@@ -67,7 +105,7 @@ export const listAutomationRunsCommand = new Command('list')
         onInteractive: (list) => {
           const rows = list.data.map((r) => [
             r.id,
-            r.status,
+            runStatusIndicator(r.status),
             r.started_at ?? '-',
             r.completed_at ?? '-',
           ]);
@@ -76,6 +114,12 @@ export const listAutomationRunsCommand = new Command('list')
               ['ID', 'Status', 'Started', 'Completed'],
               rows,
               '(no runs)',
+              {
+                statusColumn: {
+                  index: 1,
+                  tones: list.data.map((r) => runStatusTone(r.status)),
+                },
+              },
             ),
           );
           printPaginationHint(list, `automations runs list ${automationId}`, {

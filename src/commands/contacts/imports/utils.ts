@@ -2,13 +2,49 @@ import type { ContactImport, ContactImportColumnMap } from 'resend';
 import type { GlobalOpts } from '../../../lib/client';
 import { outputError } from '../../../lib/output';
 import type { PickerConfig } from '../../../lib/prompts';
-import { renderTable } from '../../../lib/table';
+import { renderTable, type StatusTone } from '../../../lib/table';
+import { isUnicodeSupported } from '../../../lib/tty';
 
 // ─── Table renderer ────────────────────────────────────────────────────────
 
+// Status symbols generated via String.fromCodePoint() — never literal Unicode in
+// source — to prevent UTF-8 → Latin-1 corruption when the npm package is bundled.
+const CHECK = isUnicodeSupported ? String.fromCodePoint(0x2713) : 'v'; // ✓
+const HOURGLASS = isUnicodeSupported ? String.fromCodePoint(0x23f3) : '~'; // ⏳
+const CROSS_MARK = isUnicodeSupported ? String.fromCodePoint(0x2717) : 'x'; // ✗
+
+function importStatusTone(status: string): StatusTone {
+  switch (status) {
+    case 'completed':
+      return 'success';
+    case 'queued':
+    case 'in_progress':
+      return 'pending';
+    case 'failed':
+      return 'failure';
+    default:
+      return 'neutral';
+  }
+}
+
+export function importStatusIndicator(status: string): string {
+  switch (status) {
+    case 'completed':
+      return `${CHECK} Completed`;
+    case 'queued':
+      return `${HOURGLASS} Queued`;
+    case 'in_progress':
+      return `${HOURGLASS} In progress`;
+    case 'failed':
+      return `${CROSS_MARK} Failed`;
+    default:
+      return status;
+  }
+}
+
 export function renderContactImportsTable(imports: ContactImport[]): string {
   const rows = imports.map((imp) => [
-    imp.status,
+    importStatusIndicator(imp.status),
     String(imp.counts.total),
     String(imp.counts.created),
     String(imp.counts.updated),
@@ -30,6 +66,12 @@ export function renderContactImportsTable(imports: ContactImport[]): string {
     ],
     rows,
     '(no contact imports)',
+    {
+      statusColumn: {
+        index: 0,
+        tones: imports.map((imp) => importStatusTone(imp.status)),
+      },
+    },
   );
 }
 

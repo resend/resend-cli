@@ -1,6 +1,8 @@
 import * as p from '@clack/prompts';
 import { Command } from '@commander-js/extra-typings';
+import pc from 'picocolors';
 import { Resend } from 'resend';
+import { wordmark } from '../../lib/brand';
 import { openInBrowser } from '../../lib/browser';
 import type { GlobalOpts } from '../../lib/client';
 import {
@@ -12,6 +14,7 @@ import {
   validateProfileName,
 } from '../../lib/config';
 import { buildHelpText } from '../../lib/help-text';
+import { printBanner } from '../../lib/logo';
 import { errorMessage, outputError, outputResult } from '../../lib/output';
 import { cancelAndExit, promptRenameIfInvalid } from '../../lib/prompts';
 import { createSpinner } from '../../lib/spinner';
@@ -60,7 +63,10 @@ export const loginCommand = new Command('login')
         );
       }
 
-      p.intro('Resend Authentication');
+      if (process.stdout.isTTY) {
+        printBanner();
+      }
+      p.intro('Resend authentication');
       p.log.info(
         `Use a full access API key for complete CLI access.\n${SENDING_KEY_MESSAGE}`,
       );
@@ -264,7 +270,9 @@ export const loginCommand = new Command('login')
         : `in ${backend.name}`;
       const msg = `API key stored for profile '${profileLabel}' ${storageInfo}`;
       if (isInteractive()) {
-        p.outro(msg);
+        p.outro(
+          `${wordmark()} is ready — API key stored for profile '${pc.bold(profileLabel)}' ${storageInfo}`,
+        );
       } else {
         console.log(msg);
       }

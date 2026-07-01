@@ -1,5 +1,36 @@
+import pc from 'picocolors';
 import { safeTerminalText } from './safe-terminal-text';
 import { isUnicodeSupported } from './tty';
+
+export type StatusTone = 'success' | 'pending' | 'failure' | 'neutral';
+
+export interface RenderTableOptions {
+  // Colors the cell at `index` for each row per `tones[rowIndex]` (undefined = no color).
+  statusColumn?: {
+    index: number;
+    tones: (StatusTone | undefined)[];
+  };
+}
+
+const TONE_COLOR: Record<StatusTone, (s: string) => string> = {
+  success: pc.green,
+  pending: pc.yellow,
+  failure: pc.red,
+  neutral: pc.dim,
+};
+
+function colorizeStatusCell(
+  cell: string,
+  rowIndex: number,
+  colIndex: number,
+  statusColumn: RenderTableOptions['statusColumn'],
+): string {
+  if (!statusColumn || colIndex !== statusColumn.index) {
+    return cell;
+  }
+  const tone = statusColumn.tones[rowIndex];
+  return tone ? TONE_COLOR[tone](cell) : cell;
+}
 
 // All box-drawing characters generated via String.fromCodePoint() — never literal
 // Unicode in source — to prevent UTF-8 → Latin-1 corruption in npm bundles.
@@ -39,6 +70,7 @@ function renderCards(
   headers: string[],
   rows: string[][],
   termWidth: number,
+  statusColumn: RenderTableOptions['statusColumn'],
 ): string {
   const labelWidth = Math.max(...headers.map((h) => h.length));
   const sepWidth = Math.max(20, Math.min(termWidth, 60));
@@ -46,10 +78,13 @@ function renderCards(
   return rows
     .map((row, idx) => {
       const label = String(idx + 1);
-      const sep = `${BOX.h}${BOX.h} ${label} ${BOX.h.repeat(Math.max(0, sepWidth - label.length - 4))}`;
-      const fields = headers.map(
-        (h, i) => `  ${h.padEnd(labelWidth)}  ${row[i]}`,
+      const sep = pc.dim(
+        `${BOX.h}${BOX.h} ${label} ${BOX.h.repeat(Math.max(0, sepWidth - label.length - 4))}`,
       );
+      const fields = headers.map((h, i) => {
+        const value = colorizeStatusCell(row[i], idx, i, statusColumn);
+        return `  ${h.padEnd(labelWidth)}  ${value}`;
+      });
       return [sep, ...fields].join('\n');
     })
     .join('\n\n');
@@ -59,6 +94,7 @@ export function renderTable(
   headers: string[],
   rows: string[][],
   emptyMessage = '(no results)',
+  options: RenderTableOptions = {},
 ): string {
   if (rows.length === 0) {
     return emptyMessage;
@@ -73,21 +109,42 @@ export function renderTable(
     const totalWidth =
       widths.reduce((s, w) => s + w, 0) + 3 * widths.length + 1;
     if (totalWidth > termWidth) {
-      return renderCards(headers, sanitizedRows, termWidth);
+      return renderCards(
+        headers,
+        sanitizedRows,
+        termWidth,
+        options.statusColumn,
+      );
     }
   }
 
-  const top =
-    BOX.tl + widths.map((w) => BOX.h.repeat(w + 2)).join(BOX.tm) + BOX.tr;
-  const mid =
-    BOX.lm + widths.map((w) => BOX.h.repeat(w + 2)).join(BOX.mm) + BOX.rm;
-  const bot =
-    BOX.bl + widths.map((w) => BOX.h.repeat(w + 2)).join(BOX.bm) + BOX.br;
-  const row = (cells: string[]) =>
+  const top = pc.dim(
+    BOX.tl + widths.map((w) => BOX.h.repeat(w + 2)).join(BOX.tm) + BOX.tr,
+  );
+  const mid = pc.dim(
+    BOX.lm + widths.map((w) => BOX.h.repeat(w + 2)).join(BOX.mm) + BOX.rm,
+  );
+  const bot = pc.dim(
+    BOX.bl + widths.map((w) => BOX.h.repeat(w + 2)).join(BOX.bm) + BOX.br,
+  );
+  const row = (cells: string[], rowIndex?: number) =>
     BOX.v +
     ' ' +
-    cells.map((c, i) => c.padEnd(widths[i])).join(` ${BOX.v} `) +
+    cells
+      .map((c, i) => {
+        const padded = c.padEnd(widths[i]);
+        return rowIndex === undefined
+          ? padded
+          : colorizeStatusCell(padded, rowIndex, i, options.statusColumn);
+      })
+      .join(` ${BOX.v} `) +
     ' ' +
     BOX.v;
-  return [top, row(headers), mid, ...sanitizedRows.map(row), bot].join('\n');
+  return [
+    top,
+    pc.bold(row(headers)),
+    mid,
+    ...sanitizedRows.map((r, idx) => row(r, idx)),
+    bot,
+  ].join('\n');
 }

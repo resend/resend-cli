@@ -1,15 +1,10 @@
 import pc from 'picocolors';
+import { CROSS, TICK, WARN } from './brand';
 import type { GlobalOpts } from './client';
 import { errorMessage, outputError } from './output';
 import { isInteractive, isUnicodeSupported } from './tty';
 import { type SdkResponse, withRetry } from './with-retry';
 import { REQUEST_TIMEOUT_MS, withTimeout } from './with-timeout';
-
-// Status symbols generated via String.fromCodePoint() — never literal Unicode in
-// source — to prevent UTF-8 → Latin-1 corruption when the npm package is bundled.
-const TICK = isUnicodeSupported ? String.fromCodePoint(0x2714) : 'v'; // ✔
-const WARN = isUnicodeSupported ? String.fromCodePoint(0x26a0) : '!'; // ⚠
-const CROSS = isUnicodeSupported ? String.fromCodePoint(0x2717) : 'x'; // ✗
 
 // Braille spinner: cycle through U+2800-block dot patterns.
 const SPINNER_FRAMES = [

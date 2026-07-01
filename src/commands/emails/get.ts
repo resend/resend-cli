@@ -3,7 +3,7 @@ import { runGet } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { pickId } from '../../lib/prompts';
-import { emailPickerConfig } from './utils';
+import { emailPickerConfig, lastEventIndicator } from './utils';
 
 export const getEmailCommand = new Command('get')
   .description('Retrieve a sent email by ID')
@@ -31,7 +31,7 @@ export const getEmailCommand = new Command('get')
           console.log(`From:    ${data.from}`);
           console.log(`To:      ${data.to.join(', ')}`);
           console.log(`Subject: ${data.subject}`);
-          console.log(`Status:  ${data.last_event}`);
+          console.log(`Status:  ${lastEventIndicator(data.last_event)}`);
           console.log(`Date:    ${data.created_at}`);
           if (data.scheduled_at) {
             console.log(`Scheduled: ${data.scheduled_at}`);

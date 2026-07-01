@@ -1,9 +1,35 @@
 import type { DomainRecords } from 'resend';
 import type { PickerConfig } from '../../lib/prompts';
-import { renderTable } from '../../lib/table';
+import { renderTable, type StatusTone } from '../../lib/table';
 import { isUnicodeSupported } from '../../lib/tty';
 
 const h = isUnicodeSupported ? String.fromCodePoint(0x2500) : '-';
+
+// Status symbols generated via String.fromCodePoint() — never literal Unicode in
+// source — to prevent UTF-8 → Latin-1 corruption when the npm package is bundled.
+const CHECK = isUnicodeSupported ? String.fromCodePoint(0x2713) : 'v'; // ✓
+const HOURGLASS = isUnicodeSupported ? String.fromCodePoint(0x23f3) : '~'; // ⏳
+const CIRCLE = isUnicodeSupported ? String.fromCodePoint(0x25cb) : 'o'; // ○
+const HALF_CIRCLE = isUnicodeSupported ? String.fromCodePoint(0x25d0) : '~'; // ◐
+const CROSS_MARK = isUnicodeSupported ? String.fromCodePoint(0x2717) : 'x'; // ✗
+
+function domainStatusTone(status: string): StatusTone {
+  switch (status) {
+    case 'verified':
+      return 'success';
+    case 'pending':
+    case 'partially_verified':
+    case 'partially_failed':
+      return 'pending';
+    case 'not_started':
+      return 'neutral';
+    case 'failed':
+    case 'temporary_failure':
+      return 'failure';
+    default:
+      return 'neutral';
+  }
+}
 
 export function renderDnsRecordsTable(
   records: DomainRecords[],
@@ -36,24 +62,29 @@ export function renderDomainsTable(
   domains: Array<{ id: string; name: string; status: string; region: string }>,
 ): string {
   const rows = domains.map((d) => [d.name, d.status, d.region, d.id]);
-  return renderTable(['Name', 'Status', 'Region', 'ID'], rows, '(no domains)');
+  return renderTable(['Name', 'Status', 'Region', 'ID'], rows, '(no domains)', {
+    statusColumn: {
+      index: 1,
+      tones: domains.map((d) => domainStatusTone(d.status)),
+    },
+  });
 }
 
 export function statusIndicator(status: string): string {
   switch (status) {
     case 'verified':
-      return '✓ Verified';
+      return `${CHECK} Verified`;
     case 'pending':
-      return '⏳ Pending';
+      return `${HOURGLASS} Pending`;
     case 'not_started':
-      return '○ Not started';
+      return `${CIRCLE} Not started`;
     case 'partially_verified':
-      return '◐ Partially verified';
+      return `${HALF_CIRCLE} Partially verified`;
     case 'partially_failed':
-      return '◐ Partially failed';
+      return `${HALF_CIRCLE} Partially failed`;
     case 'failed':
     case 'temporary_failure':
-      return '✗ Failed';
+      return `${CROSS_MARK} Failed`;
     default:
       return status;
   }
