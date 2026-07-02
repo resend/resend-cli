@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@clack/prompts':
-        specifier: 1.4.0
-        version: 1.4.0
+        specifier: 1.6.0
+        version: 1.6.0
       '@commander-js/extra-typings':
         specifier: 14.0.0
         version: 14.0.0(commander@14.0.3)
@@ -145,12 +145,12 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@clack/core@1.3.1':
-    resolution: {integrity: sha512-fT1qHVGAag4IEkrupZ6lRRbNCs1vS9P01KB/sG8zKgvUztbYtFBtQpjSITNwooDZ83tpsPzP0mRNs1/KVszCRA==}
+  '@clack/core@1.4.2':
+    resolution: {integrity: sha512-0Ty/1Gfm+Kb07sXcuESjyKfwEhSy4Ns1AgeEisHb/bDY5fWme0tTeTkU14T1Gmcs17YIjB/teiDe4uaCghbYqQ==}
     engines: {node: '>= 20.12.0'}
 
-  '@clack/prompts@1.4.0':
-    resolution: {integrity: sha512-S0My7XPGIgpRWMDG8uRqalbgT+a6FmCUdOW+HaIOVVpUPHOb7RrpvjTjiODadKp06fsrVDJZlIzc6yCTp4AnxA==}
+  '@clack/prompts@1.6.0':
+    resolution: {integrity: sha512-EYlRokl8szrP9Z25qT5aepMdBjzBvHF9ZEhzIiUBc9guz/T31EqRgvD0QSgZcpE93xiwrr+OkB4nz0BZyF6fSA==}
     engines: {node: '>= 20.12.0'}
 
   '@commander-js/extra-typings@14.0.0':
@@ -1579,14 +1579,14 @@ snapshots:
   '@biomejs/cli-win32-x64@2.4.11':
     optional: true
 
-  '@clack/core@1.3.1':
+  '@clack/core@1.4.2':
     dependencies:
       fast-wrap-ansi: 0.2.0
       sisteransi: 1.0.5
 
-  '@clack/prompts@1.4.0':
+  '@clack/prompts@1.6.0':
     dependencies:
-      '@clack/core': 1.3.1
+      '@clack/core': 1.4.2
       fast-string-width: 3.0.2
       fast-wrap-ansi: 0.2.0
       sisteransi: 1.0.5
