@@ -3,6 +3,7 @@ import { runGet } from '../../../lib/actions';
 import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { requireText } from '../../../lib/prompts';
+import { runStatusIndicator } from './list';
 
 export const getAutomationRunCommand = new Command('get')
   .description('Retrieve details of a specific automation run')
@@ -52,7 +53,7 @@ export const getAutomationRunCommand = new Command('get')
           resend.automations.runs.get({ automationId, runId }),
         onInteractive: (r) => {
           console.log(`Run: ${r.id}`);
-          console.log(`Status: ${r.status}`);
+          console.log(`Status: ${runStatusIndicator(r.status)}`);
           if (r.started_at) {
             console.log(`Started: ${r.started_at}`);
           }

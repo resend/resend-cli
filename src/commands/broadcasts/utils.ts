@@ -1,16 +1,36 @@
 import type { PickerConfig } from '../../lib/prompts';
-import { renderTable } from '../../lib/table';
+import { renderTable, type StatusTone } from '../../lib/table';
+import { isUnicodeSupported } from '../../lib/tty';
+
+// Status symbols generated via String.fromCodePoint() — never literal Unicode in
+// source — to prevent UTF-8 → Latin-1 corruption when the npm package is bundled.
+const CHECK = isUnicodeSupported ? String.fromCodePoint(0x2713) : 'v'; // ✓
+const HOURGLASS = isUnicodeSupported ? String.fromCodePoint(0x23f3) : '~'; // ⏳
+const CIRCLE = isUnicodeSupported ? String.fromCodePoint(0x25cb) : 'o'; // ○
 
 export function broadcastStatusIndicator(status: string): string {
   switch (status) {
     case 'draft':
-      return '○ Draft';
+      return `${CIRCLE} Draft`;
     case 'queued':
-      return '⏳ Queued';
+      return `${HOURGLASS} Queued`;
     case 'sent':
-      return '✓ Sent';
+      return `${CHECK} Sent`;
     default:
       return status;
+  }
+}
+
+function broadcastStatusTone(status: string): StatusTone {
+  switch (status) {
+    case 'sent':
+      return 'success';
+    case 'queued':
+      return 'pending';
+    case 'draft':
+      return 'neutral';
+    default:
+      return 'neutral';
   }
 }
 
@@ -59,5 +79,11 @@ export function renderBroadcastsTable(
     ['Name', 'Status', 'Created', 'ID'],
     rows,
     '(no broadcasts)',
+    {
+      statusColumn: {
+        index: 1,
+        tones: broadcasts.map((b) => broadcastStatusTone(b.status)),
+      },
+    },
   );
 }

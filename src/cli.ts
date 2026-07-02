@@ -26,7 +26,7 @@ import { webhooksCommand } from './commands/webhooks/index';
 import { whoamiCommand } from './commands/whoami';
 import { setupCliExitHandler } from './lib/cli-exit';
 import { installCommandSuggestions } from './lib/command-suggestions';
-import { printBannerPlain } from './lib/logo';
+import { printBanner } from './lib/logo';
 import { errorMessage, outputError } from './lib/output';
 import { trackCommand } from './lib/telemetry';
 import { checkForUpdates } from './lib/update-check';
@@ -108,11 +108,13 @@ ${pc.gray('Examples:')}
 - Send an email
 
   ${pc.blue('$ resend emails send')}
+
+${pc.dim('Run resend <command> --help for details on a specific command.')}
 `,
   )
   .action(() => {
     if (process.stdout.isTTY) {
-      printBannerPlain();
+      printBanner();
     }
     const opts = program.opts();
     if (opts.apiKey) {

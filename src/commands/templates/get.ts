@@ -3,7 +3,7 @@ import { runGet } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { pickId } from '../../lib/prompts';
-import { templatePickerConfig } from './utils';
+import { templatePickerConfig, templateStatusIndicator } from './utils';
 
 export const getTemplateCommand = new Command('get')
   .description('Retrieve a template by ID or alias')
@@ -31,7 +31,7 @@ export const getTemplateCommand = new Command('get')
         onInteractive: (data) => {
           console.log(`${data.name}`);
           console.log(`ID: ${data.id}`);
-          console.log(`Status: ${data.status}`);
+          console.log(`Status: ${templateStatusIndicator(data.status)}`);
           if (data.alias) {
             console.log(`Alias: ${data.alias}`);
           }

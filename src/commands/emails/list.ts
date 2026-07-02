@@ -8,6 +8,7 @@ import {
   printPaginationHint,
 } from '../../lib/pagination';
 import { renderTable } from '../../lib/table';
+import { lastEventIndicator, lastEventTone } from './utils';
 
 type SentEmail = {
   id: string;
@@ -21,16 +22,20 @@ type SentEmail = {
 
 function renderSentEmailsTable(emails: SentEmail[]): string {
   const rows = emails.map((e) => {
-    const to = e.to.join(', ');
-    const toStr = to.length > 40 ? `${to.slice(0, 37)}...` : to;
     const subject =
       e.subject.length > 50 ? `${e.subject.slice(0, 47)}...` : e.subject;
-    return [e.from, toStr, subject, e.last_event ?? '—', e.created_at, e.id];
+    return [subject, lastEventIndicator(e.last_event), e.created_at, e.id];
   });
   return renderTable(
-    ['From', 'To', 'Subject', 'Status', 'Created', 'ID'],
+    ['Subject', 'Status', 'Created', 'ID'],
     rows,
     '(no sent emails)',
+    {
+      statusColumn: {
+        index: 1,
+        tones: emails.map((e) => lastEventTone(e.last_event)),
+      },
+    },
   );
 }
 

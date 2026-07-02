@@ -3,7 +3,7 @@ import { runGet } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { pickId } from '../../lib/prompts';
-import { webhookPickerConfig } from './utils';
+import { webhookPickerConfig, webhookStatusIndicator } from './utils';
 
 export const getWebhookCommand = new Command('get')
   .description('Retrieve a webhook endpoint configuration by ID')
@@ -31,7 +31,7 @@ To rotate secrets, delete the webhook and recreate it.`,
         onInteractive: (d) => {
           console.log(`${d.endpoint}`);
           console.log(`ID:      ${d.id}`);
-          console.log(`Status:  ${d.status}`);
+          console.log(`Status:  ${webhookStatusIndicator(d.status)}`);
           console.log(`Events:  ${(d.events ?? []).join(', ') || '(none)'}`);
           console.log(`Created: ${d.created_at}`);
         },

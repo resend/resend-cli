@@ -8,7 +8,13 @@ type TemplateVariableCreationOptions = NonNullable<
   CreateTemplateOptions['variables']
 >[number];
 
-import { renderTable } from '../../lib/table';
+import { renderTable, type StatusTone } from '../../lib/table';
+import { isUnicodeSupported } from '../../lib/tty';
+
+// Status symbols generated via String.fromCodePoint() — never literal Unicode in
+// source — to prevent UTF-8 → Latin-1 corruption when the npm package is bundled.
+const CHECK = isUnicodeSupported ? String.fromCodePoint(0x2713) : 'v'; // ✓
+const CIRCLE = isUnicodeSupported ? String.fromCodePoint(0x25cb) : 'o'; // ○
 
 /**
  * Parse `--var` values like "name:string" or "count:number:42" into SDK options.
@@ -65,12 +71,34 @@ export const templatePickerConfig: PickerConfig<{
   display: (t) => ({ label: t.name, hint: t.id }),
 };
 
+function templateStatusTone(status: string): StatusTone {
+  switch (status) {
+    case 'published':
+      return 'success';
+    case 'draft':
+      return 'neutral';
+    default:
+      return 'neutral';
+  }
+}
+
+export function templateStatusIndicator(status: string): string {
+  switch (status) {
+    case 'published':
+      return `${CHECK} Published`;
+    case 'draft':
+      return `${CIRCLE} Draft`;
+    default:
+      return status;
+  }
+}
+
 export function renderTemplatesTable(
   templates: ListTemplatesResponseSuccess['data'],
 ): string {
   const rows = templates.map((t) => [
     t.name,
-    t.status,
+    templateStatusIndicator(t.status),
     t.alias ?? '',
     t.id,
     t.created_at,
@@ -79,5 +107,11 @@ export function renderTemplatesTable(
     ['Name', 'Status', 'Alias', 'ID', 'Created'],
     rows,
     '(no templates)',
+    {
+      statusColumn: {
+        index: 1,
+        tones: templates.map((t) => templateStatusTone(t.status)),
+      },
+    },
   );
 }
