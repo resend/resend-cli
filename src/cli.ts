@@ -17,6 +17,7 @@ import { domainsCommand } from './commands/domains/index';
 import { emailsCommand } from './commands/emails/index';
 import { eventsCommand } from './commands/events/index';
 import { logsCommand } from './commands/logs/index';
+import { oauthGrantsCommand } from './commands/oauth-grants/index';
 import { openCommand } from './commands/open';
 import { segmentsCommand } from './commands/segments/index';
 import { templatesCommand } from './commands/templates/index';
@@ -141,6 +142,7 @@ ${pc.gray('Examples:')}
   .addCommand(logsCommand)
   .addCommand(apiKeysCommand)
   .addCommand(webhooksCommand)
+  .addCommand(oauthGrantsCommand)
   .addCommand(authCommand)
   .addCommand(logoutCommand)
   .addCommand(whoamiCommand)
