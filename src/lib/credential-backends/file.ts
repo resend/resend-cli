@@ -14,7 +14,8 @@ export class FileBackend implements CredentialBackend {
     if (!creds) {
       return null;
     }
-    return creds.profiles[account]?.api_key ?? null;
+    const credential = creds.profiles[account];
+    return (credential?.type === 'api_key' ? credential.api_key : null) ?? null;
   }
 
   async set(_service: string, account: string, secret: string): Promise<void> {

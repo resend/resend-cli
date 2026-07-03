@@ -101,6 +101,100 @@ describe('whoami command', () => {
     expect(parsed.config_path).toBe(join(tmpDir, 'resend', 'credentials.json'));
   });
 
+  it('shows an OAuth grant without making any network call', async () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'staging',
+        profiles: {
+          staging: {
+            type: 'oauth_grant',
+            access_token: 'header.body.abcd',
+            access_token_expires_at: nowSeconds + 900,
+            refresh_token: 'rt_secret',
+            scope: 'full_access',
+          },
+        },
+      }),
+    );
+
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockRejectedValue(new Error('network should not be called'));
+
+    spies = setupOutputSpies();
+
+    const { whoamiCommand } = await import('../../src/commands/whoami');
+    await whoamiCommand.parseAsync([], { from: 'user' });
+
+    const output = spies.logSpy.mock.calls[0][0] as string;
+    const parsed = JSON.parse(output);
+    expect(parsed.authenticated).toBe(true);
+    expect(parsed.profile).toBe('staging');
+    expect(parsed.api_key).toBe('hea...abcd');
+    expect(parsed.source).toBe('config');
+    // whoami is documented as local-only: it must not refresh the token.
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    fetchSpy.mockRestore();
+  });
+
+  it('reports secure_storage source for a keychain OAuth grant', async () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'staging',
+        storage: 'secure_storage',
+        profiles: { staging: { type: 'oauth_grant', scope: 'full_access' } },
+      }),
+    );
+
+    const grant = {
+      access_token: 'header.body.abcd',
+      access_token_expires_at: nowSeconds + 900,
+      refresh_token: 'rt_secret',
+      scope: 'full_access',
+    };
+    const mockBackend = {
+      get: vi.fn().mockResolvedValue(JSON.stringify(grant)),
+      set: vi.fn(),
+      delete: vi.fn(),
+      isAvailable: vi.fn().mockResolvedValue(true),
+      name: 'mock-backend',
+      isSecure: true,
+    };
+
+    vi.resetModules();
+    vi.doMock('../../src/lib/credential-store', () => ({
+      getCredentialBackend: vi.fn().mockResolvedValue(mockBackend),
+      SERVICE_NAME: 'resend-cli',
+      resetCredentialBackend: vi.fn(),
+    }));
+
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockRejectedValue(new Error('network should not be called'));
+
+    spies = setupOutputSpies();
+
+    const { whoamiCommand } = await import('../../src/commands/whoami');
+    await whoamiCommand.parseAsync([], { from: 'user' });
+
+    const output = spies.logSpy.mock.calls[0][0] as string;
+    const parsed = JSON.parse(output);
+    expect(parsed.authenticated).toBe(true);
+    expect(parsed.source).toBe('secure_storage');
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    fetchSpy.mockRestore();
+  });
+
   it('shows env source when RESEND_API_KEY is set', async () => {
     process.env.RESEND_API_KEY = 're_env_key_5678';
 
