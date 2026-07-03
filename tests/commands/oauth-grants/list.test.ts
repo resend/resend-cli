@@ -1,12 +1,4 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  type MockInstance,
-  vi,
-} from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { captureTestEnv, setupOutputSpies } from '../../helpers';
 
 const mockList = vi.fn(async () => ({
