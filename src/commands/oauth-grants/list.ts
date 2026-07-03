@@ -30,7 +30,7 @@ export const listOAuthGrantsCommand = new Command('list')
   .addHelpText(
     'after',
     buildHelpText({
-      output: `  {"object":"list","has_more":false,"data":[{"id":"<id>","client_id":"<id>","scopes":["<scope>"],"resource":"<url>|null","created_at":"<date>","revoked_at":"<date>|null","revoked_reason":"<reason>|null","client":{"name":"<name>","logo_uri":"<url>|null"}}]}
+      output: `  {"object":"list","has_more":false,"data":[{"id":"<id>","client_id":"<id>","scopes":["<scope>"],"created_at":"<date>","revoked_at":"<date>|null","revoked_reason":"<reason>|null","client":{"name":"<name>","logo_uri":"<url>|null"}}]}
   Revoked grants have non-null revoked_at and revoked_reason.`,
       errorCodes: ['auth_error', 'invalid_limit', 'list_error'],
       examples: [
