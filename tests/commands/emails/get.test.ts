@@ -22,6 +22,7 @@ const mockGet = vi.fn(async () => ({
   data: {
     object: 'email' as const,
     id: 'email_abc123',
+    message_id: '<abc123@email.example.com>',
     from: 'you@domain.com',
     to: ['user@example.com'],
     subject: 'Hello',
@@ -89,6 +90,7 @@ describe('emails get command', () => {
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
     expect(parsed.id).toBe('email_abc123');
+    expect(parsed.message_id).toBe('<abc123@email.example.com>');
     expect(parsed.from).toBe('you@domain.com');
     expect(parsed.subject).toBe('Hello');
     expect(parsed.last_event).toBe('delivered');

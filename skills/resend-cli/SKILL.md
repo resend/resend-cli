@@ -13,7 +13,7 @@ metadata:
   author: resend
   # Skill version is independent from the CLI/package.json version —
   # bump it on skill content changes, not CLI releases.
-  version: "2.3.0"
+  version: "2.3.1"
   homepage: https://resend.com/docs/cli-agents
   source: https://github.com/resend/resend-cli
   openclaw:
