@@ -34,7 +34,9 @@ function summarizeEvent(body: Record<string, unknown>): {
   const type = safeTerminalText((body.type as string) ?? 'unknown');
   const data = (body.data as Record<string, unknown>) ?? {};
 
-  const resourceId = safeTerminalText((data.id as string) ?? '');
+  const resourceId = safeTerminalText(
+    (data.email_id as string) ?? (data.id as string) ?? '',
+  );
 
   let detail = '';
   if (type.startsWith('email.')) {
@@ -42,9 +44,15 @@ function summarizeEvent(body: Record<string, unknown>): {
     const to = safeTerminalText(
       Array.isArray(data.to) ? (data.to[0] as string) : '',
     );
+    const messageId = safeTerminalText((data.message_id as string) ?? '');
+    const parts: string[] = [];
     if (from || to) {
-      detail = `${from} -> ${to}`;
+      parts.push(`${from} -> ${to}`);
     }
+    if (messageId) {
+      parts.push(messageId);
+    }
+    detail = parts.join('  ');
   } else if (type.startsWith('domain.')) {
     detail = safeTerminalText((data.name as string) ?? '');
   } else if (type.startsWith('contact.')) {

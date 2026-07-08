@@ -12,7 +12,7 @@ export const getEmailCommand = new Command('get')
     'after',
     buildHelpText({
       output:
-        '  {"object":"email","id":"<uuid>","from":"onboarding@resend.com","to":["delivered@resend.com"],"subject":"Hello","html":"<p>Hi</p>","text":"Hi","last_event":"delivered","created_at":"<iso-date>","scheduled_at":null,"bcc":null,"cc":null,"reply_to":null}',
+        '  {"object":"email","id":"<uuid>","message_id":"<111-222-333@email.example.com>","from":"onboarding@resend.com","to":["delivered@resend.com"],"subject":"Hello","html":"<p>Hi</p>","text":"Hi","last_event":"delivered","created_at":"<iso-date>","scheduled_at":null,"bcc":null,"cc":null,"reply_to":null}',
       errorCodes: ['auth_error', 'fetch_error'],
       examples: [
         'resend emails get <email-id>',
@@ -28,11 +28,12 @@ export const getEmailCommand = new Command('get')
         loading: 'Fetching email...',
         sdkCall: (resend) => resend.emails.get(id),
         onInteractive: (data) => {
-          console.log(`From:    ${data.from}`);
-          console.log(`To:      ${data.to.join(', ')}`);
-          console.log(`Subject: ${data.subject}`);
-          console.log(`Status:  ${data.last_event}`);
-          console.log(`Date:    ${data.created_at}`);
+          console.log(`From:       ${data.from}`);
+          console.log(`To:         ${data.to.join(', ')}`);
+          console.log(`Subject:    ${data.subject}`);
+          console.log(`Message-ID: ${data.message_id}`);
+          console.log(`Status:     ${data.last_event}`);
+          console.log(`Date:       ${data.created_at}`);
           if (data.scheduled_at) {
             console.log(`Scheduled: ${data.scheduled_at}`);
           }

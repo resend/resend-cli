@@ -44,6 +44,7 @@ Retrieve a sent email by ID.
 {
   "object": "email",
   "id": "<uuid>",
+  "message_id": "<111-222-333@email.example.com>",
   "from": "you@domain.com",
   "to": ["user@example.com"],
   "subject": "Hello",
@@ -65,7 +66,7 @@ List sent emails.
 | `--after <cursor>` | string | — | Forward pagination cursor |
 | `--before <cursor>` | string | — | Backward pagination cursor |
 
-**Output:** `{"object":"list","data":[...],"has_more":bool}`
+**Output:** `{"object":"list","data":[{"id":"...","message_id":"<111-222-333@email.example.com>",...}],"has_more":bool}`
 
 ---
 

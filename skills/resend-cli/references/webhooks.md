@@ -74,6 +74,8 @@ Start a local server that receives Resend webhook events in real time via a publ
 **Behavior:**
 1. Starts a local HTTP server on `--port`
 2. Registers a temporary Resend webhook pointing at `--url`
-3. Displays incoming events in the terminal
+3. Displays incoming events in the terminal (email events show `email_id`, `message_id`, from/to)
 4. Optionally forwards payloads to `--forward-to` with original Svix headers
 5. Deletes the temporary webhook on exit (Ctrl+C)
+
+Email webhook payloads include `message_id` (RFC 5322 Message-ID) in `data`.

@@ -1,4 +1,5 @@
 import { Command } from '@commander-js/extra-typings';
+import type { ListEmail } from 'resend';
 import { runList } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
@@ -9,17 +10,7 @@ import {
 } from '../../lib/pagination';
 import { renderTable } from '../../lib/table';
 
-type SentEmail = {
-  id: string;
-  to: string[];
-  from: string;
-  created_at: string;
-  subject: string;
-  last_event: string | null;
-  scheduled_at: string | null;
-};
-
-function renderSentEmailsTable(emails: SentEmail[]): string {
+function renderSentEmailsTable(emails: ListEmail[]): string {
   const rows = emails.map((e) => {
     const to = e.to.join(', ');
     const toStr = to.length > 40 ? `${to.slice(0, 37)}...` : to;
@@ -52,7 +43,7 @@ export const listEmailsCommand = new Command('list')
     'after',
     buildHelpText({
       context: `Lists emails sent by your team. For emails received by your domain, use: resend emails receiving list`,
-      output: `  {"object":"list","has_more":false,"data":[{"id":"...","to":["..."],"from":"...","subject":"...","created_at":"...","last_event":"delivered|opened|...","scheduled_at":null}]}`,
+      output: `  {"object":"list","has_more":false,"data":[{"id":"...","message_id":"<111-222-333@email.example.com>","to":["..."],"from":"...","subject":"...","created_at":"...","last_event":"delivered|opened|...","scheduled_at":null}]}`,
       errorCodes: ['auth_error', 'invalid_limit', 'list_error'],
       examples: [
         'resend emails list',
