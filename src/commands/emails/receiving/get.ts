@@ -32,11 +32,10 @@ export const getReceivingCommand = new Command('get')
         loading: 'Fetching received email...',
         sdkCall: (resend) => resend.emails.receiving.get(id),
         onInteractive: (data) => {
-          console.log(`From:       ${data.from}`);
-          console.log(`To:         ${data.to.join(', ')}`);
-          console.log(`Subject:    ${data.subject}`);
-          console.log(`Message-ID: ${data.message_id}`);
-          console.log(`Date:       ${data.created_at}`);
+          console.log(`From:    ${data.from}`);
+          console.log(`To:      ${data.to.join(', ')}`);
+          console.log(`Subject: ${data.subject}`);
+          console.log(`Date:    ${data.created_at}`);
           if (data.attachments.length > 0) {
             console.log(`Files:   ${data.attachments.length} attachment(s)`);
           }

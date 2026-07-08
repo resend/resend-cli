@@ -28,12 +28,12 @@ export const getEmailCommand = new Command('get')
         loading: 'Fetching email...',
         sdkCall: (resend) => resend.emails.get(id),
         onInteractive: (data) => {
-          console.log(`From:       ${data.from}`);
-          console.log(`To:         ${data.to.join(', ')}`);
-          console.log(`Subject:    ${data.subject}`);
+          console.log(`From:    ${data.from}`);
+          console.log(`To:      ${data.to.join(', ')}`);
+          console.log(`Subject: ${data.subject}`);
           console.log(`Message-ID: ${data.message_id}`);
-          console.log(`Status:     ${data.last_event}`);
-          console.log(`Date:       ${data.created_at}`);
+          console.log(`Status:  ${data.last_event}`);
+          console.log(`Date:    ${data.created_at}`);
           if (data.scheduled_at) {
             console.log(`Scheduled: ${data.scheduled_at}`);
           }

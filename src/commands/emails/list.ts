@@ -1,5 +1,4 @@
 import { Command } from '@commander-js/extra-typings';
-import type { ListEmail } from 'resend';
 import { runList } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
@@ -10,7 +9,17 @@ import {
 } from '../../lib/pagination';
 import { renderTable } from '../../lib/table';
 
-function renderSentEmailsTable(emails: ListEmail[]): string {
+type SentEmail = {
+  id: string;
+  to: string[];
+  from: string;
+  created_at: string;
+  subject: string;
+  last_event: string | null;
+  scheduled_at: string | null;
+};
+
+function renderSentEmailsTable(emails: SentEmail[]): string {
   const rows = emails.map((e) => {
     const to = e.to.join(', ');
     const toStr = to.length > 40 ? `${to.slice(0, 37)}...` : to;
