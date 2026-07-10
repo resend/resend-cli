@@ -10,6 +10,42 @@ import { buildReactEmailHtml } from '../../lib/react-email';
 import { withSpinner } from '../../lib/spinner';
 import { isInteractive } from '../../lib/tty';
 
+/** Map API snake_case fields in batch JSON to SDK camelCase before send. */
+function normalizeBatchEmail(
+  email: Record<string, unknown>,
+): Record<string, unknown> {
+  const out = { ...email };
+
+  if ('scheduled_at' in out && !('scheduledAt' in out)) {
+    out.scheduledAt = out.scheduled_at;
+  }
+  if ('reply_to' in out && !('replyTo' in out)) {
+    out.replyTo = out.reply_to;
+  }
+  if ('topic_id' in out && !('topicId' in out)) {
+    out.topicId = out.topic_id;
+  }
+
+  const attachments = out.attachments;
+  if (Array.isArray(attachments)) {
+    out.attachments = attachments.map((item) => {
+      if (item === null || typeof item !== 'object' || Array.isArray(item)) {
+        return item;
+      }
+      const attachment = { ...(item as Record<string, unknown>) };
+      if ('content_type' in attachment && !('contentType' in attachment)) {
+        attachment.contentType = attachment.content_type;
+      }
+      if ('content_id' in attachment && !('contentId' in attachment)) {
+        attachment.contentId = attachment.content_id;
+      }
+      return attachment;
+    });
+  }
+
+  return out;
+}
+
 export const batchCommand = new Command('batch')
   .description('Send up to 100 emails in a single API request from a JSON file')
   .option(
@@ -34,7 +70,7 @@ export const batchCommand = new Command('batch')
     'after',
     buildHelpText({
       context:
-        'Non-interactive: --file\nLimit: 100 emails per request (API hard limit — warned if exceeded)\nUnsupported per-email fields: attachments, scheduled_at\n\nFile format (--file path):\n  [\n    {"from":"onboarding@resend.com","to":["delivered@resend.com"],"subject":"Hello","text":"Hi"},\n    {"from":"onboarding@resend.com","to":["delivered@resend.com"],"subject":"Hello","html":"<b>Hi</b>"}\n  ]',
+        'Non-interactive: --file\nLimit: 100 emails per request (API hard limit — warned if exceeded)\nPer-email fields: attachments, scheduled_at, tags (and all single-send fields)\n\nFile format (--file path):\n  [\n    {"from":"onboarding@resend.com","to":["delivered@resend.com"],"subject":"Hello","text":"Hi"},\n    {"from":"onboarding@resend.com","to":["delivered@resend.com"],"subject":"Hello","html":"<b>Hi</b>","scheduled_at":"2026-01-01T00:00:00Z","tags":[{"name":"category","value":"welcome"}],"attachments":[{"filename":"doc.pdf","content":"<base64>"}]}\n  ]',
       output: '  [{"id":"<email-id>"},{"id":"<email-id>"}]',
       errorCodes: [
         'auth_error',
@@ -120,25 +156,6 @@ export const batchCommand = new Command('batch')
           { json: globalOpts.json },
         );
       }
-
-      if ('attachments' in email) {
-        outputError(
-          {
-            message: `Email at index ${i} contains "attachments", which is not supported in batch sends.`,
-            code: 'batch_error',
-          },
-          { json: globalOpts.json },
-        );
-      }
-      if ('scheduled_at' in email) {
-        outputError(
-          {
-            message: `Email at index ${i} contains "scheduled_at", which is not supported in batch sends.`,
-            code: 'batch_error',
-          },
-          { json: globalOpts.json },
-        );
-      }
     }
 
     const batchData = await withSpinner(
@@ -151,7 +168,9 @@ export const batchCommand = new Command('batch')
           }),
         };
         return resend.batch.send(
-          emails as CreateBatchOptions,
+          emails.map((email) =>
+            normalizeBatchEmail(email as Record<string, unknown>),
+          ) as CreateBatchOptions,
           Object.keys(options).length > 0 ? options : undefined,
         );
       },
