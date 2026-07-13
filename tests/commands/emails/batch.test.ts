@@ -212,43 +212,43 @@ describe('batch command', () => {
     expect(output).toContain('Email at index 0 must be a JSON object.');
   });
 
-  it('passes entries with attachments through to batch.send', async () => {
-    spies = setupOutputSpies();
+  it('rejects entries with attachments', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
 
     const emails = [
       {
         ...VALID_EMAILS[0],
-        attachments: [{ filename: 'test.txt', content: 'aGVsbG8=' }],
+        attachments: [{ filename: 'test.txt', content: 'hello' }],
       },
     ];
     const file = await writeTmpJson(emails);
     const { batchCommand } = await import('../../../src/commands/emails/batch');
-    await batchCommand.parseAsync(['--file', file], { from: 'user' });
+    await expectExit1(() =>
+      batchCommand.parseAsync(['--file', file], { from: 'user' }),
+    );
 
-    expect(mockBatchSend).toHaveBeenCalledTimes(1);
-    const sent = mockBatchSend.mock.calls[0][0] as Array<
-      Record<string, unknown>
-    >;
-    expect(sent[0].attachments).toEqual([
-      { filename: 'test.txt', content: 'aGVsbG8=' },
-    ]);
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('attachments');
   });
 
-  it('passes entries with scheduled_at through to batch.send', async () => {
-    spies = setupOutputSpies();
+  it('rejects entries with scheduled_at', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
 
     const emails = [
       { ...VALID_EMAILS[0], scheduled_at: '2026-01-01T00:00:00Z' },
     ];
     const file = await writeTmpJson(emails);
     const { batchCommand } = await import('../../../src/commands/emails/batch');
-    await batchCommand.parseAsync(['--file', file], { from: 'user' });
+    await expectExit1(() =>
+      batchCommand.parseAsync(['--file', file], { from: 'user' }),
+    );
 
-    expect(mockBatchSend).toHaveBeenCalledTimes(1);
-    const sent = mockBatchSend.mock.calls[0][0] as Array<
-      Record<string, unknown>
-    >;
-    expect(sent[0].scheduledAt).toBe('2026-01-01T00:00:00Z');
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('scheduled_at');
   });
 
   it('passes entries with tags through to batch.send', async () => {
