@@ -1,4 +1,10 @@
-import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -131,6 +137,33 @@ describe('logout command', () => {
     const output = JSON.parse(spies.logSpy.mock.calls[0][0] as string);
     expect(output.success).toBe(true);
     expect(output.profile).toBe('staging');
+  });
+
+  it('does not remove all profiles when --profile is empty', async () => {
+    spies = setupOutputSpies();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+    writeCredentials({ staging: 're_staging_key', production: 're_prod_key' });
+
+    const { Command } = await import('@commander-js/extra-typings');
+    const { logoutCommand } = await import('../../../src/commands/auth/logout');
+    const program = new Command()
+      .option('--profile <name>')
+      .option('--json')
+      .addCommand(logoutCommand);
+
+    await expectExit1(() =>
+      program.parseAsync(['logout', '--profile', ''], { from: 'user' }),
+    );
+
+    const configPath = join(tmpDir, 'resend', 'credentials.json');
+    expect(existsSync(configPath)).toBe(true);
+    const remaining = JSON.parse(readFileSync(configPath, 'utf-8'));
+    expect(remaining.profiles.staging).toBeDefined();
+    expect(remaining.profiles.production).toBeDefined();
+
+    const output = JSON.parse(errorSpy?.mock.calls[0][0] as string);
+    expect(output.error.code).toBe('remove_failed');
   });
 
   it('exits with error when file removal fails', async () => {

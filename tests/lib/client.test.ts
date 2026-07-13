@@ -87,6 +87,116 @@ describe('createClient', () => {
 
     rmSync(tmpDir, { recursive: true, force: true });
   });
+
+  it('rejects an empty api key flag instead of falling back to env', async () => {
+    process.env.RESEND_API_KEY = 're_env_key';
+    process.env.RESEND_CREDENTIAL_STORE = 'file';
+    const { createClient } = await import('../../src/lib/client');
+    await expect(createClient('')).rejects.toThrow(
+      '--api-key is set but empty',
+    );
+  });
+
+  it('rejects an empty profile name instead of using the active profile', async () => {
+    delete process.env.RESEND_API_KEY;
+    process.env.RESEND_CREDENTIAL_STORE = 'file';
+    const tmpDir = join(
+      tmpdir(),
+      `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
+    mkdirSync(tmpDir, { recursive: true });
+    process.env.XDG_CONFIG_HOME = tmpDir;
+
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'default',
+        profiles: { default: { api_key: 're_default_key' } },
+      }),
+    );
+
+    const { createClient } = await import('../../src/lib/client');
+    await expect(createClient(undefined, '')).rejects.toThrow(
+      '--profile is set but empty',
+    );
+
+    rmSync(tmpDir, { recursive: true, force: true });
+  });
+});
+
+describe('requireClient input validation', () => {
+  const restoreEnv = captureTestEnv();
+  let tmpDir: string;
+  let exitSpy: MockInstance | undefined;
+
+  beforeEach(() => {
+    tmpDir = join(
+      tmpdir(),
+      `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
+    mkdirSync(tmpDir, { recursive: true });
+    process.env.XDG_CONFIG_HOME = tmpDir;
+    process.env.RESEND_CREDENTIAL_STORE = 'file';
+    delete process.env.RESEND_API_KEY;
+    delete process.env.RESEND_PROFILE;
+  });
+
+  afterEach(() => {
+    restoreEnv();
+    exitSpy?.mockRestore();
+    exitSpy = undefined;
+    rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it('exits with auth_error when --profile is empty instead of using the active profile', async () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'default',
+        profiles: { default: { api_key: 're_default_key' } },
+      }),
+    );
+
+    setupOutputSpies();
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { requireClient } = await import('../../src/lib/client');
+    await expectExit1(() => requireClient({ json: true, profile: '' }));
+
+    const output = errSpy.mock.calls[0][0] as string;
+    expect(output).toContain('auth_error');
+    expect(output).toContain('--profile is set but empty');
+    errSpy.mockRestore();
+  });
+
+  it('exits with auth_error when --api-key is empty instead of falling back', async () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'default',
+        profiles: { default: { api_key: 're_default_key' } },
+      }),
+    );
+
+    setupOutputSpies();
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { requireClient } = await import('../../src/lib/client');
+    await expectExit1(() => requireClient({ json: true, apiKey: '' }));
+
+    const output = errSpy.mock.calls[0][0] as string;
+    expect(output).toContain('auth_error');
+    expect(output).toContain('--api-key is set but empty');
+    errSpy.mockRestore();
+  });
 });
 
 describe('requireClient permission check', () => {

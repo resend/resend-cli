@@ -175,6 +175,37 @@ describe('resolveApiKey', () => {
     const result = resolveApiKey(undefined, 'nonexistent');
     expect(result).toBeNull();
   });
+
+  it('throws on empty flag value instead of falling back to env', () => {
+    process.env.RESEND_API_KEY = 're_env_key';
+    expect(() => resolveApiKey('')).toThrow('--api-key is set but empty');
+  });
+
+  it('throws on empty RESEND_API_KEY instead of falling back to config', () => {
+    process.env.RESEND_API_KEY = '';
+    process.env.XDG_CONFIG_HOME = tmpDir;
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'default',
+        profiles: { default: { api_key: 're_config_key' } },
+      }),
+    );
+
+    expect(() => resolveApiKey()).toThrow('RESEND_API_KEY is set but empty');
+  });
+
+  it('uses flag value without consulting an empty RESEND_API_KEY', () => {
+    process.env.RESEND_API_KEY = '';
+    const result = resolveApiKey('re_flag_key');
+    expect(result).toEqual({
+      type: 'api_key',
+      key: 're_flag_key',
+      source: 'flag',
+    });
+  });
 });
 
 describe('resolveProfileName', () => {
@@ -223,6 +254,23 @@ describe('resolveProfileName', () => {
   it('defaults to "default" when nothing configured', () => {
     delete process.env.RESEND_PROFILE;
     expect(resolveProfileName()).toBe('default');
+  });
+
+  it('throws on empty flag value instead of falling back', () => {
+    process.env.RESEND_PROFILE = 'env_profile';
+    expect(() => resolveProfileName('')).toThrow('--profile is set but empty');
+  });
+
+  it('throws on empty RESEND_PROFILE instead of falling back', () => {
+    process.env.RESEND_PROFILE = '';
+    expect(() => resolveProfileName()).toThrow(
+      'RESEND_PROFILE is set but empty',
+    );
+  });
+
+  it('uses flag value without consulting an empty RESEND_PROFILE', () => {
+    process.env.RESEND_PROFILE = '';
+    expect(resolveProfileName('flag_profile')).toBe('flag_profile');
   });
 });
 

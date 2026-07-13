@@ -76,6 +76,46 @@ describe('whoami command', () => {
     expect(parsed.error.message).toContain('not found');
   });
 
+  it('errors on empty RESEND_PROFILE instead of falling back to the active profile', async () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'production',
+        profiles: { production: { api_key: 're_test_key_abcd' } },
+      }),
+    );
+    process.env.RESEND_PROFILE = '';
+
+    spies = setupOutputSpies();
+
+    const { whoamiCommand } = await import('../../src/commands/whoami');
+    await expect(
+      whoamiCommand.parseAsync([], { from: 'user' }),
+    ).rejects.toThrow('RESEND_PROFILE is set but empty');
+  });
+
+  it('errors on empty RESEND_API_KEY instead of falling back to stored credentials', async () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'production',
+        profiles: { production: { api_key: 're_test_key_abcd' } },
+      }),
+    );
+    process.env.RESEND_API_KEY = '';
+
+    spies = setupOutputSpies();
+
+    const { whoamiCommand } = await import('../../src/commands/whoami');
+    await expect(
+      whoamiCommand.parseAsync([], { from: 'user' }),
+    ).rejects.toThrow('RESEND_API_KEY is set but empty');
+  });
+
   it('shows authenticated JSON when key exists in config', async () => {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });

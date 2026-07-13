@@ -211,6 +211,78 @@ describe('resolveAuthentication', () => {
     expect(result).toBeNull();
     expect(mockBackend.get).not.toHaveBeenCalled();
   });
+
+  it('throws on empty --api-key flag instead of falling back to env', async () => {
+    process.env.RESEND_API_KEY = 're_env_key';
+    const { resolveAuthentication } = await import('../../src/lib/config');
+    await expect(resolveAuthentication('')).rejects.toThrow(
+      '--api-key is set but empty',
+    );
+  });
+
+  it('throws on empty RESEND_API_KEY instead of falling back to stored credentials', async () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'default',
+        profiles: { default: { api_key: 're_file_key' } },
+      }),
+    );
+    process.env.RESEND_API_KEY = '';
+
+    const { resolveAuthentication } = await import('../../src/lib/config');
+    await expect(resolveAuthentication()).rejects.toThrow(
+      'RESEND_API_KEY is set but empty',
+    );
+  });
+
+  it('throws on empty profile name instead of resolving the active profile', async () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'default',
+        profiles: { default: { api_key: 're_file_key' } },
+      }),
+    );
+
+    const { resolveAuthentication } = await import('../../src/lib/config');
+    await expect(resolveAuthentication(undefined, '')).rejects.toThrow(
+      '--profile is set but empty',
+    );
+  });
+
+  it('throws on empty RESEND_PROFILE instead of resolving the active profile', async () => {
+    const configDir = join(tmpDir, 'resend');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({
+        active_profile: 'default',
+        profiles: { default: { api_key: 're_file_key' } },
+      }),
+    );
+    process.env.RESEND_PROFILE = '';
+
+    const { resolveAuthentication } = await import('../../src/lib/config');
+    await expect(resolveAuthentication()).rejects.toThrow(
+      'RESEND_PROFILE is set but empty',
+    );
+  });
+
+  it('uses flag key without consulting an empty RESEND_API_KEY', async () => {
+    process.env.RESEND_API_KEY = '';
+    const { resolveAuthentication } = await import('../../src/lib/config');
+    const result = await resolveAuthentication('re_flag_key');
+    expect(result).toEqual({
+      type: 'api_key',
+      key: 're_flag_key',
+      source: 'flag',
+    });
+  });
 });
 
 describe('storeApiKeyAsync', () => {

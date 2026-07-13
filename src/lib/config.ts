@@ -7,6 +7,7 @@ import {
 } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { requireNonEmpty } from '../utils/require-non-empty';
 import { CorruptedCredentialsError } from './corrupted-credentials-error';
 import {
   type CredentialBackend,
@@ -206,12 +207,16 @@ export function writeCredentials(creds: CredentialsFile): string {
 }
 
 export function resolveProfileName(flagValue?: string): string {
-  if (flagValue) {
-    return flagValue;
+  const flagProfile = requireNonEmpty(flagValue, '--profile');
+  if (flagProfile !== undefined) {
+    return flagProfile;
   }
 
-  const envProfile = process.env.RESEND_PROFILE;
-  if (envProfile) {
+  const envProfile = requireNonEmpty(
+    process.env.RESEND_PROFILE,
+    'RESEND_PROFILE',
+  );
+  if (envProfile !== undefined) {
     return envProfile;
   }
 
@@ -227,12 +232,13 @@ export function resolveApiKey(
   flagValue?: string,
   profileName?: string,
 ): ResolvedApiKey | null {
-  if (flagValue) {
-    return { type: 'api_key', key: flagValue, source: 'flag' };
+  const flagKey = requireNonEmpty(flagValue, '--api-key');
+  if (flagKey !== undefined) {
+    return { type: 'api_key', key: flagKey, source: 'flag' };
   }
 
-  const envKey = process.env.RESEND_API_KEY;
-  if (envKey) {
+  const envKey = requireNonEmpty(process.env.RESEND_API_KEY, 'RESEND_API_KEY');
+  if (envKey !== undefined) {
     return { type: 'api_key', key: envKey, source: 'env' };
   }
 
@@ -307,7 +313,8 @@ export function removeApiKey(profileName?: string): string {
       throw new Error('No credentials file found.');
     }
 
-    const profile = profileName || resolveProfileName();
+    const profile =
+      requireNonEmpty(profileName, '--profile') ?? resolveProfileName();
     if (!creds.profiles[profile]) {
       throw new Error(
         `Profile "${profile}" not found. Available profiles: ${Object.keys(creds.profiles).join(', ')}`,
@@ -459,21 +466,18 @@ export async function resolveAuthentication(
   profileName?: string,
   options?: { refresh?: boolean },
 ): Promise<ResolvedAuthentication | null> {
-  if (flagValue) {
-    return { type: 'api_key', key: flagValue, source: 'flag' };
+  const flagKey = requireNonEmpty(flagValue, '--api-key');
+  if (flagKey !== undefined) {
+    return { type: 'api_key', key: flagKey, source: 'flag' };
   }
 
-  const envKey = process.env.RESEND_API_KEY;
-  if (envKey) {
+  const envKey = requireNonEmpty(process.env.RESEND_API_KEY, 'RESEND_API_KEY');
+  if (envKey !== undefined) {
     return { type: 'api_key', key: envKey, source: 'env' };
   }
 
   const creds = readCredentials();
-  const profile =
-    profileName ||
-    process.env.RESEND_PROFILE ||
-    creds?.active_profile ||
-    'default';
+  const profile = resolveProfileName(profileName);
 
   if (creds?.storage === 'secure_storage' && creds.profiles[profile]) {
     const credential = creds.profiles[profile];
@@ -642,11 +646,7 @@ export async function storeOAuthGrant(
 export async function removeApiKeyAsync(profileName?: string): Promise<string> {
   return withFileLock(getCredentialsLockPath(), async () => {
     const creds = readCredentials();
-    const profile =
-      profileName ||
-      process.env.RESEND_PROFILE ||
-      creds?.active_profile ||
-      'default';
+    const profile = resolveProfileName(profileName);
 
     if (!creds?.profiles[profile]) {
       throw new Error(
