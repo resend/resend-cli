@@ -67,6 +67,7 @@ export const listSuppressionsCommand = new Command('list')
             before: opts.before,
             apiKey: globalOpts.apiKey,
             profile: globalOpts.profile,
+            ...(opts.origin && { extraFlags: `--origin ${opts.origin}` }),
           });
         },
       },

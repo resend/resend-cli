@@ -22,12 +22,12 @@ Suppressions block future sends to an address. Each entry has an `origin`:
 
 List suppressed addresses (default subcommand — `resend suppressions` alone runs it).
 
-| Flag | Type | Required | Description |
-|------|------|----------|-------------|
-| `--limit <n>` | number | No | Max results, 1-100 (default 10) |
-| `--after <cursor>` | string | No | Forward pagination cursor |
-| `--before <cursor>` | string | No | Backward pagination cursor |
-| `--origin <origin>` | string | No | Filter: `bounce` \| `complaint` \| `manual` |
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--limit <n>` | number | 10 | Max results, 1-100 |
+| `--after <cursor>` | string | — | Forward pagination cursor |
+| `--before <cursor>` | string | — | Backward pagination cursor |
+| `--origin <origin>` | string | — | Filter: `bounce` \| `complaint` \| `manual` |
 
 **Alias:** `ls`
 

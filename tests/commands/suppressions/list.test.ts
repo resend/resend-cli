@@ -149,6 +149,41 @@ describe('suppressions list command', () => {
     expect(getFirstCallArgs()).toMatchObject({ after: 'cur' });
   });
 
+  it('preserves --origin in the next-page hint', async () => {
+    mockList.mockResolvedValueOnce({
+      data: {
+        object: 'list',
+        data: [
+          {
+            object: 'suppression',
+            id: 'sup-1',
+            email: 'spam@example.com',
+            origin: 'bounce',
+            source_id: 'evt-1',
+            created_at: '2026-01-01T00:00:00.000Z',
+          },
+        ],
+        has_more: true,
+      },
+      error: null,
+    });
+    // Interactive mode: the pagination hint only prints when stdout is a TTY.
+    Object.defineProperty(process.stdin, 'isTTY', { value: true, writable: true });
+    Object.defineProperty(process.stdout, 'isTTY', { value: true, writable: true });
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    const { listSuppressionsCommand } = await import(
+      '../../../src/commands/suppressions/list'
+    );
+    await listSuppressionsCommand.parseAsync(['--origin', 'bounce'], {
+      from: 'user',
+    });
+
+    const output = logSpy.mock.calls.map((c) => c[0]).join('\n');
+    logSpy.mockRestore();
+    expect(output).toContain('--origin bounce');
+  });
+
   it('errors with list_error when SDK returns an error', async () => {
     setNonInteractive();
     mockList.mockResolvedValueOnce(
