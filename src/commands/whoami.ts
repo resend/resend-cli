@@ -53,21 +53,19 @@ Shows which profile is active and where the active credential comes from.`,
     );
 
     if (!resolved) {
-      const requestedProfile = profileFlag
-        ? profileFlag
-        : resolveProfileName(profileFlag);
+      const requestedProfile = profileFlag ?? resolveProfileName(profileFlag);
       const profiles = listProfiles();
       const profileExists = profiles.some((p) => p.name === requestedProfile);
-      const explicitProfile = profileFlag || process.env.RESEND_PROFILE;
+      const explicitProfile = profileFlag ?? process.env.RESEND_PROFILE;
+      const explicitProfileNotFound =
+        explicitProfile !== undefined && !profileExists;
 
-      const message =
-        explicitProfile && !profileExists
-          ? `Profile "${requestedProfile}" not found.\nAvailable profiles: ${profiles.map((p) => p.name).join(', ') || '(none)'}`
-          : 'Not authenticated.\nRun `resend login` to get started.';
-      const code =
-        explicitProfile && !profileExists
-          ? 'profile_not_found'
-          : 'not_authenticated';
+      const message = explicitProfileNotFound
+        ? `Profile "${requestedProfile}" not found.\nAvailable profiles: ${profiles.map((p) => p.name).join(', ') || '(none)'}`
+        : 'Not authenticated.\nRun `resend login` to get started.';
+      const code = explicitProfileNotFound
+        ? 'profile_not_found'
+        : 'not_authenticated';
 
       if (globalOpts.json || !isInteractive()) {
         outputError({ message, code }, { json: globalOpts.json });

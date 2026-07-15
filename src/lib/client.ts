@@ -37,7 +37,7 @@ export async function createClient(
 ): Promise<Resend> {
   const resolved = await resolveAuthentication(flagValue, profileName);
   if (!resolved) {
-    if (profileName) {
+    if (profileName !== undefined) {
       const profiles = listProfiles();
       const exists = profiles.some((p) => p.name === profileName);
       if (!exists) {
@@ -64,7 +64,7 @@ export async function requireClient(
   try {
     const resolved = await resolveAuthentication(opts.apiKey, profileName);
     if (!resolved) {
-      if (profileName) {
+      if (profileName !== undefined) {
         const profiles = listProfiles();
         const exists = profiles.some((p) => p.name === profileName);
         if (!exists) {

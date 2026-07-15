@@ -54,7 +54,7 @@ If no credentials file exists, exits cleanly with no error.`,
     }
 
     const profileFlag = globalOpts.profile;
-    const logoutAll = !profileFlag;
+    const logoutAll = profileFlag === undefined;
     // For logoutAll we don't need a specific profile; for single-profile
     // removal, the user-supplied flag is the source of truth. We deliberately
     // avoid resolveProfileName() so a corrupted credentials file doesn't
