@@ -167,7 +167,7 @@ describe('suppressions list command', () => {
       },
       error: null,
     });
-    // Interactive mode: the pagination hint only prints when stdout is a TTY.
+    // Interactive mode: the hint only prints when TTY and not a CI env.
     Object.defineProperty(process.stdin, 'isTTY', {
       value: true,
       writable: true,
@@ -176,6 +176,9 @@ describe('suppressions list command', () => {
       value: true,
       writable: true,
     });
+    delete process.env.CI;
+    delete process.env.GITHUB_ACTIONS;
+    delete process.env.TERM;
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
     const { listSuppressionsCommand } = await import(
