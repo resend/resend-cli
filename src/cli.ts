@@ -20,6 +20,7 @@ import { logsCommand } from './commands/logs/index';
 import { oauthGrantsCommand } from './commands/oauth-grants/index';
 import { openCommand } from './commands/open';
 import { segmentsCommand } from './commands/segments/index';
+import { suppressionsCommand } from './commands/suppressions/index';
 import { templatesCommand } from './commands/templates/index';
 import { topicsCommand } from './commands/topics/index';
 import { updateCommand } from './commands/update';
@@ -140,6 +141,9 @@ ${pc.gray('Examples:')}
   .addCommand(topicsCommand)
   .addCommand(domainsCommand)
   .addCommand(logsCommand)
+  // Visible pre-GA with a [beta] marker in its description — the API gates usage
+  // per account, so non-enabled users see the command but get an API error until enrolled.
+  .addCommand(suppressionsCommand)
   .addCommand(apiKeysCommand)
   .addCommand(webhooksCommand)
   .addCommand(oauthGrantsCommand)

@@ -45,7 +45,13 @@ export function printPaginationHint(
     data: Array<{ id: string }>;
   },
   command: string,
-  opts: { limit?: number; before?: string; apiKey?: string; profile?: string },
+  opts: {
+    limit?: number;
+    before?: string;
+    apiKey?: string;
+    profile?: string;
+    extraFlags?: string;
+  },
 ): void {
   if (!list.has_more || list.data.length === 0) {
     return;
@@ -61,8 +67,9 @@ export function printPaginationHint(
   const limitFlag = opts.limit ? ` --limit ${opts.limit}` : '';
   const apiKeyFlag = opts.apiKey ? ` --api-key ${maskKey(opts.apiKey)}` : '';
   const profileFlag = opts.profile ? ` --profile ${opts.profile}` : '';
+  const extraFlags = opts.extraFlags ? ` ${opts.extraFlags}` : '';
 
   console.log(
-    `\nFetch the next page:\n$ resend ${command} ${flag} ${cursor}${limitFlag}${apiKeyFlag}${profileFlag}`,
+    `\nFetch the next page:\n$ resend ${command} ${flag} ${cursor}${limitFlag}${extraFlags}${apiKeyFlag}${profileFlag}`,
   );
 }
