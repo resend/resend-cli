@@ -34,7 +34,7 @@ export const batchCommand = new Command('batch')
     'after',
     buildHelpText({
       context:
-        'Non-interactive: --file\nLimit: 100 emails per request (API hard limit — warned if exceeded)\nUnsupported per-email fields: attachments, scheduled_at\nPer-email tags supported: [{"name":"category","value":"welcome"}]\n\nFile format (--file path):\n  [\n    {"from":"onboarding@resend.com","to":["delivered@resend.com"],"subject":"Hello","text":"Hi"},\n    {"from":"onboarding@resend.com","to":["delivered@resend.com"],"subject":"Hello","html":"<b>Hi</b>","tags":[{"name":"category","value":"welcome"}]}\n  ]',
+        'Non-interactive: --file\nLimit: 100 emails per request (API hard limit — warned if exceeded)\nPer-email tags supported: [{"name":"category","value":"welcome"}]\nUnsupported per-email field: scheduled_at\n\nFile format (--file path):\n  [\n    {"from":"onboarding@resend.com","to":["delivered@resend.com"],"subject":"Hello","text":"Hi"},\n    {"from":"onboarding@resend.com","to":["delivered@resend.com"],"subject":"Hello","html":"<b>Hi</b>","tags":[{"name":"category","value":"welcome"}]}\n  ]',
       output: '  [{"id":"<email-id>"},{"id":"<email-id>"}]',
       errorCodes: [
         'auth_error',
