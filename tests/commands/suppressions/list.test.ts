@@ -168,8 +168,14 @@ describe('suppressions list command', () => {
       error: null,
     });
     // Interactive mode: the pagination hint only prints when stdout is a TTY.
-    Object.defineProperty(process.stdin, 'isTTY', { value: true, writable: true });
-    Object.defineProperty(process.stdout, 'isTTY', { value: true, writable: true });
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
     const { listSuppressionsCommand } = await import(
