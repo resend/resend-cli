@@ -105,10 +105,10 @@ export const sendCommand = new Command('send')
         'send_error',
       ],
       examples: [
-        'resend emails send --from onboarding@resend.com --to delivered@resend.com --subject "Hello" --text "Hi"',
-        'resend emails send --from onboarding@resend.com --to delivered@resend.com --subject "Hello" --html "<b>Hi</b>"',
-        'resend emails send --from onboarding@resend.com --to delivered@resend.com --subject "Hello" --text "Hi" --attachment ./report.pdf',
-        'resend emails send --template tmpl_123 --to delivered@resend.com',
+        'resend emails send --from onboarding@resend.dev --to delivered@resend.dev --subject "Hello" --text "Hi"',
+        'resend emails send --from onboarding@resend.dev --to delivered@resend.dev --subject "Hello" --html "<b>Hi</b>"',
+        'resend emails send --from onboarding@resend.dev --to delivered@resend.dev --subject "Hello" --text "Hi" --attachment ./report.pdf',
+        'resend emails send --template tmpl_123 --to delivered@resend.dev',
       ],
     }),
   )

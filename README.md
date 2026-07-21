@@ -627,7 +627,7 @@ steps:
   - run: |
       resend emails send \
         --from "deploy@example.com" \
-        --to "delivered@resend.com" \
+        --to "delivered@resend.dev" \
         --subject "Deploy complete" \
         --text "Version ${{ github.sha }} deployed."
 ```

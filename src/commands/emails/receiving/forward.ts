@@ -18,8 +18,8 @@ export const forwardCommand = new Command('forward')
       output: '  {"id":"<email-id>"}',
       errorCodes: ['auth_error', 'create_error'],
       examples: [
-        'resend emails receiving forward <email-id> --to delivered@resend.com --from onboarding@resend.com',
-        'resend emails receiving forward <email-id> --to delivered@resend.com --from onboarding@resend.com --json',
+        'resend emails receiving forward <email-id> --to delivered@resend.dev --from onboarding@resend.dev',
+        'resend emails receiving forward <email-id> --to delivered@resend.dev --from onboarding@resend.dev --json',
       ],
     }),
   )
