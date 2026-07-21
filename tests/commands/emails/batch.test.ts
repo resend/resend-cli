@@ -233,22 +233,48 @@ describe('batch command', () => {
     expect(output).toContain('attachments');
   });
 
-  it('rejects entries with scheduled_at', async () => {
-    setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    exitSpy = mockExitThrow();
+  it('passes scheduling and tags through to the API', async () => {
+    spies = setupOutputSpies();
 
     const emails = [
-      { ...VALID_EMAILS[0], scheduled_at: '2026-01-01T00:00:00Z' },
+      {
+        ...VALID_EMAILS[0],
+        scheduledAt: '2026-01-01T00:00:00Z',
+        tags: [{ name: 'campaign', value: 'welcome' }],
+      },
     ];
     const file = await writeTmpJson(emails);
     const { batchCommand } = await import('../../../src/commands/emails/batch');
-    await expectExit1(() =>
-      batchCommand.parseAsync(['--file', file], { from: 'user' }),
-    );
+    await batchCommand.parseAsync(['--file', file], { from: 'user' });
 
-    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
-    expect(output).toContain('scheduled_at');
+    expect(mockBatchSend).toHaveBeenCalledTimes(1);
+    const sent = mockBatchSend.mock.calls[0][0] as Record<string, unknown>[];
+    expect(sent[0].scheduledAt).toBe('2026-01-01T00:00:00Z');
+    expect(sent[0].tags).toEqual([{ name: 'campaign', value: 'welcome' }]);
+  });
+
+  it('normalizes snake_case fields to the camelCase names the SDK serializes', async () => {
+    spies = setupOutputSpies();
+
+    const emails = [
+      {
+        ...VALID_EMAILS[0],
+        scheduled_at: '2026-01-01T00:00:00Z',
+        reply_to: 'reply@example.com',
+        topic_id: 'topic-1',
+      },
+    ];
+    const file = await writeTmpJson(emails);
+    const { batchCommand } = await import('../../../src/commands/emails/batch');
+    await batchCommand.parseAsync(['--file', file], { from: 'user' });
+
+    const sent = mockBatchSend.mock.calls[0][0] as Record<string, unknown>[];
+    expect(sent[0].scheduledAt).toBe('2026-01-01T00:00:00Z');
+    expect(sent[0].replyTo).toBe('reply@example.com');
+    expect(sent[0].topicId).toBe('topic-1');
+    expect(sent[0]).not.toHaveProperty('scheduled_at');
+    expect(sent[0]).not.toHaveProperty('reply_to');
+    expect(sent[0]).not.toHaveProperty('topic_id');
   });
 
   it('warns but continues when array length exceeds 100', async () => {

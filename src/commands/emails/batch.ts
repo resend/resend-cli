@@ -34,7 +34,7 @@ export const batchCommand = new Command('batch')
     'after',
     buildHelpText({
       context:
-        'Non-interactive: --file\nLimit: 100 emails per request (API hard limit — warned if exceeded)\nUnsupported per-email fields: attachments, scheduled_at\n\nFile format (--file path):\n  [\n    {"from":"onboarding@resend.com","to":["delivered@resend.com"],"subject":"Hello","text":"Hi"},\n    {"from":"onboarding@resend.com","to":["delivered@resend.com"],"subject":"Hello","html":"<b>Hi</b>"}\n  ]',
+        'Non-interactive: --file\nLimit: 100 emails per request (API hard limit — warned if exceeded)\nUnsupported per-email fields: attachments\n\nFile format (--file path):\n  [\n    {"from":"onboarding@resend.com","to":["delivered@resend.com"],"subject":"Hello","text":"Hi"},\n    {"from":"onboarding@resend.com","to":["delivered@resend.com"],"subject":"Hello","html":"<b>Hi</b>","scheduled_at":"in 1 hour","tags":[{"name":"campaign","value":"welcome"}]}\n  ]',
       output: '  [{"id":"<email-id>"},{"id":"<email-id>"}]',
       errorCodes: [
         'auth_error',
@@ -109,6 +109,14 @@ export const batchCommand = new Command('batch')
       }
     }
 
+    // The SDK re-serializes each email and only reads camelCase field names —
+    // snake_case variants would be silently dropped.
+    const snakeCaseAliases: Record<string, string> = {
+      reply_to: 'replyTo',
+      scheduled_at: 'scheduledAt',
+      topic_id: 'topicId',
+    };
+
     for (let i = 0; i < emails.length; i++) {
       const email = emails[i];
       if (email === null || typeof email !== 'object' || Array.isArray(email)) {
@@ -130,14 +138,13 @@ export const batchCommand = new Command('batch')
           { json: globalOpts.json },
         );
       }
-      if ('scheduled_at' in email) {
-        outputError(
-          {
-            message: `Email at index ${i} contains "scheduled_at", which is not supported in batch sends.`,
-            code: 'batch_error',
-          },
-          { json: globalOpts.json },
-        );
+
+      const record = email as Record<string, unknown>;
+      for (const [snake, camel] of Object.entries(snakeCaseAliases)) {
+        if (snake in record) {
+          record[camel] ??= record[snake];
+          delete record[snake];
+        }
       }
     }
 
