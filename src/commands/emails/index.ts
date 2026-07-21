@@ -16,14 +16,14 @@ export const emailsCommand = new Command('emails')
     'after',
     buildHelpText({
       examples: [
-        'resend emails send --from onboarding@resend.com --to delivered@resend.com --subject "Hello" --text "Hi"',
+        'resend emails send --from onboarding@resend.dev --to delivered@resend.dev --subject "Hello" --text "Hi"',
         'resend emails get <email-id>',
         'resend emails batch --file ./emails.json',
         'resend emails cancel <email-id>',
         'resend emails attachments <email-id>',
         'resend emails attachment <email-id> <attachment-id>',
         'resend emails receiving list',
-        'resend emails receiving forward <email-id> --to delivered@resend.com --from onboarding@resend.com',
+        'resend emails receiving forward <email-id> --to delivered@resend.dev --from onboarding@resend.dev',
       ],
     }),
   )

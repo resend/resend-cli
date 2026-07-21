@@ -12,7 +12,7 @@ export const getEmailCommand = new Command('get')
     'after',
     buildHelpText({
       output:
-        '  {"object":"email","id":"<uuid>","message_id":"<111-222-333@email.example.com>","from":"onboarding@resend.com","to":["delivered@resend.com"],"subject":"Hello","html":"<p>Hi</p>","text":"Hi","last_event":"delivered","created_at":"<iso-date>","scheduled_at":null,"bcc":null,"cc":null,"reply_to":null}',
+        '  {"object":"email","id":"<uuid>","message_id":"<111-222-333@email.example.com>","from":"onboarding@resend.dev","to":["delivered@resend.dev"],"subject":"Hello","html":"<p>Hi</p>","text":"Hi","last_event":"delivered","created_at":"<iso-date>","scheduled_at":null,"bcc":null,"cc":null,"reply_to":null}',
       errorCodes: ['auth_error', 'fetch_error'],
       examples: [
         'resend emails get <email-id>',

@@ -34,7 +34,7 @@ export const batchCommand = new Command('batch')
     'after',
     buildHelpText({
       context:
-        'Non-interactive: --file\nLimit: 100 emails per request (API hard limit — warned if exceeded)\nUnsupported per-email fields: attachments\n\nFile format (--file path):\n  [\n    {"from":"onboarding@resend.com","to":["delivered@resend.com"],"subject":"Hello","text":"Hi"},\n    {"from":"onboarding@resend.com","to":["delivered@resend.com"],"subject":"Hello","html":"<b>Hi</b>","scheduled_at":"in 1 hour","tags":[{"name":"campaign","value":"welcome"}]}\n  ]',
+        'Non-interactive: --file\nLimit: 100 emails per request (API hard limit — warned if exceeded)\nUnsupported per-email fields: attachments\n\nFile format (--file path):\n  [\n    {"from":"onboarding@resend.dev","to":["delivered@resend.dev"],"subject":"Hello","text":"Hi"},\n    {"from":"onboarding@resend.dev","to":["delivered@resend.dev"],"subject":"Hello","html":"<b>Hi</b>","scheduled_at":"in 1 hour","tags":[{"name":"campaign","value":"welcome"}]}\n  ]',
       output: '  [{"id":"<email-id>"},{"id":"<email-id>"}]',
       errorCodes: [
         'auth_error',
@@ -50,7 +50,7 @@ export const batchCommand = new Command('batch')
       examples: [
         'resend emails batch --file ./emails.json',
         'resend emails batch --file ./emails.json --batch-validation permissive',
-        'echo \'[{"from":"onboarding@resend.com","to":["delivered@resend.com"],"subject":"Hi","text":"Hello"}]\' | resend emails batch --file -',
+        'echo \'[{"from":"onboarding@resend.dev","to":["delivered@resend.dev"],"subject":"Hi","text":"Hello"}]\' | resend emails batch --file -',
       ],
     }),
   )
