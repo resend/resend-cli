@@ -28,6 +28,7 @@ Create a new domain and receive DNS records to configure.
 | `--region <region>` | string | No | `us-east-1` \| `eu-west-1` \| `sa-east-1` \| `ap-northeast-1` |
 | `--tls <mode>` | string | No | `opportunistic` (default) \| `enforced` |
 | `--tracking-subdomain <subdomain>` | string | No | Subdomain for click and open tracking (e.g., `track`) |
+| `--custom-return-path <subdomain>` | string | No | Subdomain for the Return-Path address (e.g., `bounce`) |
 | `--sending` | boolean | No | Enable sending (default: enabled) |
 | `--receiving` | boolean | No | Enable receiving (default: disabled) |
 
