@@ -453,6 +453,229 @@ describe('send command', () => {
     expect(output).toContain('file_read_error');
   });
 
+  it('parses ;cid= and ;type= attachment params into SDK fields', async () => {
+    spies = setupOutputSpies();
+
+    const tmpFile = join(
+      dirname(fileURLToPath(import.meta.url)),
+      '__test_inline.png',
+    );
+    writeFileSync(tmpFile, 'png bytes');
+
+    try {
+      const { sendCommand } = await import('../../../src/commands/emails/send');
+      await sendCommand.parseAsync(
+        [
+          '--from',
+          'a@test.com',
+          '--to',
+          'b@test.com',
+          '--subject',
+          'Test',
+          '--html',
+          '<img src=cid:logo>',
+          '--attachment',
+          `${tmpFile};cid=logo;type=image/png;filename=logo.png`,
+        ],
+        { from: 'user' },
+      );
+
+      const callArgs = mockSend.mock.calls[0][0] as Record<string, unknown>;
+      const attachments = callArgs.attachments as Array<
+        Record<string, unknown>
+      >;
+      expect(attachments).toHaveLength(1);
+      expect(attachments[0].filename).toBe('logo.png');
+      expect(attachments[0].contentId).toBe('logo');
+      expect(attachments[0].contentType).toBe('image/png');
+      expect(Buffer.isBuffer(attachments[0].content)).toBe(true);
+    } finally {
+      unlinkSync(tmpFile);
+    }
+  });
+
+  it('passes URL attachments as path without reading a file', async () => {
+    spies = setupOutputSpies();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await sendCommand.parseAsync(
+      [
+        '--from',
+        'a@test.com',
+        '--to',
+        'b@test.com',
+        '--subject',
+        'Test',
+        '--text',
+        'Hi',
+        '--attachment',
+        'https://example.com/report.pdf;cid=doc',
+      ],
+      { from: 'user' },
+    );
+
+    const callArgs = mockSend.mock.calls[0][0] as Record<string, unknown>;
+    const attachments = callArgs.attachments as Array<Record<string, unknown>>;
+    expect(attachments).toEqual([
+      { path: 'https://example.com/report.pdf', contentId: 'doc' },
+    ]);
+  });
+
+  it('errors with invalid_attachment for unrecognized ;key= params', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await expectExit1(() =>
+      sendCommand.parseAsync(
+        [
+          '--from',
+          'a@test.com',
+          '--to',
+          'b@test.com',
+          '--subject',
+          'Test',
+          '--text',
+          'Hi',
+          '--attachment',
+          './a.png;content-id=logo',
+        ],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_attachment');
+  });
+
+  it('merges --attachments-file entries after --attachment ones', async () => {
+    spies = setupOutputSpies();
+
+    const testDir = dirname(fileURLToPath(import.meta.url));
+    const attachmentFile = join(testDir, '__test_merge.txt');
+    const jsonFile = join(testDir, '__test_attachments.json');
+    writeFileSync(attachmentFile, 'hi');
+    writeFileSync(
+      jsonFile,
+      '[{"path":"https://example.com/a.pdf","content_id":"doc"}]',
+    );
+
+    try {
+      const { sendCommand } = await import('../../../src/commands/emails/send');
+      await sendCommand.parseAsync(
+        [
+          '--from',
+          'a@test.com',
+          '--to',
+          'b@test.com',
+          '--subject',
+          'Test',
+          '--text',
+          'Hi',
+          '--attachment',
+          attachmentFile,
+          '--attachments-file',
+          jsonFile,
+        ],
+        { from: 'user' },
+      );
+
+      const callArgs = mockSend.mock.calls[0][0] as Record<string, unknown>;
+      const attachments = callArgs.attachments as Array<
+        Record<string, unknown>
+      >;
+      expect(attachments).toHaveLength(2);
+      expect(attachments[0].filename).toBe('__test_merge.txt');
+      expect(attachments[1]).toEqual({
+        path: 'https://example.com/a.pdf',
+        contentId: 'doc',
+      });
+    } finally {
+      unlinkSync(attachmentFile);
+      unlinkSync(jsonFile);
+    }
+  });
+
+  it('errors with invalid_attachment for a malformed attachments file', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const jsonFile = join(
+      dirname(fileURLToPath(import.meta.url)),
+      '__test_bad_attachments.json',
+    );
+    writeFileSync(jsonFile, '{"path":"x"}');
+
+    try {
+      const { sendCommand } = await import('../../../src/commands/emails/send');
+      await expectExit1(() =>
+        sendCommand.parseAsync(
+          [
+            '--from',
+            'a@test.com',
+            '--to',
+            'b@test.com',
+            '--subject',
+            'Test',
+            '--text',
+            'Hi',
+            '--attachments-file',
+            jsonFile,
+          ],
+          { from: 'user' },
+        ),
+      );
+
+      const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+      expect(output).toContain('invalid_attachment');
+    } finally {
+      unlinkSync(jsonFile);
+    }
+  });
+
+  it('dry-run summarizes attachment metadata without raw content', async () => {
+    spies = setupOutputSpies();
+
+    const tmpFile = join(
+      dirname(fileURLToPath(import.meta.url)),
+      '__test_dryrun.png',
+    );
+    writeFileSync(tmpFile, 'png bytes');
+
+    try {
+      const { sendCommand } = await import('../../../src/commands/emails/send');
+      await sendCommand.parseAsync(
+        [
+          '--from',
+          'a@test.com',
+          '--to',
+          'b@test.com',
+          '--subject',
+          'Test',
+          '--text',
+          'Hi',
+          '--attachment',
+          `${tmpFile};cid=logo`,
+          '--attachment',
+          'https://example.com/report.pdf',
+          '--dry-run',
+        ],
+        { from: 'user' },
+      );
+
+      expect(mockSend).not.toHaveBeenCalled();
+      const out = JSON.parse(spies.logSpy.mock.calls[0][0] as string);
+      expect(out.request.attachments).toEqual([
+        { filename: '__test_dryrun.png', contentId: 'logo', byteLength: 9 },
+        { path: 'https://example.com/report.pdf' },
+      ]);
+    } finally {
+      unlinkSync(tmpFile);
+    }
+  });
+
   it('parses key=value headers correctly', async () => {
     spies = setupOutputSpies();
 
@@ -1192,6 +1415,58 @@ describe('send command', () => {
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('template_attachment_conflict');
+  });
+
+  it('errors with template_attachment_conflict when --template and --attachments-file used together', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await expectExit1(() =>
+      sendCommand.parseAsync(
+        [
+          '--template',
+          'tmpl_123',
+          '--to',
+          'b@test.com',
+          '--attachments-file',
+          './attachments.json',
+        ],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('template_attachment_conflict');
+  });
+
+  it('does not silently ignore an empty --attachments-file value', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await expectExit1(() =>
+      sendCommand.parseAsync(
+        [
+          '--from',
+          'a@test.com',
+          '--to',
+          'b@test.com',
+          '--subject',
+          'Test',
+          '--text',
+          'Hi',
+          '--attachments-file',
+          '',
+        ],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('file_read_error');
   });
 
   it('sends email with --react-email flag', async () => {

@@ -1,7 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { basename } from 'node:path';
 import { Command } from '@commander-js/extra-typings';
-import type { CreateEmailOptions } from 'resend';
+import type { Attachment, CreateEmailOptions } from 'resend';
+import {
+  type AttachmentSpec,
+  parseAttachmentSpec,
+  parseAttachmentsJson,
+} from '../../lib/attachments';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
 import { fetchVerifiedDomains, promptForFromAddress } from '../../lib/domains';
@@ -21,10 +26,15 @@ function serializeEmailPayloadForDryRun(payload: CreateEmailOptions): unknown {
   return {
     ...rest,
     attachments: attachments.map((a) => ({
-      filename: a.filename,
-      byteLength: Buffer.isBuffer(a.content)
-        ? a.content.byteLength
-        : Buffer.byteLength(String(a.content), 'utf8'),
+      ...(a.filename !== undefined && { filename: a.filename }),
+      ...(a.path && { path: a.path }),
+      ...(a.contentType && { contentType: a.contentType }),
+      ...(a.contentId && { contentId: a.contentId }),
+      ...(a.content !== undefined && {
+        byteLength: Buffer.isBuffer(a.content)
+          ? a.content.byteLength
+          : Buffer.byteLength(String(a.content), 'utf8'),
+      }),
     })),
   };
 }
@@ -61,7 +71,14 @@ export const sendCommand = new Command('send')
     '--scheduled-at <datetime>',
     'Schedule email for later — ISO 8601 or natural language e.g. "in 1 hour", "tomorrow at 9am ET"',
   )
-  .option('--attachment <paths...>', 'File path(s) to attach')
+  .option(
+    '--attachment <specs...>',
+    'File path or URL to attach, with optional ;cid= ;type= ;filename= params (quote the value)',
+  )
+  .option(
+    '--attachments-file <path>',
+    'Path to a JSON array of attachment objects (use "-" for stdin)',
+  )
   .option(
     '--headers <key=value...>',
     'Custom headers as key=value pairs (e.g. X-Entity-Ref-ID=123)',
@@ -87,7 +104,7 @@ export const sendCommand = new Command('send')
     'after',
     buildHelpText({
       context:
-        'Required: --to and either --template, --react-email, or (--from, --subject, and one of --text | --text-file | --html | --html-file).\nUse --dry-run to print the request JSON without sending (attachments show filename and byteLength only).',
+        'Required: --to and either --template, --react-email, or (--from, --subject, and one of --text | --text-file | --html | --html-file).\nAttachments: --attachment takes a local path or https:// URL plus optional ;cid= (inline content-id), ;type= (MIME type), ;filename= params. Always double-quote values containing ";" — required on every shell (bash, PowerShell, cmd). For paths containing ";key=" or scripted use, pass a JSON array via --attachments-file.\nURL attachments are fetched by the API after send: an unreachable URL fails the email (check `emails get <id>`), and filename/MIME type are not derived from the URL — pass ;filename= and ;type=.\nUse --dry-run to print the request JSON without sending (attachment content shows byteLength only).',
       output: '  {"id":"<email-id>"}',
       errorCodes: [
         'auth_error',
@@ -98,6 +115,7 @@ export const sendCommand = new Command('send')
         'invalid_header',
         'invalid_tag',
         'invalid_var',
+        'invalid_attachment',
         'template_body_conflict',
         'template_attachment_conflict',
         'react_email_build_error',
@@ -108,6 +126,9 @@ export const sendCommand = new Command('send')
         'resend emails send --from onboarding@resend.dev --to delivered@resend.dev --subject "Hello" --text "Hi"',
         'resend emails send --from onboarding@resend.dev --to delivered@resend.dev --subject "Hello" --html "<b>Hi</b>"',
         'resend emails send --from onboarding@resend.dev --to delivered@resend.dev --subject "Hello" --text "Hi" --attachment ./report.pdf',
+        'resend emails send --from onboarding@resend.dev --to delivered@resend.dev --subject "Hello" --html "<img src=cid:logo>" --attachment "./logo.png;cid=logo"',
+        'resend emails send --from onboarding@resend.dev --to delivered@resend.dev --subject "Hello" --text "Hi" --attachment "https://example.com/report.pdf;filename=report.pdf;type=application/pdf"',
+        'resend emails send --from onboarding@resend.dev --to delivered@resend.dev --subject "Hello" --text "Hi" --attachments-file ./attachments.json',
         'resend emails send --template tmpl_123 --to delivered@resend.dev',
       ],
     }),
@@ -115,11 +136,12 @@ export const sendCommand = new Command('send')
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
-    if (opts.htmlFile === '-' && opts.textFile === '-') {
+    const stdinReaders = [opts.htmlFile, opts.textFile, opts.attachmentsFile];
+    if (stdinReaders.filter((f) => f === '-').length > 1) {
       outputError(
         {
           message:
-            'Cannot read both --html-file and --text-file from stdin. Pipe to one and pass the other as a file path.',
+            'Only one of --html-file, --text-file, or --attachments-file can read from stdin ("-"). Pass the others as file paths.',
           code: 'invalid_options',
         },
         { json: globalOpts.json },
@@ -173,10 +195,14 @@ export const sendCommand = new Command('send')
       );
     }
 
-    if (hasTemplate && opts.attachment) {
+    if (
+      hasTemplate &&
+      (opts.attachment || opts.attachmentsFile !== undefined)
+    ) {
       outputError(
         {
-          message: 'Cannot use --attachment with --template',
+          message:
+            'Cannot use --attachment or --attachments-file with --template',
           code: 'template_attachment_conflict',
         },
         { json: globalOpts.json },
@@ -295,21 +321,58 @@ export const sendCommand = new Command('send')
 
     const toAddresses = opts.to ?? [filled.to];
 
-    // Parse attachments from file paths
-    const attachments = opts.attachment?.map((filePath) => {
+    let attachments: Attachment[] | undefined = opts.attachment?.map(
+      (value) => {
+        let spec: AttachmentSpec;
+        try {
+          spec = parseAttachmentSpec(value);
+        } catch (err) {
+          return outputError(
+            { message: (err as Error).message, code: 'invalid_attachment' },
+            { json: globalOpts.json },
+          );
+        }
+        const metadata = {
+          ...(spec.contentType && { contentType: spec.contentType }),
+          ...(spec.contentId && { contentId: spec.contentId }),
+        };
+        if (spec.isUrl) {
+          return {
+            path: spec.source,
+            ...(spec.filename && { filename: spec.filename }),
+            ...metadata,
+          };
+        }
+        try {
+          const content = readFileSync(spec.source);
+          return {
+            filename: spec.filename ?? basename(spec.source),
+            content,
+            ...metadata,
+          };
+        } catch {
+          return outputError(
+            {
+              message: `Failed to read file: ${spec.source}`,
+              code: 'file_read_error',
+            },
+            { json: globalOpts.json },
+          );
+        }
+      },
+    );
+
+    if (opts.attachmentsFile !== undefined) {
+      const raw = readFile(opts.attachmentsFile, globalOpts);
       try {
-        const content = readFileSync(filePath);
-        return { filename: basename(filePath), content };
-      } catch {
-        return outputError(
-          {
-            message: `Failed to read file: ${filePath}`,
-            code: 'file_read_error',
-          },
+        attachments = [...(attachments ?? []), ...parseAttachmentsJson(raw)];
+      } catch (err) {
+        outputError(
+          { message: (err as Error).message, code: 'invalid_attachment' },
           { json: globalOpts.json },
         );
       }
-    });
+    }
 
     // Parse key=value headers
     const headers = opts.headers

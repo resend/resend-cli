@@ -26,6 +26,10 @@ export const createDomainCommand = new Command('create')
     '--tracking-subdomain <subdomain>',
     'Subdomain for click and open tracking (e.g. track)',
   )
+  .option(
+    '--custom-return-path <subdomain>',
+    'Subdomain for the Return-Path address (e.g. bounce)',
+  )
   .option('--sending', 'Enable sending capability (default: enabled)')
   .option('--receiving', 'Enable receiving capability (default: disabled)')
   .addHelpText(
@@ -40,6 +44,7 @@ export const createDomainCommand = new Command('create')
         'resend domains create --name example.com',
         'resend domains create --name example.com --region eu-west-1 --tls enforced',
         'resend domains create --name example.com --tracking-subdomain track',
+        'resend domains create --name example.com --custom-return-path bounce',
         'resend domains create --name example.com --receiving --json',
         'resend domains create --name example.com --sending --receiving --json',
       ],
@@ -65,6 +70,9 @@ export const createDomainCommand = new Command('create')
             ...(opts.tls && { tls: opts.tls }),
             ...(opts.trackingSubdomain && {
               trackingSubdomain: opts.trackingSubdomain,
+            }),
+            ...(opts.customReturnPath !== undefined && {
+              customReturnPath: opts.customReturnPath,
             }),
             ...((opts.sending || opts.receiving) && {
               capabilities: {
