@@ -21,8 +21,8 @@ importers:
         specifier: 0.28.1
         version: 0.28.1
       esbuild-wasm:
-        specifier: 0.28.0
-        version: 0.28.0
+        specifier: 0.28.1
+        version: 0.28.1
       picocolors:
         specifier: 1.1.1
         version: 1.1.1
@@ -983,8 +983,8 @@ packages:
   es-module-lexer@2.0.0:
     resolution: {integrity: sha512-5POEcUuZybH7IdmGsD8wlf0AI55wMecM9rVBTI/qEAy2c1kTOm3DjFYjrBdI2K3BaJjJYfYFeRtM0t9ssnRuxw==}
 
-  esbuild-wasm@0.28.0:
-    resolution: {integrity: sha512-5TRVKExcEmeMkccIZMzUq+Az6X2RoMAJyfl6SMMO1dMVhmvt0I2mx7gAb6zYi42n4d1ETcatFXazGKzA+aW7fg==}
+  esbuild-wasm@0.28.1:
+    resolution: {integrity: sha512-p/GD4E8oYRjg3kjdKrnMb0s4PzXgJF42e0MF4H0+ACyK/kIlFRp3e0fzOleIG+wBBm6MM3XQrbpe7soEA+vJIA==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -2140,7 +2140,7 @@ snapshots:
 
   es-module-lexer@2.0.0: {}
 
-  esbuild-wasm@0.28.0: {}
+  esbuild-wasm@0.28.1: {}
 
   esbuild@0.25.12:
     optionalDependencies:

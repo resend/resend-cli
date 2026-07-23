@@ -44,7 +44,7 @@
     "@commander-js/extra-typings": "14.0.0",
     "commander": "14.0.3",
     "esbuild": "0.28.1",
-    "esbuild-wasm": "0.28.0",
+    "esbuild-wasm": "0.28.1",
     "picocolors": "1.1.1",
     "resend": "6.18.0"
   },
