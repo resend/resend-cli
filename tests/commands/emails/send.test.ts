@@ -1441,6 +1441,34 @@ describe('send command', () => {
     expect(output).toContain('template_attachment_conflict');
   });
 
+  it('does not silently ignore an empty --attachments-file value', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { sendCommand } = await import('../../../src/commands/emails/send');
+    await expectExit1(() =>
+      sendCommand.parseAsync(
+        [
+          '--from',
+          'a@test.com',
+          '--to',
+          'b@test.com',
+          '--subject',
+          'Test',
+          '--text',
+          'Hi',
+          '--attachments-file',
+          '',
+        ],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('file_read_error');
+  });
+
   it('sends email with --react-email flag', async () => {
     spies = setupOutputSpies();
 

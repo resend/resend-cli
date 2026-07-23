@@ -130,6 +130,21 @@ describe('domains create command', () => {
     expect(args.customReturnPath).toBe('bounce');
   });
 
+  it('forwards an explicit empty --custom-return-path to the API', async () => {
+    spies = setupOutputSpies();
+
+    const { createDomainCommand } = await import(
+      '../../../src/commands/domains/create'
+    );
+    await createDomainCommand.parseAsync(
+      ['--name', 'example.com', '--custom-return-path', ''],
+      { from: 'user' },
+    );
+
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.customReturnPath).toBe('');
+  });
+
   it('omits customReturnPath when flag is absent', async () => {
     spies = setupOutputSpies();
 

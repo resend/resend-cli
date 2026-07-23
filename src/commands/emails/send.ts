@@ -195,7 +195,10 @@ export const sendCommand = new Command('send')
       );
     }
 
-    if (hasTemplate && (opts.attachment || opts.attachmentsFile)) {
+    if (
+      hasTemplate &&
+      (opts.attachment || opts.attachmentsFile !== undefined)
+    ) {
       outputError(
         {
           message:
@@ -359,7 +362,7 @@ export const sendCommand = new Command('send')
       },
     );
 
-    if (opts.attachmentsFile) {
+    if (opts.attachmentsFile !== undefined) {
       const raw = readFile(opts.attachmentsFile, globalOpts);
       try {
         attachments = [...(attachments ?? []), ...parseAttachmentsJson(raw)];

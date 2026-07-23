@@ -71,7 +71,7 @@ export const createDomainCommand = new Command('create')
             ...(opts.trackingSubdomain && {
               trackingSubdomain: opts.trackingSubdomain,
             }),
-            ...(opts.customReturnPath && {
+            ...(opts.customReturnPath !== undefined && {
               customReturnPath: opts.customReturnPath,
             }),
             ...((opts.sending || opts.receiving) && {

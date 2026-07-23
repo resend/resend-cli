@@ -55,6 +55,15 @@ describe('parseAttachmentSpec', () => {
     );
   });
 
+  it('rejects unrecognized ;key= params inside cid and filename values', () => {
+    expect(() => parseAttachmentSpec('./a.png;cid=logo;foo=bar')).toThrow(
+      /Unrecognized attachment parameter/,
+    );
+    expect(() => parseAttachmentSpec('./a.png;filename=a;foo=bar')).toThrow(
+      /Unrecognized attachment parameter/,
+    );
+  });
+
   it('rejects duplicate params', () => {
     expect(() => parseAttachmentSpec('./a.png;cid=a;cid=b')).toThrow(
       /Duplicate ";cid="/,

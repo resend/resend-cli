@@ -44,6 +44,13 @@ export function parseAttachmentSpec(value: string): AttachmentSpec {
     if (!paramValue) {
       throw new Error(`Empty ";${key}=" in attachment "${value}".`);
     }
+    // MIME parameters like "type=text/plain;charset=utf-8" are legitimate,
+    // but a ";key=" inside a cid or filename value is a typo.
+    if (field !== 'contentType' && PARAM_LIKE.test(paramValue)) {
+      throw new Error(
+        `Unrecognized attachment parameter in "${value}". Supported: ;cid=, ;type=, ;filename= (use --attachments-file for paths containing ";key=").`,
+      );
+    }
     spec[field] = paramValue;
   }
   return spec;
@@ -83,7 +90,7 @@ export function parseAttachmentsJson(raw: string): Attachment[] {
       const key = FIELD_ALIASES[rawKey] ?? rawKey;
       if (!ALLOWED_FIELDS.has(key)) {
         throw new Error(
-          `Attachment at index ${i} has unsupported field "${rawKey}". Supported: content, filename, path, content_type, content_id.`,
+          `Attachment at index ${i} has unsupported field "${rawKey}". Supported: content, filename, path, content_type/contentType, content_id/contentId.`,
         );
       }
       if (key in attachment) {
