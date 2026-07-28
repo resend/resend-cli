@@ -34,12 +34,13 @@ Events fire per-recipient: a batch email to 3 recipients generates 3 email.sent 
   resend webhooks create --endpoint https://... --events email.sent,email.delivered
   resend webhooks create --endpoint https://... --events all
 
-Available event types (17 total):
-  Email:   email.sent, email.delivered, email.delivery_delayed, email.bounced,
-           email.complained, email.opened, email.clicked, email.failed,
-           email.scheduled, email.suppressed, email.received
-  Contact: contact.created, contact.updated, contact.deleted
-  Domain:  domain.created, domain.updated, domain.deleted
+Available event types (19 total):
+  Email:       email.sent, email.delivered, email.delivery_delayed, email.bounced,
+               email.complained, email.opened, email.clicked, email.failed,
+               email.scheduled, email.suppressed, email.received
+  Contact:     contact.created, contact.updated, contact.deleted
+  Domain:      domain.created, domain.updated, domain.deleted
+  Suppression: suppression.added, suppression.removed
 
 The signing_secret in the response is shown ONCE — save it immediately to verify
 webhook payloads using Svix signature headers (svix-id, svix-timestamp, svix-signature).

@@ -47,7 +47,7 @@ function summarizeEvent(body: Record<string, unknown>): {
     }
   } else if (type.startsWith('domain.')) {
     detail = safeTerminalText((data.name as string) ?? '');
-  } else if (type.startsWith('contact.')) {
+  } else if (type.startsWith('contact.') || type.startsWith('suppression.')) {
     detail = safeTerminalText((data.email as string) ?? '');
   }
 
