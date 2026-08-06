@@ -65,7 +65,7 @@ Retrieve a sent email by ID.
   "to": ["user@example.com"],
   "subject": "Hello",
   "last_event": "delivered",
-  "created_at": "<iso-date>",
+  "created_at": "<date>",
   "scheduled_at": null
 }
 ```

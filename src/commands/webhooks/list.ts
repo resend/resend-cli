@@ -24,7 +24,7 @@ export const listWebhooksCommand = new Command('list')
       context: `Pagination: use --after or --before with a webhook ID as the cursor.
 Only one of --after or --before may be used at a time.
 The response includes has_more: true when additional pages exist.`,
-      output: `  {"object":"list","data":[{"id":"<uuid>","endpoint":"<url>","events":["<event>"],"status":"enabled","created_at":"<iso-date>"}],"has_more":false}`,
+      output: `  {"object":"list","data":[{"id":"<uuid>","endpoint":"<url>","events":["<event>"],"status":"enabled","created_at":"<date>"}],"has_more":false}`,
       errorCodes: ['auth_error', 'invalid_limit', 'list_error'],
       examples: [
         'resend webhooks list',

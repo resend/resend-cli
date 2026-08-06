@@ -11,7 +11,7 @@ export const getSegmentCommand = new Command('get')
   .addHelpText(
     'after',
     buildHelpText({
-      output: `  {"object":"segment","id":"<uuid>","name":"<name>","created_at":"<iso-date>"}`,
+      output: `  {"object":"segment","id":"<uuid>","name":"<name>","created_at":"<date>"}`,
       errorCodes: ['auth_error', 'fetch_error'],
       examples: [
         'resend segments get 78261eea-8f8b-4381-83c6-79fa7120f1cf',

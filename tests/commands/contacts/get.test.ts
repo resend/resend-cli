@@ -23,7 +23,7 @@ const mockGet = vi.fn(async () => ({
     email: 'jane@example.com',
     first_name: 'Jane',
     last_name: 'Smith',
-    created_at: '2026-01-01T00:00:00.000Z',
+    created_at: '2026-01-01 00:00:00+00',
     unsubscribed: false,
     properties: {},
   },

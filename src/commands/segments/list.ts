@@ -27,7 +27,7 @@ export const listSegmentsCommand = new Command('list')
 
 Use "resend segments list" to discover segment IDs for use with broadcasts
 or "resend contacts add-segment".`,
-      output: `  {"object":"list","data":[{"id":"<uuid>","name":"<name>","created_at":"<iso-date>"}],"has_more":false}`,
+      output: `  {"object":"list","data":[{"id":"<uuid>","name":"<name>","created_at":"<date>"}],"has_more":false}`,
       errorCodes: ['auth_error', 'invalid_limit', 'list_error'],
       examples: [
         'resend segments list',

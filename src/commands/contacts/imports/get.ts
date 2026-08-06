@@ -12,7 +12,7 @@ export const getContactImportCommand = new Command('get')
   .addHelpText(
     'after',
     buildHelpText({
-      output: `  {\n    "object": "contact_import",\n    "id": "479e3145-dd38-476b-932c-529ceb705947",\n    "status": "completed",\n    "created_at": "2026-05-15T18:32:37.823Z",\n    "completed_at": "2026-05-15T18:33:42.916Z",\n    "counts": {"total":1200,"created":800,"updated":300,"skipped":75,"failed":25}\n  }`,
+      output: `  {\n    "object": "contact_import",\n    "id": "479e3145-dd38-476b-932c-529ceb705947",\n    "status": "completed",\n    "created_at": "2026-05-15 18:32:37.823+00",\n    "completed_at": "2026-05-15 18:33:42.916+00",\n    "counts": {"total":1200,"created":800,"updated":300,"skipped":75,"failed":25}\n  }`,
       errorCodes: ['auth_error', 'fetch_error'],
       examples: [
         'resend contacts imports get 479e3145-dd38-476b-932c-529ceb705947',

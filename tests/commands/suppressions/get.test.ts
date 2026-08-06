@@ -23,7 +23,7 @@ const mockGet = vi.fn(async () => ({
     email: 'spam@example.com',
     origin: 'bounce',
     source_id: 'evt-1',
-    created_at: '2026-01-01T00:00:00.000Z',
+    created_at: '2026-01-01 00:00:00+00',
   },
   error: null,
 }));

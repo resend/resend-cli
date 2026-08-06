@@ -27,7 +27,7 @@ const mockList = vi.fn(async () => ({
         segment_id: '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
         audience_id: null,
         status: 'sent' as const,
-        created_at: '2026-02-18T12:00:00.000Z',
+        created_at: '2026-02-18 12:00:00+00',
         scheduled_at: null,
         sent_at: null,
       },

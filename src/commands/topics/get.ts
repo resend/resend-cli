@@ -11,7 +11,7 @@ export const getTopicCommand = new Command('get')
   .addHelpText(
     'after',
     buildHelpText({
-      output: `  {"id":"<uuid>","name":"<name>","description":"<desc>","default_subscription":"opt_in|opt_out","created_at":"<iso-date>"}`,
+      output: `  {"id":"<uuid>","name":"<name>","description":"<desc>","default_subscription":"opt_in|opt_out","created_at":"<date>"}`,
       errorCodes: ['auth_error', 'fetch_error'],
       examples: [
         'resend topics get 78261eea-8f8b-4381-83c6-79fa7120f1cf',

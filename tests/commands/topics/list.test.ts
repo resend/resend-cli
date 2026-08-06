@@ -24,7 +24,7 @@ const mockList = vi.fn(async () => ({
         name: 'Product Updates',
         description: 'Get notified about new features',
         default_subscription: 'opt_in' as const,
-        created_at: '2026-01-01T00:00:00.000Z',
+        created_at: '2026-01-01 00:00:00+00',
       },
     ],
   },

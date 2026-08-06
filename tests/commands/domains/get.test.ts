@@ -22,7 +22,7 @@ const mockGet = vi.fn(async () => ({
     id: 'test-domain-id',
     name: 'example.com',
     status: 'verified',
-    created_at: '2026-01-01T00:00:00.000Z',
+    created_at: '2026-01-01 00:00:00+00',
     region: 'us-east-1',
     records: [
       {
@@ -103,7 +103,7 @@ describe('domains get command', () => {
         id: 'test-domain-id',
         name: 'example.com',
         status: 'verified',
-        created_at: '2026-01-01T00:00:00.000Z',
+        created_at: '2026-01-01 00:00:00+00',
         region: 'us-east-1',
         open_tracking: true,
         click_tracking: true,

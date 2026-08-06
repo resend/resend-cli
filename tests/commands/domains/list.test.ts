@@ -25,7 +25,7 @@ const mockList = vi.fn(async () => ({
         name: 'example.com',
         status: 'verified',
         region: 'us-east-1',
-        created_at: '2026-01-01T00:00:00.000Z',
+        created_at: '2026-01-01 00:00:00+00',
         capabilities: { sending: 'enabled', receiving: 'disabled' },
       },
       {
@@ -33,7 +33,7 @@ const mockList = vi.fn(async () => ({
         name: 'test.com',
         status: 'pending',
         region: 'eu-west-1',
-        created_at: '2026-01-02T00:00:00.000Z',
+        created_at: '2026-01-02 00:00:00+00',
         capabilities: { sending: 'enabled', receiving: 'disabled' },
       },
     ],

@@ -23,13 +23,13 @@ const mockList = vi.fn(async () => ({
       {
         id: 'key-id-1',
         name: 'Production Key',
-        created_at: '2026-01-01T00:00:00.000Z',
-        last_used_at: '2026-01-15T12:00:00.000Z',
+        created_at: '2026-01-01 00:00:00+00',
+        last_used_at: '2026-01-15 12:00:00+00',
       },
       {
         id: 'key-id-2',
         name: 'Staging Key',
-        created_at: '2026-01-02T00:00:00.000Z',
+        created_at: '2026-01-02 00:00:00+00',
         last_used_at: null,
       },
     ],

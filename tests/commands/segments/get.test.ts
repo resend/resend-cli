@@ -21,7 +21,7 @@ const mockGet = vi.fn(async () => ({
     object: 'segment' as const,
     id: '3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c',
     name: 'Newsletter Subscribers',
-    created_at: '2026-01-01T00:00:00.000Z',
+    created_at: '2026-01-01 00:00:00+00',
   },
   error: null,
 }));
@@ -89,7 +89,7 @@ describe('segments get command', () => {
     expect(parsed.object).toBe('segment');
     expect(parsed.id).toBe('3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c');
     expect(parsed.name).toBe('Newsletter Subscribers');
-    expect(parsed.created_at).toBe('2026-01-01T00:00:00.000Z');
+    expect(parsed.created_at).toBe('2026-01-01 00:00:00+00');
   });
 
   it('errors with auth_error when no API key', async () => {

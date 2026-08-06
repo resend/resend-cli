@@ -28,7 +28,7 @@ const mockGet = vi.fn(async () => ({
     subject: 'Hello',
     html: '<p>Hi</p>',
     text: 'Hi',
-    created_at: '2026-02-18T12:00:00.000Z',
+    created_at: '2026-02-18 12:00:00+00',
     scheduled_at: null,
     last_event: 'delivered' as const,
     bcc: null,

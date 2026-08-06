@@ -23,7 +23,7 @@ const mockList = vi.fn(async () => ({
     data: [
       {
         id: '3d4a472d-bc6d-4dd2-aa9d-d3d11b549e55',
-        created_at: '2024-11-01T18:10:00.000Z',
+        created_at: '2024-11-01 18:10:00+00',
         endpoint: '/emails',
         method: 'POST',
         response_status: 200,

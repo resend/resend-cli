@@ -20,8 +20,8 @@ const contactImport = {
   object: 'contact_import',
   id: '479e3145-dd38-476b-932c-529ceb705947',
   status: 'completed',
-  created_at: '2026-05-15T18:32:37.823Z',
-  completed_at: '2026-05-15T18:33:42.916Z',
+  created_at: '2026-05-15 18:32:37.823+00',
+  completed_at: '2026-05-15 18:33:42.916+00',
   counts: { total: 1200, created: 800, updated: 300, skipped: 75, failed: 25 },
 };
 

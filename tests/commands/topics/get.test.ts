@@ -22,7 +22,7 @@ const mockGet = vi.fn(async () => ({
     name: 'Product Updates',
     description: 'Get notified about new features',
     default_subscription: 'opt_in' as const,
-    created_at: '2026-01-01T00:00:00.000Z',
+    created_at: '2026-01-01 00:00:00+00',
   },
   error: null,
 }));
@@ -83,7 +83,7 @@ describe('topics get command', () => {
     expect(parsed.name).toBe('Product Updates');
     expect(parsed.description).toBe('Get notified about new features');
     expect(parsed.default_subscription).toBe('opt_in');
-    expect(parsed.created_at).toBe('2026-01-01T00:00:00.000Z');
+    expect(parsed.created_at).toBe('2026-01-01 00:00:00+00');
   });
 
   it('errors with auth_error when no API key', async () => {

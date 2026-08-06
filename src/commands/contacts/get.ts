@@ -14,7 +14,7 @@ export const getContactCommand = new Command('get')
   .addHelpText(
     'after',
     buildHelpText({
-      output: `  {\n    "object": "contact",\n    "id": "e169aa45-1ecf-4183-9955-b1499d5701d3",\n    "email": "steve.wozniak@gmail.com",\n    "first_name": "Steve",\n    "last_name": "Wozniak",\n    "created_at": "2026-01-01T00:00:00.000Z",\n    "unsubscribed": false,\n    "properties": {}\n  }`,
+      output: `  {\n    "object": "contact",\n    "id": "e169aa45-1ecf-4183-9955-b1499d5701d3",\n    "email": "steve.wozniak@gmail.com",\n    "first_name": "Steve",\n    "last_name": "Wozniak",\n    "created_at": "2026-01-01 00:00:00+00",\n    "unsubscribed": false,\n    "properties": {}\n  }`,
       errorCodes: ['auth_error', 'fetch_error'],
       examples: [
         'resend contacts get e169aa45-1ecf-4183-9955-b1499d5701d3',

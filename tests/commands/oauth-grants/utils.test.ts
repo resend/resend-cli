@@ -9,7 +9,7 @@ const grant = {
   client_id: 'client-1',
   scopes: ['emails:send'],
   resource: null,
-  created_at: '2026-01-01T00:00:00.000Z',
+  created_at: '2026-01-01 00:00:00+00',
   revoked_at: null,
   revoked_reason: null,
   client: { name: 'Resend CLI', logo_uri: null },
@@ -58,7 +58,7 @@ describe('renderOAuthGrantsTable', () => {
         ...grant,
         id: 'grant-2',
         scopes: ['emails:send', 'domains:read'],
-        revoked_at: '2026-01-02T00:00:00.000Z',
+        revoked_at: '2026-01-02 00:00:00+00',
         revoked_reason: 'revoked_from_api',
       },
     ]);
@@ -66,7 +66,7 @@ describe('renderOAuthGrantsTable', () => {
     expect(table).toContain('Resend CLI');
     expect(table).toContain('grant-1');
     expect(table).toContain('emails:send, domains:read');
-    expect(table).toContain('2026-01-02T00:00:00.000Z');
+    expect(table).toContain('2026-01-02 00:00:00+00');
   });
 
   it('shows an empty message when there are no grants', () => {

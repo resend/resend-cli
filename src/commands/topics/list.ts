@@ -12,7 +12,7 @@ export const listTopicsCommand = new Command('list')
     buildHelpText({
       context: `Returns all topics in your account. Topic subscription management for individual
 contacts is handled via "resend contacts topics <contactId>".`,
-      output: `  {"data":[{"id":"<uuid>","name":"<name>","description":"<desc>","default_subscription":"opt_in|opt_out","created_at":"<iso-date>"}]}`,
+      output: `  {"data":[{"id":"<uuid>","name":"<name>","description":"<desc>","default_subscription":"opt_in|opt_out","created_at":"<date>"}]}`,
       errorCodes: ['auth_error', 'list_error'],
       examples: ['resend topics list', 'resend topics list --json'],
     }),
