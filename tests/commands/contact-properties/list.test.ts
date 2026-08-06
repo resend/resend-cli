@@ -26,7 +26,7 @@ const mockList = vi.fn(async () => ({
         key: 'company_name',
         type: 'string' as const,
         fallbackValue: null,
-        createdAt: '2026-01-01T00:00:00.000Z',
+        createdAt: '2026-01-01 00:00:00+00',
       },
     ],
   },

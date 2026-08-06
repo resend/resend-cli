@@ -23,7 +23,7 @@ const mockListSegments = vi.fn(async () => ({
       {
         id: '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d',
         name: 'Newsletter',
-        created_at: '2026-01-01T00:00:00.000Z',
+        created_at: '2026-01-01 00:00:00+00',
       },
     ],
     has_more: false,

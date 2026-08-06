@@ -33,7 +33,7 @@ export const listAttachmentsCommand = new Command('attachments')
       context:
         'Each attachment has a download_url (signed, expires ~1 hour).\nUse the attachment sub-command to retrieve a single attachment with its download URL:\n  resend emails receiving attachment <emailId> <attachmentId>\n\ncontent_disposition: "inline" means the attachment is embedded in the HTML body (e.g. an image).\ncontent_disposition: "attachment" means it is a standalone file download.',
       output:
-        '  {"object":"list","has_more":false,"data":[{"id":"<uuid>","filename":"invoice.pdf","size":51200,"content_type":"application/pdf","content_disposition":"attachment","content_id":null,"download_url":"<url>","expires_at":"<iso-date>"}]}',
+        '  {"object":"list","has_more":false,"data":[{"id":"<uuid>","filename":"invoice.pdf","size":51200,"content_type":"application/pdf","content_disposition":"attachment","content_id":null,"download_url":"<url>","expires_at":"<date>"}]}',
       errorCodes: ['auth_error', 'invalid_limit', 'list_error'],
       examples: [
         'resend emails receiving attachments <email-id>',

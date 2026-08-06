@@ -38,7 +38,7 @@ describe('suppressionPickerConfig', () => {
       email: 'spam@example.com',
       origin: 'manual',
       source_id: null,
-      created_at: '2026-01-01T00:00:00.000Z',
+      created_at: '2026-01-01 00:00:00+00',
     });
 
     expect(display).toEqual({ label: 'spam@example.com', hint: 'sup-123' });
@@ -53,7 +53,7 @@ describe('renderSuppressionsTable', () => {
         email: 'spam@example.com',
         origin: 'bounce',
         source_id: 'evt-1',
-        created_at: '2026-01-01T00:00:00.000Z',
+        created_at: '2026-01-01 00:00:00+00',
       },
     ]);
 

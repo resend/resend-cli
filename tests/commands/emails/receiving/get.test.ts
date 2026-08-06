@@ -23,7 +23,7 @@ const mockGet = vi.fn(async () => ({
     to: ['inbox@example.com'],
     from: 'sender@external.com',
     subject: 'Hello from outside',
-    created_at: '2026-02-18T12:00:00.000Z',
+    created_at: '2026-02-18 12:00:00+00',
     bcc: null,
     cc: null,
     reply_to: null,
@@ -33,7 +33,7 @@ const mockGet = vi.fn(async () => ({
     message_id: '<hello@external.com>',
     raw: {
       download_url: 'https://storage.example.com/signed/raw-email',
-      expires_at: '2026-02-18T13:00:00.000Z',
+      expires_at: '2026-02-18 13:00:00+00',
     },
     attachments: [],
   },

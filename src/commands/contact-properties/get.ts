@@ -17,7 +17,7 @@ export const getContactPropertyCommand = new Command('get')
     "key": "company_name",
     "type": "string",
     "fallbackValue": null,
-    "createdAt": "2026-01-01T00:00:00.000Z"
+    "createdAt": "2026-01-01 00:00:00+00"
   }`,
       errorCodes: ['auth_error', 'fetch_error'],
       examples: [

@@ -26,7 +26,7 @@ const mockList = vi.fn(async () => ({
         to: ['inbox@example.com'],
         from: 'sender@external.com',
         subject: 'Hello from outside',
-        created_at: '2026-02-18T12:00:00.000Z',
+        created_at: '2026-02-18 12:00:00+00',
         message_id: '<hello@external.com>',
         bcc: null,
         cc: null,

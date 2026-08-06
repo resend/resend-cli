@@ -29,7 +29,7 @@ const mockList = vi.fn(async () => ({
         content_disposition: 'attachment' as const,
         content_id: null,
         download_url: 'https://storage.example.com/signed/invoice.pdf',
-        expires_at: '2026-02-18T13:00:00.000Z',
+        expires_at: '2026-02-18 13:00:00+00',
       },
     ],
   },

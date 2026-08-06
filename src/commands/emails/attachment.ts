@@ -15,7 +15,7 @@ export const getAttachmentCommand = new Command('attachment')
       context:
         'The download_url is a signed URL that expires in ~1 hour. Download the file directly:\n  resend emails attachment <emailId> <attachmentId> --json | jq -r .download_url | xargs curl -O',
       output:
-        '  {"object":"attachment","id":"<uuid>","filename":"invoice.pdf","size":51200,"content_type":"application/pdf","content_disposition":"attachment","content_id":null,"download_url":"<signed-url>","expires_at":"<iso-date>"}',
+        '  {"object":"attachment","id":"<uuid>","filename":"invoice.pdf","size":51200,"content_type":"application/pdf","content_disposition":"attachment","content_id":null,"download_url":"<signed-url>","expires_at":"<date>"}',
       errorCodes: ['auth_error', 'fetch_error'],
       examples: [
         'resend emails attachment <email-id> <attachment-id>',
