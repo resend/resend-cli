@@ -197,6 +197,13 @@ jobs:
                     dist/resend-windows-x64.zip; do
             [ -s "$f" ] || { echo "Missing or empty: $f"; exit 1; }
           done
+      - name: Generate checksums
+        run: |
+          cd dist
+          sha256sum resend-darwin-arm64.tar.gz resend-darwin-x64.tar.gz \
+                    resend-linux-x64.tar.gz resend-linux-arm64.tar.gz \
+                    resend-windows-x64.zip > checksums.txt
+          cat checksums.txt
       - name: Detect pre-release
         id: meta
         run: |
@@ -241,6 +248,7 @@ jobs:
             dist/resend-linux-x64.tar.gz
             dist/resend-linux-arm64.tar.gz
             dist/resend-windows-x64.zip
+            dist/checksums.txt
   publish-npm:
     if: github.event_name != 'workflow_dispatch'
     needs: release
