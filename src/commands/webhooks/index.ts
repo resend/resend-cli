@@ -15,12 +15,13 @@ export const webhooksCommand = new Command('webhooks')
       context: `Webhooks let you receive real-time event notifications from Resend at an HTTPS endpoint.
 Payloads are signed with Svix headers for verification.
 
-Event categories (17 total):
-  Email:   email.sent, email.delivered, email.delivery_delayed, email.bounced,
-           email.complained, email.opened, email.clicked, email.failed,
-           email.scheduled, email.suppressed, email.received
-  Contact: contact.created, contact.updated, contact.deleted
-  Domain:  domain.created, domain.updated, domain.deleted
+Event categories (19 total):
+  Email:       email.sent, email.delivered, email.delivery_delayed, email.bounced,
+               email.complained, email.opened, email.clicked, email.failed,
+               email.scheduled, email.suppressed, email.received
+  Contact:     contact.created, contact.updated, contact.deleted
+  Domain:      domain.created, domain.updated, domain.deleted
+  Suppression: suppression.added, suppression.removed
 
 Signature verification (Svix):
   Each delivery includes headers: svix-id, svix-timestamp, svix-signature

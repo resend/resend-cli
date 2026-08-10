@@ -20,6 +20,8 @@ export const ALL_WEBHOOK_EVENTS: WebhookEvent[] = [
   'domain.created',
   'domain.updated',
   'domain.deleted',
+  'suppression.added',
+  'suppression.removed',
 ];
 
 export function normalizeEvents(raw: string[]): string[] {
