@@ -20,7 +20,38 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - name: Run install.sh from repo
-        run: bash install.sh
+        run: |
+          bash install.sh 2>&1 | tee install.log
+          grep -q "Checksum verified" install.log || {
+            echo "Expected checksum verification for the latest release"
+            exit 1
+          }
+      - name: Run install.sh pinned to a pre-checksum release (warn path)
+        run: |
+          RESEND_INSTALL="$HOME/.resend-pinned" bash install.sh 2.10.0 2>&1 | tee install-pinned.log
+          grep -q "no published checksums" install-pinned.log || {
+            echo "Expected a warning about missing checksums for v2.10.0"
+            exit 1
+          }
+          "$HOME/.resend-pinned/bin/resend" --version
+      - name: Run install.sh with a mismatched manifest (fail path)
+        run: |
+          sed 's|^checksums_url=.*|checksums_url="https://github.com/resend/resend-cli/releases/download/v2.11.0/checksums.txt"|' install.sh > install-mismatch.sh
+          status=0
+          RESEND_INSTALL="$HOME/.resend-mismatch" bash install-mismatch.sh 2.10.0 > install-mismatch.log 2>&1 || status=$?
+          cat install-mismatch.log
+          if [ "$status" -eq 0 ]; then
+            echo "Expected installer to fail on checksum mismatch"
+            exit 1
+          fi
+          grep -q "Checksum verification failed" install-mismatch.log || {
+            echo "Expected a checksum mismatch error"
+            exit 1
+          }
+          if [ -e "$HOME/.resend-mismatch/bin/resend" ]; then
+            echo "Binary must not be installed on mismatch"
+            exit 1
+          fi
       - name: Verify binary exists
         run: |
           exe="$HOME/.resend/bin/resend"

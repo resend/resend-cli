@@ -130,10 +130,25 @@ if [[ -n $VERSION ]]; then
   Expected: semantic version like 0.1.0 or 1.2.3-beta.1
   Usage:    curl -fsSL https://resend.com/install.sh | bash -s v0.1.0"
   fi
-  url="${REPO}/releases/download/v${VERSION}/resend-${target}.tar.gz"
 else
-  url="${REPO}/releases/latest/download/resend-${target}.tar.gz"
+  # Resolve "latest" to a concrete tag so the archive and its checksums come
+  # from the same release even while a new one is being published.
+  release_url=$(curl --head --fail --location --silent --output /dev/null --write-out '%{url_effective}' "${REPO}/releases/latest") ||
+    error "Failed to resolve the latest release.
+
+  Possible causes:
+    - No internet connection
+    - GitHub is unreachable
+
+  URL: ${REPO}/releases/latest"
+
+  case "$release_url" in
+    */releases/tag/v*) VERSION="${release_url##*/tag/v}" ;;
+    *) error "Could not determine the latest version from: ${release_url}" ;;
+  esac
 fi
+
+url="${REPO}/releases/download/v${VERSION}/resend-${target}.tar.gz"
 
 # ─── Install directory ──────────────────────────────────────────────────────
 
@@ -162,10 +177,59 @@ curl --fail --location --progress-bar --output "$tmpfile" "$url" ||
 
   Possible causes:
     - No internet connection
-    - The version does not exist: ${VERSION:-latest}
+    - The version does not exist: ${VERSION}
     - GitHub is unreachable
 
   URL: ${url}"
+
+# ─── Checksum verification ──────────────────────────────────────────────────
+
+archive_name="resend-${target}.tar.gz"
+checksums_url="${url%/*}/checksums.txt"
+checksums_file="${tmpdir}/checksums.txt"
+
+sha256() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | awk '{print $1}'
+  elif command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 "$1" | awk '{print $1}'
+  fi
+}
+
+http_code=$(curl --location --silent --output "$checksums_file" --write-out '%{http_code}' "$checksums_url" || true)
+
+if [[ $http_code == "404" ]]; then
+  # Releases up to v2.10.0 predate checksums.txt — warn and continue so
+  # pinned old versions stay installable. Any other failure refuses to
+  # install: a fetch error must not silently disable verification.
+  warn "this release has no published checksums — skipping verification"
+elif [[ $http_code != "200" ]]; then
+  error "Failed to download checksums.txt (HTTP ${http_code:-000}).
+
+  Refusing to install without verification — try again.
+
+  URL: ${checksums_url}"
+else
+  expected=$(awk -v name="$archive_name" '$2 == name { print $1 }' "$checksums_file")
+  actual=$(sha256 "$tmpfile")
+  if [[ -z $expected ]]; then
+    error "checksums.txt does not list ${archive_name}.
+
+  The release may be incomplete or tampered with. Please, try again.
+  Report it: https://github.com/resend/resend-cli/issues"
+  elif [[ -z $actual ]]; then
+    warn "sha256sum/shasum not found — skipping checksum verification"
+  elif [[ $actual != "$expected" ]]; then
+    error "Checksum verification failed for ${archive_name}.
+
+  Expected: ${expected}
+  Actual:   ${actual}
+
+  If the problem persists, report it: https://github.com/resend/resend-cli/issues"
+  else
+    info "  Checksum verified"
+  fi
+fi
 
 tar -xzf "$tmpfile" -C "$bin_dir" ||
   error "Failed to extract archive. The download may be corrupted — try again."
