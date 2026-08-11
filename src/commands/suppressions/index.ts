@@ -1,5 +1,4 @@
 import { Command } from '@commander-js/extra-typings';
-import pc from 'picocolors';
 import { buildHelpText } from '../../lib/help-text';
 import { addSuppressionCommand } from './add';
 import { batchSuppressionsCommand } from './batch/index';
