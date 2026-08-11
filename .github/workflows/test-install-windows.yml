@@ -25,7 +25,7 @@ jobs:
       - name: Run installer via Invoke-Expression (simulates irm | iex)
         run: |
           Invoke-Expression (Get-Content -Raw .\install.ps1) *>&1 | Tee-Object install.log
-          if (-not (Select-String -Path install.log -Pattern 'Checksum verified' -Quiet)) {
+          if (-not (Select-String -Path install.log -Pattern 'Checksum verified' -SimpleMatch -Quiet)) {
             Write-Error "Expected checksum verification for the latest release"
             exit 1
           }
@@ -34,11 +34,40 @@ jobs:
           $env:RESEND_VERSION = '2.10.0'
           $env:RESEND_INSTALL = "$env:USERPROFILE\.resend-pinned"
           Invoke-Expression (Get-Content -Raw .\install.ps1) *>&1 | Tee-Object install-pinned.log
-          if (-not (Select-String -Path install-pinned.log -Pattern 'no published checksums' -Quiet)) {
+          if (-not (Select-String -Path install-pinned.log -Pattern 'predates published checksums' -SimpleMatch -Quiet)) {
             Write-Error "Expected a warning about missing checksums for v2.10.0"
             exit 1
           }
           & "$env:USERPROFILE\.resend-pinned\bin\resend.exe" --version
+      - name: Run installer with a missing manifest for a new release (fail path)
+        run: |
+          $original = '($url.Substring(0, $url.LastIndexOf(''/''))) + ''/checksums.txt'''
+          $override = '''https://github.com/resend/resend-cli/releases/download/v2.11.0/nonexistent.txt'''
+          $script = (Get-Content -Raw .\install.ps1).Replace($original, $override)
+          if ($script -notlike '*releases/download/v2.11.0/nonexistent.txt*') {
+            Write-Error "Failed to inject the missing manifest URL -- did install.ps1 change?"
+            exit 1
+          }
+          $env:RESEND_VERSION = '2.11.0'
+          $env:RESEND_INSTALL = "$env:USERPROFILE\.resend-missing"
+          $failed = $false
+          try {
+            Invoke-Expression $script *>&1 | Tee-Object install-missing.log
+          } catch {
+            $failed = $true
+          }
+          if (-not $failed) {
+            Write-Error "Expected installer to fail when checksums are missing for a post-v2.10.0 release"
+            exit 1
+          }
+          if (-not (Select-String -Path install-missing.log -Pattern 'checksums.txt not found' -SimpleMatch -Quiet)) {
+            Write-Error "Expected a missing-checksums error"
+            exit 1
+          }
+          if (Test-Path "$env:USERPROFILE\.resend-missing\bin\resend.exe") {
+            Write-Error "Binary must not be installed when checksums are missing"
+            exit 1
+          }
       - name: Run installer with a mismatched manifest (fail path)
         run: |
           $original = '($url.Substring(0, $url.LastIndexOf(''/''))) + ''/checksums.txt'''
@@ -60,7 +89,7 @@ jobs:
             Write-Error "Expected installer to fail on checksum mismatch"
             exit 1
           }
-          if (-not (Select-String -Path install-mismatch.log -Pattern 'Checksum verification failed' -Quiet)) {
+          if (-not (Select-String -Path install-mismatch.log -Pattern 'Checksum verification failed' -SimpleMatch -Quiet)) {
             Write-Error "Expected a checksum mismatch error"
             exit 1
           }

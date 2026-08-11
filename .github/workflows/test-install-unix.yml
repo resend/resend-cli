@@ -21,19 +21,39 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - name: Run install.sh from repo
         run: |
+          set -o pipefail
           bash install.sh 2>&1 | tee install.log
-          grep -q "Checksum verified" install.log || {
+          grep -qF "Checksum verified" install.log || {
             echo "Expected checksum verification for the latest release"
             exit 1
           }
       - name: Run install.sh pinned to a pre-checksum release (warn path)
         run: |
+          set -o pipefail
           RESEND_INSTALL="$HOME/.resend-pinned" bash install.sh 2.10.0 2>&1 | tee install-pinned.log
-          grep -q "no published checksums" install-pinned.log || {
+          grep -qF "predates published checksums" install-pinned.log || {
             echo "Expected a warning about missing checksums for v2.10.0"
             exit 1
           }
           "$HOME/.resend-pinned/bin/resend" --version
+      - name: Run install.sh with a missing manifest for a new release (fail path)
+        run: |
+          sed 's|^checksums_url=.*|checksums_url="https://github.com/resend/resend-cli/releases/download/v2.11.0/nonexistent.txt"|' install.sh > install-missing.sh
+          status=0
+          RESEND_INSTALL="$HOME/.resend-missing" bash install-missing.sh 2.11.0 > install-missing.log 2>&1 || status=$?
+          cat install-missing.log
+          if [ "$status" -eq 0 ]; then
+            echo "Expected installer to fail when checksums are missing for a post-v2.10.0 release"
+            exit 1
+          fi
+          grep -qF "checksums.txt not found" install-missing.log || {
+            echo "Expected a missing-checksums error"
+            exit 1
+          }
+          if [ -e "$HOME/.resend-missing/bin/resend" ]; then
+            echo "Binary must not be installed when checksums are missing"
+            exit 1
+          fi
       - name: Run install.sh with a mismatched manifest (fail path)
         run: |
           sed 's|^checksums_url=.*|checksums_url="https://github.com/resend/resend-cli/releases/download/v2.11.0/checksums.txt"|' install.sh > install-mismatch.sh
@@ -44,7 +64,7 @@ jobs:
             echo "Expected installer to fail on checksum mismatch"
             exit 1
           fi
-          grep -q "Checksum verification failed" install-mismatch.log || {
+          grep -qF "Checksum verification failed" install-mismatch.log || {
             echo "Expected a checksum mismatch error"
             exit 1
           }
