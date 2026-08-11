@@ -42,9 +42,9 @@ jobs:
       - name: Run installer with a mismatched manifest (fail path)
         run: |
           $original = '($url.Substring(0, $url.LastIndexOf(''/''))) + ''/checksums.txt'''
-          $override = '''https://github.com/resend/resend-cli/releases/latest/download/checksums.txt'''
+          $override = '''https://github.com/resend/resend-cli/releases/download/v2.11.0/checksums.txt'''
           $script = (Get-Content -Raw .\install.ps1).Replace($original, $override)
-          if ($script -notlike '*releases/latest/download/checksums.txt*') {
+          if ($script -notlike '*releases/download/v2.11.0/checksums.txt*') {
             Write-Error "Failed to inject the mismatched manifest URL -- did install.ps1 change?"
             exit 1
           }
