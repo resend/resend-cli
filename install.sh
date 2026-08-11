@@ -167,6 +167,47 @@ curl --fail --location --progress-bar --output "$tmpfile" "$url" ||
 
   URL: ${url}"
 
+# ─── Checksum verification ──────────────────────────────────────────────────
+
+# Releases up to v2.10.0 have no checksums.txt — warn and continue so pinned
+# old versions stay installable. A hash mismatch always fails.
+archive_name="resend-${target}.tar.gz"
+checksums_url="${url%/*}/checksums.txt"
+checksums_file="${tmpdir}/checksums.txt"
+
+sha256() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | awk '{print $1}'
+  elif command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 "$1" | awk '{print $1}'
+  fi
+}
+
+if ! curl --fail --location --silent --output "$checksums_file" "$checksums_url"; then
+  warn "this release has no published checksums — skipping verification"
+else
+  expected=$(awk -v name="$archive_name" '$2 == name { print $1 }' "$checksums_file")
+  actual=$(sha256 "$tmpfile")
+  if [[ -z $expected ]]; then
+    error "checksums.txt does not list ${archive_name}.
+
+  The release may be incomplete or tampered with.
+  Report it: https://github.com/resend/resend-cli/issues"
+  elif [[ -z $actual ]]; then
+    warn "sha256sum/shasum not found — skipping checksum verification"
+  elif [[ $actual != "$expected" ]]; then
+    error "Checksum verification failed for ${archive_name}.
+
+  Expected: ${expected}
+  Actual:   ${actual}
+
+  The download may be corrupted or tampered with — try again.
+  If the problem persists, report it: https://github.com/resend/resend-cli/issues"
+  else
+    info "  Checksum verified"
+  fi
+fi
+
 tar -xzf "$tmpfile" -C "$bin_dir" ||
   error "Failed to extract archive. The download may be corrupted — try again."
 

@@ -24,7 +24,21 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - name: Run installer via Invoke-Expression (simulates irm | iex)
         run: |
-          Invoke-Expression (Get-Content -Raw .\install.ps1)
+          Invoke-Expression (Get-Content -Raw .\install.ps1) *>&1 | Tee-Object install.log
+          if (-not (Select-String -Path install.log -Pattern 'Checksum verified' -Quiet)) {
+            Write-Error "Expected checksum verification for the latest release"
+            exit 1
+          }
+      - name: Run installer pinned to a pre-checksum release (warn path)
+        run: |
+          $env:RESEND_VERSION = '2.10.0'
+          $env:RESEND_INSTALL = "$env:USERPROFILE\.resend-pinned"
+          Invoke-Expression (Get-Content -Raw .\install.ps1) *>&1 | Tee-Object install-pinned.log
+          if (-not (Select-String -Path install-pinned.log -Pattern 'no published checksums' -Quiet)) {
+            Write-Error "Expected a warning about missing checksums for v2.10.0"
+            exit 1
+          }
+          & "$env:USERPROFILE\.resend-pinned\bin\resend.exe" --version
       - name: Verify binary exists
         run: |
           $exe = "$env:USERPROFILE\.resend\bin\resend.exe"

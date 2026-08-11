@@ -85,6 +85,40 @@ try {
     throw "Installation failed."
   }
 
+  # --- Checksum verification ---------------------------------------------
+  # Releases up to v2.10.0 have no checksums.txt -- warn and continue so
+  # pinned old versions stay installable. A hash mismatch always fails.
+  $archiveName  = "resend-$target.zip"
+  $checksumsUrl = ($url.Substring(0, $url.LastIndexOf('/'))) + '/checksums.txt'
+  $tmpChecksums = Join-Path $tmpDir 'checksums.txt'
+  $expected     = $null
+
+  try {
+    Invoke-WebRequest -Uri $checksumsUrl -OutFile $tmpChecksums -UseBasicParsing
+  } catch {
+    Write-Info "This release has no published checksums -- skipping verification"
+  }
+
+  if (Test-Path $tmpChecksums) {
+    foreach ($line in Get-Content $tmpChecksums) {
+      $parts = $line.Trim() -split '\s+'
+      if ($parts.Length -eq 2 -and $parts[1] -eq $archiveName) {
+        $expected = $parts[0].ToLower()
+        break
+      }
+    }
+    if (-not $expected) {
+      Write-Fail "checksums.txt does not list $archiveName.`n`n  The release may be incomplete or tampered with.`n  Report it: https://github.com/resend/resend-cli/issues"
+      throw "Installation failed."
+    }
+    $actual = (Get-FileHash -Path $tmpZip -Algorithm SHA256).Hash.ToLower()
+    if ($actual -ne $expected) {
+      Write-Fail "Checksum verification failed for $archiveName.`n`n  Expected: $expected`n  Actual:   $actual`n`n  The download may be corrupted or tampered with -- try again.`n  If the problem persists, report it: https://github.com/resend/resend-cli/issues"
+      throw "Installation failed."
+    }
+    Write-Info "Checksum verified"
+  }
+
   try {
     Expand-Archive -Path $tmpZip -DestinationPath $binDir -Force
   } catch {

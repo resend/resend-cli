@@ -20,7 +20,20 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - name: Run install.sh from repo
-        run: bash install.sh
+        run: |
+          bash install.sh 2>&1 | tee install.log
+          grep -q "Checksum verified" install.log || {
+            echo "Expected checksum verification for the latest release"
+            exit 1
+          }
+      - name: Run install.sh pinned to a pre-checksum release (warn path)
+        run: |
+          RESEND_INSTALL="$HOME/.resend-pinned" bash install.sh 2.10.0 2>&1 | tee install-pinned.log
+          grep -q "no published checksums" install-pinned.log || {
+            echo "Expected a warning about missing checksums for v2.10.0"
+            exit 1
+          }
+          "$HOME/.resend-pinned/bin/resend" --version
       - name: Verify binary exists
         run: |
           exe="$HOME/.resend/bin/resend"
