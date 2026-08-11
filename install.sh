@@ -215,7 +215,7 @@ else
   if [[ -z $expected ]]; then
     error "checksums.txt does not list ${archive_name}.
 
-  The release may be incomplete or tampered with.
+  The release may be incomplete or tampered with. Please, try again.
   Report it: https://github.com/resend/resend-cli/issues"
   elif [[ -z $actual ]]; then
     warn "sha256sum/shasum not found — skipping checksum verification"
@@ -225,7 +225,6 @@ else
   Expected: ${expected}
   Actual:   ${actual}
 
-  The download may be corrupted or tampered with — try again.
   If the problem persists, report it: https://github.com/resend/resend-cli/issues"
   else
     info "  Checksum verified"

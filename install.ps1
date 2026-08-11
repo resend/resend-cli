@@ -139,12 +139,12 @@ try {
       }
     }
     if (-not $expected) {
-      Write-Fail "checksums.txt does not list $archiveName.`n`n  The release may be incomplete or tampered with.`n  Report it: https://github.com/resend/resend-cli/issues"
+      Write-Fail "checksums.txt does not list $archiveName.`n`n  The release may be incomplete or tampered with. Please, try again.`n  Report it: https://github.com/resend/resend-cli/issues"
       throw "Installation failed."
     }
     $actual = (Get-FileHash -Path $tmpZip -Algorithm SHA256).Hash.ToLower()
     if ($actual -ne $expected) {
-      Write-Fail "Checksum verification failed for $archiveName.`n`n  Expected: $expected`n  Actual:   $actual`n`n  The download may be corrupted or tampered with -- try again.`n  If the problem persists, report it: https://github.com/resend/resend-cli/issues"
+      Write-Fail "Checksum verification failed for $archiveName.`n`n  Expected: $expected`n  Actual:   $actual`n`n  If the problem persists, report it: https://github.com/resend/resend-cli/issues"
       throw "Installation failed."
     }
     Write-Info "Checksum verified"
