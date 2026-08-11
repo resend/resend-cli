@@ -32,6 +32,7 @@ broadcast stops it mid-send — emails already sent are not affected.`,
         sdkCall: (resend) => resend.broadcasts.cancel(id),
         errorCode: 'cancel_error',
         successMsg: 'Broadcast cancelled',
+        permission: 'sending_access',
       },
       globalOpts,
     );
