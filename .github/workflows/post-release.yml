@@ -20,8 +20,9 @@ jobs:
     steps:
       - name: Install via install.sh
         run: |
+          set -o pipefail
           curl -fsSL https://raw.githubusercontent.com/resend/resend-cli/${{ github.event.workflow_run.head_sha }}/install.sh | bash 2>&1 | tee install.log
-          grep -q "Checksum verified" install.log || {
+          grep -qF "Checksum verified" install.log || {
             echo "The released archive was not verified against checksums.txt"
             exit 1
           }
