@@ -7,6 +7,8 @@ export function broadcastStatusIndicator(status: string): string {
       return '○ Draft';
     case 'queued':
       return '⏳ Queued';
+    case 'scheduled':
+      return '📅 Scheduled';
     case 'sent':
       return '✓ Sent';
     default:
@@ -39,6 +41,22 @@ export const sendBroadcastPickerConfig: PickerConfig<{
     hint: `${broadcastStatusIndicator(b.status)}  ${b.id}`,
   }),
   filter: (b) => b.status === 'draft',
+};
+
+export const cancelBroadcastPickerConfig: PickerConfig<{
+  id: string;
+  name: string | null;
+  status: string;
+}> = {
+  resource: 'broadcast',
+  resourcePlural: 'broadcasts',
+  fetchItems: (resend, { limit, after }) =>
+    resend.broadcasts.list({ limit, ...(after && { after }) }),
+  display: (b) => ({
+    label: b.name ?? '(untitled)',
+    hint: `${broadcastStatusIndicator(b.status)}  ${b.id}`,
+  }),
+  filter: (b) => b.status === 'queued' || b.status === 'scheduled',
 };
 
 export function renderBroadcastsTable(
