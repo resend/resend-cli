@@ -9,15 +9,12 @@ import { listSuppressionsCommand } from './list';
 
 export const suppressionsCommand = new Command('suppressions')
   .description(
-    `${pc.cyan('● beta')} · Manage the suppression list — addresses that won't receive your emails (request access to enable)`,
+    "Manage the suppression list — addresses that won't receive your emails",
   )
   .addHelpText(
     'after',
     buildHelpText({
-      context: `Beta: this command requires the suppression list to be enabled on your account.
-Not enabled yet? Reach out to Resend to join the beta. Calls return an API error until then.
-
-Suppressions block future sends to an address. Entries have an origin:
+      context: `Suppressions block future sends to an address. Entries have an origin:
   bounce     added automatically after a hard bounce
   complaint  added automatically after a spam complaint
   manual     added by you via "suppressions add"
