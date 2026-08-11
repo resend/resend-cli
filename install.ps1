@@ -125,6 +125,7 @@ try {
       Write-Info "This release has no published checksums -- skipping verification"
       $checksumsAvailable = $false
     } else {
+      if (-not $status) { $status = '000' }
       Write-Fail "Failed to download checksums.txt (HTTP $status).`n`n  Refusing to install without verification -- try again.`n`n  URL: $checksumsUrl"
       throw "Installation failed."
     }
