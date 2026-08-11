@@ -111,19 +111,23 @@ try {
   $expected     = $null
   $checksumsAvailable = $true
 
+  # Releases up to v2.10.0 predate checksums.txt.
+  $versionHasChecksums = [version](($Version -split '-')[0]) -gt [version]'2.10.0'
+
   try {
     Invoke-WebRequest -Uri $checksumsUrl -OutFile $tmpChecksums -UseBasicParsing
   } catch {
-    # Releases up to v2.10.0 predate checksums.txt (404) -- warn and continue
-    # so pinned old versions stay installable. Any other failure refuses to
-    # install: a fetch error must not silently disable verification.
     $status = $null
     if ($_.Exception.PSObject.Properties['Response'] -and $_.Exception.Response) {
       $status = [int]$_.Exception.Response.StatusCode
     }
-    if ($status -eq 404) {
-      Write-Info "This release has no published checksums -- skipping verification"
+    if ($status -eq 404 -and -not $versionHasChecksums) {
+      # Old versions stay installable, but only they may skip verification.
+      Write-Info "This release predates published checksums -- skipping verification"
       $checksumsAvailable = $false
+    } elseif ($status -eq 404) {
+      Write-Fail "checksums.txt not found for v$Version (HTTP 404).`n`n  Every release after v2.10.0 publishes checksums. The release may be incomplete or tampered with.`n  Report it: https://github.com/resend/resend-cli/issues"
+      throw "Installation failed."
     } else {
       if (-not $status) { $status = '000' }
       Write-Fail "Failed to download checksums.txt (HTTP $status).`n`n  Refusing to install without verification -- try again.`n`n  URL: $checksumsUrl"

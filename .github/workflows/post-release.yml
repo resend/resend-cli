@@ -19,7 +19,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Install via install.sh
-        run: curl -fsSL https://raw.githubusercontent.com/resend/resend-cli/${{ github.event.workflow_run.head_sha }}/install.sh | bash
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/resend/resend-cli/${{ github.event.workflow_run.head_sha }}/install.sh | bash 2>&1 | tee install.log
+          grep -q "Checksum verified" install.log || {
+            echo "The released archive was not verified against checksums.txt"
+            exit 1
+          }
       - name: Verify binary
         run: |
           "$HOME/.resend/bin/resend" --version
@@ -31,7 +36,12 @@ jobs:
     steps:
       - name: Install via install.ps1
         shell: pwsh
-        run: irm https://raw.githubusercontent.com/resend/resend-cli/${{ github.event.workflow_run.head_sha }}/install.ps1 | iex
+        run: |
+          irm https://raw.githubusercontent.com/resend/resend-cli/${{ github.event.workflow_run.head_sha }}/install.ps1 | iex *>&1 | Tee-Object install.log
+          if (-not (Select-String -Path install.log -Pattern 'Checksum verified' -Quiet)) {
+            Write-Error "The released archive was not verified against checksums.txt"
+            exit 1
+          }
       - name: Verify binary
         shell: pwsh
         run: |

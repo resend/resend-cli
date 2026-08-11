@@ -64,6 +64,8 @@ tildify() {
 
 command -v curl >/dev/null 2>&1 || error "curl is required but not found. Install it and try again."
 command -v tar  >/dev/null 2>&1 || error "tar is required but not found. Install it and try again."
+command -v sha256sum >/dev/null 2>&1 || command -v shasum >/dev/null 2>&1 ||
+  error "sha256sum or shasum is required to verify the download but neither was found. Install coreutils and try again."
 
 # ─── OS / Architecture detection ────────────────────────────────────────────
 
@@ -191,18 +193,33 @@ checksums_file="${tmpdir}/checksums.txt"
 sha256() {
   if command -v sha256sum >/dev/null 2>&1; then
     sha256sum "$1" | awk '{print $1}'
-  elif command -v shasum >/dev/null 2>&1; then
+  else
     shasum -a 256 "$1" | awk '{print $1}'
   fi
 }
 
+# Releases up to v2.10.0 predate checksums.txt.
+version_has_checksums() {
+  local base="${VERSION%%-*}" major minor patch
+  IFS=. read -r major minor patch <<< "$base"
+  if (( major > 2 )); then return 0; fi
+  if (( major < 2 )); then return 1; fi
+  if (( minor > 10 )); then return 0; fi
+  if (( minor < 10 )); then return 1; fi
+  (( patch > 0 ))
+}
+
 http_code=$(curl --location --silent --output "$checksums_file" --write-out '%{http_code}' "$checksums_url" || true)
 
-if [[ $http_code == "404" ]]; then
-  # Releases up to v2.10.0 predate checksums.txt — warn and continue so
-  # pinned old versions stay installable. Any other failure refuses to
-  # install: a fetch error must not silently disable verification.
-  warn "this release has no published checksums — skipping verification"
+if [[ $http_code == "404" ]] && ! version_has_checksums; then
+  # Old versions stay installable, but only they may skip verification.
+  warn "this release predates published checksums — skipping verification"
+elif [[ $http_code == "404" ]]; then
+  error "checksums.txt not found for v${VERSION} (HTTP 404).
+
+  Every release after v2.10.0 publishes checksums. The release may be
+  incomplete or tampered with.
+  Report it: https://github.com/resend/resend-cli/issues"
 elif [[ $http_code != "200" ]]; then
   error "Failed to download checksums.txt (HTTP ${http_code:-000}).
 
@@ -217,8 +234,6 @@ else
 
   The release may be incomplete or tampered with. Please, try again.
   Report it: https://github.com/resend/resend-cli/issues"
-  elif [[ -z $actual ]]; then
-    warn "sha256sum/shasum not found — skipping checksum verification"
   elif [[ $actual != "$expected" ]]; then
     error "Checksum verification failed for ${archive_name}.
 
