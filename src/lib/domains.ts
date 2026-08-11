@@ -55,7 +55,7 @@ export async function promptForFromAddress(domains: string[]): Promise<string> {
       message: 'From address',
       placeholder: `e.g. you@${domain}`,
       validate: (v) =>
-        !v || !v.includes('@') ? 'Enter a valid email address' : undefined,
+        !v?.includes('@') ? 'Enter a valid email address' : undefined,
     });
     if (p.isCancel(custom)) {
       cancelAndExit('Send cancelled.');

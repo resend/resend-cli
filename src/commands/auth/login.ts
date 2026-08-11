@@ -391,7 +391,7 @@ export const loginCommand = new Command('login')
       apiKey = result.trim();
     }
 
-    if (!apiKey || !apiKey.startsWith('re_')) {
+    if (!apiKey?.startsWith('re_')) {
       outputError(
         {
           message: 'Invalid API key format. Key must start with re_',
