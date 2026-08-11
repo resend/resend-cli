@@ -73,6 +73,16 @@ Send a draft broadcast.
 
 ---
 
+## broadcasts cancel
+
+Cancel a queued or scheduled broadcast without removing it.
+
+**Argument:** `<id>` — Broadcast ID
+
+Cancelling a queued broadcast stops it mid-send — emails already sent are not affected. Cancelling a scheduled broadcast reverts it to draft. Draft and sent broadcasts cannot be cancelled.
+
+---
+
 ## broadcasts delete
 
 **Argument:** `<id>` — Broadcast ID
