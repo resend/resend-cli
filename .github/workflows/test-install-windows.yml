@@ -39,6 +39,35 @@ jobs:
             exit 1
           }
           & "$env:USERPROFILE\.resend-pinned\bin\resend.exe" --version
+      - name: Run installer with a mismatched manifest (fail path)
+        run: |
+          $original = '($url.Substring(0, $url.LastIndexOf(''/''))) + ''/checksums.txt'''
+          $override = '''https://github.com/resend/resend-cli/releases/latest/download/checksums.txt'''
+          $script = (Get-Content -Raw .\install.ps1).Replace($original, $override)
+          if ($script -notlike '*releases/latest/download/checksums.txt*') {
+            Write-Error "Failed to inject the mismatched manifest URL -- did install.ps1 change?"
+            exit 1
+          }
+          $env:RESEND_VERSION = '2.10.0'
+          $env:RESEND_INSTALL = "$env:USERPROFILE\.resend-mismatch"
+          $failed = $false
+          try {
+            Invoke-Expression $script *>&1 | Tee-Object install-mismatch.log
+          } catch {
+            $failed = $true
+          }
+          if (-not $failed) {
+            Write-Error "Expected installer to fail on checksum mismatch"
+            exit 1
+          }
+          if (-not (Select-String -Path install-mismatch.log -Pattern 'Checksum verification failed' -Quiet)) {
+            Write-Error "Expected a checksum mismatch error"
+            exit 1
+          }
+          if (Test-Path "$env:USERPROFILE\.resend-mismatch\bin\resend.exe") {
+            Write-Error "Binary must not be installed on mismatch"
+            exit 1
+          }
       - name: Verify binary exists
         run: |
           $exe = "$env:USERPROFILE\.resend\bin\resend.exe"

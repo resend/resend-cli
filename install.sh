@@ -130,10 +130,25 @@ if [[ -n $VERSION ]]; then
   Expected: semantic version like 0.1.0 or 1.2.3-beta.1
   Usage:    curl -fsSL https://resend.com/install.sh | bash -s v0.1.0"
   fi
-  url="${REPO}/releases/download/v${VERSION}/resend-${target}.tar.gz"
 else
-  url="${REPO}/releases/latest/download/resend-${target}.tar.gz"
+  # Resolve "latest" to a concrete tag so the archive and its checksums come
+  # from the same release even while a new one is being published.
+  release_url=$(curl --head --fail --location --silent --output /dev/null --write-out '%{url_effective}' "${REPO}/releases/latest") ||
+    error "Failed to resolve the latest release.
+
+  Possible causes:
+    - No internet connection
+    - GitHub is unreachable
+
+  URL: ${REPO}/releases/latest"
+
+  case "$release_url" in
+    */releases/tag/v*) VERSION="${release_url##*/tag/v}" ;;
+    *) error "Could not determine the latest version from: ${release_url}" ;;
+  esac
 fi
+
+url="${REPO}/releases/download/v${VERSION}/resend-${target}.tar.gz"
 
 # ─── Install directory ──────────────────────────────────────────────────────
 
@@ -162,15 +177,13 @@ curl --fail --location --progress-bar --output "$tmpfile" "$url" ||
 
   Possible causes:
     - No internet connection
-    - The version does not exist: ${VERSION:-latest}
+    - The version does not exist: ${VERSION}
     - GitHub is unreachable
 
   URL: ${url}"
 
 # ─── Checksum verification ──────────────────────────────────────────────────
 
-# Releases up to v2.10.0 have no checksums.txt — warn and continue so pinned
-# old versions stay installable. A hash mismatch always fails.
 archive_name="resend-${target}.tar.gz"
 checksums_url="${url%/*}/checksums.txt"
 checksums_file="${tmpdir}/checksums.txt"
@@ -183,8 +196,19 @@ sha256() {
   fi
 }
 
-if ! curl --fail --location --silent --output "$checksums_file" "$checksums_url"; then
+http_code=$(curl --location --silent --output "$checksums_file" --write-out '%{http_code}' "$checksums_url" || true)
+
+if [[ $http_code == "404" ]]; then
+  # Releases up to v2.10.0 predate checksums.txt — warn and continue so
+  # pinned old versions stay installable. Any other failure refuses to
+  # install: a fetch error must not silently disable verification.
   warn "this release has no published checksums — skipping verification"
+elif [[ $http_code != "200" ]]; then
+  error "Failed to download checksums.txt (HTTP ${http_code:-000}).
+
+  Refusing to install without verification — try again.
+
+  URL: ${checksums_url}"
 else
   expected=$(awk -v name="$archive_name" '$2 == name { print $1 }' "$checksums_file")
   actual=$(sha256 "$tmpfile")
