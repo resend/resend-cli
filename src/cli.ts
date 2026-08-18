@@ -7,6 +7,7 @@ import { loginCommand } from './commands/auth/login';
 import { logoutCommand } from './commands/auth/logout';
 import { automationsCommand } from './commands/automations/index';
 import { broadcastsCommand } from './commands/broadcasts/index';
+import { careersCommand } from './commands/careers/index';
 import { listCommandsCommand } from './commands/commands';
 import { completionCommand } from './commands/completion';
 import { contactPropertiesCommand } from './commands/contact-properties/index';
@@ -141,6 +142,7 @@ ${pc.gray('Examples:')}
   .addCommand(topicsCommand)
   .addCommand(domainsCommand)
   .addCommand(logsCommand)
+  .addCommand(careersCommand)
   // Visible pre-GA with a [beta] marker in its description — the API gates usage
   // per account, so non-enabled users see the command but get an API error until enrolled.
   .addCommand(suppressionsCommand)

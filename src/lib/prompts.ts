@@ -3,7 +3,11 @@ import type { Resend } from 'resend';
 import { getCancelExitCode } from './cli-exit';
 import type { GlobalOpts } from './client';
 import { requireClient } from './client';
-import { renameProfileAsync, validateProfileName } from './config';
+import {
+  type ApiKeyPermission,
+  renameProfileAsync,
+  validateProfileName,
+} from './config';
 import { errorMessage, outputError } from './output';
 import { createSpinner } from './spinner';
 import { isInteractive } from './tty';
@@ -247,6 +251,7 @@ export type PickerConfig<T extends { id: string }> = {
   }>;
   display: (item: T) => { label: string; hint?: string };
   filter?: (item: T) => boolean;
+  permission?: ApiKeyPermission;
 };
 
 export type PickedItem = { readonly id: string; readonly label: string };
@@ -284,7 +289,10 @@ export async function pickItem<T extends { id: string }>(
     );
   }
 
-  const resend = await requireClient(globalOpts);
+  const resend = await requireClient(
+    globalOpts,
+    config.permission ? { permission: config.permission } : undefined,
+  );
   const allFetched: T[] = [];
 
   for (;;) {
