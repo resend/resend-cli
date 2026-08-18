@@ -31,7 +31,7 @@ export const applyCareerCommand = new Command('apply')
   .option('--resume <path>', 'Path to your resume file (PDF, max 10MB)')
   .option(
     '--field <path=value...>',
-    'Answer a job-specific question by field path (repeatable: --field <path>=<answer>). Field paths come from `resend careers get <id>`',
+    'Answer a job-specific question by field path (repeatable: --field <path>=<answer>). Field paths are shown on the job posting page at resend.com/careers',
   )
   .option('--yes', 'Skip the confirmation prompt in interactive mode')
   .addHelpText(
@@ -42,7 +42,8 @@ question in a guided form. Flags pre-fill their matching questions.
 
 Non-interactive: --name, --email, and --resume are required, plus the job posting
 ID argument. Answer job-specific questions with --field <path>=<value>, where
-<path> comes from \`resend careers get <id>\` (custom questions use UUID paths).
+<path> is shown on the job posting page at resend.com/careers (custom questions
+use UUID paths).
 
 The resume is uploaded as multipart form data (max 10MB, PDF recommended).`,
       output: `  {"success":true}`,

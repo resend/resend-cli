@@ -19,22 +19,6 @@ No flags.
 
 ---
 
-## careers get
-
-Get a job posting and its application form fields.
-
-**Argument:** `<id>` — Job posting ID (required in non-interactive mode; interactive mode shows a picker)
-
-**Output:** Job posting object with a `fields[]` array describing the application form:
-
-```json
-{"object":"job_posting","id":"<id>","title":"<title>","compensation":null,"fields":[{"path":"name","title":"Name","type":"String","required":true},{"path":"<uuid>","title":"Why do you want to join Resend?","type":"LongText","required":true}]}
-```
-
-`fields[].path` is the value to use with `careers apply --field`. System fields use the short paths `name`, `email`, and `resume`; job-specific questions use UUID paths. Fields may also carry `description` and `selectable_values` (`[{label, value}]`).
-
----
-
 ## careers apply
 
 Submit a job application as multipart form data.
@@ -46,7 +30,7 @@ Submit a job application as multipart form data.
 | `--name <name>` | string | Yes (non-interactive) | Applicant's full name |
 | `--email <email>` | string | Yes (non-interactive) | Applicant's email address |
 | `--resume <path>` | string | Yes (non-interactive) | Path to a local resume file (PDF recommended, max 10MB) |
-| `--field <path=value>` | string | No | Answer to a job-specific question; repeatable. Get paths from `careers get <id>` |
+| `--field <path=value>` | string | No | Answer to a job-specific question; repeatable. Paths are shown on the job posting page at resend.com/careers, or via `GET /careers/<id>` (system fields use `name`/`email`/`resume`; job-specific questions use UUID paths) |
 | `--yes` | boolean | No | Skip the confirmation prompt (interactive mode only) |
 
 Interactive mode walks through every question in the job's application form; flags pre-fill their matching questions. Non-interactive mode submits exactly what the flags provide — required job-specific questions missing from `--field` are rejected by the API with a `validation_error`.

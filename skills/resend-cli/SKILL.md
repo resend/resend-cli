@@ -145,7 +145,7 @@ Auth resolves: `--api-key` flag > `RESEND_API_KEY` env > config file (`resend lo
 | `emails receiving` | list, get, attachments, forward, listen |
 | `domains` | create, verify, get, claim, update, delete, list |
 | `logs` | list, get, open |
-| `careers` | list, get, apply — browse open positions at Resend and apply |
+| `careers` | list, apply — browse open positions at Resend and apply |
 | `suppressions` _(beta)_ | list, add, get, delete, batch — requires account enrollment |
 | `api-keys` | create, list, delete |
 | `automations` | create, get, list, update, delete, stop, open, runs |

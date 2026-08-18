@@ -64,17 +64,3 @@ export function renderCareersTable(jobs: CareerSummary[]): string {
     '(no open positions)',
   );
 }
-
-export function renderCareerFieldsTable(fields: CareerField[]): string {
-  const rows = fields.map((field) => [
-    field.title,
-    field.type,
-    field.required ? 'yes' : 'no',
-    field.path,
-  ]);
-  return renderTable(
-    ['Question', 'Type', 'Required', 'Field path'],
-    rows,
-    '(no application fields)',
-  );
-}
