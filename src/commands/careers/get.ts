@@ -20,7 +20,7 @@ the job-specific question paths accepted by \`resend careers apply --field\`.
 
 Interactive mode without an ID shows a picker of open positions.`,
       output: `  {"object":"job_posting","id":"<id>","title":"<title>","fields":[{"path":"<path>","title":"<question>","type":"<type>","required":true}]}`,
-      errorCodes: ['auth_error', 'missing_id', 'fetch_error'],
+      errorCodes: ['auth_error', 'missing_id', 'list_error', 'fetch_error'],
       examples: [
         'resend careers get',
         'resend careers get 053bde8f-294e-4cce-9d62-2301282120a2 --json',

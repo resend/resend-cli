@@ -40,6 +40,7 @@ export type CareersListResponse = {
 export const careerPickerConfig: PickerConfig<CareerSummary> = {
   resource: 'job posting',
   resourcePlural: 'job postings',
+  permission: 'sending_access',
   fetchItems: async (resend) => {
     const { data, error } = await resend.get<CareersListResponse>('/careers');
     return {

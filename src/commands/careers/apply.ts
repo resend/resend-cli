@@ -49,6 +49,7 @@ The resume is uploaded as multipart form data (max 10MB, PDF recommended).`,
       errorCodes: [
         'auth_error',
         'missing_id',
+        'list_error',
         'missing_name',
         'missing_email',
         'missing_resume',
@@ -104,8 +105,15 @@ The resume is uploaded as multipart form data (max 10MB, PDF recommended).`,
       );
 
       for (const field of job.fields) {
-        if (field.type === 'File' || field.path === 'resume') {
+        if (field.path === 'resume') {
           resumePath = resumePath ?? (await promptResumePath(field.title));
+          continue;
+        }
+        // The apply endpoint only accepts a single file, at the resume field.
+        if (field.type === 'File') {
+          p.log.warn(
+            `Skipping "${field.title}": only the resume file can be uploaded here. Apply on the careers page to include it.`,
+          );
           continue;
         }
         if (answers.has(field.path)) {
