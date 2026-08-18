@@ -40,7 +40,6 @@ Interactive mode walks through every question in the job's application form; fla
 **Notes:**
 - Applying twice with the same email fails with `apply_error` ("An application has already been submitted...").
 - The resume is required by the API for every position.
-- Applications are attributed by channel in the ATS: CLI submissions carry `utm_source=resend-cli`, raw API submissions carry `utm_source=resend-api` (derived server-side from the `User-Agent`).
 
 **Example (non-interactive):**
 ```bash
