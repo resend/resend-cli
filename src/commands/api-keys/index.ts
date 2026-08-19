@@ -3,6 +3,7 @@ import { buildHelpText } from '../../lib/help-text';
 import { createApiKeyCommand } from './create';
 import { deleteApiKeyCommand } from './delete';
 import { listApiKeysCommand } from './list';
+import { updateApiKeyCommand } from './update';
 
 export const apiKeysCommand = new Command('api-keys')
   .description('Manage API keys for authentication')
@@ -17,10 +18,12 @@ export const apiKeysCommand = new Command('api-keys')
         'resend api-keys list',
         'resend api-keys create --name "Production"',
         'resend api-keys create --name "CI Token" --permission sending_access --domain-id <domain-id>',
+        'resend api-keys update <id> --name "Production v2"',
         'resend api-keys delete <id> --yes',
       ],
     }),
   )
   .addCommand(createApiKeyCommand)
   .addCommand(listApiKeysCommand, { isDefault: true })
+  .addCommand(updateApiKeyCommand)
   .addCommand(deleteApiKeyCommand);
