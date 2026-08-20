@@ -1,11 +1,9 @@
-import * as p from '@clack/prompts';
 import { Command } from '@commander-js/extra-typings';
 import { runWrite } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
-import { cancelAndExit, pickId } from '../../lib/prompts';
-import { isInteractive } from '../../lib/tty';
+import { pickId, requireText } from '../../lib/prompts';
 import { apiKeyPickerConfig } from './utils';
 
 export const updateApiKeyCommand = new Command('update')
@@ -28,17 +26,9 @@ export const updateApiKeyCommand = new Command('update')
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const id = await pickId(idArg, apiKeyPickerConfig, globalOpts);
 
-    let name = opts.name;
-
-    if (name === undefined) {
-      if (!isInteractive() || globalOpts.json) {
-        outputError(
-          { message: 'Missing --name flag.', code: 'missing_name' },
-          { json: globalOpts.json },
-        );
-      }
-
-      const nameResult = await p.text({
+    const name = await requireText(
+      opts.name,
+      {
         message: 'New key name',
         placeholder: 'e.g. Production v2',
         validate: (v) => {
@@ -50,12 +40,12 @@ export const updateApiKeyCommand = new Command('update')
           }
           return undefined;
         },
-      });
-      if (p.isCancel(nameResult)) {
-        cancelAndExit('Cancelled.');
-      }
-      name = nameResult;
-    } else if (!name) {
+      },
+      { message: 'Missing --name flag.', code: 'missing_name' },
+      globalOpts,
+    );
+
+    if (!name) {
       outputError(
         { message: 'Name is required.', code: 'missing_name' },
         { json: globalOpts.json },
