@@ -9,7 +9,7 @@ import { apiKeyPickerConfig } from './utils';
 export const updateApiKeyCommand = new Command('update')
   .description('Rename an API key')
   .argument('[id]', 'API key ID')
-  .option('--name <name>', 'New API key name (max 50 characters)')
+  .option('--name <name>', 'New API key name')
   .addHelpText(
     'after',
     buildHelpText({
@@ -34,9 +34,6 @@ export const updateApiKeyCommand = new Command('update')
         validate: (v) => {
           if (!v) {
             return 'Name is required';
-          }
-          if (v.length > 50) {
-            return 'Name must be 50 characters or less';
           }
           return undefined;
         },

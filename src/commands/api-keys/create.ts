@@ -13,7 +13,7 @@ export const createApiKeyCommand = new Command('create')
   .description(
     'Create a new API key and display the token (shown once — store it immediately)',
   )
-  .option('--name <name>', 'API key name (max 50 characters)')
+  .option('--name <name>', 'API key name')
   .addOption(
     new Option('--permission <permission>', 'Permission level').choices([
       'full_access',
@@ -68,9 +68,6 @@ Permissions:
         validate: (v) => {
           if (!v) {
             return 'Name is required';
-          }
-          if (v.length > 50) {
-            return 'Name must be 50 characters or less';
           }
           return undefined;
         },

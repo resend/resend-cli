@@ -16,7 +16,7 @@ List all API keys (IDs, names, `created_at`, and `last_used_at` — tokens never
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
-| `--name <name>` | string | Yes (non-interactive) | Key name (max 50 chars) |
+| `--name <name>` | string | Yes (non-interactive) | Key name |
 | `--permission <perm>` | string | No | `full_access` (default) \| `sending_access` |
 | `--domain-id <id>` | string | No | Restrict `sending_access` to one domain |
 
@@ -32,7 +32,7 @@ Rename an API key.
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
-| `--name <name>` | string | Yes (non-interactive) | New key name (max 50 chars) |
+| `--name <name>` | string | Yes (non-interactive) | New key name |
 
 **Output:** `{"object":"api_key","id":"..."}`
 
