@@ -79,6 +79,17 @@ describe('emails share command', () => {
     });
   });
 
+  it('passes an empty --expires-in through to the SDK instead of dropping it', async () => {
+    spies = setupOutputSpies();
+
+    const { shareCommand } = await import('../../../src/commands/emails/share');
+    await shareCommand.parseAsync(['test-email-id', '--expires-in', ''], {
+      from: 'user',
+    });
+
+    expect(mockShare).toHaveBeenCalledWith('test-email-id', { expiresIn: '' });
+  });
+
   it('outputs JSON object in non-interactive mode', async () => {
     spies = setupOutputSpies();
 

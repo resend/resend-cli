@@ -34,7 +34,9 @@ export const shareCommand = new Command('share')
         sdkCall: (resend) =>
           resend.emails.share(
             id,
-            opts.expiresIn ? { expiresIn: opts.expiresIn } : undefined,
+            opts.expiresIn !== undefined
+              ? { expiresIn: opts.expiresIn }
+              : undefined,
           ),
         onInteractive: (d) => {
           console.log(`  ${pc.gray('ID:')}   ${d.id}`);
