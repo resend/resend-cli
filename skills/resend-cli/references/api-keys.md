@@ -26,7 +26,7 @@ List all API keys (IDs, names, `created_at`, and `last_used_at` — tokens never
 
 ## api-keys update
 
-Rename an API key. `permission` and `domain_id` cannot be changed after creation — delete and recreate the key to change those.
+Rename an API key.
 
 **Argument:** `[id]` — API key ID
 

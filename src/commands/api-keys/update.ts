@@ -15,10 +15,7 @@ export const updateApiKeyCommand = new Command('update')
   .addHelpText(
     'after',
     buildHelpText({
-      context: `Non-interactive: --name is required (no prompts when stdin/stdout is not a TTY).
-
-Note: permission and domain restrictions cannot be changed after creation.
-To change those, delete the key and create a new one.`,
+      context: `Non-interactive: --name is required (no prompts when stdin/stdout is not a TTY).`,
       output: `  {"object":"api_key","id":"<id>"}`,
       errorCodes: ['auth_error', 'missing_name', 'update_error'],
       examples: [
