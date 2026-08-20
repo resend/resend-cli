@@ -106,6 +106,41 @@ describe('api-keys update command', () => {
     expect(output).toContain('missing_name');
   });
 
+  it('errors with missing_name when --name is an empty string, even in TTY', async () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const { Command } = await import('@commander-js/extra-typings');
+    const { updateApiKeyCommand } = await import(
+      '../../../src/commands/api-keys/update'
+    );
+    const program = new Command()
+      .option('--profile <name>')
+      .option('--team <name>')
+      .option('--json')
+      .option('--api-key <key>')
+      .option('-q, --quiet')
+      .addCommand(updateApiKeyCommand);
+    commandRef = updateApiKeyCommand as unknown as { parent: unknown };
+
+    await expectExit1(() =>
+      program.parseAsync(['update', 'test-key-id', '--name', '', '--json'], {
+        from: 'user',
+      }),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('missing_name');
+  });
+
   it('errors with missing_name when --json is set even in TTY', async () => {
     Object.defineProperty(process.stdin, 'isTTY', {
       value: true,

@@ -30,7 +30,7 @@ export const updateApiKeyCommand = new Command('update')
 
     let name = opts.name;
 
-    if (!name) {
+    if (name === undefined) {
       if (!isInteractive() || globalOpts.json) {
         outputError(
           { message: 'Missing --name flag.', code: 'missing_name' },
@@ -55,6 +55,11 @@ export const updateApiKeyCommand = new Command('update')
         cancelAndExit('Cancelled.');
       }
       name = nameResult;
+    } else if (!name) {
+      outputError(
+        { message: 'Name is required.', code: 'missing_name' },
+        { json: globalOpts.json },
+      );
     }
 
     await runWrite(
