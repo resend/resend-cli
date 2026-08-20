@@ -54,6 +54,18 @@ resend automations update <id> --status enabled
 
 ---
 
+## automations duplicate
+
+```
+resend automations duplicate <id>
+```
+
+Creates a copy of an existing automation, including its steps and connections.
+
+Returns `{"object":"automation","id":"<new-automation-id>"}`.
+
+---
+
 ## automations stop
 
 ```
