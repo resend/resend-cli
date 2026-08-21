@@ -43,6 +43,25 @@ Returns full object with html/text, from, subject, status (`draft`|`queued`|`sen
 
 ---
 
+## broadcasts recipients
+
+**Argument:** `[id]` — Broadcast ID
+
+| Flag | Type | Required | Description |
+|------|------|----------|-------------|
+| `--type <type>` | string | Yes | Event to filter by: `sent`, `delivered`, `opened`, `clicked`, `bounced`, `complained`, `unsubscribed`, `suppressed` |
+| `--email <email>` | string | No | Substring filter on recipient email |
+| `--bounce-type <type>` | string | No | Bounce classification: `permanent`, `transient`, `undetermined` — only meaningful when `--type bounced` |
+| `--limit <n>` | number | No | Max results (1-100, default 20) |
+| `--after <cursor>` | string | No | Forward pagination |
+| `--before <cursor>` | string | No | Backward pagination |
+
+Returns `id` (opaque pagination cursor), `contact_id` (nullable), `email`, and, depending on `--type`: `count` (`opened`/`clicked`), `bounce_type` (`bounced`), `clicked_links` (`clicked`).
+
+**Note:** Responses are cached for up to 15 minutes, so requesting the same page again may return slightly stale data within that window.
+
+---
+
 ## broadcasts send
 
 Send a draft broadcast.
