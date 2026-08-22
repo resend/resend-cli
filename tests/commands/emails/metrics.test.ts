@@ -8,6 +8,10 @@ import {
   vi,
 } from 'vitest';
 import {
+  renderBreakdownTable,
+  renderTotalsTable,
+} from '../../../src/commands/emails/metrics';
+import {
   captureTestEnv,
   expectExit1,
   mockExitThrow,
@@ -152,5 +156,62 @@ describe('emails metrics command', () => {
     );
 
     expect(mockMetrics).not.toHaveBeenCalled();
+  });
+
+  it('rejects an empty --email-id combined with --broadcast-id, without calling the SDK', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
+    exitSpy = mockExitThrow();
+
+    const { metricsCommand } = await import(
+      '../../../src/commands/emails/metrics'
+    );
+    await expectExit1(() =>
+      metricsCommand.parseAsync(['--email-id', '', '--broadcast-id', 'b1'], {
+        from: 'user',
+      }),
+    );
+
+    expect(mockMetrics).not.toHaveBeenCalled();
+  });
+});
+
+describe('renderTotalsTable', () => {
+  it('renders a row per metric', () => {
+    const output = renderTotalsTable({ sent: 100, delivered: 95 });
+    expect(output).toContain('sent');
+    expect(output).toContain('100');
+    expect(output).toContain('delivered');
+    expect(output).toContain('95');
+  });
+
+  it('returns the empty message when there are no metrics', () => {
+    expect(renderTotalsTable({})).toBe('(no metrics)');
+  });
+});
+
+describe('renderBreakdownTable', () => {
+  it('renders a row per breakdown entry, dimension columns before metrics', () => {
+    const output = renderBreakdownTable(
+      [
+        {
+          broadcast_id: 'b1',
+          broadcast_name: 'July Newsletter',
+          sent: 100,
+          delivered: 95,
+        },
+      ],
+      ['sent', 'delivered'],
+    );
+    expect(output).toContain('July Newsletter');
+    expect(output).toContain('100');
+    expect(output).toContain('95');
+  });
+
+  it('returns the empty message when there are no breakdown rows', () => {
+    expect(renderBreakdownTable([], ['sent'])).toBe('(no breakdown rows)');
   });
 });
