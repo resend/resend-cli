@@ -16,7 +16,7 @@ function parseList(value: string | undefined): string[] | undefined {
     .filter((v) => v.length > 0);
 }
 
-export function renderTotalsTable(totals: EmailMetricsTotals): string {
+function renderTotalsTable(totals: EmailMetricsTotals): string {
   const rows = Object.entries(totals).map(([metric, value]) => [
     metric,
     String(value),
@@ -24,7 +24,7 @@ export function renderTotalsTable(totals: EmailMetricsTotals): string {
   return renderTable(['Metric', 'Value'], rows, '(no metrics)');
 }
 
-export function renderBreakdownTable(
+function renderBreakdownTable(
   data: EmailMetricsDataRow[],
   metrics: string[],
 ): string {
