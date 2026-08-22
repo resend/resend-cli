@@ -16,7 +16,7 @@ function parseList(value: string | undefined): string[] | undefined {
     .filter((v) => v.length > 0);
 }
 
-function renderTotalsTable(totals: EmailMetricsTotals): string {
+export function renderTotalsTable(totals: EmailMetricsTotals): string {
   const rows = Object.entries(totals).map(([metric, value]) => [
     metric,
     String(value),
@@ -24,7 +24,7 @@ function renderTotalsTable(totals: EmailMetricsTotals): string {
   return renderTable(['Metric', 'Value'], rows, '(no metrics)');
 }
 
-function renderBreakdownTable(
+export function renderBreakdownTable(
   data: EmailMetricsDataRow[],
   metrics: string[],
 ): string {
@@ -92,10 +92,10 @@ export const metricsCommand = new Command('metrics')
     const broadcastId = parseList(opts.broadcastId);
 
     const hasEmail =
-      (dimensions?.includes('email') ?? false) || (emailId?.length ?? 0) > 0;
+      (dimensions?.includes('email') ?? false) || opts.emailId !== undefined;
     const hasBroadcast =
       (dimensions?.includes('broadcast') ?? false) ||
-      (broadcastId?.length ?? 0) > 0;
+      opts.broadcastId !== undefined;
 
     if (hasEmail && hasBroadcast) {
       outputError(
