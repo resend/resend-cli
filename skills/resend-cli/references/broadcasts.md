@@ -100,3 +100,17 @@ Cancelling a queued broadcast stops it mid-send — emails already sent are not 
 Open a broadcast (or the broadcasts list) in the Resend dashboard.
 
 **Argument:** `[id]` — Broadcast ID (omit to open the list)
+
+---
+
+## broadcasts clicked-links
+
+List the links clicked in a broadcast, ranked by total clicks.
+
+**Argument:** `[id]` — Broadcast ID
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--limit <n>` | number | 10 | Max results (1-100) |
+| `--after <cursor>` | string | — | Forward pagination |
+| `--before <cursor>` | string | — | Backward pagination |

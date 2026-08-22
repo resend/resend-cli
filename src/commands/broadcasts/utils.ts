@@ -77,3 +77,22 @@ export function renderBroadcastsTable(
     '(no broadcasts)',
   );
 }
+
+export function renderBroadcastClickedLinksTable(
+  links: Array<{
+    url: string;
+    clicks: number;
+    unique_clicks: number;
+  }>,
+): string {
+  const rows = links.map((l) => [
+    l.url,
+    String(l.clicks),
+    String(l.unique_clicks),
+  ]);
+  return renderTable(
+    ['URL', 'Clicks', 'Unique Clicks'],
+    rows,
+    '(no clicked links)',
+  );
+}
