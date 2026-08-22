@@ -6,6 +6,7 @@ import { batchCommand } from './batch';
 import { cancelCommand } from './cancel';
 import { getEmailCommand } from './get';
 import { listEmailsCommand } from './list';
+import { metricsCommand } from './metrics';
 import { receivingCommand } from './receiving/index';
 import { sendCommand } from './send';
 import { shareCommand } from './share';
@@ -22,6 +23,7 @@ export const emailsCommand = new Command('emails')
         'resend emails batch --file ./emails.json',
         'resend emails cancel <email-id>',
         'resend emails share <email-id>',
+        'resend emails metrics',
         'resend emails attachments <email-id>',
         'resend emails attachment <email-id> <attachment-id>',
         'resend emails receiving list',
@@ -36,6 +38,7 @@ export const emailsCommand = new Command('emails')
   .addCommand(cancelCommand)
   .addCommand(updateCommand)
   .addCommand(shareCommand)
+  .addCommand(metricsCommand)
   .addCommand(listAttachmentsCommand)
   .addCommand(getAttachmentCommand)
   .addCommand(receivingCommand);
