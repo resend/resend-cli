@@ -42,11 +42,10 @@ function renderCards(
 ): string {
   const labelWidth = Math.max(...headers.map((h) => h.length));
   const sepWidth = Math.max(20, Math.min(termWidth, 60));
+  const sep = BOX.h.repeat(sepWidth);
 
   return rows
-    .map((row, idx) => {
-      const label = String(idx + 1);
-      const sep = `${BOX.h}${BOX.h} ${label} ${BOX.h.repeat(Math.max(0, sepWidth - label.length - 4))}`;
+    .map((row) => {
       const fields = headers.map(
         (h, i) => `  ${h.padEnd(labelWidth)}  ${row[i]}`,
       );
