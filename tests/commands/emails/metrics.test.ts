@@ -172,5 +172,7 @@ describe('emails metrics command', () => {
     );
 
     expect(mockMetrics).not.toHaveBeenCalled();
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_options');
   });
 });
