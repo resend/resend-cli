@@ -139,7 +139,7 @@ describe('renderTable card layout fallback', () => {
     expect(cards[1]).toContain('widget-b');
   });
 
-  it('cards use box-drawing separator with row number', () => {
+  it('cards separate rows with a plain box-drawing separator, no row number', () => {
     setTerminalWidth(20);
     const output = renderTable(
       ['Name', 'ID'],
@@ -148,8 +148,15 @@ describe('renderTable card layout fallback', () => {
         ['test2', 'xyz-789-uvw-456-rst-123-opq-000-aaa'],
       ],
     );
-    expect(output).toContain('── 1 ─');
-    expect(output).toContain('── 2 ─');
+    // Separator lines are the only ones with no spaces (field lines are
+    // always "  Header  value").
+    const separators = output
+      .split('\n')
+      .filter((line) => line.length > 0 && !line.includes(' '));
+    expect(separators).toHaveLength(2);
+    for (const separator of separators) {
+      expect(separator).not.toMatch(/\d/);
+    }
   });
 
   it('wide table with many columns switches to cards', () => {
