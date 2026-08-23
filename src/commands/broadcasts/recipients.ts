@@ -10,10 +10,6 @@ import {
 import { pickId, requireSelect } from '../../lib/prompts';
 import { broadcastPickerConfig, renderBroadcastRecipientsTable } from './utils';
 
-function shellQuote(value: string): string {
-  return `'${value.replace(/'/g, `'\\''`)}'`;
-}
-
 const EVENT_TYPES = [
   'sent',
   'delivered',
@@ -114,7 +110,7 @@ again may return slightly stale data within that window.
             profile: globalOpts.profile,
             extraFlags: [
               `--type ${type}`,
-              opts.email && `--email ${shellQuote(opts.email)}`,
+              opts.email && `--email ${opts.email}`,
               opts.bounceType && `--bounce-type ${opts.bounceType}`,
             ]
               .filter(Boolean)
