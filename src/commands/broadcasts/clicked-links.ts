@@ -29,7 +29,12 @@ export const clickedLinksBroadcastCommand = new Command('clicked-links')
     'after',
     buildHelpText({
       output: `  {"object":"list","has_more":false,"data":[{"id":"...","url":"...","clicks":42,"unique_clicks":30}]}`,
-      errorCodes: ['auth_error', 'invalid_limit', 'list_error'],
+      errorCodes: [
+        'auth_error',
+        'invalid_limit',
+        'invalid_pagination',
+        'list_error',
+      ],
       examples: [
         'resend broadcasts clicked-links d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
         'resend broadcasts clicked-links d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6 --limit 5',
