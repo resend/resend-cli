@@ -49,7 +49,7 @@ Returns full object with html/text, from, subject, status (`draft`|`queued`|`sen
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
-| `--type <type>` | string | Yes | Event to filter by: `sent`, `delivered`, `opened`, `clicked`, `bounced`, `complained`, `unsubscribed`, `suppressed` |
+| `--type <type>` | string | Yes (non-interactive) | Event to filter by: `sent`, `delivered`, `opened`, `clicked`, `bounced`, `complained`, `unsubscribed`, `suppressed` |
 | `--email <email>` | string | No | Substring filter on recipient email |
 | `--bounce-type <type>` | string | No | Bounce classification: `permanent`, `transient`, `undetermined` — only meaningful when `--type bounced` |
 | `--limit <n>` | number | No | Max results (1-100, default 20) |

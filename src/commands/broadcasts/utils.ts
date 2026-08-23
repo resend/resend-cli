@@ -91,7 +91,7 @@ export function renderBroadcastRecipientsTable(
   const rows = recipients.map((r) => [
     r.email,
     r.contact_id ?? '-',
-    r.count !== undefined ? String(r.count) : '-',
+    r.count !== undefined && r.count !== null ? String(r.count) : '-',
     r.bounce_type ?? '-',
     r.clicked_links && r.clicked_links.length > 0
       ? r.clicked_links.map((l) => `${l.url} (${l.clicks})`).join(', ')
