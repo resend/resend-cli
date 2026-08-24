@@ -78,6 +78,33 @@ export function renderBroadcastsTable(
   );
 }
 
+export function renderBroadcastRecipientsTable(
+  recipients: Array<{
+    id: string;
+    contact_id: string | null;
+    email: string;
+    count?: number;
+    bounce_type?: string;
+    clicked_links?: Array<{ url: string; clicks: number }>;
+  }>,
+): string {
+  const rows = recipients.map((r) => [
+    r.email,
+    r.contact_id ?? '-',
+    r.count !== undefined && r.count !== null ? String(r.count) : '-',
+    r.bounce_type ?? '-',
+    r.clicked_links && r.clicked_links.length > 0
+      ? r.clicked_links.map((l) => `${l.url} (${l.clicks})`).join(', ')
+      : '-',
+    r.id,
+  ]);
+  return renderTable(
+    ['Email', 'Contact ID', 'Count', 'Bounce Type', 'Clicked Links', 'ID'],
+    rows,
+    '(no recipients)',
+  );
+}
+
 export function renderBroadcastClickedLinksTable(
   links: Array<{
     url: string;
