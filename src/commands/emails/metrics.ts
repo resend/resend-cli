@@ -1,4 +1,4 @@
-import { Command } from '@commander-js/extra-typings';
+import { Command, Option } from '@commander-js/extra-typings';
 import type { EmailMetricsDataRow, EmailMetricsTotals } from 'resend';
 import { runGet } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
@@ -49,9 +49,11 @@ export const metricsCommand = new Command('metrics')
     '--timezone <tz>',
     'IANA timezone, e.g. America/New_York, defaults to UTC',
   )
-  .option(
-    '--granularity <granularity>',
-    'Bucket size used when "period" is a dimension: hourly, daily, weekly, monthly',
+  .addOption(
+    new Option(
+      '--granularity <granularity>',
+      'Bucket size used when "period" is a dimension (default: daily)',
+    ).choices(['hourly', 'daily', 'weekly', 'monthly'] as const),
   )
   .option(
     '--metrics <list>',

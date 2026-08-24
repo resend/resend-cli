@@ -138,6 +138,28 @@ Update a scheduled email.
 
 ---
 
+## emails metrics
+
+Retrieve account-level email metrics for a date range, with optional breakdowns.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--start-date <date>` | string | 6 days before `--end-date` | ISO 8601 date or datetime |
+| `--end-date <date>` | string | now | ISO 8601 date or datetime |
+| `--timezone <tz>` | string | UTC | IANA timezone used to bucket periods |
+| `--granularity <granularity>` | string | daily | `hourly`, `daily`, `weekly`, or `monthly` |
+| `--metrics <list>` | string | all | Comma-separated metrics to include |
+| `--dimensions <list>` | string | — | Comma-separated breakdowns: `period`, `domain`, `email`, `broadcast` |
+| `--domain-id <list>` | string | — | Comma-separated sending domain IDs (max 100) |
+| `--email-id <list>` | string | — | Comma-separated email IDs (max 100) |
+| `--broadcast-id <list>` | string | — | Comma-separated broadcast IDs (max 100) |
+
+The `email` and `broadcast` dimensions/filters cannot be combined. Without `--dimensions`, the response has totals only and no `data` array.
+
+**Output:** `{"object":"metrics","start_date":"...","end_date":"...","metrics":["sent",...],"dimensions":["period"],"granularity":"daily","totals":{"sent":100,...},"data":[{"period":"2026-07-01","sent":10,...}]}`
+
+---
+
 ## emails receiving list
 
 List received (inbound) emails. Requires domain receiving enabled.

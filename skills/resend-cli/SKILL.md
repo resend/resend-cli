@@ -141,7 +141,7 @@ Auth resolves: `--api-key` flag > `RESEND_API_KEY` env > config file (`resend lo
 
 | Command Group | What it does |
 |--------------|-------------|
-| `emails` | send, get, list, batch, cancel, update |
+| `emails` | send, get, list, batch, cancel, update, metrics |
 | `emails receiving` | list, get, attachments, forward, listen |
 | `domains` | create, verify, get, claim, update, delete, list |
 | `logs` | list, get, open |
