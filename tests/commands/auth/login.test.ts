@@ -7,6 +7,7 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { Command } from '@commander-js/extra-typings';
 import {
   afterEach,
   beforeEach,
@@ -16,6 +17,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { loginCommand } from '../../../src/commands/auth/login';
 import {
   captureTestEnv,
   expectExit1,
@@ -64,7 +66,6 @@ describe('login command', () => {
     exitSpy?.mockRestore();
     exitSpy = undefined;
     try {
-      const { loginCommand } = await import('../../../src/commands/auth/login');
       (loginCommand as { parent?: unknown }).parent = null;
     } catch {
       // ignore if module not loaded
@@ -86,7 +87,6 @@ describe('login command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { loginCommand } = await import('../../../src/commands/auth/login');
     await expectExit1(() =>
       loginCommand.parseAsync(['--key', 're_fake_invalid_key'], {
         from: 'user',
@@ -106,7 +106,6 @@ describe('login command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { loginCommand } = await import('../../../src/commands/auth/login');
     await expectExit1(() =>
       loginCommand.parseAsync(['--key', 'bad_key'], { from: 'user' }),
     );
@@ -120,7 +119,6 @@ describe('login command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { loginCommand } = await import('../../../src/commands/auth/login');
     await expectExit1(() =>
       loginCommand.parseAsync(['--key', '   '], { from: 'user' }),
     );
@@ -132,7 +130,6 @@ describe('login command', () => {
   it('trims API key before storing', async () => {
     setNonInteractive();
 
-    const { loginCommand } = await import('../../../src/commands/auth/login');
     await loginCommand.parseAsync(['--key', '  re_trimmed_key_456  '], {
       from: 'user',
     });
@@ -145,7 +142,6 @@ describe('login command', () => {
   it('stores valid key to credentials.json and sets active_profile', async () => {
     setupOutputSpies();
 
-    const { loginCommand } = await import('../../../src/commands/auth/login');
     await loginCommand.parseAsync(['--key', 're_valid_test_key_123'], {
       from: 'user',
     });
@@ -161,7 +157,6 @@ describe('login command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { loginCommand } = await import('../../../src/commands/auth/login');
     await expectExit1(() => loginCommand.parseAsync([], { from: 'user' }));
 
     expect(errorSpy).toBeDefined();
@@ -181,8 +176,6 @@ describe('login command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { Command } = await import('@commander-js/extra-typings');
-    const { loginCommand } = await import('../../../src/commands/auth/login');
     const program = new Command()
       .option('--profile <name>')
       .option('--team <name>')
@@ -215,7 +208,6 @@ describe('login command', () => {
 
     setupOutputSpies();
 
-    const { loginCommand } = await import('../../../src/commands/auth/login');
     await loginCommand.parseAsync(['--key', 're_new_key_5678'], {
       from: 'user',
     });
@@ -231,8 +223,6 @@ describe('login command', () => {
   it('auto-switches to profile specified via --profile flag', async () => {
     setupOutputSpies();
 
-    const { Command } = await import('@commander-js/extra-typings');
-    const { loginCommand } = await import('../../../src/commands/auth/login');
     const program = new Command()
       .option('--profile <name>')
       .option('--team <name>')
@@ -268,8 +258,6 @@ describe('login command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { Command } = await import('@commander-js/extra-typings');
-    const { loginCommand } = await import('../../../src/commands/auth/login');
     const program = new Command()
       .option('--profile <name>')
       .option('--json')
@@ -291,8 +279,6 @@ describe('login command', () => {
   it('trims --profile before storing', async () => {
     setupOutputSpies();
 
-    const { Command } = await import('@commander-js/extra-typings');
-    const { loginCommand } = await import('../../../src/commands/auth/login');
     const program = new Command()
       .option('--profile <name>')
       .option('--team <name>')
@@ -317,8 +303,6 @@ describe('login command', () => {
     setupOutputSpies();
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-    const { Command } = await import('@commander-js/extra-typings');
-    const { loginCommand } = await import('../../../src/commands/auth/login');
     const program = new Command()
       .option('--profile <name>')
       .option('--json')
@@ -351,7 +335,6 @@ describe('login command', () => {
 
     setupOutputSpies();
 
-    const { loginCommand } = await import('../../../src/commands/auth/login');
     await loginCommand.parseAsync(['--key', 're_sending_only_key_123'], {
       from: 'user',
     });
@@ -365,7 +348,6 @@ describe('login command', () => {
   it('stores full_access permission for valid full access key', async () => {
     setupOutputSpies();
 
-    const { loginCommand } = await import('../../../src/commands/auth/login');
     await loginCommand.parseAsync(['--key', 're_full_access_key_123'], {
       from: 'user',
     });
@@ -389,8 +371,6 @@ describe('login command', () => {
     setupOutputSpies();
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-    const { Command } = await import('@commander-js/extra-typings');
-    const { loginCommand } = await import('../../../src/commands/auth/login');
     const program = new Command()
       .option('--profile <name>')
       .option('--json')

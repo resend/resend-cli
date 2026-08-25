@@ -10,6 +10,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { createContactImportCommand } from '../../../../src/commands/contacts/imports/create';
 import {
   captureTestEnv,
   expectExit1,
@@ -71,9 +72,6 @@ describe('contacts imports create command', () => {
   it('reads the CSV file and passes it to the SDK as a File', async () => {
     spies = setupOutputSpies();
 
-    const { createContactImportCommand } = await import(
-      '../../../../src/commands/contacts/imports/create'
-    );
     await createContactImportCommand.parseAsync(['--file', tmpFile], {
       from: 'user',
     });
@@ -87,9 +85,6 @@ describe('contacts imports create command', () => {
   it('outputs JSON contact_import id when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { createContactImportCommand } = await import(
-      '../../../../src/commands/contacts/imports/create'
-    );
     await createContactImportCommand.parseAsync(['--file', tmpFile], {
       from: 'user',
     });
@@ -103,9 +98,6 @@ describe('contacts imports create command', () => {
   it('parses --column-map JSON and passes it to the SDK', async () => {
     spies = setupOutputSpies();
 
-    const { createContactImportCommand } = await import(
-      '../../../../src/commands/contacts/imports/create'
-    );
     await createContactImportCommand.parseAsync(
       [
         '--file',
@@ -126,9 +118,6 @@ describe('contacts imports create command', () => {
   it('passes --on-conflict to the SDK', async () => {
     spies = setupOutputSpies();
 
-    const { createContactImportCommand } = await import(
-      '../../../../src/commands/contacts/imports/create'
-    );
     await createContactImportCommand.parseAsync(
       ['--file', tmpFile, '--on-conflict', 'skip'],
       { from: 'user' },
@@ -141,9 +130,6 @@ describe('contacts imports create command', () => {
   it('maps multiple --segment-id values to a segments array', async () => {
     spies = setupOutputSpies();
 
-    const { createContactImportCommand } = await import(
-      '../../../../src/commands/contacts/imports/create'
-    );
     await createContactImportCommand.parseAsync(
       [
         '--file',
@@ -166,9 +152,6 @@ describe('contacts imports create command', () => {
   it('parses --topics JSON and passes it to the SDK', async () => {
     spies = setupOutputSpies();
 
-    const { createContactImportCommand } = await import(
-      '../../../../src/commands/contacts/imports/create'
-    );
     await createContactImportCommand.parseAsync(
       [
         '--file',
@@ -190,9 +173,6 @@ describe('contacts imports create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createContactImportCommand } = await import(
-      '../../../../src/commands/contacts/imports/create'
-    );
     await expectExit1(() =>
       createContactImportCommand.parseAsync([], { from: 'user' }),
     );
@@ -206,9 +186,6 @@ describe('contacts imports create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createContactImportCommand } = await import(
-      '../../../../src/commands/contacts/imports/create'
-    );
     await expectExit1(() =>
       createContactImportCommand.parseAsync(
         ['--file', '/tmp/nonexistent-resend-contacts.csv'],
@@ -225,9 +202,6 @@ describe('contacts imports create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createContactImportCommand } = await import(
-      '../../../../src/commands/contacts/imports/create'
-    );
     await expectExit1(() =>
       createContactImportCommand.parseAsync(
         ['--file', tmpFile, '--column-map', 'not-json'],
@@ -244,9 +218,6 @@ describe('contacts imports create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createContactImportCommand } = await import(
-      '../../../../src/commands/contacts/imports/create'
-    );
     await expectExit1(() =>
       createContactImportCommand.parseAsync(
         ['--file', tmpFile, '--column-map', '["email"]'],
@@ -270,9 +241,6 @@ describe('contacts imports create command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { createContactImportCommand } = await import(
-      '../../../../src/commands/contacts/imports/create'
-    );
     await expectExit1(() =>
       createContactImportCommand.parseAsync(['--file', tmpFile], {
         from: 'user',

@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { getBroadcastCommand } from '../../../src/commands/broadcasts/get';
 import {
   captureTestEnv,
   expectExit1,
@@ -71,9 +72,6 @@ describe('broadcasts get command', () => {
   it('fetches broadcast by id', async () => {
     spies = setupOutputSpies();
 
-    const { getBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/get'
-    );
     await getBroadcastCommand.parseAsync(
       ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
       { from: 'user' },
@@ -88,9 +86,6 @@ describe('broadcasts get command', () => {
   it('outputs full JSON when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { getBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/get'
-    );
     await getBroadcastCommand.parseAsync(
       ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
       { from: 'user' },
@@ -110,9 +105,6 @@ describe('broadcasts get command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { getBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/get'
-    );
     await expectExit1(() =>
       getBroadcastCommand.parseAsync(['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], {
         from: 'user',
@@ -132,9 +124,6 @@ describe('broadcasts get command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { getBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/get'
-    );
     await expectExit1(() =>
       getBroadcastCommand.parseAsync(['00000000-0000-0000-0000-00000000bad0'], {
         from: 'user',

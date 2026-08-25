@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { listContactsCommand } from '../../../src/commands/contacts/list';
 import {
   captureTestEnv,
   expectExit1,
@@ -67,9 +68,6 @@ describe('contacts list command', () => {
   it('calls SDK with default limit of 10', async () => {
     spies = setupOutputSpies();
 
-    const { listContactsCommand } = await import(
-      '../../../src/commands/contacts/list'
-    );
     await listContactsCommand.parseAsync([], { from: 'user' });
 
     expect(mockList).toHaveBeenCalledTimes(1);
@@ -80,9 +78,6 @@ describe('contacts list command', () => {
   it('calls SDK with custom --limit', async () => {
     spies = setupOutputSpies();
 
-    const { listContactsCommand } = await import(
-      '../../../src/commands/contacts/list'
-    );
     await listContactsCommand.parseAsync(['--limit', '25'], { from: 'user' });
 
     const args = mockList.mock.calls[0][0] as Record<string, unknown>;
@@ -92,9 +87,6 @@ describe('contacts list command', () => {
   it('calls SDK with --after cursor', async () => {
     spies = setupOutputSpies();
 
-    const { listContactsCommand } = await import(
-      '../../../src/commands/contacts/list'
-    );
     await listContactsCommand.parseAsync(['--after', 'cursor_xyz'], {
       from: 'user',
     });
@@ -106,9 +98,6 @@ describe('contacts list command', () => {
   it('outputs JSON list when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { listContactsCommand } = await import(
-      '../../../src/commands/contacts/list'
-    );
     await listContactsCommand.parseAsync([], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -123,9 +112,6 @@ describe('contacts list command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listContactsCommand } = await import(
-      '../../../src/commands/contacts/list'
-    );
     await expectExit1(() =>
       listContactsCommand.parseAsync(['--limit', '0'], { from: 'user' }),
     );
@@ -141,9 +127,6 @@ describe('contacts list command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listContactsCommand } = await import(
-      '../../../src/commands/contacts/list'
-    );
     await expectExit1(() =>
       listContactsCommand.parseAsync([], { from: 'user' }),
     );
@@ -163,9 +146,6 @@ describe('contacts list command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { listContactsCommand } = await import(
-      '../../../src/commands/contacts/list'
-    );
     await expectExit1(() =>
       listContactsCommand.parseAsync([], { from: 'user' }),
     );

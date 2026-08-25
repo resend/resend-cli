@@ -1,5 +1,6 @@
 import { createServer, type Server } from 'node:http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { listenWebhookCommand } from '../../../src/commands/webhooks/listen';
 import {
   captureTestEnv,
   setNonInteractive,
@@ -75,10 +76,6 @@ describe('webhook listen --forward-to status propagation', () => {
     setNonInteractive();
     setupOutputSpies();
 
-    const { listenWebhookCommand } = await import(
-      '../../../src/commands/webhooks/listen'
-    );
-
     const listenerPort = 10_000 + Math.floor(Math.random() * 50_000);
 
     listenWebhookCommand
@@ -145,10 +142,6 @@ describe('webhook listen --forward-to status propagation', () => {
   it('returns 502 when forward target is unreachable', async () => {
     setNonInteractive();
     setupOutputSpies();
-
-    const { listenWebhookCommand } = await import(
-      '../../../src/commands/webhooks/listen'
-    );
 
     const listenerPort = 10_000 + Math.floor(Math.random() * 50_000);
 

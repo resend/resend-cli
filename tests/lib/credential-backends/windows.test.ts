@@ -1,4 +1,6 @@
+import { execFile, spawn } from 'node:child_process';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { WindowsBackend } from '../../../src/lib/credential-backends/windows';
 
 // We mock child_process to verify stdin usage without requiring Windows
 vi.mock('node:child_process', () => {
@@ -46,10 +48,6 @@ describe('WindowsBackend', () => {
   });
 
   it('set() passes secret via stdin, NOT in PowerShell script args', async () => {
-    const { spawn } = await import('node:child_process');
-    const { WindowsBackend } = await import(
-      '../../../src/lib/credential-backends/windows'
-    );
     const backend = new WindowsBackend();
 
     await backend.set('resend-cli', 'default', 're_secret_key_1234');
@@ -72,10 +70,6 @@ describe('WindowsBackend', () => {
   });
 
   it('get() does not use stdin', async () => {
-    const { execFile } = await import('node:child_process');
-    const { WindowsBackend } = await import(
-      '../../../src/lib/credential-backends/windows'
-    );
     const backend = new WindowsBackend();
 
     await backend.get('resend-cli', 'default');

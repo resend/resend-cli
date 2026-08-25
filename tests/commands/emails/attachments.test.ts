@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { listAttachmentsCommand } from '../../../src/commands/emails/attachments';
 import {
   captureTestEnv,
   expectExit1,
@@ -69,9 +70,6 @@ describe('emails attachments command', () => {
   it('calls SDK list with emailId and default pagination', async () => {
     spies = setupOutputSpies();
 
-    const { listAttachmentsCommand } = await import(
-      '../../../src/commands/emails/attachments'
-    );
     await listAttachmentsCommand.parseAsync(['email123'], { from: 'user' });
 
     expect(mockList).toHaveBeenCalledTimes(1);
@@ -83,9 +81,6 @@ describe('emails attachments command', () => {
   it('passes --limit to pagination options', async () => {
     spies = setupOutputSpies();
 
-    const { listAttachmentsCommand } = await import(
-      '../../../src/commands/emails/attachments'
-    );
     await listAttachmentsCommand.parseAsync(['email123', '--limit', '5'], {
       from: 'user',
     });
@@ -97,9 +92,6 @@ describe('emails attachments command', () => {
   it('outputs JSON list with attachment data when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { listAttachmentsCommand } = await import(
-      '../../../src/commands/emails/attachments'
-    );
     await listAttachmentsCommand.parseAsync(['email123'], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -116,9 +108,6 @@ describe('emails attachments command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listAttachmentsCommand } = await import(
-      '../../../src/commands/emails/attachments'
-    );
     await expectExit1(() =>
       listAttachmentsCommand.parseAsync(['email123', '--limit', '200'], {
         from: 'user',
@@ -136,9 +125,6 @@ describe('emails attachments command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listAttachmentsCommand } = await import(
-      '../../../src/commands/emails/attachments'
-    );
     await expectExit1(() =>
       listAttachmentsCommand.parseAsync(['email123'], { from: 'user' }),
     );
@@ -156,9 +142,6 @@ describe('emails attachments command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { listAttachmentsCommand } = await import(
-      '../../../src/commands/emails/attachments'
-    );
     await expectExit1(() =>
       listAttachmentsCommand.parseAsync(['nonexistent'], { from: 'user' }),
     );

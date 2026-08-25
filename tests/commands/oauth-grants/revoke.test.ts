@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { revokeOAuthGrantCommand } from '../../../src/commands/oauth-grants/revoke';
 import {
   captureTestEnv,
   expectExit1,
@@ -59,9 +60,6 @@ describe('oauth-grants revoke command', () => {
   it('revokes an OAuth grant with the --yes flag', async () => {
     spies = setupOutputSpies();
 
-    const { revokeOAuthGrantCommand } = await import(
-      '../../../src/commands/oauth-grants/revoke'
-    );
     await revokeOAuthGrantCommand.parseAsync(['test-grant-id', '--yes'], {
       from: 'user',
     });
@@ -72,9 +70,6 @@ describe('oauth-grants revoke command', () => {
   it('outputs the revoked grant JSON on success', async () => {
     spies = setupOutputSpies();
 
-    const { revokeOAuthGrantCommand } = await import(
-      '../../../src/commands/oauth-grants/revoke'
-    );
     await revokeOAuthGrantCommand.parseAsync(['test-grant-id', '--yes'], {
       from: 'user',
     });
@@ -91,9 +86,6 @@ describe('oauth-grants revoke command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { revokeOAuthGrantCommand } = await import(
-      '../../../src/commands/oauth-grants/revoke'
-    );
     await expectExit1(() =>
       revokeOAuthGrantCommand.parseAsync(['test-grant-id'], { from: 'user' }),
     );
@@ -107,9 +99,6 @@ describe('oauth-grants revoke command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { revokeOAuthGrantCommand } = await import(
-      '../../../src/commands/oauth-grants/revoke'
-    );
     await expectExit1(() =>
       revokeOAuthGrantCommand.parseAsync(['test-grant-id'], { from: 'user' }),
     );
@@ -128,9 +117,6 @@ describe('oauth-grants revoke command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { revokeOAuthGrantCommand } = await import(
-      '../../../src/commands/oauth-grants/revoke'
-    );
     await expectExit1(() =>
       revokeOAuthGrantCommand.parseAsync(['test-grant-id', '--yes'], {
         from: 'user',

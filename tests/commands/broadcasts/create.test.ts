@@ -1,3 +1,4 @@
+import { Command } from '@commander-js/extra-typings';
 import {
   afterEach,
   beforeEach,
@@ -7,7 +8,9 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { createBroadcastCommand } from '../../../src/commands/broadcasts/create';
 import * as files from '../../../src/lib/files';
+import { outputError } from '../../../src/lib/output';
 import {
   captureTestEnv,
   expectExit1,
@@ -72,9 +75,6 @@ describe('broadcasts create command', () => {
   it('creates broadcast with required flags', async () => {
     spies = setupOutputSpies();
 
-    const { createBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/create'
-    );
     await createBroadcastCommand.parseAsync(
       [
         '--from',
@@ -100,9 +100,6 @@ describe('broadcasts create command', () => {
   it('dry-run does not call API and prints create payload', async () => {
     spies = setupOutputSpies();
 
-    const { createBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/create'
-    );
     await createBroadcastCommand.parseAsync(
       [
         '--from',
@@ -129,9 +126,6 @@ describe('broadcasts create command', () => {
     spies = setupOutputSpies();
     delete process.env.RESEND_API_KEY;
 
-    const { createBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/create'
-    );
     await createBroadcastCommand.parseAsync(
       [
         '--from',
@@ -155,9 +149,6 @@ describe('broadcasts create command', () => {
   it('outputs JSON id when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { createBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/create'
-    );
     await createBroadcastCommand.parseAsync(
       [
         '--from',
@@ -180,9 +171,6 @@ describe('broadcasts create command', () => {
   it('passes --send flag to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { createBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/create'
-    );
     await createBroadcastCommand.parseAsync(
       [
         '--from',
@@ -205,9 +193,6 @@ describe('broadcasts create command', () => {
   it('passes --scheduled-at with --send to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { createBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/create'
-    );
     await createBroadcastCommand.parseAsync(
       [
         '--from',
@@ -232,9 +217,6 @@ describe('broadcasts create command', () => {
   it('passes optional flags to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { createBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/create'
-    );
     await createBroadcastCommand.parseAsync(
       [
         '--from',
@@ -269,9 +251,6 @@ describe('broadcasts create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/create'
-    );
     await expectExit1(() =>
       createBroadcastCommand.parseAsync(
         [
@@ -295,9 +274,6 @@ describe('broadcasts create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/create'
-    );
     await expectExit1(() =>
       createBroadcastCommand.parseAsync(
         [
@@ -321,9 +297,6 @@ describe('broadcasts create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/create'
-    );
     await expectExit1(() =>
       createBroadcastCommand.parseAsync(
         [
@@ -347,9 +320,6 @@ describe('broadcasts create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/create'
-    );
     await expectExit1(() =>
       createBroadcastCommand.parseAsync(
         [
@@ -375,9 +345,6 @@ describe('broadcasts create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/create'
-    );
     await expectExit1(() =>
       createBroadcastCommand.parseAsync(
         [
@@ -409,9 +376,6 @@ describe('broadcasts create command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { createBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/create'
-    );
     await expectExit1(() =>
       createBroadcastCommand.parseAsync(
         [
@@ -437,9 +401,6 @@ describe('broadcasts create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/create'
-    );
     await expectExit1(() =>
       createBroadcastCommand.parseAsync([], { from: 'user' }),
     );
@@ -459,10 +420,6 @@ describe('broadcasts create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { Command } = await import('@commander-js/extra-typings');
-    const { createBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/create'
-    );
     const program = new Command()
       .option('--profile <name>')
       .option('--team <name>')
@@ -498,9 +455,6 @@ describe('broadcasts create command', () => {
       .spyOn(files, 'readFile')
       .mockReturnValue('<p>From file</p>');
 
-    const { createBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/create'
-    );
     await createBroadcastCommand.parseAsync(
       [
         '--from',
@@ -526,9 +480,6 @@ describe('broadcasts create command', () => {
       .spyOn(files, 'readFile')
       .mockReturnValue('Plain text from file');
 
-    const { createBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/create'
-    );
     await createBroadcastCommand.parseAsync(
       [
         '--from',
@@ -553,9 +504,6 @@ describe('broadcasts create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/create'
-    );
     await expectExit1(() =>
       createBroadcastCommand.parseAsync(
         [
@@ -585,9 +533,6 @@ describe('broadcasts create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/create'
-    );
     await expectExit1(() =>
       createBroadcastCommand.parseAsync(
         [
@@ -617,9 +562,6 @@ describe('broadcasts create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/create'
-    );
     await expectExit1(() =>
       createBroadcastCommand.parseAsync(
         [
@@ -648,9 +590,6 @@ describe('broadcasts create command', () => {
       .spyOn(files, 'readFile')
       .mockReturnValue('stdin text content');
 
-    const { createBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/create'
-    );
     await createBroadcastCommand.parseAsync(
       [
         '--from',
@@ -673,9 +612,6 @@ describe('broadcasts create command', () => {
   it('creates broadcast with --react-email flag', async () => {
     spies = setupOutputSpies();
 
-    const { createBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/create'
-    );
     await createBroadcastCommand.parseAsync(
       [
         '--from',
@@ -703,9 +639,6 @@ describe('broadcasts create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/create'
-    );
     await expectExit1(() =>
       createBroadcastCommand.parseAsync(
         [
@@ -736,7 +669,6 @@ describe('broadcasts create command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { outputError } = await import('../../../src/lib/output');
     readFileSpy = vi
       .spyOn(files, 'readFile')
       .mockImplementation(
@@ -751,9 +683,6 @@ describe('broadcasts create command', () => {
         },
       );
 
-    const { createBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/create'
-    );
     await expectExit1(() =>
       createBroadcastCommand.parseAsync(
         [

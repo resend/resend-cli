@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { getWebhookCommand } from '../../../src/commands/webhooks/get';
 import {
   captureTestEnv,
   expectExit1,
@@ -62,9 +63,6 @@ describe('webhooks get command', () => {
   it('calls SDK get with the provided id', async () => {
     spies = setupOutputSpies();
 
-    const { getWebhookCommand } = await import(
-      '../../../src/commands/webhooks/get'
-    );
     await getWebhookCommand.parseAsync(['wh_abc123'], { from: 'user' });
 
     expect(mockGet).toHaveBeenCalledTimes(1);
@@ -74,9 +72,6 @@ describe('webhooks get command', () => {
   it('outputs JSON with webhook fields when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { getWebhookCommand } = await import(
-      '../../../src/commands/webhooks/get'
-    );
     await getWebhookCommand.parseAsync(['wh_abc123'], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -93,9 +88,6 @@ describe('webhooks get command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { getWebhookCommand } = await import(
-      '../../../src/commands/webhooks/get'
-    );
     await expectExit1(() =>
       getWebhookCommand.parseAsync(['wh_abc123'], { from: 'user' }),
     );
@@ -113,9 +105,6 @@ describe('webhooks get command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { getWebhookCommand } = await import(
-      '../../../src/commands/webhooks/get'
-    );
     await expectExit1(() =>
       getWebhookCommand.parseAsync(['wh_nonexistent'], { from: 'user' }),
     );

@@ -1,3 +1,4 @@
+import { Command } from '@commander-js/extra-typings';
 import {
   afterEach,
   beforeEach,
@@ -7,6 +8,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { createContactCommand } from '../../../src/commands/contacts/create';
 import {
   captureTestEnv,
   expectExit1,
@@ -62,9 +64,6 @@ describe('contacts create command', () => {
   it('creates contact with --email flag', async () => {
     spies = setupOutputSpies();
 
-    const { createContactCommand } = await import(
-      '../../../src/commands/contacts/create'
-    );
     await createContactCommand.parseAsync(['--email', 'jane@example.com'], {
       from: 'user',
     });
@@ -77,9 +76,6 @@ describe('contacts create command', () => {
   it('outputs JSON id when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { createContactCommand } = await import(
-      '../../../src/commands/contacts/create'
-    );
     await createContactCommand.parseAsync(['--email', 'jane@example.com'], {
       from: 'user',
     });
@@ -93,9 +89,6 @@ describe('contacts create command', () => {
   it('passes --first-name and --last-name to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { createContactCommand } = await import(
-      '../../../src/commands/contacts/create'
-    );
     await createContactCommand.parseAsync(
       [
         '--email',
@@ -116,9 +109,6 @@ describe('contacts create command', () => {
   it('passes --unsubscribed flag to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { createContactCommand } = await import(
-      '../../../src/commands/contacts/create'
-    );
     await createContactCommand.parseAsync(
       ['--email', 'jane@example.com', '--unsubscribed'],
       { from: 'user' },
@@ -131,9 +121,6 @@ describe('contacts create command', () => {
   it('parses --properties JSON and passes to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { createContactCommand } = await import(
-      '../../../src/commands/contacts/create'
-    );
     await createContactCommand.parseAsync(
       [
         '--email',
@@ -151,9 +138,6 @@ describe('contacts create command', () => {
   it('passes --segment-id (single) to SDK as segments array', async () => {
     spies = setupOutputSpies();
 
-    const { createContactCommand } = await import(
-      '../../../src/commands/contacts/create'
-    );
     await createContactCommand.parseAsync(
       [
         '--email',
@@ -173,9 +157,6 @@ describe('contacts create command', () => {
   it('passes multiple --segment-id values to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { createContactCommand } = await import(
-      '../../../src/commands/contacts/create'
-    );
     await createContactCommand.parseAsync(
       [
         '--email',
@@ -209,10 +190,6 @@ describe('contacts create command', () => {
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);
 
-    const { Command } = await import('@commander-js/extra-typings');
-    const { createContactCommand } = await import(
-      '../../../src/commands/contacts/create'
-    );
     const program = new Command()
       .option('--profile <name>')
       .option('--team <name>')
@@ -242,9 +219,6 @@ describe('contacts create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createContactCommand } = await import(
-      '../../../src/commands/contacts/create'
-    );
     await expectExit1(() =>
       createContactCommand.parseAsync([], { from: 'user' }),
     );
@@ -258,9 +232,6 @@ describe('contacts create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createContactCommand } = await import(
-      '../../../src/commands/contacts/create'
-    );
     await expectExit1(() =>
       createContactCommand.parseAsync(
         ['--email', 'jane@example.com', '--properties', 'not-json'],
@@ -279,9 +250,6 @@ describe('contacts create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createContactCommand } = await import(
-      '../../../src/commands/contacts/create'
-    );
     await expectExit1(() =>
       createContactCommand.parseAsync(['--email', 'jane@example.com'], {
         from: 'user',
@@ -303,9 +271,6 @@ describe('contacts create command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { createContactCommand } = await import(
-      '../../../src/commands/contacts/create'
-    );
     await expectExit1(() =>
       createContactCommand.parseAsync(['--email', 'jane@example.com'], {
         from: 'user',

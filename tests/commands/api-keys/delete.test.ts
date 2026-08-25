@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { deleteApiKeyCommand } from '../../../src/commands/api-keys/delete';
 import {
   captureTestEnv,
   expectExit1,
@@ -54,9 +55,6 @@ describe('api-keys delete command', () => {
   it('deletes API key with --yes flag', async () => {
     spies = setupOutputSpies();
 
-    const { deleteApiKeyCommand } = await import(
-      '../../../src/commands/api-keys/delete'
-    );
     await deleteApiKeyCommand.parseAsync(['test-key-id', '--yes'], {
       from: 'user',
     });
@@ -67,9 +65,6 @@ describe('api-keys delete command', () => {
   it('outputs synthesized deleted JSON on success', async () => {
     spies = setupOutputSpies();
 
-    const { deleteApiKeyCommand } = await import(
-      '../../../src/commands/api-keys/delete'
-    );
     await deleteApiKeyCommand.parseAsync(['test-key-id', '--yes'], {
       from: 'user',
     });
@@ -85,9 +80,6 @@ describe('api-keys delete command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteApiKeyCommand } = await import(
-      '../../../src/commands/api-keys/delete'
-    );
     await expectExit1(() =>
       deleteApiKeyCommand.parseAsync(['test-key-id'], { from: 'user' }),
     );
@@ -101,9 +93,6 @@ describe('api-keys delete command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteApiKeyCommand } = await import(
-      '../../../src/commands/api-keys/delete'
-    );
     await expectExit1(() =>
       deleteApiKeyCommand.parseAsync(['test-key-id'], { from: 'user' }),
     );
@@ -118,9 +107,6 @@ describe('api-keys delete command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteApiKeyCommand } = await import(
-      '../../../src/commands/api-keys/delete'
-    );
     await expectExit1(() =>
       deleteApiKeyCommand.parseAsync(['test-key-id', '--yes'], {
         from: 'user',
@@ -142,9 +128,6 @@ describe('api-keys delete command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { deleteApiKeyCommand } = await import(
-      '../../../src/commands/api-keys/delete'
-    );
     await expectExit1(() =>
       deleteApiKeyCommand.parseAsync(['test-key-id', '--yes'], {
         from: 'user',

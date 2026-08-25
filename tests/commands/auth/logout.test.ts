@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { Command } from '@commander-js/extra-typings';
 import {
   afterEach,
   beforeEach,
@@ -10,6 +11,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { logoutCommand } from '../../../src/commands/auth/logout';
 import {
   captureTestEnv,
   expectExit1,
@@ -64,7 +66,6 @@ describe('logout command', () => {
     spies = setupOutputSpies();
     writeCredentials();
 
-    const { logoutCommand } = await import('../../../src/commands/auth/logout');
     await logoutCommand.parseAsync([], { from: 'user' });
 
     const configPath = join(tmpDir, 'resend', 'credentials.json');
@@ -78,7 +79,6 @@ describe('logout command', () => {
   it('exits cleanly when no credentials file exists (non-interactive)', async () => {
     spies = setupOutputSpies();
 
-    const { logoutCommand } = await import('../../../src/commands/auth/logout');
     await logoutCommand.parseAsync([], { from: 'user' });
 
     const output = JSON.parse(spies.logSpy.mock.calls[0][0] as string);
@@ -90,7 +90,6 @@ describe('logout command', () => {
     spies = setupOutputSpies();
     writeCredentials({ staging: 're_staging_key', production: 're_prod_key' });
 
-    const { logoutCommand } = await import('../../../src/commands/auth/logout');
     await logoutCommand.parseAsync([], { from: 'user' });
 
     const configPath = join(tmpDir, 'resend', 'credentials.json');
@@ -106,8 +105,6 @@ describe('logout command', () => {
     writeCredentials({ staging: 're_staging_key', production: 're_prod_key' });
 
     // Use the full CLI program so --profile global option is recognized
-    const { Command } = await import('@commander-js/extra-typings');
-    const { logoutCommand } = await import('../../../src/commands/auth/logout');
     const program = new Command()
       .option('--profile <name>')
       .option('--team <name>')
@@ -144,7 +141,6 @@ describe('logout command', () => {
     rmSync(configPath);
     mkdirSync(configPath); // replace file with a directory — unlinkSync will throw EISDIR
 
-    const { logoutCommand } = await import('../../../src/commands/auth/logout');
     await expectExit1(() => logoutCommand.parseAsync([], { from: 'user' }));
 
     expect(errorSpy).toBeDefined();
@@ -162,8 +158,6 @@ describe('logout command', () => {
     // Use a fresh Command wrapper so we don't inherit cached --profile
     // option values from earlier tests (commander caches parsed opts on
     // the parent program).
-    const { Command } = await import('@commander-js/extra-typings');
-    const { logoutCommand } = await import('../../../src/commands/auth/logout');
     const program = new Command()
       .option('--profile <name>')
       .option('--json')
@@ -186,8 +180,6 @@ describe('logout command', () => {
     const configPath = join(configDir, 'credentials.json');
     writeFileSync(configPath, '{"truncated');
 
-    const { Command } = await import('@commander-js/extra-typings');
-    const { logoutCommand } = await import('../../../src/commands/auth/logout');
     const program = new Command()
       .option('--profile <name>')
       .option('--json')

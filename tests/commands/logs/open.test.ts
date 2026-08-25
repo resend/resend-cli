@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { openLogsCommand } from '../../../src/commands/logs/open';
 import * as browser from '../../../src/lib/browser';
 
 describe('logs open command', () => {
@@ -11,7 +12,6 @@ describe('logs open command', () => {
   });
 
   it('with no args opens logs list', async () => {
-    const { openLogsCommand } = await import('../../../src/commands/logs/open');
     await openLogsCommand.parseAsync([], { from: 'user' });
 
     expect(browser.openInBrowserOrLog).toHaveBeenCalledTimes(1);
@@ -22,7 +22,6 @@ describe('logs open command', () => {
   });
 
   it('with id opens log detail URL', async () => {
-    const { openLogsCommand } = await import('../../../src/commands/logs/open');
     await openLogsCommand.parseAsync(['3d4a472d-bc6d-4dd2-aa9d-d3d11b549e55'], {
       from: 'user',
     });

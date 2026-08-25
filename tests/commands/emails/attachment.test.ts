@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { getAttachmentCommand } from '../../../src/commands/emails/attachment';
 import {
   captureTestEnv,
   expectExit1,
@@ -64,9 +65,6 @@ describe('emails attachment command', () => {
   it('calls SDK get with emailId and attachmentId', async () => {
     spies = setupOutputSpies();
 
-    const { getAttachmentCommand } = await import(
-      '../../../src/commands/emails/attachment'
-    );
     await getAttachmentCommand.parseAsync(['email123', 'attach_abc123'], {
       from: 'user',
     });
@@ -80,9 +78,6 @@ describe('emails attachment command', () => {
   it('outputs JSON with attachment fields when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { getAttachmentCommand } = await import(
-      '../../../src/commands/emails/attachment'
-    );
     await getAttachmentCommand.parseAsync(['email123', 'attach_abc123'], {
       from: 'user',
     });
@@ -104,9 +99,6 @@ describe('emails attachment command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { getAttachmentCommand } = await import(
-      '../../../src/commands/emails/attachment'
-    );
     await expectExit1(() =>
       getAttachmentCommand.parseAsync(['email123', 'attach_abc123'], {
         from: 'user',
@@ -126,9 +118,6 @@ describe('emails attachment command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { getAttachmentCommand } = await import(
-      '../../../src/commands/emails/attachment'
-    );
     await expectExit1(() =>
       getAttachmentCommand.parseAsync(['email123', 'attach_nonexistent'], {
         from: 'user',

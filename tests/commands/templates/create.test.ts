@@ -1,3 +1,4 @@
+import { Command } from '@commander-js/extra-typings';
 import {
   afterEach,
   beforeEach,
@@ -7,6 +8,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { createTemplateCommand } from '../../../src/commands/templates/create';
 import * as files from '../../../src/lib/files';
 import {
   captureTestEnv,
@@ -72,9 +74,6 @@ describe('templates create command', () => {
   it('creates template with required flags', async () => {
     spies = setupOutputSpies();
 
-    const { createTemplateCommand } = await import(
-      '../../../src/commands/templates/create'
-    );
     await createTemplateCommand.parseAsync(
       ['--name', 'Welcome', '--html', '<h1>Hello</h1>'],
       { from: 'user' },
@@ -89,9 +88,6 @@ describe('templates create command', () => {
   it('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { createTemplateCommand } = await import(
-      '../../../src/commands/templates/create'
-    );
     await createTemplateCommand.parseAsync(
       ['--name', 'Welcome', '--html', '<h1>Hello</h1>'],
       { from: 'user' },
@@ -107,9 +103,6 @@ describe('templates create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createTemplateCommand } = await import(
-      '../../../src/commands/templates/create'
-    );
     await expectExit1(() =>
       createTemplateCommand.parseAsync(['--html', '<h1>Hello</h1>'], {
         from: 'user',
@@ -125,9 +118,6 @@ describe('templates create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createTemplateCommand } = await import(
-      '../../../src/commands/templates/create'
-    );
     await expectExit1(() =>
       createTemplateCommand.parseAsync(['--name', 'Welcome'], {
         from: 'user',
@@ -150,10 +140,6 @@ describe('templates create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { Command } = await import('@commander-js/extra-typings');
-    const { createTemplateCommand } = await import(
-      '../../../src/commands/templates/create'
-    );
     const program = new Command()
       .option('--profile <name>')
       .option('--team <name>')
@@ -180,10 +166,6 @@ describe('templates create command', () => {
       .mockReturnValueOnce('<h1>HTML</h1>')
       .mockReturnValueOnce('Plain text from file');
 
-    const { createTemplateCommand } = await import(
-      '../../../src/commands/templates/create'
-    );
-
     await createTemplateCommand.parseAsync(
       [
         '--name',
@@ -206,9 +188,6 @@ describe('templates create command', () => {
     spies = setupOutputSpies();
     readFileSpy = vi.spyOn(files, 'readFile').mockReturnValue('From file');
 
-    const { createTemplateCommand } = await import(
-      '../../../src/commands/templates/create'
-    );
     await createTemplateCommand.parseAsync(
       [
         '--name',
@@ -236,9 +215,6 @@ describe('templates create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createTemplateCommand } = await import(
-      '../../../src/commands/templates/create'
-    );
     await expectExit1(() =>
       createTemplateCommand.parseAsync(
         ['--name', 'Welcome', '--html', '<h1>Hello</h1>'],
@@ -253,9 +229,6 @@ describe('templates create command', () => {
   it('creates template with --react-email flag', async () => {
     spies = setupOutputSpies();
 
-    const { createTemplateCommand } = await import(
-      '../../../src/commands/templates/create'
-    );
     await createTemplateCommand.parseAsync(
       ['--name', 'Welcome', '--react-email', './emails/welcome.tsx'],
       { from: 'user' },
@@ -274,9 +247,6 @@ describe('templates create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createTemplateCommand } = await import(
-      '../../../src/commands/templates/create'
-    );
     await expectExit1(() =>
       createTemplateCommand.parseAsync(
         [
@@ -306,9 +276,6 @@ describe('templates create command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { createTemplateCommand } = await import(
-      '../../../src/commands/templates/create'
-    );
     await expectExit1(() =>
       createTemplateCommand.parseAsync(
         ['--name', 'Welcome', '--html', '<h1>Hello</h1>'],

@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { listContactPropertiesCommand } from '../../../src/commands/contact-properties/list';
 import {
   captureTestEnv,
   expectExit1,
@@ -66,9 +67,6 @@ describe('contact-properties list command', () => {
   it('calls SDK with default limit of 10', async () => {
     spies = setupOutputSpies();
 
-    const { listContactPropertiesCommand } = await import(
-      '../../../src/commands/contact-properties/list'
-    );
     await listContactPropertiesCommand.parseAsync([], { from: 'user' });
 
     expect(mockList).toHaveBeenCalledTimes(1);
@@ -79,9 +77,6 @@ describe('contact-properties list command', () => {
   it('calls SDK with custom --limit', async () => {
     spies = setupOutputSpies();
 
-    const { listContactPropertiesCommand } = await import(
-      '../../../src/commands/contact-properties/list'
-    );
     await listContactPropertiesCommand.parseAsync(['--limit', '25'], {
       from: 'user',
     });
@@ -93,9 +88,6 @@ describe('contact-properties list command', () => {
   it('calls SDK with --after cursor', async () => {
     spies = setupOutputSpies();
 
-    const { listContactPropertiesCommand } = await import(
-      '../../../src/commands/contact-properties/list'
-    );
     await listContactPropertiesCommand.parseAsync(
       ['--after', 'c0c0c0c0-d1d1-e2e2-f3f3-b5b5b5b5b5b5'],
       { from: 'user' },
@@ -108,9 +100,6 @@ describe('contact-properties list command', () => {
   it('outputs JSON list when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { listContactPropertiesCommand } = await import(
-      '../../../src/commands/contact-properties/list'
-    );
     await listContactPropertiesCommand.parseAsync([], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -126,9 +115,6 @@ describe('contact-properties list command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listContactPropertiesCommand } = await import(
-      '../../../src/commands/contact-properties/list'
-    );
     await expectExit1(() =>
       listContactPropertiesCommand.parseAsync(['--limit', '0'], {
         from: 'user',
@@ -146,9 +132,6 @@ describe('contact-properties list command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listContactPropertiesCommand } = await import(
-      '../../../src/commands/contact-properties/list'
-    );
     await expectExit1(() =>
       listContactPropertiesCommand.parseAsync([], { from: 'user' }),
     );
@@ -168,9 +151,6 @@ describe('contact-properties list command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { listContactPropertiesCommand } = await import(
-      '../../../src/commands/contact-properties/list'
-    );
     await expectExit1(() =>
       listContactPropertiesCommand.parseAsync([], { from: 'user' }),
     );

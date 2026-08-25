@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { getSegmentCommand } from '../../../src/commands/segments/get';
 import {
   captureTestEnv,
   expectExit1,
@@ -59,9 +60,6 @@ describe('segments get command', () => {
   it('calls SDK with the provided segment ID', async () => {
     spies = setupOutputSpies();
 
-    const { getSegmentCommand } = await import(
-      '../../../src/commands/segments/get'
-    );
     await getSegmentCommand.parseAsync(
       ['3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c'],
       { from: 'user' },
@@ -76,9 +74,6 @@ describe('segments get command', () => {
   it('outputs JSON segment data when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { getSegmentCommand } = await import(
-      '../../../src/commands/segments/get'
-    );
     await getSegmentCommand.parseAsync(
       ['3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c'],
       { from: 'user' },
@@ -99,9 +94,6 @@ describe('segments get command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { getSegmentCommand } = await import(
-      '../../../src/commands/segments/get'
-    );
     await expectExit1(() =>
       getSegmentCommand.parseAsync(['3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c'], {
         from: 'user',
@@ -123,9 +115,6 @@ describe('segments get command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { getSegmentCommand } = await import(
-      '../../../src/commands/segments/get'
-    );
     await expectExit1(() =>
       getSegmentCommand.parseAsync(['00000000-0000-0000-0000-000000000000'], {
         from: 'user',

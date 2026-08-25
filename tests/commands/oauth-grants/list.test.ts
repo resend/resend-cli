@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { listOAuthGrantsCommand } from '../../../src/commands/oauth-grants/list';
 import { captureTestEnv, setupOutputSpies } from '../../helpers';
 
 const mockList = vi.fn(async () => ({
@@ -63,9 +64,6 @@ describe('oauth-grants list command', () => {
   it('uses default limit of 10 when not specified', async () => {
     spies = setupOutputSpies();
 
-    const { listOAuthGrantsCommand } = await import(
-      '../../../src/commands/oauth-grants/list'
-    );
     await listOAuthGrantsCommand.parseAsync([], { from: 'user' });
 
     expect(mockList).toHaveBeenCalledTimes(1);
@@ -75,9 +73,6 @@ describe('oauth-grants list command', () => {
   it('outputs JSON list when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { listOAuthGrantsCommand } = await import(
-      '../../../src/commands/oauth-grants/list'
-    );
     await listOAuthGrantsCommand.parseAsync([], { from: 'user' });
 
     const output = (spies.logSpy.mock.calls[0] as unknown[])[0] as string;
@@ -92,9 +87,6 @@ describe('oauth-grants list command', () => {
   it('passes limit to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { listOAuthGrantsCommand } = await import(
-      '../../../src/commands/oauth-grants/list'
-    );
     await listOAuthGrantsCommand.parseAsync(['--limit', '25'], {
       from: 'user',
     });
@@ -105,9 +97,6 @@ describe('oauth-grants list command', () => {
   it('passes after cursor to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { listOAuthGrantsCommand } = await import(
-      '../../../src/commands/oauth-grants/list'
-    );
     await listOAuthGrantsCommand.parseAsync(['--after', 'some-cursor'], {
       from: 'user',
     });
@@ -118,9 +107,6 @@ describe('oauth-grants list command', () => {
   it('passes before cursor to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { listOAuthGrantsCommand } = await import(
-      '../../../src/commands/oauth-grants/list'
-    );
     await listOAuthGrantsCommand.parseAsync(['--before', 'some-cursor'], {
       from: 'user',
     });

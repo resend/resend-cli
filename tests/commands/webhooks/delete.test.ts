@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { deleteWebhookCommand } from '../../../src/commands/webhooks/delete';
 import {
   captureTestEnv,
   expectExit1,
@@ -54,9 +55,6 @@ describe('webhooks delete command', () => {
   it('deletes webhook with --yes flag', async () => {
     spies = setupOutputSpies();
 
-    const { deleteWebhookCommand } = await import(
-      '../../../src/commands/webhooks/delete'
-    );
     await deleteWebhookCommand.parseAsync(['wh_abc123', '--yes'], {
       from: 'user',
     });
@@ -68,9 +66,6 @@ describe('webhooks delete command', () => {
   it('outputs synthesized JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { deleteWebhookCommand } = await import(
-      '../../../src/commands/webhooks/delete'
-    );
     await deleteWebhookCommand.parseAsync(['wh_abc123', '--yes'], {
       from: 'user',
     });
@@ -87,9 +82,6 @@ describe('webhooks delete command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteWebhookCommand } = await import(
-      '../../../src/commands/webhooks/delete'
-    );
     await expectExit1(() =>
       deleteWebhookCommand.parseAsync(['wh_abc123'], { from: 'user' }),
     );
@@ -103,9 +95,6 @@ describe('webhooks delete command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteWebhookCommand } = await import(
-      '../../../src/commands/webhooks/delete'
-    );
     await expectExit1(() =>
       deleteWebhookCommand.parseAsync(['wh_abc123'], { from: 'user' }),
     );
@@ -120,9 +109,6 @@ describe('webhooks delete command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteWebhookCommand } = await import(
-      '../../../src/commands/webhooks/delete'
-    );
     await expectExit1(() =>
       deleteWebhookCommand.parseAsync(['wh_abc123', '--yes'], { from: 'user' }),
     );
@@ -142,9 +128,6 @@ describe('webhooks delete command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { deleteWebhookCommand } = await import(
-      '../../../src/commands/webhooks/delete'
-    );
     await expectExit1(() =>
       deleteWebhookCommand.parseAsync(['wh_nonexistent', '--yes'], {
         from: 'user',

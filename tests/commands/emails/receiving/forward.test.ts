@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { forwardCommand } from '../../../../src/commands/emails/receiving/forward';
 import {
   captureTestEnv,
   expectExit1,
@@ -54,9 +55,6 @@ describe('emails receiving forward command', () => {
   it('calls SDK forward with correct emailId, to, and from', async () => {
     spies = setupOutputSpies();
 
-    const { forwardCommand } = await import(
-      '../../../../src/commands/emails/receiving/forward'
-    );
     await forwardCommand.parseAsync(
       ['rcv_abc123', '--to', 'user@example.com', '--from', 'you@domain.com'],
       { from: 'user' },
@@ -72,9 +70,6 @@ describe('emails receiving forward command', () => {
   it('outputs JSON object in non-interactive mode', async () => {
     spies = setupOutputSpies();
 
-    const { forwardCommand } = await import(
-      '../../../../src/commands/emails/receiving/forward'
-    );
     await forwardCommand.parseAsync(
       ['rcv_abc123', '--to', 'user@example.com', '--from', 'you@domain.com'],
       { from: 'user' },
@@ -92,9 +87,6 @@ describe('emails receiving forward command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { forwardCommand } = await import(
-      '../../../../src/commands/emails/receiving/forward'
-    );
     await expectExit1(() =>
       forwardCommand.parseAsync(
         ['rcv_abc123', '--to', 'user@example.com', '--from', 'you@domain.com'],
@@ -117,9 +109,6 @@ describe('emails receiving forward command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { forwardCommand } = await import(
-      '../../../../src/commands/emails/receiving/forward'
-    );
     await expectExit1(() =>
       forwardCommand.parseAsync(
         ['rcv_abc123', '--to', 'user@example.com', '--from', 'you@domain.com'],

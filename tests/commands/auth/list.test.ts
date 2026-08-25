@@ -3,11 +3,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Command } from '@commander-js/extra-typings';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { listCommand } from '../../../src/commands/auth/list';
 import { storeApiKey } from '../../../src/lib/config';
 import { captureTestEnv, setupOutputSpies } from '../../helpers';
 
 async function createProgram() {
-  const { listCommand } = await import('../../../src/commands/auth/list');
   return new Command()
     .name('resend')
     .option('--json', 'Force JSON output')

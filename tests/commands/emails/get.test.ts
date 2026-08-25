@@ -9,6 +9,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { getEmailCommand } from '../../../src/commands/emails/get';
 import {
   captureTestEnv,
   expectExit1,
@@ -71,9 +72,6 @@ describe('emails get command', () => {
   it('calls SDK get with the provided id', async () => {
     spies = setupOutputSpies();
 
-    const { getEmailCommand } = await import(
-      '../../../src/commands/emails/get'
-    );
     await getEmailCommand.parseAsync(['email_abc123'], { from: 'user' });
 
     expect(mockGet).toHaveBeenCalledWith('email_abc123');
@@ -82,9 +80,6 @@ describe('emails get command', () => {
   it('outputs JSON with full email fields when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { getEmailCommand } = await import(
-      '../../../src/commands/emails/get'
-    );
     await getEmailCommand.parseAsync(['email_abc123'], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -106,9 +101,6 @@ describe('emails get command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { getEmailCommand } = await import(
-      '../../../src/commands/emails/get'
-    );
     await expectExit1(() =>
       getEmailCommand.parseAsync(['email_abc123'], { from: 'user' }),
     );
@@ -126,9 +118,6 @@ describe('emails get command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { getEmailCommand } = await import(
-      '../../../src/commands/emails/get'
-    );
     await expectExit1(() =>
       getEmailCommand.parseAsync(['email_nonexistent'], { from: 'user' }),
     );

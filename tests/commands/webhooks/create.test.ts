@@ -1,3 +1,4 @@
+import { Command } from '@commander-js/extra-typings';
 import {
   afterEach,
   beforeEach,
@@ -7,6 +8,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { createWebhookCommand } from '../../../src/commands/webhooks/create';
 import {
   captureTestEnv,
   expectExit1,
@@ -63,9 +65,6 @@ describe('webhooks create command', () => {
   it('creates webhook with --endpoint and explicit --events', async () => {
     spies = setupOutputSpies();
 
-    const { createWebhookCommand } = await import(
-      '../../../src/commands/webhooks/create'
-    );
     await createWebhookCommand.parseAsync(
       [
         '--endpoint',
@@ -86,9 +85,6 @@ describe('webhooks create command', () => {
   it('expands "all" shorthand to all 19 events', async () => {
     spies = setupOutputSpies();
 
-    const { createWebhookCommand } = await import(
-      '../../../src/commands/webhooks/create'
-    );
     await createWebhookCommand.parseAsync(
       ['--endpoint', 'https://app.example.com/hooks', '--events', 'all'],
       { from: 'user' },
@@ -104,9 +100,6 @@ describe('webhooks create command', () => {
   it('outputs JSON with id and signing_secret when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { createWebhookCommand } = await import(
-      '../../../src/commands/webhooks/create'
-    );
     await createWebhookCommand.parseAsync(
       ['--endpoint', 'https://app.example.com/hooks', '--events', 'email.sent'],
       { from: 'user' },
@@ -121,9 +114,6 @@ describe('webhooks create command', () => {
   it('splits comma-separated events', async () => {
     spies = setupOutputSpies();
 
-    const { createWebhookCommand } = await import(
-      '../../../src/commands/webhooks/create'
-    );
     await createWebhookCommand.parseAsync(
       [
         '--endpoint',
@@ -142,9 +132,6 @@ describe('webhooks create command', () => {
   it('handles mixed comma and space-separated events', async () => {
     spies = setupOutputSpies();
 
-    const { createWebhookCommand } = await import(
-      '../../../src/commands/webhooks/create'
-    );
     await createWebhookCommand.parseAsync(
       [
         '--endpoint',
@@ -168,9 +155,6 @@ describe('webhooks create command', () => {
   it('trims spaces around comma-separated events', async () => {
     spies = setupOutputSpies();
 
-    const { createWebhookCommand } = await import(
-      '../../../src/commands/webhooks/create'
-    );
     await createWebhookCommand.parseAsync(
       [
         '--endpoint',
@@ -191,9 +175,6 @@ describe('webhooks create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createWebhookCommand } = await import(
-      '../../../src/commands/webhooks/create'
-    );
     await expectExit1(() =>
       createWebhookCommand.parseAsync(['--events', 'email.sent'], {
         from: 'user',
@@ -209,9 +190,6 @@ describe('webhooks create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createWebhookCommand } = await import(
-      '../../../src/commands/webhooks/create'
-    );
     await expectExit1(() =>
       createWebhookCommand.parseAsync(
         ['--endpoint', 'https://app.example.com/hooks'],
@@ -235,10 +213,6 @@ describe('webhooks create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { Command } = await import('@commander-js/extra-typings');
-    const { createWebhookCommand } = await import(
-      '../../../src/commands/webhooks/create'
-    );
     const program = new Command()
       .option('--profile <name>')
       .option('--team <name>')
@@ -264,9 +238,6 @@ describe('webhooks create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createWebhookCommand } = await import(
-      '../../../src/commands/webhooks/create'
-    );
     await expectExit1(() =>
       createWebhookCommand.parseAsync(['--events', 'email.sent'], {
         from: 'user',
@@ -283,9 +254,6 @@ describe('webhooks create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createWebhookCommand } = await import(
-      '../../../src/commands/webhooks/create'
-    );
     await expectExit1(() =>
       createWebhookCommand.parseAsync(
         [
@@ -313,9 +281,6 @@ describe('webhooks create command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { createWebhookCommand } = await import(
-      '../../../src/commands/webhooks/create'
-    );
     await expectExit1(() =>
       createWebhookCommand.parseAsync(
         [

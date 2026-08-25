@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { deleteTopicCommand } from '../../../src/commands/topics/delete';
 import {
   captureTestEnv,
   expectExit1,
@@ -54,9 +55,6 @@ describe('topics delete command', () => {
   it('deletes topic with --yes flag', async () => {
     spies = setupOutputSpies();
 
-    const { deleteTopicCommand } = await import(
-      '../../../src/commands/topics/delete'
-    );
     await deleteTopicCommand.parseAsync(['top_abc123', '--yes'], {
       from: 'user',
     });
@@ -68,9 +66,6 @@ describe('topics delete command', () => {
   it('outputs synthesized JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { deleteTopicCommand } = await import(
-      '../../../src/commands/topics/delete'
-    );
     await deleteTopicCommand.parseAsync(['top_abc123', '--yes'], {
       from: 'user',
     });
@@ -87,9 +82,6 @@ describe('topics delete command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteTopicCommand } = await import(
-      '../../../src/commands/topics/delete'
-    );
     await expectExit1(() =>
       deleteTopicCommand.parseAsync(['top_abc123'], { from: 'user' }),
     );
@@ -103,9 +95,6 @@ describe('topics delete command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteTopicCommand } = await import(
-      '../../../src/commands/topics/delete'
-    );
     await expectExit1(() =>
       deleteTopicCommand.parseAsync(['top_abc123'], { from: 'user' }),
     );
@@ -120,9 +109,6 @@ describe('topics delete command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteTopicCommand } = await import(
-      '../../../src/commands/topics/delete'
-    );
     await expectExit1(() =>
       deleteTopicCommand.parseAsync(['top_abc123', '--yes'], { from: 'user' }),
     );
@@ -142,9 +128,6 @@ describe('topics delete command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { deleteTopicCommand } = await import(
-      '../../../src/commands/topics/delete'
-    );
     await expectExit1(() =>
       deleteTopicCommand.parseAsync(['top_nonexistent', '--yes'], {
         from: 'user',

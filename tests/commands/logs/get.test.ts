@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { getLogCommand } from '../../../src/commands/logs/get';
 import {
   captureTestEnv,
   expectExit1,
@@ -64,7 +65,6 @@ describe('logs get command', () => {
   it('calls SDK get with the provided id', async () => {
     spies = setupOutputSpies();
 
-    const { getLogCommand } = await import('../../../src/commands/logs/get');
     await getLogCommand.parseAsync(['3d4a472d-bc6d-4dd2-aa9d-d3d11b549e55'], {
       from: 'user',
     });
@@ -78,7 +78,6 @@ describe('logs get command', () => {
   it('outputs JSON with log fields when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { getLogCommand } = await import('../../../src/commands/logs/get');
     await getLogCommand.parseAsync(['3d4a472d-bc6d-4dd2-aa9d-d3d11b549e55'], {
       from: 'user',
     });
@@ -98,7 +97,6 @@ describe('logs get command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { getLogCommand } = await import('../../../src/commands/logs/get');
     await expectExit1(() =>
       getLogCommand.parseAsync(['3d4a472d-bc6d-4dd2-aa9d-d3d11b549e55'], {
         from: 'user',
@@ -118,7 +116,6 @@ describe('logs get command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { getLogCommand } = await import('../../../src/commands/logs/get');
     await expectExit1(() =>
       getLogCommand.parseAsync(['nonexistent-id'], { from: 'user' }),
     );

@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { listCareersCommand } from '../../../src/commands/careers/list';
 import {
   captureTestEnv,
   expectExit1,
@@ -65,9 +66,6 @@ describe('careers list command', () => {
   it('fetches open positions from /careers', async () => {
     spies = setupOutputSpies();
 
-    const { listCareersCommand } = await import(
-      '../../../src/commands/careers/list'
-    );
     await listCareersCommand.parseAsync([], { from: 'user' });
 
     expect(mockGet).toHaveBeenCalledTimes(1);
@@ -77,9 +75,6 @@ describe('careers list command', () => {
   it('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { listCareersCommand } = await import(
-      '../../../src/commands/careers/list'
-    );
     await listCareersCommand.parseAsync([], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -97,9 +92,6 @@ describe('careers list command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listCareersCommand } = await import(
-      '../../../src/commands/careers/list'
-    );
     await expectExit1(() =>
       listCareersCommand.parseAsync([], { from: 'user' }),
     );
@@ -115,9 +107,6 @@ describe('careers list command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listCareersCommand } = await import(
-      '../../../src/commands/careers/list'
-    );
     await expectExit1(() =>
       listCareersCommand.parseAsync([], { from: 'user' }),
     );

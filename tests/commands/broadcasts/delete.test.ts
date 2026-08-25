@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { deleteBroadcastCommand } from '../../../src/commands/broadcasts/delete';
 import {
   captureTestEnv,
   expectExit1,
@@ -58,9 +59,6 @@ describe('broadcasts delete command', () => {
   it('deletes broadcast with --yes flag', async () => {
     spies = setupOutputSpies();
 
-    const { deleteBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/delete'
-    );
     await deleteBroadcastCommand.parseAsync(
       ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--yes'],
       {
@@ -77,9 +75,6 @@ describe('broadcasts delete command', () => {
   it('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { deleteBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/delete'
-    );
     await deleteBroadcastCommand.parseAsync(
       ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--yes'],
       {
@@ -99,9 +94,6 @@ describe('broadcasts delete command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/delete'
-    );
     await expectExit1(() =>
       deleteBroadcastCommand.parseAsync(
         ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
@@ -118,9 +110,6 @@ describe('broadcasts delete command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/delete'
-    );
     await expectExit1(() =>
       deleteBroadcastCommand.parseAsync(
         ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
@@ -138,9 +127,6 @@ describe('broadcasts delete command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/delete'
-    );
     await expectExit1(() =>
       deleteBroadcastCommand.parseAsync(
         ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--yes'],
@@ -165,9 +151,6 @@ describe('broadcasts delete command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { deleteBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/delete'
-    );
     await expectExit1(() =>
       deleteBroadcastCommand.parseAsync(
         ['s1e2n3t4-5a6b-7c8d-9e0f-a1b2c3d4e5f6', '--yes'],

@@ -11,6 +11,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { removeCommand } from '../../../src/commands/auth/remove';
 import { storeApiKey } from '../../../src/lib/config';
 import {
   captureTestEnv,
@@ -20,7 +21,6 @@ import {
 } from '../../helpers';
 
 async function createProgram() {
-  const { removeCommand } = await import('../../../src/commands/auth/remove');
   return new Command()
     .name('resend')
     .option('--json', 'Force JSON output')

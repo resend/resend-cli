@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { updateDomainCommand } from '../../../src/commands/domains/update';
 import {
   captureTestEnv,
   expectExit1,
@@ -54,9 +55,6 @@ describe('domains update command', () => {
   it('calls SDK update with correct id', async () => {
     spies = setupOutputSpies();
 
-    const { updateDomainCommand } = await import(
-      '../../../src/commands/domains/update'
-    );
     await updateDomainCommand.parseAsync(
       ['test-domain-id', '--tls', 'enforced'],
       { from: 'user' },
@@ -71,9 +69,6 @@ describe('domains update command', () => {
   it('passes openTracking=true when --open-tracking is set', async () => {
     spies = setupOutputSpies();
 
-    const { updateDomainCommand } = await import(
-      '../../../src/commands/domains/update'
-    );
     await updateDomainCommand.parseAsync(
       ['test-domain-id', '--open-tracking'],
       { from: 'user' },
@@ -86,9 +81,6 @@ describe('domains update command', () => {
   it('passes openTracking=false when --no-open-tracking is set', async () => {
     spies = setupOutputSpies();
 
-    const { updateDomainCommand } = await import(
-      '../../../src/commands/domains/update'
-    );
     await updateDomainCommand.parseAsync(
       ['test-domain-id', '--no-open-tracking'],
       { from: 'user' },
@@ -101,9 +93,6 @@ describe('domains update command', () => {
   it('does not include tracking keys in payload when no tracking flags are passed', async () => {
     spies = setupOutputSpies();
 
-    const { updateDomainCommand } = await import(
-      '../../../src/commands/domains/update'
-    );
     await updateDomainCommand.parseAsync(
       ['test-domain-id', '--tls', 'enforced'],
       { from: 'user' },
@@ -117,9 +106,6 @@ describe('domains update command', () => {
   it('passes clickTracking=true when --click-tracking is set', async () => {
     spies = setupOutputSpies();
 
-    const { updateDomainCommand } = await import(
-      '../../../src/commands/domains/update'
-    );
     await updateDomainCommand.parseAsync(
       ['test-domain-id', '--click-tracking'],
       { from: 'user' },
@@ -132,9 +118,6 @@ describe('domains update command', () => {
   it('passes clickTracking=false when --no-click-tracking is set', async () => {
     spies = setupOutputSpies();
 
-    const { updateDomainCommand } = await import(
-      '../../../src/commands/domains/update'
-    );
     await updateDomainCommand.parseAsync(
       ['test-domain-id', '--no-click-tracking'],
       { from: 'user' },
@@ -147,9 +130,6 @@ describe('domains update command', () => {
   it('passes trackingSubdomain when --tracking-subdomain is set', async () => {
     spies = setupOutputSpies();
 
-    const { updateDomainCommand } = await import(
-      '../../../src/commands/domains/update'
-    );
     await updateDomainCommand.parseAsync(
       ['test-domain-id', '--tracking-subdomain', 'track'],
       { from: 'user' },
@@ -162,9 +142,6 @@ describe('domains update command', () => {
   it('does not error when only --tracking-subdomain is provided', async () => {
     spies = setupOutputSpies();
 
-    const { updateDomainCommand } = await import(
-      '../../../src/commands/domains/update'
-    );
     await updateDomainCommand.parseAsync(
       ['test-domain-id', '--tracking-subdomain', 'track'],
       { from: 'user' },
@@ -178,9 +155,6 @@ describe('domains update command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateDomainCommand } = await import(
-      '../../../src/commands/domains/update'
-    );
     await expectExit1(() =>
       updateDomainCommand.parseAsync(['test-domain-id'], { from: 'user' }),
     );
@@ -193,9 +167,6 @@ describe('domains update command', () => {
   it('outputs domain JSON on success', async () => {
     spies = setupOutputSpies();
 
-    const { updateDomainCommand } = await import(
-      '../../../src/commands/domains/update'
-    );
     await updateDomainCommand.parseAsync(
       ['test-domain-id', '--tls', 'opportunistic'],
       { from: 'user' },
@@ -214,9 +185,6 @@ describe('domains update command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateDomainCommand } = await import(
-      '../../../src/commands/domains/update'
-    );
     await expectExit1(() =>
       updateDomainCommand.parseAsync(['test-domain-id', '--tls', 'enforced'], {
         from: 'user',
@@ -238,9 +206,6 @@ describe('domains update command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { updateDomainCommand } = await import(
-      '../../../src/commands/domains/update'
-    );
     await expectExit1(() =>
       updateDomainCommand.parseAsync(['test-domain-id', '--tls', 'enforced'], {
         from: 'user',

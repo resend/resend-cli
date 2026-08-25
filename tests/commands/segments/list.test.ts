@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { listSegmentsCommand } from '../../../src/commands/segments/list';
 import {
   captureTestEnv,
   expectExit1,
@@ -64,9 +65,6 @@ describe('segments list command', () => {
   it('calls SDK with default limit of 10', async () => {
     spies = setupOutputSpies();
 
-    const { listSegmentsCommand } = await import(
-      '../../../src/commands/segments/list'
-    );
     await listSegmentsCommand.parseAsync([], { from: 'user' });
 
     expect(mockList).toHaveBeenCalledTimes(1);
@@ -77,9 +75,6 @@ describe('segments list command', () => {
   it('calls SDK with custom --limit', async () => {
     spies = setupOutputSpies();
 
-    const { listSegmentsCommand } = await import(
-      '../../../src/commands/segments/list'
-    );
     await listSegmentsCommand.parseAsync(['--limit', '25'], { from: 'user' });
 
     const args = mockList.mock.calls[0][0] as Record<string, unknown>;
@@ -89,9 +84,6 @@ describe('segments list command', () => {
   it('calls SDK with --after cursor', async () => {
     spies = setupOutputSpies();
 
-    const { listSegmentsCommand } = await import(
-      '../../../src/commands/segments/list'
-    );
     await listSegmentsCommand.parseAsync(['--after', 'cursor_xyz'], {
       from: 'user',
     });
@@ -103,9 +95,6 @@ describe('segments list command', () => {
   it('outputs JSON list when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { listSegmentsCommand } = await import(
-      '../../../src/commands/segments/list'
-    );
     await listSegmentsCommand.parseAsync([], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -121,9 +110,6 @@ describe('segments list command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listSegmentsCommand } = await import(
-      '../../../src/commands/segments/list'
-    );
     await expectExit1(() =>
       listSegmentsCommand.parseAsync(['--limit', '0'], { from: 'user' }),
     );
@@ -139,9 +125,6 @@ describe('segments list command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listSegmentsCommand } = await import(
-      '../../../src/commands/segments/list'
-    );
     await expectExit1(() =>
       listSegmentsCommand.parseAsync([], { from: 'user' }),
     );
@@ -161,9 +144,6 @@ describe('segments list command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { listSegmentsCommand } = await import(
-      '../../../src/commands/segments/list'
-    );
     await expectExit1(() =>
       listSegmentsCommand.parseAsync([], { from: 'user' }),
     );

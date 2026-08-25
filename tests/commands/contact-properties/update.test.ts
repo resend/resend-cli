@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { updateContactPropertyCommand } from '../../../src/commands/contact-properties/update';
 import {
   captureTestEnv,
   expectExit1,
@@ -70,9 +71,6 @@ describe('contact-properties update command', () => {
   it('updates property fallback value', async () => {
     spies = setupOutputSpies();
 
-    const { updateContactPropertyCommand } = await import(
-      '../../../src/commands/contact-properties/update'
-    );
     await updateContactPropertyCommand.parseAsync(
       ['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d', '--fallback-value', 'Acme Corp'],
       { from: 'user' },
@@ -87,9 +85,6 @@ describe('contact-properties update command', () => {
   it('clears fallback value with --clear-fallback-value', async () => {
     spies = setupOutputSpies();
 
-    const { updateContactPropertyCommand } = await import(
-      '../../../src/commands/contact-properties/update'
-    );
     await updateContactPropertyCommand.parseAsync(
       ['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d', '--clear-fallback-value'],
       { from: 'user' },
@@ -105,9 +100,6 @@ describe('contact-properties update command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateContactPropertyCommand } = await import(
-      '../../../src/commands/contact-properties/update'
-    );
     await expectExit1(() =>
       updateContactPropertyCommand.parseAsync(
         [
@@ -127,9 +119,6 @@ describe('contact-properties update command', () => {
   it('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { updateContactPropertyCommand } = await import(
-      '../../../src/commands/contact-properties/update'
-    );
     await updateContactPropertyCommand.parseAsync(
       ['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d', '--fallback-value', 'Test'],
       { from: 'user' },
@@ -146,9 +135,6 @@ describe('contact-properties update command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateContactPropertyCommand } = await import(
-      '../../../src/commands/contact-properties/update'
-    );
     await expectExit1(() =>
       updateContactPropertyCommand.parseAsync(
         ['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d'],
@@ -167,9 +153,6 @@ describe('contact-properties update command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateContactPropertyCommand } = await import(
-      '../../../src/commands/contact-properties/update'
-    );
     await expectExit1(() =>
       updateContactPropertyCommand.parseAsync(
         ['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d'],
@@ -189,9 +172,6 @@ describe('contact-properties update command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateContactPropertyCommand } = await import(
-      '../../../src/commands/contact-properties/update'
-    );
     await expectExit1(() =>
       updateContactPropertyCommand.parseAsync(
         ['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d', '--fallback-value', 'Test'],
@@ -214,9 +194,6 @@ describe('contact-properties update command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { updateContactPropertyCommand } = await import(
-      '../../../src/commands/contact-properties/update'
-    );
     await expectExit1(() =>
       updateContactPropertyCommand.parseAsync(
         ['nonexistent_id', '--fallback-value', 'Test'],
@@ -242,9 +219,6 @@ describe('contact-properties update command', () => {
       error: null,
     });
 
-    const { updateContactPropertyCommand } = await import(
-      '../../../src/commands/contact-properties/update'
-    );
     await updateContactPropertyCommand.parseAsync(
       ['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d', '--fallback-value', '42'],
       { from: 'user' },
@@ -269,9 +243,6 @@ describe('contact-properties update command', () => {
       error: null,
     });
 
-    const { updateContactPropertyCommand } = await import(
-      '../../../src/commands/contact-properties/update'
-    );
     await updateContactPropertyCommand.parseAsync(
       ['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d', '--fallback-value', 'Acme Corp'],
       { from: 'user' },
@@ -301,9 +272,6 @@ describe('contact-properties update command', () => {
       error: null,
     });
 
-    const { updateContactPropertyCommand } = await import(
-      '../../../src/commands/contact-properties/update'
-    );
     await expectExit1(() =>
       updateContactPropertyCommand.parseAsync(
         [

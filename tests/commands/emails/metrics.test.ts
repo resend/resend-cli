@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { metricsCommand } from '../../../src/commands/emails/metrics';
 import {
   captureTestEnv,
   expectExit1,
@@ -61,9 +62,6 @@ describe('emails metrics command', () => {
   it('calls SDK metrics with no options by default', async () => {
     spies = setupOutputSpies();
 
-    const { metricsCommand } = await import(
-      '../../../src/commands/emails/metrics'
-    );
     await metricsCommand.parseAsync([], { from: 'user' });
 
     expect(mockMetrics).toHaveBeenCalledWith({
@@ -82,9 +80,6 @@ describe('emails metrics command', () => {
   it('parses comma-separated dimensions and a filter into arrays', async () => {
     spies = setupOutputSpies();
 
-    const { metricsCommand } = await import(
-      '../../../src/commands/emails/metrics'
-    );
     await metricsCommand.parseAsync(
       ['--dimensions', 'period,broadcast', '--broadcast-id', 'b1,b2'],
       { from: 'user' },
@@ -101,9 +96,6 @@ describe('emails metrics command', () => {
   it('outputs JSON in non-interactive mode', async () => {
     spies = setupOutputSpies();
 
-    const { metricsCommand } = await import(
-      '../../../src/commands/emails/metrics'
-    );
     await metricsCommand.parseAsync([], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -120,9 +112,6 @@ describe('emails metrics command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { metricsCommand } = await import(
-      '../../../src/commands/emails/metrics'
-    );
     await expectExit1(() =>
       metricsCommand.parseAsync(['--dimensions', 'email,broadcast'], {
         from: 'user',
@@ -142,9 +131,6 @@ describe('emails metrics command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { metricsCommand } = await import(
-      '../../../src/commands/emails/metrics'
-    );
     await expectExit1(() =>
       metricsCommand.parseAsync(['--email-id', 'e1', '--broadcast-id', 'b1'], {
         from: 'user',
@@ -162,9 +148,6 @@ describe('emails metrics command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { metricsCommand } = await import(
-      '../../../src/commands/emails/metrics'
-    );
     await expectExit1(() =>
       metricsCommand.parseAsync(['--email-id', '', '--broadcast-id', 'b1'], {
         from: 'user',

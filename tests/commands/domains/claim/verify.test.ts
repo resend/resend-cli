@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { claimVerifyCommand } from '../../../../src/commands/domains/claim/verify';
 import {
   captureTestEnv,
   expectExit1,
@@ -70,9 +71,6 @@ describe('domains claim verify command', () => {
   it('calls SDK claims.verify with the domain id and outputs JSON', async () => {
     spies = setupOutputSpies();
 
-    const { claimVerifyCommand } = await import(
-      '../../../../src/commands/domains/claim/verify'
-    );
     await claimVerifyCommand.parseAsync(['placeholder-id'], { from: 'user' });
 
     expect(mockVerify).toHaveBeenCalledWith('placeholder-id');
@@ -93,9 +91,6 @@ describe('domains claim verify command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { claimVerifyCommand } = await import(
-      '../../../../src/commands/domains/claim/verify'
-    );
     await expectExit1(() =>
       claimVerifyCommand.parseAsync(['placeholder-id'], { from: 'user' }),
     );

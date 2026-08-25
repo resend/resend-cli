@@ -23,6 +23,7 @@ vi.hoisted(() => {
   process.env.POSTHOG_PUBLIC_KEY = 'phc_test_key';
 });
 
+import * as cp from 'node:child_process';
 import {
   flushFromFile,
   flushPayload,
@@ -111,7 +112,6 @@ describe('trackCommand', () => {
     delete process.env.RESEND_TELEMETRY_DISABLED;
 
     unrefMock = vi.fn();
-    const cp = await import('node:child_process');
     spawnMock = vi
       .mocked(cp.spawn)
       // @ts-expect-error -- only unref() is needed for this test

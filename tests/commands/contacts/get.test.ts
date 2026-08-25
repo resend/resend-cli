@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { getContactCommand } from '../../../src/commands/contacts/get';
 import {
   captureTestEnv,
   expectExit1,
@@ -63,9 +64,6 @@ describe('contacts get command', () => {
   it('calls SDK with contact ID', async () => {
     spies = setupOutputSpies();
 
-    const { getContactCommand } = await import(
-      '../../../src/commands/contacts/get'
-    );
     await getContactCommand.parseAsync(
       ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
       { from: 'user' },
@@ -80,9 +78,6 @@ describe('contacts get command', () => {
   it('calls SDK with email address', async () => {
     spies = setupOutputSpies();
 
-    const { getContactCommand } = await import(
-      '../../../src/commands/contacts/get'
-    );
     await getContactCommand.parseAsync(['jane@example.com'], { from: 'user' });
 
     expect(mockGet.mock.calls[0][0]).toBe('jane@example.com');
@@ -91,9 +86,6 @@ describe('contacts get command', () => {
   it('outputs JSON when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { getContactCommand } = await import(
-      '../../../src/commands/contacts/get'
-    );
     await getContactCommand.parseAsync(
       ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
       { from: 'user' },
@@ -112,9 +104,6 @@ describe('contacts get command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { getContactCommand } = await import(
-      '../../../src/commands/contacts/get'
-    );
     await expectExit1(() =>
       getContactCommand.parseAsync(['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'], {
         from: 'user',
@@ -136,9 +125,6 @@ describe('contacts get command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { getContactCommand } = await import(
-      '../../../src/commands/contacts/get'
-    );
     await expectExit1(() =>
       getContactCommand.parseAsync(['nonexistent_id'], { from: 'user' }),
     );

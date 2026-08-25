@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { getSuppressionCommand } from '../../../src/commands/suppressions/get';
 import {
   captureTestEnv,
   expectExit1,
@@ -60,9 +61,6 @@ describe('suppressions get command', () => {
 
   it('fetches by email argument', async () => {
     spies = setupOutputSpies();
-    const { getSuppressionCommand } = await import(
-      '../../../src/commands/suppressions/get'
-    );
     await getSuppressionCommand.parseAsync(['spam@example.com'], {
       from: 'user',
     });
@@ -72,9 +70,6 @@ describe('suppressions get command', () => {
 
   it('fetches by id argument', async () => {
     spies = setupOutputSpies();
-    const { getSuppressionCommand } = await import(
-      '../../../src/commands/suppressions/get'
-    );
     await getSuppressionCommand.parseAsync(['sup-1'], { from: 'user' });
 
     expect(mockGet).toHaveBeenCalledWith('sup-1');
@@ -82,9 +77,6 @@ describe('suppressions get command', () => {
 
   it('outputs the suppression JSON when non-interactive', async () => {
     spies = setupOutputSpies();
-    const { getSuppressionCommand } = await import(
-      '../../../src/commands/suppressions/get'
-    );
     await getSuppressionCommand.parseAsync(['spam@example.com'], {
       from: 'user',
     });
@@ -104,9 +96,6 @@ describe('suppressions get command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { getSuppressionCommand } = await import(
-      '../../../src/commands/suppressions/get'
-    );
     await expectExit1(() =>
       getSuppressionCommand.parseAsync(['sup-1'], { from: 'user' }),
     );

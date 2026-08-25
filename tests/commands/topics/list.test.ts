@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { listTopicsCommand } from '../../../src/commands/topics/list';
 import {
   captureTestEnv,
   expectExit1,
@@ -64,9 +65,6 @@ describe('topics list command', () => {
   it('calls SDK list method', async () => {
     spies = setupOutputSpies();
 
-    const { listTopicsCommand } = await import(
-      '../../../src/commands/topics/list'
-    );
     await listTopicsCommand.parseAsync([], { from: 'user' });
 
     expect(mockList).toHaveBeenCalledTimes(1);
@@ -75,9 +73,6 @@ describe('topics list command', () => {
   it('outputs JSON list when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { listTopicsCommand } = await import(
-      '../../../src/commands/topics/list'
-    );
     await listTopicsCommand.parseAsync([], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -94,9 +89,6 @@ describe('topics list command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listTopicsCommand } = await import(
-      '../../../src/commands/topics/list'
-    );
     await expectExit1(() => listTopicsCommand.parseAsync([], { from: 'user' }));
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -114,9 +106,6 @@ describe('topics list command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { listTopicsCommand } = await import(
-      '../../../src/commands/topics/list'
-    );
     await expectExit1(() => listTopicsCommand.parseAsync([], { from: 'user' }));
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { createDomainCommand } from '../../../src/commands/domains/create';
 import {
   captureTestEnv,
   expectExit1,
@@ -72,9 +73,6 @@ describe('domains create command', () => {
   it('creates domain with --name flag', async () => {
     spies = setupOutputSpies();
 
-    const { createDomainCommand } = await import(
-      '../../../src/commands/domains/create'
-    );
     await createDomainCommand.parseAsync(['--name', 'example.com'], {
       from: 'user',
     });
@@ -87,9 +85,6 @@ describe('domains create command', () => {
   it('passes region and tls flags to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { createDomainCommand } = await import(
-      '../../../src/commands/domains/create'
-    );
     await createDomainCommand.parseAsync(
       ['--name', 'example.com', '--region', 'eu-west-1', '--tls', 'enforced'],
       { from: 'user' },
@@ -103,9 +98,6 @@ describe('domains create command', () => {
   it('passes trackingSubdomain when --tracking-subdomain is set', async () => {
     spies = setupOutputSpies();
 
-    const { createDomainCommand } = await import(
-      '../../../src/commands/domains/create'
-    );
     await createDomainCommand.parseAsync(
       ['--name', 'example.com', '--tracking-subdomain', 'track'],
       { from: 'user' },
@@ -118,9 +110,6 @@ describe('domains create command', () => {
   it('passes customReturnPath when --custom-return-path is set', async () => {
     spies = setupOutputSpies();
 
-    const { createDomainCommand } = await import(
-      '../../../src/commands/domains/create'
-    );
     await createDomainCommand.parseAsync(
       ['--name', 'example.com', '--custom-return-path', 'bounce'],
       { from: 'user' },
@@ -133,9 +122,6 @@ describe('domains create command', () => {
   it('forwards an explicit empty --custom-return-path to the API', async () => {
     spies = setupOutputSpies();
 
-    const { createDomainCommand } = await import(
-      '../../../src/commands/domains/create'
-    );
     await createDomainCommand.parseAsync(
       ['--name', 'example.com', '--custom-return-path', ''],
       { from: 'user' },
@@ -148,9 +134,6 @@ describe('domains create command', () => {
   it('omits customReturnPath when flag is absent', async () => {
     spies = setupOutputSpies();
 
-    const { createDomainCommand } = await import(
-      '../../../src/commands/domains/create'
-    );
     await createDomainCommand.parseAsync(['--name', 'example.com'], {
       from: 'user',
     });
@@ -162,9 +145,6 @@ describe('domains create command', () => {
   it('passes receiving capability when --receiving flag is set', async () => {
     spies = setupOutputSpies();
 
-    const { createDomainCommand } = await import(
-      '../../../src/commands/domains/create'
-    );
     await createDomainCommand.parseAsync(
       ['--name', 'example.com', '--receiving'],
       { from: 'user' },
@@ -177,9 +157,6 @@ describe('domains create command', () => {
   it('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { createDomainCommand } = await import(
-      '../../../src/commands/domains/create'
-    );
     await createDomainCommand.parseAsync(['--name', 'example.com'], {
       from: 'user',
     });
@@ -195,9 +172,6 @@ describe('domains create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createDomainCommand } = await import(
-      '../../../src/commands/domains/create'
-    );
     await expectExit1(() =>
       createDomainCommand.parseAsync([], { from: 'user' }),
     );
@@ -213,9 +187,6 @@ describe('domains create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createDomainCommand } = await import(
-      '../../../src/commands/domains/create'
-    );
     await expectExit1(() =>
       createDomainCommand.parseAsync(['--name', 'example.com'], {
         from: 'user',
@@ -237,9 +208,6 @@ describe('domains create command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { createDomainCommand } = await import(
-      '../../../src/commands/domains/create'
-    );
     await expectExit1(() =>
       createDomainCommand.parseAsync(['--name', 'example.com'], {
         from: 'user',

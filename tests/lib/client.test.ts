@@ -11,6 +11,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { createClient, requireClient } from '../../src/lib/client';
 import {
   captureTestEnv,
   expectExit1,
@@ -28,7 +29,6 @@ describe('createClient', () => {
   it('returns Resend instance when flag value provided', async () => {
     // Force file backend so tests don't interact with real OS keychain
     process.env.RESEND_CREDENTIAL_STORE = 'file';
-    const { createClient } = await import('../../src/lib/client');
     const client = await createClient('re_test_key');
     expect(client).toBeInstanceOf(Resend);
   });
@@ -36,7 +36,6 @@ describe('createClient', () => {
   it('returns Resend instance when env var set', async () => {
     process.env.RESEND_API_KEY = 're_env_key';
     process.env.RESEND_CREDENTIAL_STORE = 'file';
-    const { createClient } = await import('../../src/lib/client');
     const client = await createClient();
     expect(client).toBeInstanceOf(Resend);
   });
@@ -45,14 +44,12 @@ describe('createClient', () => {
     delete process.env.RESEND_API_KEY;
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend-test';
     process.env.RESEND_CREDENTIAL_STORE = 'file';
-    const { createClient } = await import('../../src/lib/client');
     await expect(createClient()).rejects.toThrow('No API key found');
   });
 
   it('flag value takes priority over env var', async () => {
     process.env.RESEND_API_KEY = 're_env_key';
     process.env.RESEND_CREDENTIAL_STORE = 'file';
-    const { createClient } = await import('../../src/lib/client');
     const client = await createClient('re_flag_key');
     expect(client).toBeInstanceOf(Resend);
   });
@@ -80,7 +77,6 @@ describe('createClient', () => {
       }),
     );
 
-    const { createClient } = await import('../../src/lib/client');
     // Should not throw — resolves staging profile's key
     const client = await createClient(undefined, 'staging');
     expect(client).toBeInstanceOf(Resend);
@@ -133,7 +129,6 @@ describe('requireClient permission check', () => {
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { requireClient } = await import('../../src/lib/client');
     await expectExit1(() => requireClient({ json: true }));
 
     const output = errSpy.mock.calls[0][0] as string;
@@ -166,7 +161,6 @@ describe('requireClient permission check', () => {
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { requireClient } = await import('../../src/lib/client');
     await expectExit1(() => requireClient({ json: true }));
 
     const output = errSpy.mock.calls[0][0] as string;
@@ -199,7 +193,6 @@ describe('requireClient permission check', () => {
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { requireClient } = await import('../../src/lib/client');
     await expectExit1(() => requireClient({ json: true }));
 
     const output = errSpy.mock.calls[0][0] as string;
@@ -220,7 +213,6 @@ describe('requireClient permission check', () => {
       }),
     );
 
-    const { requireClient } = await import('../../src/lib/client');
     const client = await requireClient({}, { permission: 'sending_access' });
     expect(client).toBeInstanceOf(Resend);
   });
@@ -238,7 +230,6 @@ describe('requireClient permission check', () => {
       }),
     );
 
-    const { requireClient } = await import('../../src/lib/client');
     const client = await requireClient({});
     expect(client).toBeInstanceOf(Resend);
   });
@@ -254,7 +245,6 @@ describe('requireClient permission check', () => {
       }),
     );
 
-    const { requireClient } = await import('../../src/lib/client');
     const client = await requireClient({});
     expect(client).toBeInstanceOf(Resend);
   });

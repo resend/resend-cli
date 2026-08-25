@@ -1,3 +1,4 @@
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Command } from '@commander-js/extra-typings';
@@ -10,6 +11,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { doctorCommand } from '../../src/commands/doctor';
 import {
   captureTestEnv,
   expectExit1,
@@ -43,7 +45,6 @@ vi.mock('resend', () => ({
  * matching the real CLI structure in src/cli.ts.
  */
 async function createDoctorProgram() {
-  const { doctorCommand } = await import('../../src/commands/doctor');
   const program = new Command()
     .name('resend')
     .option('--json', 'Force JSON output')
@@ -263,9 +264,6 @@ describe('doctor command — expired OAuth grant', () => {
   let tmpDir: string;
 
   beforeEach(async () => {
-    const { mkdirSync, writeFileSync } = await import('node:fs');
-    const { tmpdir } = await import('node:os');
-    const { join } = await import('node:path');
     tmpDir = join(
       tmpdir(),
       `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -297,7 +295,6 @@ describe('doctor command — expired OAuth grant', () => {
   });
 
   afterEach(async () => {
-    const { rmSync } = await import('node:fs');
     restoreEnv();
     rmSync(tmpDir, { recursive: true, force: true });
     spies = undefined;
@@ -363,9 +360,6 @@ describe('doctor command — valid OAuth grant', () => {
   let tmpDir: string;
 
   beforeEach(async () => {
-    const { mkdirSync, writeFileSync } = await import('node:fs');
-    const { tmpdir } = await import('node:os');
-    const { join } = await import('node:path');
     tmpDir = join(
       tmpdir(),
       `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -398,7 +392,6 @@ describe('doctor command — valid OAuth grant', () => {
   });
 
   afterEach(async () => {
-    const { rmSync } = await import('node:fs');
     restoreEnv();
     rmSync(tmpDir, { recursive: true, force: true });
     spies = undefined;

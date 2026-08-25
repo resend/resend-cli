@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { listDomainsCommand } from '../../../src/commands/domains/list';
 import {
   captureTestEnv,
   expectExit1,
@@ -83,9 +84,6 @@ describe('domains list command', () => {
   it('calls SDK list and outputs domains as JSON', async () => {
     spies = setupOutputSpies();
 
-    const { listDomainsCommand } = await import(
-      '../../../src/commands/domains/list'
-    );
     await listDomainsCommand.parseAsync([], { from: 'user' });
 
     expect(mockList).toHaveBeenCalledTimes(1);
@@ -98,9 +96,6 @@ describe('domains list command', () => {
   it('passes limit to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { listDomainsCommand } = await import(
-      '../../../src/commands/domains/list'
-    );
     await listDomainsCommand.parseAsync(['--limit', '25'], { from: 'user' });
 
     expect(getFirstCallArgs()).toMatchObject({ limit: 25 });
@@ -109,9 +104,6 @@ describe('domains list command', () => {
   it('passes after cursor to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { listDomainsCommand } = await import(
-      '../../../src/commands/domains/list'
-    );
     await listDomainsCommand.parseAsync(['--after', 'some-cursor'], {
       from: 'user',
     });
@@ -124,9 +116,6 @@ describe('domains list command', () => {
   it('passes before cursor to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { listDomainsCommand } = await import(
-      '../../../src/commands/domains/list'
-    );
     await listDomainsCommand.parseAsync(['--before', 'some-cursor'], {
       from: 'user',
     });
@@ -141,9 +130,6 @@ describe('domains list command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listDomainsCommand } = await import(
-      '../../../src/commands/domains/list'
-    );
     await expectExit1(() =>
       listDomainsCommand.parseAsync(
         ['--after', 'cursor_after', '--before', 'cursor_before'],
@@ -159,9 +145,6 @@ describe('domains list command', () => {
   it('uses default limit of 10 when not specified', async () => {
     spies = setupOutputSpies();
 
-    const { listDomainsCommand } = await import(
-      '../../../src/commands/domains/list'
-    );
     await listDomainsCommand.parseAsync([], { from: 'user' });
 
     expect(getFirstCallArgs()).toMatchObject({ limit: 10 });
@@ -174,9 +157,6 @@ describe('domains list command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listDomainsCommand } = await import(
-      '../../../src/commands/domains/list'
-    );
     await expectExit1(() =>
       listDomainsCommand.parseAsync([], { from: 'user' }),
     );
@@ -194,9 +174,6 @@ describe('domains list command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { listDomainsCommand } = await import(
-      '../../../src/commands/domains/list'
-    );
     await expectExit1(() =>
       listDomainsCommand.parseAsync([], { from: 'user' }),
     );

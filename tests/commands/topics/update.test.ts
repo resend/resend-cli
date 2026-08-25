@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { updateTopicCommand } from '../../../src/commands/topics/update';
 import {
   captureTestEnv,
   expectExit1,
@@ -54,9 +55,6 @@ describe('topics update command', () => {
   it('calls SDK with id and name when --name is provided', async () => {
     spies = setupOutputSpies();
 
-    const { updateTopicCommand } = await import(
-      '../../../src/commands/topics/update'
-    );
     await updateTopicCommand.parseAsync(
       ['top_abc123', '--name', 'Security Alerts'],
       { from: 'user' },
@@ -71,9 +69,6 @@ describe('topics update command', () => {
   it('calls SDK with id and description when --description is provided', async () => {
     spies = setupOutputSpies();
 
-    const { updateTopicCommand } = await import(
-      '../../../src/commands/topics/update'
-    );
     await updateTopicCommand.parseAsync(
       ['top_abc123', '--description', 'Updated desc'],
       { from: 'user' },
@@ -88,9 +83,6 @@ describe('topics update command', () => {
   it('outputs JSON with id when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { updateTopicCommand } = await import(
-      '../../../src/commands/topics/update'
-    );
     await updateTopicCommand.parseAsync(
       ['top_abc123', '--name', 'Security Alerts'],
       { from: 'user' },
@@ -106,9 +98,6 @@ describe('topics update command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateTopicCommand } = await import(
-      '../../../src/commands/topics/update'
-    );
     await expectExit1(() =>
       updateTopicCommand.parseAsync(['top_abc123'], { from: 'user' }),
     );
@@ -122,9 +111,6 @@ describe('topics update command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateTopicCommand } = await import(
-      '../../../src/commands/topics/update'
-    );
     await expectExit1(() =>
       updateTopicCommand.parseAsync(['top_abc123'], { from: 'user' }),
     );
@@ -139,9 +125,6 @@ describe('topics update command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateTopicCommand } = await import(
-      '../../../src/commands/topics/update'
-    );
     await expectExit1(() =>
       updateTopicCommand.parseAsync(['top_abc123', '--name', 'Test'], {
         from: 'user',
@@ -163,9 +146,6 @@ describe('topics update command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { updateTopicCommand } = await import(
-      '../../../src/commands/topics/update'
-    );
     await expectExit1(() =>
       updateTopicCommand.parseAsync(['top_nonexistent', '--name', 'Test'], {
         from: 'user',

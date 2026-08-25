@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { listLogsCommand } from '../../../src/commands/logs/list';
 import {
   captureTestEnv,
   expectExit1,
@@ -67,7 +68,6 @@ describe('logs list command', () => {
   it('calls SDK list method with default pagination', async () => {
     spies = setupOutputSpies();
 
-    const { listLogsCommand } = await import('../../../src/commands/logs/list');
     await listLogsCommand.parseAsync([], { from: 'user' });
 
     expect(mockList).toHaveBeenCalledTimes(1);
@@ -78,7 +78,6 @@ describe('logs list command', () => {
   it('passes --limit to pagination options', async () => {
     spies = setupOutputSpies();
 
-    const { listLogsCommand } = await import('../../../src/commands/logs/list');
     await listLogsCommand.parseAsync(['--limit', '5'], { from: 'user' });
 
     const args = mockList.mock.calls[0][0] as Record<string, unknown>;
@@ -88,7 +87,6 @@ describe('logs list command', () => {
   it('passes --after cursor to pagination options', async () => {
     spies = setupOutputSpies();
 
-    const { listLogsCommand } = await import('../../../src/commands/logs/list');
     await listLogsCommand.parseAsync(
       ['--after', '3d4a472d-bc6d-4dd2-aa9d-d3d11b549e55'],
       { from: 'user' },
@@ -101,7 +99,6 @@ describe('logs list command', () => {
   it('outputs JSON list with log data when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { listLogsCommand } = await import('../../../src/commands/logs/list');
     await listLogsCommand.parseAsync([], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -117,7 +114,6 @@ describe('logs list command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listLogsCommand } = await import('../../../src/commands/logs/list');
     await expectExit1(() =>
       listLogsCommand.parseAsync(['--limit', '200'], { from: 'user' }),
     );
@@ -133,7 +129,6 @@ describe('logs list command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listLogsCommand } = await import('../../../src/commands/logs/list');
     await expectExit1(() => listLogsCommand.parseAsync([], { from: 'user' }));
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -151,7 +146,6 @@ describe('logs list command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { listLogsCommand } = await import('../../../src/commands/logs/list');
     await expectExit1(() => listLogsCommand.parseAsync([], { from: 'user' }));
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

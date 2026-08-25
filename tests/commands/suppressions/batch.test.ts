@@ -10,6 +10,8 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { batchAddSuppressionsCommand } from '../../../src/commands/suppressions/batch/add';
+import { batchRemoveSuppressionsCommand } from '../../../src/commands/suppressions/batch/remove';
 import {
   captureTestEnv,
   expectExit1,
@@ -67,9 +69,6 @@ describe('suppressions batch commands', () => {
     writeFileSync(tmpFile, JSON.stringify(['a@example.com', 'b@example.com']));
     _spies = setupOutputSpies();
 
-    const { batchAddSuppressionsCommand } = await import(
-      '../../../src/commands/suppressions/batch/add'
-    );
     await batchAddSuppressionsCommand.parseAsync(['--file', tmpFile], {
       from: 'user',
     });
@@ -83,9 +82,6 @@ describe('suppressions batch commands', () => {
     writeFileSync(tmpFile, JSON.stringify(['a@example.com']));
     _spies = setupOutputSpies();
 
-    const { batchRemoveSuppressionsCommand } = await import(
-      '../../../src/commands/suppressions/batch/remove'
-    );
     await batchRemoveSuppressionsCommand.parseAsync(['--file', tmpFile], {
       from: 'user',
     });
@@ -97,9 +93,6 @@ describe('suppressions batch commands', () => {
     writeFileSync(tmpFile, JSON.stringify(['sup-1', 'sup-2']));
     _spies = setupOutputSpies();
 
-    const { batchRemoveSuppressionsCommand } = await import(
-      '../../../src/commands/suppressions/batch/remove'
-    );
     await batchRemoveSuppressionsCommand.parseAsync(
       ['--file', tmpFile, '--ids'],
       { from: 'user' },
@@ -114,9 +107,6 @@ describe('suppressions batch commands', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { batchAddSuppressionsCommand } = await import(
-      '../../../src/commands/suppressions/batch/add'
-    );
     await expectExit1(() =>
       batchAddSuppressionsCommand.parseAsync(['--file', tmpFile], {
         from: 'user',
@@ -133,9 +123,6 @@ describe('suppressions batch commands', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { batchAddSuppressionsCommand } = await import(
-      '../../../src/commands/suppressions/batch/add'
-    );
     await expectExit1(() =>
       batchAddSuppressionsCommand.parseAsync([], { from: 'user' }),
     );

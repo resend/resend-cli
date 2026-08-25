@@ -11,6 +11,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { batchCommand } from '../../../src/commands/emails/batch';
 import * as files from '../../../src/lib/files';
 import {
   captureTestEnv,
@@ -104,7 +105,6 @@ describe('batch command', () => {
     spies = setupOutputSpies();
 
     const file = await writeTmpJson(VALID_EMAILS);
-    const { batchCommand } = await import('../../../src/commands/emails/batch');
     await batchCommand.parseAsync(['--file', file], { from: 'user' });
 
     expect(mockBatchSend).toHaveBeenCalledTimes(1);
@@ -117,7 +117,6 @@ describe('batch command', () => {
     spies = setupOutputSpies();
 
     const file = await writeTmpJson(VALID_EMAILS);
-    const { batchCommand } = await import('../../../src/commands/emails/batch');
     await batchCommand.parseAsync(['--file', file], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -130,7 +129,6 @@ describe('batch command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { batchCommand } = await import('../../../src/commands/emails/batch');
     await expectExit1(() => batchCommand.parseAsync([], { from: 'user' }));
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -142,7 +140,6 @@ describe('batch command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { batchCommand } = await import('../../../src/commands/emails/batch');
     await expectExit1(() =>
       batchCommand.parseAsync(
         ['--file', '/tmp/nonexistent-resend-batch.json'],
@@ -166,7 +163,6 @@ describe('batch command', () => {
     writeFileSync(path, 'not valid json{{{');
     tmpFile = path;
 
-    const { batchCommand } = await import('../../../src/commands/emails/batch');
     await expectExit1(() =>
       batchCommand.parseAsync(['--file', path], { from: 'user' }),
     );
@@ -184,7 +180,6 @@ describe('batch command', () => {
       from: 'you@domain.com',
       to: ['user@example.com'],
     });
-    const { batchCommand } = await import('../../../src/commands/emails/batch');
     await expectExit1(() =>
       batchCommand.parseAsync(['--file', file], { from: 'user' }),
     );
@@ -202,7 +197,6 @@ describe('batch command', () => {
     exitSpy = mockExitThrow();
 
     const file = await writeTmpJson([null]);
-    const { batchCommand } = await import('../../../src/commands/emails/batch');
     await expectExit1(() =>
       batchCommand.parseAsync(['--file', file], { from: 'user' }),
     );
@@ -224,7 +218,6 @@ describe('batch command', () => {
       },
     ];
     const file = await writeTmpJson(emails);
-    const { batchCommand } = await import('../../../src/commands/emails/batch');
     await expectExit1(() =>
       batchCommand.parseAsync(['--file', file], { from: 'user' }),
     );
@@ -244,7 +237,6 @@ describe('batch command', () => {
       },
     ];
     const file = await writeTmpJson(emails);
-    const { batchCommand } = await import('../../../src/commands/emails/batch');
     await batchCommand.parseAsync(['--file', file], { from: 'user' });
 
     expect(mockBatchSend).toHaveBeenCalledTimes(1);
@@ -265,7 +257,6 @@ describe('batch command', () => {
       },
     ];
     const file = await writeTmpJson(emails);
-    const { batchCommand } = await import('../../../src/commands/emails/batch');
     await batchCommand.parseAsync(['--file', file], { from: 'user' });
 
     const sent = mockBatchSend.mock.calls[0][0] as Record<string, unknown>[];
@@ -288,7 +279,6 @@ describe('batch command', () => {
       text: `Hello ${i}`,
     }));
     const file = await writeTmpJson(emails);
-    const { batchCommand } = await import('../../../src/commands/emails/batch');
     await batchCommand.parseAsync(['--file', file], { from: 'user' });
 
     expect(mockBatchSend).toHaveBeenCalledTimes(1);
@@ -300,7 +290,6 @@ describe('batch command', () => {
     spies = setupOutputSpies();
 
     const file = await writeTmpJson(VALID_EMAILS);
-    const { batchCommand } = await import('../../../src/commands/emails/batch');
     await batchCommand.parseAsync(
       ['--file', file, '--idempotency-key', 'my-key-123'],
       { from: 'user' },
@@ -315,7 +304,6 @@ describe('batch command', () => {
     spies = setupOutputSpies();
 
     const file = await writeTmpJson(VALID_EMAILS);
-    const { batchCommand } = await import('../../../src/commands/emails/batch');
     await batchCommand.parseAsync(
       ['--file', file, '--batch-validation', 'permissive'],
       { from: 'user' },
@@ -337,7 +325,6 @@ describe('batch command', () => {
     exitSpy = mockExitThrow();
 
     const file = await writeTmpJson(VALID_EMAILS);
-    const { batchCommand } = await import('../../../src/commands/emails/batch');
     await expectExit1(() =>
       batchCommand.parseAsync(['--file', file], { from: 'user' }),
     );
@@ -362,7 +349,6 @@ describe('batch command', () => {
       .mockImplementation(() => true);
 
     const file = await writeTmpJson(VALID_EMAILS);
-    const { batchCommand } = await import('../../../src/commands/emails/batch');
     await batchCommand.parseAsync(['--file', file], { from: 'user' });
 
     const allOutput = logSpy.mock.calls.map((c) => c[0]).join('\n');
@@ -385,7 +371,6 @@ describe('batch command', () => {
     }));
 
     const file = await writeTmpJson(VALID_EMAILS);
-    const { batchCommand } = await import('../../../src/commands/emails/batch');
     await batchCommand.parseAsync(
       ['--file', file, '--batch-validation', 'permissive'],
       { from: 'user' },
@@ -403,7 +388,6 @@ describe('batch command', () => {
     spies = setupOutputSpies();
 
     const file = await writeTmpJson(VALID_EMAILS);
-    const { batchCommand } = await import('../../../src/commands/emails/batch');
     await batchCommand.parseAsync(['--file', file], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -419,7 +403,6 @@ describe('batch command', () => {
       .spyOn(files, 'readFile')
       .mockReturnValue(JSON.stringify(VALID_EMAILS));
 
-    const { batchCommand } = await import('../../../src/commands/emails/batch');
     await batchCommand.parseAsync(['--file', '-'], { from: 'user' });
 
     expect(readFileSpy).toHaveBeenCalledWith('-', expect.anything());
@@ -442,7 +425,6 @@ describe('batch command', () => {
       },
     ];
     const file = await writeTmpJson(emailsWithoutHtml);
-    const { batchCommand } = await import('../../../src/commands/emails/batch');
     await batchCommand.parseAsync(
       ['--file', file, '--react-email', './emails/welcome.tsx'],
       { from: 'user' },
@@ -475,7 +457,6 @@ describe('batch command', () => {
     }));
 
     const file = await writeTmpJson(VALID_EMAILS);
-    const { batchCommand } = await import('../../../src/commands/emails/batch');
     await expectExit1(() =>
       batchCommand.parseAsync(['--file', file], { from: 'user' }),
     );

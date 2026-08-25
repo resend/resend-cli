@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { deleteContactCommand } from '../../../src/commands/contacts/delete';
 import {
   captureTestEnv,
   expectExit1,
@@ -58,9 +59,6 @@ describe('contacts delete command', () => {
   it('deletes contact by ID with --yes', async () => {
     spies = setupOutputSpies();
 
-    const { deleteContactCommand } = await import(
-      '../../../src/commands/contacts/delete'
-    );
     await deleteContactCommand.parseAsync(
       ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--yes'],
       {
@@ -77,9 +75,6 @@ describe('contacts delete command', () => {
   it('deletes contact by email with --yes', async () => {
     spies = setupOutputSpies();
 
-    const { deleteContactCommand } = await import(
-      '../../../src/commands/contacts/delete'
-    );
     await deleteContactCommand.parseAsync(['jane@example.com', '--yes'], {
       from: 'user',
     });
@@ -90,9 +85,6 @@ describe('contacts delete command', () => {
   it('outputs synthesized JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { deleteContactCommand } = await import(
-      '../../../src/commands/contacts/delete'
-    );
     await deleteContactCommand.parseAsync(
       ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--yes'],
       {
@@ -112,9 +104,6 @@ describe('contacts delete command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteContactCommand } = await import(
-      '../../../src/commands/contacts/delete'
-    );
     await expectExit1(() =>
       deleteContactCommand.parseAsync(
         ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
@@ -131,9 +120,6 @@ describe('contacts delete command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteContactCommand } = await import(
-      '../../../src/commands/contacts/delete'
-    );
     await expectExit1(() =>
       deleteContactCommand.parseAsync(
         ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
@@ -151,9 +137,6 @@ describe('contacts delete command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteContactCommand } = await import(
-      '../../../src/commands/contacts/delete'
-    );
     await expectExit1(() =>
       deleteContactCommand.parseAsync(
         ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--yes'],
@@ -178,9 +161,6 @@ describe('contacts delete command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { deleteContactCommand } = await import(
-      '../../../src/commands/contacts/delete'
-    );
     await expectExit1(() =>
       deleteContactCommand.parseAsync(['nonexistent_id', '--yes'], {
         from: 'user',

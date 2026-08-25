@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { recipientsBroadcastCommand } from '../../../src/commands/broadcasts/recipients';
 import {
   captureTestEnv,
   expectExit1,
@@ -69,9 +70,6 @@ describe('broadcasts recipients command', () => {
   it('fetches recipients by id and type', async () => {
     spies = setupOutputSpies();
 
-    const { recipientsBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/recipients'
-    );
     await recipientsBroadcastCommand.parseAsync(
       ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--type', 'clicked'],
       { from: 'user' },
@@ -89,9 +87,6 @@ describe('broadcasts recipients command', () => {
   it('passes --email and --bounce-type to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { recipientsBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/recipients'
-    );
     await recipientsBroadcastCommand.parseAsync(
       [
         'd1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
@@ -114,9 +109,6 @@ describe('broadcasts recipients command', () => {
   it('passes --limit, --after, and --before to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { recipientsBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/recipients'
-    );
     await recipientsBroadcastCommand.parseAsync(
       [
         'd1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
@@ -138,9 +130,6 @@ describe('broadcasts recipients command', () => {
   it('outputs JSON list when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { recipientsBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/recipients'
-    );
     await recipientsBroadcastCommand.parseAsync(
       ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--type', 'clicked'],
       { from: 'user' },
@@ -159,9 +148,6 @@ describe('broadcasts recipients command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { recipientsBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/recipients'
-    );
     await expectExit1(() =>
       recipientsBroadcastCommand.parseAsync(
         ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
@@ -181,9 +167,6 @@ describe('broadcasts recipients command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { recipientsBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/recipients'
-    );
     await expectExit1(() =>
       recipientsBroadcastCommand.parseAsync(
         [
@@ -209,9 +192,6 @@ describe('broadcasts recipients command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { recipientsBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/recipients'
-    );
     await expectExit1(() =>
       recipientsBroadcastCommand.parseAsync(
         [
@@ -238,9 +218,6 @@ describe('broadcasts recipients command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { recipientsBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/recipients'
-    );
     await expectExit1(() =>
       recipientsBroadcastCommand.parseAsync(
         ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--type', 'sent'],
@@ -263,9 +240,6 @@ describe('broadcasts recipients command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { recipientsBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/recipients'
-    );
     await expectExit1(() =>
       recipientsBroadcastCommand.parseAsync(
         ['00000000-0000-0000-0000-00000000bad0', '--type', 'sent'],

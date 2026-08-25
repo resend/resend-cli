@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { updateWebhookCommand } from '../../../src/commands/webhooks/update';
 import {
   captureTestEnv,
   expectExit1,
@@ -54,9 +55,6 @@ describe('webhooks update command', () => {
   it('updates endpoint with --endpoint flag', async () => {
     spies = setupOutputSpies();
 
-    const { updateWebhookCommand } = await import(
-      '../../../src/commands/webhooks/update'
-    );
     await updateWebhookCommand.parseAsync(
       ['wh_abc123', '--endpoint', 'https://new-app.example.com/hooks'],
       { from: 'user' },
@@ -71,9 +69,6 @@ describe('webhooks update command', () => {
   it('updates events with --events flag', async () => {
     spies = setupOutputSpies();
 
-    const { updateWebhookCommand } = await import(
-      '../../../src/commands/webhooks/update'
-    );
     await updateWebhookCommand.parseAsync(
       ['wh_abc123', '--events', 'email.sent', 'email.bounced'],
       { from: 'user' },
@@ -86,9 +81,6 @@ describe('webhooks update command', () => {
   it('expands "all" shorthand in --events to 19 events', async () => {
     spies = setupOutputSpies();
 
-    const { updateWebhookCommand } = await import(
-      '../../../src/commands/webhooks/update'
-    );
     await updateWebhookCommand.parseAsync(['wh_abc123', '--events', 'all'], {
       from: 'user',
     });
@@ -100,9 +92,6 @@ describe('webhooks update command', () => {
   it('updates status with --status flag', async () => {
     spies = setupOutputSpies();
 
-    const { updateWebhookCommand } = await import(
-      '../../../src/commands/webhooks/update'
-    );
     await updateWebhookCommand.parseAsync(
       ['wh_abc123', '--status', 'disabled'],
       { from: 'user' },
@@ -115,9 +104,6 @@ describe('webhooks update command', () => {
   it('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { updateWebhookCommand } = await import(
-      '../../../src/commands/webhooks/update'
-    );
     await updateWebhookCommand.parseAsync(
       ['wh_abc123', '--status', 'enabled'],
       { from: 'user' },
@@ -134,9 +120,6 @@ describe('webhooks update command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateWebhookCommand } = await import(
-      '../../../src/commands/webhooks/update'
-    );
     await expectExit1(() =>
       updateWebhookCommand.parseAsync(['wh_abc123'], { from: 'user' }),
     );
@@ -150,9 +133,6 @@ describe('webhooks update command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateWebhookCommand } = await import(
-      '../../../src/commands/webhooks/update'
-    );
     await expectExit1(() =>
       updateWebhookCommand.parseAsync(['wh_abc123'], { from: 'user' }),
     );
@@ -171,9 +151,6 @@ describe('webhooks update command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { updateWebhookCommand } = await import(
-      '../../../src/commands/webhooks/update'
-    );
     await expectExit1(() =>
       updateWebhookCommand.parseAsync(['wh_abc123', '--events', ','], {
         from: 'user',
@@ -199,9 +176,6 @@ describe('webhooks update command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { updateWebhookCommand } = await import(
-      '../../../src/commands/webhooks/update'
-    );
     await expectExit1(() =>
       updateWebhookCommand.parseAsync(['wh_abc123', '--events', ' , , '], {
         from: 'user',
@@ -223,9 +197,6 @@ describe('webhooks update command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateWebhookCommand } = await import(
-      '../../../src/commands/webhooks/update'
-    );
     await expectExit1(() =>
       updateWebhookCommand.parseAsync(['wh_abc123', '--status', 'enabled'], {
         from: 'user',
@@ -247,9 +218,6 @@ describe('webhooks update command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { updateWebhookCommand } = await import(
-      '../../../src/commands/webhooks/update'
-    );
     await expectExit1(() =>
       updateWebhookCommand.parseAsync(
         ['wh_nonexistent', '--status', 'disabled'],

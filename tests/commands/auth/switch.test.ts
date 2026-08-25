@@ -11,6 +11,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { switchCommand } from '../../../src/commands/auth/switch';
 import { storeApiKey } from '../../../src/lib/config';
 import {
   captureTestEnv,
@@ -20,7 +21,6 @@ import {
 } from '../../helpers';
 
 async function createProgram() {
-  const { switchCommand } = await import('../../../src/commands/auth/switch');
   return new Command()
     .name('resend')
     .option('--json', 'Force JSON output')
