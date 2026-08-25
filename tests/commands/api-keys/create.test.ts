@@ -1,3 +1,4 @@
+import { Command } from '@commander-js/extra-typings';
 import {
   afterEach,
   beforeEach,
@@ -7,6 +8,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { createApiKeyCommand } from '../../../src/commands/api-keys/create';
 import {
   captureTestEnv,
   expectExit1,
@@ -59,9 +61,6 @@ describe('api-keys create command', () => {
   it('creates API key with --name flag', async () => {
     spies = setupOutputSpies();
 
-    const { createApiKeyCommand } = await import(
-      '../../../src/commands/api-keys/create'
-    );
     await createApiKeyCommand.parseAsync(['--name', 'Production'], {
       from: 'user',
     });
@@ -74,9 +73,6 @@ describe('api-keys create command', () => {
   it('passes permission flag to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { createApiKeyCommand } = await import(
-      '../../../src/commands/api-keys/create'
-    );
     await createApiKeyCommand.parseAsync(
       ['--name', 'CI Token', '--permission', 'sending_access'],
       { from: 'user' },
@@ -89,9 +85,6 @@ describe('api-keys create command', () => {
   it('passes domain_id (snake_case) to SDK when --domain-id is provided', async () => {
     spies = setupOutputSpies();
 
-    const { createApiKeyCommand } = await import(
-      '../../../src/commands/api-keys/create'
-    );
     await createApiKeyCommand.parseAsync(
       [
         '--name',
@@ -111,9 +104,6 @@ describe('api-keys create command', () => {
   it('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { createApiKeyCommand } = await import(
-      '../../../src/commands/api-keys/create'
-    );
     await createApiKeyCommand.parseAsync(['--name', 'Production'], {
       from: 'user',
     });
@@ -129,9 +119,6 @@ describe('api-keys create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createApiKeyCommand } = await import(
-      '../../../src/commands/api-keys/create'
-    );
     await expectExit1(() =>
       createApiKeyCommand.parseAsync([], { from: 'user' }),
     );
@@ -152,10 +139,6 @@ describe('api-keys create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { Command } = await import('@commander-js/extra-typings');
-    const { createApiKeyCommand } = await import(
-      '../../../src/commands/api-keys/create'
-    );
     const program = new Command()
       .option('--profile <name>')
       .option('--team <name>')
@@ -178,9 +161,6 @@ describe('api-keys create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createApiKeyCommand } = await import(
-      '../../../src/commands/api-keys/create'
-    );
     await expectExit1(() =>
       createApiKeyCommand.parseAsync([], { from: 'user' }),
     );
@@ -195,9 +175,6 @@ describe('api-keys create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createApiKeyCommand } = await import(
-      '../../../src/commands/api-keys/create'
-    );
     await expectExit1(() =>
       createApiKeyCommand.parseAsync(['--name', 'Production'], {
         from: 'user',
@@ -219,9 +196,6 @@ describe('api-keys create command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { createApiKeyCommand } = await import(
-      '../../../src/commands/api-keys/create'
-    );
     await expectExit1(() =>
       createApiKeyCommand.parseAsync(['--name', 'Production'], {
         from: 'user',
@@ -237,9 +211,6 @@ describe('api-keys create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createApiKeyCommand } = await import(
-      '../../../src/commands/api-keys/create'
-    );
     await expectExit1(() =>
       createApiKeyCommand.parseAsync(
         ['--name', 'CI Token', '--domain-id', 'domain-123'],
@@ -259,9 +230,6 @@ describe('api-keys create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createApiKeyCommand } = await import(
-      '../../../src/commands/api-keys/create'
-    );
     await expectExit1(() =>
       createApiKeyCommand.parseAsync(
         [
@@ -285,9 +253,6 @@ describe('api-keys create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createApiKeyCommand } = await import(
-      '../../../src/commands/api-keys/create'
-    );
     await expectExit1(() =>
       createApiKeyCommand.parseAsync(
         ['--name', 'CI Token', '--domain-id', 'domain-123'],
@@ -301,9 +266,6 @@ describe('api-keys create command', () => {
   it('allows --domain-id with --permission sending_access', async () => {
     spies = setupOutputSpies();
 
-    const { createApiKeyCommand } = await import(
-      '../../../src/commands/api-keys/create'
-    );
     await createApiKeyCommand.parseAsync(
       [
         '--name',

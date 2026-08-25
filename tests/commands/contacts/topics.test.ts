@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { listContactTopicsCommand } from '../../../src/commands/contacts/topics';
 import {
   captureTestEnv,
   expectExit1,
@@ -67,9 +68,6 @@ describe('contacts topics command', () => {
   it('lists topics by contact ID', async () => {
     spies = setupOutputSpies();
 
-    const { listContactTopicsCommand } = await import(
-      '../../../src/commands/contacts/topics'
-    );
     await listContactTopicsCommand.parseAsync(
       ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
       {
@@ -85,9 +83,6 @@ describe('contacts topics command', () => {
   it('lists topics by contact email', async () => {
     spies = setupOutputSpies();
 
-    const { listContactTopicsCommand } = await import(
-      '../../../src/commands/contacts/topics'
-    );
     await listContactTopicsCommand.parseAsync(['jane@example.com'], {
       from: 'user',
     });
@@ -99,9 +94,6 @@ describe('contacts topics command', () => {
   it('outputs JSON list when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { listContactTopicsCommand } = await import(
-      '../../../src/commands/contacts/topics'
-    );
     await listContactTopicsCommand.parseAsync(
       ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
       {
@@ -123,9 +115,6 @@ describe('contacts topics command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listContactTopicsCommand } = await import(
-      '../../../src/commands/contacts/topics'
-    );
     await expectExit1(() =>
       listContactTopicsCommand.parseAsync(
         ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
@@ -148,9 +137,6 @@ describe('contacts topics command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { listContactTopicsCommand } = await import(
-      '../../../src/commands/contacts/topics'
-    );
     await expectExit1(() =>
       listContactTopicsCommand.parseAsync(
         ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],

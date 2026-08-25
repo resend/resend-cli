@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { createSegmentCommand } from '../../../src/commands/segments/create';
 import {
   captureTestEnv,
   expectExit1,
@@ -58,9 +59,6 @@ describe('segments create command', () => {
   it('creates segment with --name flag', async () => {
     spies = setupOutputSpies();
 
-    const { createSegmentCommand } = await import(
-      '../../../src/commands/segments/create'
-    );
     await createSegmentCommand.parseAsync(
       ['--name', 'Newsletter Subscribers'],
       { from: 'user' },
@@ -74,9 +72,6 @@ describe('segments create command', () => {
   it('outputs JSON with id and object when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { createSegmentCommand } = await import(
-      '../../../src/commands/segments/create'
-    );
     await createSegmentCommand.parseAsync(
       ['--name', 'Newsletter Subscribers'],
       { from: 'user' },
@@ -94,9 +89,6 @@ describe('segments create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createSegmentCommand } = await import(
-      '../../../src/commands/segments/create'
-    );
     await expectExit1(() =>
       createSegmentCommand.parseAsync([], { from: 'user' }),
     );
@@ -110,9 +102,6 @@ describe('segments create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createSegmentCommand } = await import(
-      '../../../src/commands/segments/create'
-    );
     await expectExit1(() =>
       createSegmentCommand.parseAsync([], { from: 'user' }),
     );
@@ -127,9 +116,6 @@ describe('segments create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createSegmentCommand } = await import(
-      '../../../src/commands/segments/create'
-    );
     await expectExit1(() =>
       createSegmentCommand.parseAsync(['--name', 'Test'], { from: 'user' }),
     );
@@ -149,9 +135,6 @@ describe('segments create command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { createSegmentCommand } = await import(
-      '../../../src/commands/segments/create'
-    );
     await expectExit1(() =>
       createSegmentCommand.parseAsync(['--name', 'Newsletter Subscribers'], {
         from: 'user',

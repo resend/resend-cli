@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { docsCommand } from '../../src/commands/docs';
 import * as browser from '../../src/lib/browser';
 
 describe('resend docs command', () => {
@@ -11,8 +12,6 @@ describe('resend docs command', () => {
   });
 
   it('opens documentation URL in browser', async () => {
-    const { docsCommand } = await import('../../src/commands/docs');
-
     await docsCommand.parseAsync([], { from: 'user' });
 
     expect(browser.openInBrowserOrLog).toHaveBeenCalledTimes(1);

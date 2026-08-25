@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { clickedLinksBroadcastCommand } from '../../../src/commands/broadcasts/clicked-links';
 import {
   captureTestEnv,
   expectExit1,
@@ -65,9 +66,6 @@ describe('broadcasts clicked-links command', () => {
   it('lists clicked links for a broadcast id', async () => {
     spies = setupOutputSpies();
 
-    const { clickedLinksBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/clicked-links'
-    );
     await clickedLinksBroadcastCommand.parseAsync(
       ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
       { from: 'user' },
@@ -82,9 +80,6 @@ describe('broadcasts clicked-links command', () => {
   it('outputs JSON list when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { clickedLinksBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/clicked-links'
-    );
     await clickedLinksBroadcastCommand.parseAsync(
       ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
       { from: 'user' },
@@ -100,9 +95,6 @@ describe('broadcasts clicked-links command', () => {
   it('passes --limit to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { clickedLinksBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/clicked-links'
-    );
     await clickedLinksBroadcastCommand.parseAsync(
       ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--limit', '5'],
       { from: 'user' },
@@ -115,9 +107,6 @@ describe('broadcasts clicked-links command', () => {
   it('passes --after cursor to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { clickedLinksBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/clicked-links'
-    );
     await clickedLinksBroadcastCommand.parseAsync(
       ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--after', 'b2Zmc2V0OjA'],
       { from: 'user' },
@@ -130,9 +119,6 @@ describe('broadcasts clicked-links command', () => {
   it('passes --before cursor to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { clickedLinksBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/clicked-links'
-    );
     await clickedLinksBroadcastCommand.parseAsync(
       ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--before', 'b2Zmc2V0OjA'],
       { from: 'user' },
@@ -150,9 +136,6 @@ describe('broadcasts clicked-links command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { clickedLinksBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/clicked-links'
-    );
     await expectExit1(() =>
       clickedLinksBroadcastCommand.parseAsync(
         ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--limit', '999'],
@@ -171,9 +154,6 @@ describe('broadcasts clicked-links command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { clickedLinksBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/clicked-links'
-    );
     await expectExit1(() =>
       clickedLinksBroadcastCommand.parseAsync(
         ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
@@ -196,9 +176,6 @@ describe('broadcasts clicked-links command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { clickedLinksBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/clicked-links'
-    );
     await expectExit1(() =>
       clickedLinksBroadcastCommand.parseAsync(
         ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],

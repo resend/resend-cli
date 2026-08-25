@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { getContactPropertyCommand } from '../../../src/commands/contact-properties/get';
 import {
   captureTestEnv,
   expectExit1,
@@ -61,9 +62,6 @@ describe('contact-properties get command', () => {
   it('calls SDK with the given ID', async () => {
     spies = setupOutputSpies();
 
-    const { getContactPropertyCommand } = await import(
-      '../../../src/commands/contact-properties/get'
-    );
     await getContactPropertyCommand.parseAsync(
       ['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d'],
       {
@@ -80,9 +78,6 @@ describe('contact-properties get command', () => {
   it('outputs JSON when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { getContactPropertyCommand } = await import(
-      '../../../src/commands/contact-properties/get'
-    );
     await getContactPropertyCommand.parseAsync(
       ['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d'],
       {
@@ -105,9 +100,6 @@ describe('contact-properties get command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { getContactPropertyCommand } = await import(
-      '../../../src/commands/contact-properties/get'
-    );
     await expectExit1(() =>
       getContactPropertyCommand.parseAsync(
         ['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d'],
@@ -130,9 +122,6 @@ describe('contact-properties get command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { getContactPropertyCommand } = await import(
-      '../../../src/commands/contact-properties/get'
-    );
     await expectExit1(() =>
       getContactPropertyCommand.parseAsync(['nonexistent_id'], {
         from: 'user',

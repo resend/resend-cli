@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { claimCreateCommand } from '../../../../src/commands/domains/claim/create';
 import {
   captureTestEnv,
   expectExit1,
@@ -70,9 +71,6 @@ describe('domains claim create command', () => {
   it('calls SDK claims.create and outputs the domain_claim as JSON', async () => {
     spies = setupOutputSpies();
 
-    const { claimCreateCommand } = await import(
-      '../../../../src/commands/domains/claim/create'
-    );
     await claimCreateCommand.parseAsync(['--name', 'example.com'], {
       from: 'user',
     });
@@ -91,9 +89,6 @@ describe('domains claim create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { claimCreateCommand } = await import(
-      '../../../../src/commands/domains/claim/create'
-    );
     await expectExit1(() =>
       claimCreateCommand.parseAsync([], { from: 'user' }),
     );
@@ -104,9 +99,6 @@ describe('domains claim create command', () => {
 
   it('passes customReturnPath when --custom-return-path is set', async () => {
     spies = setupOutputSpies();
-    const { claimCreateCommand } = await import(
-      '../../../../src/commands/domains/claim/create'
-    );
     await claimCreateCommand.parseAsync(
       ['--name', 'example.com', '--custom-return-path', 'bounce'],
       { from: 'user' },
@@ -119,9 +111,6 @@ describe('domains claim create command', () => {
 
   it('passes openTracking=true with --open-tracking', async () => {
     spies = setupOutputSpies();
-    const { claimCreateCommand } = await import(
-      '../../../../src/commands/domains/claim/create'
-    );
     await claimCreateCommand.parseAsync(
       ['--name', 'example.com', '--open-tracking'],
       { from: 'user' },
@@ -134,9 +123,6 @@ describe('domains claim create command', () => {
 
   it('passes openTracking=false with --no-open-tracking', async () => {
     spies = setupOutputSpies();
-    const { claimCreateCommand } = await import(
-      '../../../../src/commands/domains/claim/create'
-    );
     await claimCreateCommand.parseAsync(
       ['--name', 'example.com', '--no-open-tracking'],
       { from: 'user' },
@@ -149,9 +135,6 @@ describe('domains claim create command', () => {
 
   it('passes clickTracking=true with --click-tracking', async () => {
     spies = setupOutputSpies();
-    const { claimCreateCommand } = await import(
-      '../../../../src/commands/domains/claim/create'
-    );
     await claimCreateCommand.parseAsync(
       ['--name', 'example.com', '--click-tracking'],
       { from: 'user' },
@@ -164,9 +147,6 @@ describe('domains claim create command', () => {
 
   it('passes clickTracking=false with --no-click-tracking', async () => {
     spies = setupOutputSpies();
-    const { claimCreateCommand } = await import(
-      '../../../../src/commands/domains/claim/create'
-    );
     await claimCreateCommand.parseAsync(
       ['--name', 'example.com', '--no-click-tracking'],
       { from: 'user' },
@@ -188,9 +168,6 @@ describe('domains claim create command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { claimCreateCommand } = await import(
-      '../../../../src/commands/domains/claim/create'
-    );
     await expectExit1(() =>
       claimCreateCommand.parseAsync(['--name', 'example.com'], {
         from: 'user',

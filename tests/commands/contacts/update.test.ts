@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { updateContactCommand } from '../../../src/commands/contacts/update';
 import {
   captureTestEnv,
   expectExit1,
@@ -57,9 +58,6 @@ describe('contacts update command', () => {
   it('updates contact by ID with --unsubscribed', async () => {
     spies = setupOutputSpies();
 
-    const { updateContactCommand } = await import(
-      '../../../src/commands/contacts/update'
-    );
     await updateContactCommand.parseAsync(
       ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--unsubscribed'],
       { from: 'user' },
@@ -74,9 +72,6 @@ describe('contacts update command', () => {
   it('updates contact by email with --no-unsubscribed', async () => {
     spies = setupOutputSpies();
 
-    const { updateContactCommand } = await import(
-      '../../../src/commands/contacts/update'
-    );
     await updateContactCommand.parseAsync(
       ['jane@example.com', '--no-unsubscribed'],
       { from: 'user' },
@@ -90,9 +85,6 @@ describe('contacts update command', () => {
   it('parses --properties JSON and passes to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { updateContactCommand } = await import(
-      '../../../src/commands/contacts/update'
-    );
     await updateContactCommand.parseAsync(
       [
         'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
@@ -109,9 +101,6 @@ describe('contacts update command', () => {
   it('does not include unsubscribed when neither flag is passed', async () => {
     spies = setupOutputSpies();
 
-    const { updateContactCommand } = await import(
-      '../../../src/commands/contacts/update'
-    );
     await updateContactCommand.parseAsync(
       ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
       { from: 'user' },
@@ -124,9 +113,6 @@ describe('contacts update command', () => {
   it('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { updateContactCommand } = await import(
-      '../../../src/commands/contacts/update'
-    );
     await updateContactCommand.parseAsync(
       ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--unsubscribed'],
       { from: 'user' },
@@ -143,9 +129,6 @@ describe('contacts update command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateContactCommand } = await import(
-      '../../../src/commands/contacts/update'
-    );
     await expectExit1(() =>
       updateContactCommand.parseAsync(
         ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--properties', 'bad-json'],
@@ -164,9 +147,6 @@ describe('contacts update command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateContactCommand } = await import(
-      '../../../src/commands/contacts/update'
-    );
     await expectExit1(() =>
       updateContactCommand.parseAsync(
         ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--unsubscribed'],
@@ -191,9 +171,6 @@ describe('contacts update command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { updateContactCommand } = await import(
-      '../../../src/commands/contacts/update'
-    );
     await expectExit1(() =>
       updateContactCommand.parseAsync(['nonexistent_id', '--unsubscribed'], {
         from: 'user',

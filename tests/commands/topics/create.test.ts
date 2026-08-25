@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { createTopicCommand } from '../../../src/commands/topics/create';
 import {
   captureTestEnv,
   expectExit1,
@@ -54,9 +55,6 @@ describe('topics create command', () => {
   it('creates topic with --name and default subscription', async () => {
     spies = setupOutputSpies();
 
-    const { createTopicCommand } = await import(
-      '../../../src/commands/topics/create'
-    );
     await createTopicCommand.parseAsync(['--name', 'Product Updates'], {
       from: 'user',
     });
@@ -70,9 +68,6 @@ describe('topics create command', () => {
   it('creates topic with explicit --default-subscription opt_out', async () => {
     spies = setupOutputSpies();
 
-    const { createTopicCommand } = await import(
-      '../../../src/commands/topics/create'
-    );
     await createTopicCommand.parseAsync(
       ['--name', 'Weekly Digest', '--default-subscription', 'opt_out'],
       { from: 'user' },
@@ -85,9 +80,6 @@ describe('topics create command', () => {
   it('includes description when --description is provided', async () => {
     spies = setupOutputSpies();
 
-    const { createTopicCommand } = await import(
-      '../../../src/commands/topics/create'
-    );
     await createTopicCommand.parseAsync(
       [
         '--name',
@@ -105,9 +97,6 @@ describe('topics create command', () => {
   it('outputs JSON with id when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { createTopicCommand } = await import(
-      '../../../src/commands/topics/create'
-    );
     await createTopicCommand.parseAsync(['--name', 'Product Updates'], {
       from: 'user',
     });
@@ -122,9 +111,6 @@ describe('topics create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createTopicCommand } = await import(
-      '../../../src/commands/topics/create'
-    );
     await expectExit1(() =>
       createTopicCommand.parseAsync([], { from: 'user' }),
     );
@@ -138,9 +124,6 @@ describe('topics create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createTopicCommand } = await import(
-      '../../../src/commands/topics/create'
-    );
     await expectExit1(() =>
       createTopicCommand.parseAsync([], { from: 'user' }),
     );
@@ -155,9 +138,6 @@ describe('topics create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createTopicCommand } = await import(
-      '../../../src/commands/topics/create'
-    );
     await expectExit1(() =>
       createTopicCommand.parseAsync(['--name', 'Test'], { from: 'user' }),
     );
@@ -177,9 +157,6 @@ describe('topics create command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { createTopicCommand } = await import(
-      '../../../src/commands/topics/create'
-    );
     await expectExit1(() =>
       createTopicCommand.parseAsync(['--name', 'Product Updates'], {
         from: 'user',

@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { createContactPropertyCommand } from '../../../src/commands/contact-properties/create';
 import {
   captureTestEnv,
   expectExit1,
@@ -57,9 +58,6 @@ describe('contact-properties create command', () => {
   it('creates property with --key and --type', async () => {
     spies = setupOutputSpies();
 
-    const { createContactPropertyCommand } = await import(
-      '../../../src/commands/contact-properties/create'
-    );
     await createContactPropertyCommand.parseAsync(
       ['--key', 'company_name', '--type', 'string'],
       { from: 'user' },
@@ -74,9 +72,6 @@ describe('contact-properties create command', () => {
   it('creates number-type property', async () => {
     spies = setupOutputSpies();
 
-    const { createContactPropertyCommand } = await import(
-      '../../../src/commands/contact-properties/create'
-    );
     await createContactPropertyCommand.parseAsync(
       ['--key', 'score', '--type', 'number'],
       { from: 'user' },
@@ -90,9 +85,6 @@ describe('contact-properties create command', () => {
   it('passes string fallback-value to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { createContactPropertyCommand } = await import(
-      '../../../src/commands/contact-properties/create'
-    );
     await createContactPropertyCommand.parseAsync(
       [
         '--key',
@@ -112,9 +104,6 @@ describe('contact-properties create command', () => {
   it('coerces fallback-value to number for number-type properties', async () => {
     spies = setupOutputSpies();
 
-    const { createContactPropertyCommand } = await import(
-      '../../../src/commands/contact-properties/create'
-    );
     await createContactPropertyCommand.parseAsync(
       ['--key', 'score', '--type', 'number', '--fallback-value', '42'],
       { from: 'user' },
@@ -127,9 +116,6 @@ describe('contact-properties create command', () => {
   it('outputs JSON id when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { createContactPropertyCommand } = await import(
-      '../../../src/commands/contact-properties/create'
-    );
     await createContactPropertyCommand.parseAsync(
       ['--key', 'plan', '--type', 'string'],
       { from: 'user' },
@@ -146,9 +132,6 @@ describe('contact-properties create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createContactPropertyCommand } = await import(
-      '../../../src/commands/contact-properties/create'
-    );
     await expectExit1(() =>
       createContactPropertyCommand.parseAsync(['--type', 'string'], {
         from: 'user',
@@ -164,9 +147,6 @@ describe('contact-properties create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createContactPropertyCommand } = await import(
-      '../../../src/commands/contact-properties/create'
-    );
     await expectExit1(() =>
       createContactPropertyCommand.parseAsync(['--key', 'company_name'], {
         from: 'user',
@@ -182,9 +162,6 @@ describe('contact-properties create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createContactPropertyCommand } = await import(
-      '../../../src/commands/contact-properties/create'
-    );
     await expectExit1(() =>
       createContactPropertyCommand.parseAsync(
         [
@@ -210,9 +187,6 @@ describe('contact-properties create command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createContactPropertyCommand } = await import(
-      '../../../src/commands/contact-properties/create'
-    );
     await expectExit1(() =>
       createContactPropertyCommand.parseAsync(
         ['--key', 'company_name', '--type', 'string'],
@@ -235,9 +209,6 @@ describe('contact-properties create command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { createContactPropertyCommand } = await import(
-      '../../../src/commands/contact-properties/create'
-    );
     await expectExit1(() =>
       createContactPropertyCommand.parseAsync(
         ['--key', 'company_name', '--type', 'string'],

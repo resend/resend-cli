@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { openTemplateCommand } from '../../../src/commands/templates/open';
 import * as browser from '../../../src/lib/browser';
 
 describe('templates open command', () => {
@@ -11,9 +12,6 @@ describe('templates open command', () => {
   });
 
   it('with no args opens templates list', async () => {
-    const { openTemplateCommand } = await import(
-      '../../../src/commands/templates/open'
-    );
     await openTemplateCommand.parseAsync([], { from: 'user' });
 
     expect(browser.openInBrowserOrLog).toHaveBeenCalledTimes(1);
@@ -24,9 +22,6 @@ describe('templates open command', () => {
   });
 
   it('with id opens template URL', async () => {
-    const { openTemplateCommand } = await import(
-      '../../../src/commands/templates/open'
-    );
     await openTemplateCommand.parseAsync(
       ['78261eea-8f8b-4381-83c6-79fa7120f1cf'],
       { from: 'user' },

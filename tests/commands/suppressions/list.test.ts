@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { listSuppressionsCommand } from '../../../src/commands/suppressions/list';
 import {
   captureTestEnv,
   expectExit1,
@@ -82,9 +83,6 @@ describe('suppressions list command', () => {
 
   it('uses default limit of 10 when not specified', async () => {
     spies = setupOutputSpies();
-    const { listSuppressionsCommand } = await import(
-      '../../../src/commands/suppressions/list'
-    );
     await listSuppressionsCommand.parseAsync([], { from: 'user' });
 
     expect(mockList).toHaveBeenCalledTimes(1);
@@ -93,9 +91,6 @@ describe('suppressions list command', () => {
 
   it('outputs JSON list when non-interactive', async () => {
     spies = setupOutputSpies();
-    const { listSuppressionsCommand } = await import(
-      '../../../src/commands/suppressions/list'
-    );
     await listSuppressionsCommand.parseAsync([], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -107,9 +102,6 @@ describe('suppressions list command', () => {
 
   it('passes origin filter to SDK', async () => {
     spies = setupOutputSpies();
-    const { listSuppressionsCommand } = await import(
-      '../../../src/commands/suppressions/list'
-    );
     await listSuppressionsCommand.parseAsync(['--origin', 'bounce'], {
       from: 'user',
     });
@@ -125,9 +117,6 @@ describe('suppressions list command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { listSuppressionsCommand } = await import(
-      '../../../src/commands/suppressions/list'
-    );
     await expect(
       listSuppressionsCommand.parseAsync(['--origin', 'nope'], {
         from: 'user',
@@ -139,9 +128,6 @@ describe('suppressions list command', () => {
 
   it('passes after cursor to SDK', async () => {
     spies = setupOutputSpies();
-    const { listSuppressionsCommand } = await import(
-      '../../../src/commands/suppressions/list'
-    );
     await listSuppressionsCommand.parseAsync(['--after', 'cur'], {
       from: 'user',
     });
@@ -181,9 +167,6 @@ describe('suppressions list command', () => {
     delete process.env.TERM;
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-    const { listSuppressionsCommand } = await import(
-      '../../../src/commands/suppressions/list'
-    );
     await listSuppressionsCommand.parseAsync(['--origin', 'bounce'], {
       from: 'user',
     });
@@ -204,9 +187,6 @@ describe('suppressions list command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { listSuppressionsCommand } = await import(
-      '../../../src/commands/suppressions/list'
-    );
     await expectExit1(() =>
       listSuppressionsCommand.parseAsync([], { from: 'user' }),
     );

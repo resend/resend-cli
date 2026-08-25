@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { getContactImportCommand } from '../../../../src/commands/contacts/imports/get';
 import {
   captureTestEnv,
   expectExit1,
@@ -60,9 +61,6 @@ describe('contacts imports get command', () => {
   it('calls SDK imports.get with the id and outputs JSON', async () => {
     spies = setupOutputSpies();
 
-    const { getContactImportCommand } = await import(
-      '../../../../src/commands/contacts/imports/get'
-    );
     await getContactImportCommand.parseAsync(
       ['479e3145-dd38-476b-932c-529ceb705947'],
       { from: 'user' },
@@ -89,9 +87,6 @@ describe('contacts imports get command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { getContactImportCommand } = await import(
-      '../../../../src/commands/contacts/imports/get'
-    );
     await expectExit1(() =>
       getContactImportCommand.parseAsync(
         ['479e3145-dd38-476b-932c-529ceb705947'],

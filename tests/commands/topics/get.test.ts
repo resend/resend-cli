@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { getTopicCommand } from '../../../src/commands/topics/get';
 import {
   captureTestEnv,
   expectExit1,
@@ -60,9 +61,6 @@ describe('topics get command', () => {
   it('calls SDK with the provided topic ID', async () => {
     spies = setupOutputSpies();
 
-    const { getTopicCommand } = await import(
-      '../../../src/commands/topics/get'
-    );
     await getTopicCommand.parseAsync(['top_abc123'], { from: 'user' });
 
     expect(mockGet).toHaveBeenCalledTimes(1);
@@ -72,9 +70,6 @@ describe('topics get command', () => {
   it('outputs JSON topic data when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { getTopicCommand } = await import(
-      '../../../src/commands/topics/get'
-    );
     await getTopicCommand.parseAsync(['top_abc123'], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -93,9 +88,6 @@ describe('topics get command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { getTopicCommand } = await import(
-      '../../../src/commands/topics/get'
-    );
     await expectExit1(() =>
       getTopicCommand.parseAsync(['top_abc123'], { from: 'user' }),
     );
@@ -113,9 +105,6 @@ describe('topics get command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { getTopicCommand } = await import(
-      '../../../src/commands/topics/get'
-    );
     await expectExit1(() =>
       getTopicCommand.parseAsync(['top_nonexistent'], { from: 'user' }),
     );

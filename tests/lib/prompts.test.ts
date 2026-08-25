@@ -1,4 +1,10 @@
 import { afterEach, describe, expect, it, type MockInstance, vi } from 'vitest';
+import {
+  confirmDelete,
+  pickId,
+  pickItem,
+  promptForMissing,
+} from '../../src/lib/prompts';
 import { expectExit1, mockExitThrow } from '../helpers';
 
 const originalStdinIsTTY = process.stdin.isTTY;
@@ -37,7 +43,6 @@ afterEach(() => {
 
 describe('promptForMissing', () => {
   it('returns options unchanged when nothing is missing', async () => {
-    const { promptForMissing } = await import('../../src/lib/prompts');
     const opts = { from: 'a@b.com', to: 'c@d.com', subject: 'Hi' };
     const result = await promptForMissing(
       opts,
@@ -54,8 +59,6 @@ describe('promptForMissing', () => {
   it('exits with missing_flags error in non-interactive mode', async () => {
     setTTY(undefined);
     setupSpies();
-
-    const { promptForMissing } = await import('../../src/lib/prompts');
 
     await expectExit1(() =>
       promptForMissing(
@@ -79,8 +82,6 @@ describe('promptForMissing', () => {
     setTTY(undefined);
     setupSpies();
 
-    const { promptForMissing } = await import('../../src/lib/prompts');
-
     await expectExit1(() =>
       promptForMissing(
         { from: undefined },
@@ -96,8 +97,6 @@ describe('promptForMissing', () => {
     setTTY(true);
     setupSpies();
 
-    const { promptForMissing } = await import('../../src/lib/prompts');
-
     await expectExit1(() =>
       promptForMissing(
         { from: undefined },
@@ -110,7 +109,6 @@ describe('promptForMissing', () => {
   });
 
   it('skips fields marked as required=false', async () => {
-    const { promptForMissing } = await import('../../src/lib/prompts');
     const opts = { from: 'a@b.com', to: undefined };
     const result = await promptForMissing(
       opts,
@@ -126,7 +124,6 @@ describe('promptForMissing', () => {
 
 describe('pickId', () => {
   it('returns id immediately when provided', async () => {
-    const { pickId } = await import('../../src/lib/prompts');
     const result = await pickId('test-id', {} as never, {});
     expect(result).toBe('test-id');
   });
@@ -134,8 +131,6 @@ describe('pickId', () => {
   it('exits with missing_id error in non-interactive mode', async () => {
     setTTY(undefined);
     setupSpies();
-
-    const { pickId } = await import('../../src/lib/prompts');
 
     await expectExit1(() => pickId(undefined, {} as never, {}));
 
@@ -146,8 +141,6 @@ describe('pickId', () => {
     setTTY(true);
     setupSpies();
 
-    const { pickId } = await import('../../src/lib/prompts');
-
     await expectExit1(() => pickId(undefined, {} as never, { json: true }));
 
     const parsed = JSON.parse(spyOutput());
@@ -157,7 +150,6 @@ describe('pickId', () => {
   it('returns undefined in non-interactive mode when optional', async () => {
     setTTY(undefined);
 
-    const { pickId } = await import('../../src/lib/prompts');
     const result = await pickId(undefined, {} as never, {}, { optional: true });
     expect(result).toBeUndefined();
   });
@@ -165,7 +157,6 @@ describe('pickId', () => {
   it('returns undefined when --json is set and optional', async () => {
     setTTY(true);
 
-    const { pickId } = await import('../../src/lib/prompts');
     const result = await pickId(
       undefined,
       {} as never,
@@ -176,7 +167,6 @@ describe('pickId', () => {
   });
 
   it('returns id immediately when provided and optional', async () => {
-    const { pickId } = await import('../../src/lib/prompts');
     const result = await pickId('test-id', {} as never, {}, { optional: true });
     expect(result).toBe('test-id');
   });
@@ -184,7 +174,6 @@ describe('pickId', () => {
 
 describe('pickItem', () => {
   it('returns id and label matching the id when provided directly', async () => {
-    const { pickItem } = await import('../../src/lib/prompts');
     const result = await pickItem('test-id', {} as never, {});
     expect(result).toEqual({ id: 'test-id', label: 'test-id' });
   });
@@ -192,8 +181,6 @@ describe('pickItem', () => {
   it('exits with missing_id error in non-interactive mode', async () => {
     setTTY(undefined);
     setupSpies();
-
-    const { pickItem } = await import('../../src/lib/prompts');
 
     await expectExit1(() => pickItem(undefined, {} as never, {}));
 
@@ -203,7 +190,6 @@ describe('pickItem', () => {
   it('returns undefined in non-interactive mode when optional', async () => {
     setTTY(undefined);
 
-    const { pickItem } = await import('../../src/lib/prompts');
     const result = await pickItem(
       undefined,
       {} as never,
@@ -214,7 +200,6 @@ describe('pickItem', () => {
   });
 
   it('returns id and label matching the id when provided and optional', async () => {
-    const { pickItem } = await import('../../src/lib/prompts');
     const result = await pickItem(
       'test-id',
       {} as never,
@@ -230,8 +215,6 @@ describe('confirmDelete', () => {
     setTTY(undefined);
     setupSpies();
 
-    const { confirmDelete } = await import('../../src/lib/prompts');
-
     await expectExit1(() =>
       confirmDelete('res_123', 'Delete resource res_123?', { json: false }),
     );
@@ -243,7 +226,6 @@ describe('confirmDelete', () => {
     setTTY(undefined);
     setupSpies();
 
-    const { confirmDelete } = await import('../../src/lib/prompts');
     await expectExit1(() =>
       confirmDelete('res_123', 'Delete?', { json: true }),
     );
@@ -256,7 +238,6 @@ describe('confirmDelete', () => {
     setTTY(true);
     setupSpies();
 
-    const { confirmDelete } = await import('../../src/lib/prompts');
     await expectExit1(() =>
       confirmDelete('res_123', 'Delete?', { json: true }),
     );

@@ -9,6 +9,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { updateCommand } from '../../../src/commands/emails/update';
 import {
   captureTestEnv,
   expectExit1,
@@ -56,9 +57,6 @@ describe('emails update command', () => {
   it('calls SDK update with correct id and scheduledAt', async () => {
     spies = setupOutputSpies();
 
-    const { updateCommand } = await import(
-      '../../../src/commands/emails/update'
-    );
     await updateCommand.parseAsync(
       ['test-email-id', '--scheduled-at', '2024-08-05T11:52:01.858Z'],
       { from: 'user' },
@@ -73,9 +71,6 @@ describe('emails update command', () => {
   it('outputs JSON object in non-interactive mode', async () => {
     spies = setupOutputSpies();
 
-    const { updateCommand } = await import(
-      '../../../src/commands/emails/update'
-    );
     await updateCommand.parseAsync(
       ['test-email-id', '--scheduled-at', '2024-08-05T11:52:01.858Z'],
       { from: 'user' },
@@ -97,9 +92,6 @@ describe('emails update command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateCommand } = await import(
-      '../../../src/commands/emails/update'
-    );
     await expectExit1(() =>
       updateCommand.parseAsync(
         ['test-email-id', '--scheduled-at', '2024-08-05T11:52:01.858Z'],
@@ -122,9 +114,6 @@ describe('emails update command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { updateCommand } = await import(
-      '../../../src/commands/emails/update'
-    );
     await expectExit1(() =>
       updateCommand.parseAsync(
         ['test-email-id', '--scheduled-at', '2024-08-05T11:52:01.858Z'],

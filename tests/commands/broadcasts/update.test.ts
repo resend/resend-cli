@@ -7,7 +7,9 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { updateBroadcastCommand } from '../../../src/commands/broadcasts/update';
 import * as files from '../../../src/lib/files';
+import { outputError } from '../../../src/lib/output';
 import {
   captureTestEnv,
   expectExit1,
@@ -67,9 +69,6 @@ describe('broadcasts update command', () => {
   it('updates broadcast subject', async () => {
     spies = setupOutputSpies();
 
-    const { updateBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/update'
-    );
     await updateBroadcastCommand.parseAsync(
       ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--subject', 'Updated Subject'],
       { from: 'user' },
@@ -86,9 +85,6 @@ describe('broadcasts update command', () => {
   it('passes all update flags to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { updateBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/update'
-    );
     await updateBroadcastCommand.parseAsync(
       [
         'd1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
@@ -114,9 +110,6 @@ describe('broadcasts update command', () => {
   it('passes explicit empty text to the SDK', async () => {
     spies = setupOutputSpies();
 
-    const { updateBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/update'
-    );
     await updateBroadcastCommand.parseAsync(
       ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--text', ''],
       { from: 'user' },
@@ -129,9 +122,6 @@ describe('broadcasts update command', () => {
   it('passes explicit empty html to the SDK', async () => {
     spies = setupOutputSpies();
 
-    const { updateBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/update'
-    );
     await updateBroadcastCommand.parseAsync(
       ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--html', ''],
       { from: 'user' },
@@ -144,9 +134,6 @@ describe('broadcasts update command', () => {
   it('outputs JSON id when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { updateBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/update'
-    );
     await updateBroadcastCommand.parseAsync(
       ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--subject', 'Updated'],
       { from: 'user' },
@@ -160,9 +147,6 @@ describe('broadcasts update command', () => {
   it('omits undefined fields from SDK payload', async () => {
     spies = setupOutputSpies();
 
-    const { updateBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/update'
-    );
     await updateBroadcastCommand.parseAsync(
       ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--name', 'Only Name'],
       { from: 'user' },
@@ -179,9 +163,6 @@ describe('broadcasts update command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/update'
-    );
     await expectExit1(() =>
       updateBroadcastCommand.parseAsync(
         ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
@@ -198,9 +179,6 @@ describe('broadcasts update command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/update'
-    );
     await expectExit1(() =>
       updateBroadcastCommand.parseAsync(
         ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
@@ -218,9 +196,6 @@ describe('broadcasts update command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/update'
-    );
     await expectExit1(() =>
       updateBroadcastCommand.parseAsync(
         ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--subject', 'X'],
@@ -245,9 +220,6 @@ describe('broadcasts update command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { updateBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/update'
-    );
     await expectExit1(() =>
       updateBroadcastCommand.parseAsync(
         ['s1e2n3t4-5a6b-7c8d-9e0f-a1b2c3d4e5f6', '--subject', 'New'],
@@ -267,9 +239,6 @@ describe('broadcasts update command', () => {
       .spyOn(files, 'readFile')
       .mockReturnValue('<p>Updated from file</p>');
 
-    const { updateBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/update'
-    );
     await updateBroadcastCommand.parseAsync(
       [
         'd1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
@@ -290,9 +259,6 @@ describe('broadcasts update command', () => {
       .spyOn(files, 'readFile')
       .mockReturnValue('<p>From empty path</p>');
 
-    const { updateBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/update'
-    );
     await updateBroadcastCommand.parseAsync(
       ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--html-file', ''],
       { from: 'user' },
@@ -309,9 +275,6 @@ describe('broadcasts update command', () => {
       .spyOn(files, 'readFile')
       .mockReturnValue('Updated text from file');
 
-    const { updateBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/update'
-    );
     await updateBroadcastCommand.parseAsync(
       ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--text-file', '/fake/body.txt'],
       { from: 'user' },
@@ -328,9 +291,6 @@ describe('broadcasts update command', () => {
       .spyOn(files, 'readFile')
       .mockReturnValue('Text from empty path');
 
-    const { updateBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/update'
-    );
     await updateBroadcastCommand.parseAsync(
       ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--text-file', ''],
       { from: 'user' },
@@ -346,9 +306,6 @@ describe('broadcasts update command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/update'
-    );
     await expectExit1(() =>
       updateBroadcastCommand.parseAsync(
         [
@@ -373,9 +330,6 @@ describe('broadcasts update command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/update'
-    );
     await expectExit1(() =>
       updateBroadcastCommand.parseAsync(
         [
@@ -400,9 +354,6 @@ describe('broadcasts update command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/update'
-    );
     await expectExit1(() =>
       updateBroadcastCommand.parseAsync(
         [
@@ -423,9 +374,6 @@ describe('broadcasts update command', () => {
   it('updates broadcast html with --react-email flag', async () => {
     spies = setupOutputSpies();
 
-    const { updateBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/update'
-    );
     await updateBroadcastCommand.parseAsync(
       [
         'd1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
@@ -449,7 +397,6 @@ describe('broadcasts update command', () => {
     exitSpy = mockExitThrow();
 
     mockBuildReactEmailHtml.mockReset();
-    const { outputError } = await import('../../../src/lib/output');
     mockBuildReactEmailHtml.mockImplementation(
       async (path: unknown, globalOpts: { json?: boolean }) => {
         if (typeof path === 'string' && path.trim() === '') {
@@ -465,9 +412,6 @@ describe('broadcasts update command', () => {
       },
     );
 
-    const { updateBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/update'
-    );
     await expectExit1(() =>
       updateBroadcastCommand.parseAsync(
         ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--react-email', ''],
@@ -485,9 +429,6 @@ describe('broadcasts update command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/update'
-    );
     await expectExit1(() =>
       updateBroadcastCommand.parseAsync(
         [
@@ -513,7 +454,6 @@ describe('broadcasts update command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { outputError } = await import('../../../src/lib/output');
     readFileSpy = vi
       .spyOn(files, 'readFile')
       .mockImplementation(
@@ -528,9 +468,6 @@ describe('broadcasts update command', () => {
         },
       );
 
-    const { updateBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/update'
-    );
     await expectExit1(() =>
       updateBroadcastCommand.parseAsync(
         [

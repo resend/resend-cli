@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { openCommand } from '../../src/commands/open';
 import * as browser from '../../src/lib/browser';
 
 describe('resend open command', () => {
@@ -11,7 +12,6 @@ describe('resend open command', () => {
   });
 
   it('opens emails URL in browser', async () => {
-    const { openCommand } = await import('../../src/commands/open');
     await openCommand.parseAsync([], { from: 'user' });
 
     expect(browser.openInBrowserOrLog).toHaveBeenCalledTimes(1);

@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { getDomainCommand } from '../../../src/commands/domains/get';
 import {
   captureTestEnv,
   expectExit1,
@@ -73,9 +74,6 @@ describe('domains get command', () => {
   it('calls SDK get with correct id', async () => {
     spies = setupOutputSpies();
 
-    const { getDomainCommand } = await import(
-      '../../../src/commands/domains/get'
-    );
     await getDomainCommand.parseAsync(['test-domain-id'], { from: 'user' });
 
     expect(mockGet).toHaveBeenCalledWith('test-domain-id');
@@ -84,9 +82,6 @@ describe('domains get command', () => {
   it('outputs full domain JSON in non-interactive mode', async () => {
     spies = setupOutputSpies();
 
-    const { getDomainCommand } = await import(
-      '../../../src/commands/domains/get'
-    );
     await getDomainCommand.parseAsync(['test-domain-id'], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -115,9 +110,6 @@ describe('domains get command', () => {
     });
     spies = setupOutputSpies();
 
-    const { getDomainCommand } = await import(
-      '../../../src/commands/domains/get'
-    );
     await getDomainCommand.parseAsync(['test-domain-id'], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -134,9 +126,6 @@ describe('domains get command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { getDomainCommand } = await import(
-      '../../../src/commands/domains/get'
-    );
     await expectExit1(() =>
       getDomainCommand.parseAsync(['test-domain-id'], { from: 'user' }),
     );
@@ -156,9 +145,6 @@ describe('domains get command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { getDomainCommand } = await import(
-      '../../../src/commands/domains/get'
-    );
     await expectExit1(() =>
       getDomainCommand.parseAsync(['test-domain-id'], { from: 'user' }),
     );

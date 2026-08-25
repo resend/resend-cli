@@ -1,3 +1,4 @@
+import { Command } from '@commander-js/extra-typings';
 import {
   afterEach,
   beforeEach,
@@ -7,6 +8,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { updateContactTopicsCommand } from '../../../src/commands/contacts/update-topics';
 import {
   captureTestEnv,
   expectExit1,
@@ -61,9 +63,6 @@ describe('contacts update-topics command', () => {
   it('updates topics by contact ID', async () => {
     spies = setupOutputSpies();
 
-    const { updateContactTopicsCommand } = await import(
-      '../../../src/commands/contacts/update-topics'
-    );
     await updateContactTopicsCommand.parseAsync(
       [
         'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
@@ -82,9 +81,6 @@ describe('contacts update-topics command', () => {
   it('updates topics by contact email', async () => {
     spies = setupOutputSpies();
 
-    const { updateContactTopicsCommand } = await import(
-      '../../../src/commands/contacts/update-topics'
-    );
     await updateContactTopicsCommand.parseAsync(
       [
         'jane@example.com',
@@ -102,9 +98,6 @@ describe('contacts update-topics command', () => {
   it('passes multiple topics in array', async () => {
     spies = setupOutputSpies();
 
-    const { updateContactTopicsCommand } = await import(
-      '../../../src/commands/contacts/update-topics'
-    );
     await updateContactTopicsCommand.parseAsync(
       [
         'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
@@ -121,9 +114,6 @@ describe('contacts update-topics command', () => {
   it('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { updateContactTopicsCommand } = await import(
-      '../../../src/commands/contacts/update-topics'
-    );
     await updateContactTopicsCommand.parseAsync(
       [
         'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
@@ -143,9 +133,6 @@ describe('contacts update-topics command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateContactTopicsCommand } = await import(
-      '../../../src/commands/contacts/update-topics'
-    );
     await expectExit1(() =>
       updateContactTopicsCommand.parseAsync(
         ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
@@ -171,10 +158,6 @@ describe('contacts update-topics command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { Command } = await import('@commander-js/extra-typings');
-    const { updateContactTopicsCommand } = await import(
-      '../../../src/commands/contacts/update-topics'
-    );
     const program = new Command()
       .option('--profile <name>')
       .option('--team <name>')
@@ -200,9 +183,6 @@ describe('contacts update-topics command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateContactTopicsCommand } = await import(
-      '../../../src/commands/contacts/update-topics'
-    );
     await expectExit1(() =>
       updateContactTopicsCommand.parseAsync(
         ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--topics', 'not-json'],
@@ -219,9 +199,6 @@ describe('contacts update-topics command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateContactTopicsCommand } = await import(
-      '../../../src/commands/contacts/update-topics'
-    );
     await expectExit1(() =>
       updateContactTopicsCommand.parseAsync(
         ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--topics', '{"id":"t1"}'],
@@ -240,9 +217,6 @@ describe('contacts update-topics command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateContactTopicsCommand } = await import(
-      '../../../src/commands/contacts/update-topics'
-    );
     await expectExit1(() =>
       updateContactTopicsCommand.parseAsync(
         [
@@ -269,9 +243,6 @@ describe('contacts update-topics command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { updateContactTopicsCommand } = await import(
-      '../../../src/commands/contacts/update-topics'
-    );
     await expectExit1(() =>
       updateContactTopicsCommand.parseAsync(
         [

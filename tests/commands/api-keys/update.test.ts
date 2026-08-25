@@ -1,3 +1,4 @@
+import { Command } from '@commander-js/extra-typings';
 import {
   afterEach,
   beforeEach,
@@ -7,6 +8,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { updateApiKeyCommand } from '../../../src/commands/api-keys/update';
 import {
   captureTestEnv,
   expectExit1,
@@ -59,9 +61,6 @@ describe('api-keys update command', () => {
   it('updates API key with id and --name flag', async () => {
     spies = setupOutputSpies();
 
-    const { updateApiKeyCommand } = await import(
-      '../../../src/commands/api-keys/update'
-    );
     await updateApiKeyCommand.parseAsync(
       ['test-key-id', '--name', 'Production v2'],
       { from: 'user' },
@@ -76,9 +75,6 @@ describe('api-keys update command', () => {
   it('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { updateApiKeyCommand } = await import(
-      '../../../src/commands/api-keys/update'
-    );
     await updateApiKeyCommand.parseAsync(
       ['test-key-id', '--name', 'Production v2'],
       { from: 'user' },
@@ -95,9 +91,6 @@ describe('api-keys update command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateApiKeyCommand } = await import(
-      '../../../src/commands/api-keys/update'
-    );
     await expectExit1(() =>
       updateApiKeyCommand.parseAsync(['test-key-id'], { from: 'user' }),
     );
@@ -118,10 +111,6 @@ describe('api-keys update command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { Command } = await import('@commander-js/extra-typings');
-    const { updateApiKeyCommand } = await import(
-      '../../../src/commands/api-keys/update'
-    );
     const program = new Command()
       .option('--profile <name>')
       .option('--team <name>')
@@ -153,10 +142,6 @@ describe('api-keys update command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { Command } = await import('@commander-js/extra-typings');
-    const { updateApiKeyCommand } = await import(
-      '../../../src/commands/api-keys/update'
-    );
     const program = new Command()
       .option('--profile <name>')
       .option('--team <name>')
@@ -181,9 +166,6 @@ describe('api-keys update command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateApiKeyCommand } = await import(
-      '../../../src/commands/api-keys/update'
-    );
     await expectExit1(() =>
       updateApiKeyCommand.parseAsync(['test-key-id'], { from: 'user' }),
     );
@@ -198,9 +180,6 @@ describe('api-keys update command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateApiKeyCommand } = await import(
-      '../../../src/commands/api-keys/update'
-    );
     await expectExit1(() =>
       updateApiKeyCommand.parseAsync(
         ['test-key-id', '--name', 'Production v2'],
@@ -223,9 +202,6 @@ describe('api-keys update command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { updateApiKeyCommand } = await import(
-      '../../../src/commands/api-keys/update'
-    );
     await expectExit1(() =>
       updateApiKeyCommand.parseAsync(
         ['test-key-id', '--name', 'Production v2'],

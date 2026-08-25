@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { removeContactSegmentCommand } from '../../../src/commands/contacts/remove-segment';
 import {
   captureTestEnv,
   expectExit1,
@@ -56,9 +57,6 @@ describe('contacts remove-segment command', () => {
   it('removes contact from segment by contact ID', async () => {
     spies = setupOutputSpies();
 
-    const { removeContactSegmentCommand } = await import(
-      '../../../src/commands/contacts/remove-segment'
-    );
     await removeContactSegmentCommand.parseAsync(
       [
         'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
@@ -76,9 +74,6 @@ describe('contacts remove-segment command', () => {
   it('removes contact from segment by email', async () => {
     spies = setupOutputSpies();
 
-    const { removeContactSegmentCommand } = await import(
-      '../../../src/commands/contacts/remove-segment'
-    );
     await removeContactSegmentCommand.parseAsync(
       ['jane@example.com', '7b1e0a3d-4c5f-4e8a-9b2d-1a3c5e7f9b2d'],
       { from: 'user' },
@@ -92,9 +87,6 @@ describe('contacts remove-segment command', () => {
   it('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { removeContactSegmentCommand } = await import(
-      '../../../src/commands/contacts/remove-segment'
-    );
     await removeContactSegmentCommand.parseAsync(
       [
         'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
@@ -116,9 +108,6 @@ describe('contacts remove-segment command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { removeContactSegmentCommand } = await import(
-      '../../../src/commands/contacts/remove-segment'
-    );
     await expectExit1(() =>
       removeContactSegmentCommand.parseAsync(
         [
@@ -146,9 +135,6 @@ describe('contacts remove-segment command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { removeContactSegmentCommand } = await import(
-      '../../../src/commands/contacts/remove-segment'
-    );
     await expectExit1(() =>
       removeContactSegmentCommand.parseAsync(
         [

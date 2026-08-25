@@ -9,6 +9,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { cancelCommand } from '../../../src/commands/emails/cancel';
 import {
   captureTestEnv,
   expectExit1,
@@ -56,9 +57,6 @@ describe('emails cancel command', () => {
   it('calls SDK cancel with correct id', async () => {
     spies = setupOutputSpies();
 
-    const { cancelCommand } = await import(
-      '../../../src/commands/emails/cancel'
-    );
     await cancelCommand.parseAsync(['test-email-id'], { from: 'user' });
 
     expect(mockCancel).toHaveBeenCalledWith('test-email-id');
@@ -67,9 +65,6 @@ describe('emails cancel command', () => {
   it('outputs JSON object in non-interactive mode', async () => {
     spies = setupOutputSpies();
 
-    const { cancelCommand } = await import(
-      '../../../src/commands/emails/cancel'
-    );
     await cancelCommand.parseAsync(['test-email-id'], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -88,9 +83,6 @@ describe('emails cancel command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { cancelCommand } = await import(
-      '../../../src/commands/emails/cancel'
-    );
     await expectExit1(() =>
       cancelCommand.parseAsync(['test-email-id'], { from: 'user' }),
     );
@@ -110,9 +102,6 @@ describe('emails cancel command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { cancelCommand } = await import(
-      '../../../src/commands/emails/cancel'
-    );
     await expectExit1(() =>
       cancelCommand.parseAsync(['test-email-id'], { from: 'user' }),
     );

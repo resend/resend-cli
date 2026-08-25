@@ -1,3 +1,4 @@
+import { Command } from '@commander-js/extra-typings';
 import {
   afterEach,
   beforeEach,
@@ -7,6 +8,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { addContactSegmentCommand } from '../../../src/commands/contacts/add-segment';
 import {
   captureTestEnv,
   expectExit1,
@@ -61,9 +63,6 @@ describe('contacts add-segment command', () => {
   it('adds contact to segment by contact ID', async () => {
     spies = setupOutputSpies();
 
-    const { addContactSegmentCommand } = await import(
-      '../../../src/commands/contacts/add-segment'
-    );
     await addContactSegmentCommand.parseAsync(
       [
         'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
@@ -82,9 +81,6 @@ describe('contacts add-segment command', () => {
   it('adds contact to segment by email', async () => {
     spies = setupOutputSpies();
 
-    const { addContactSegmentCommand } = await import(
-      '../../../src/commands/contacts/add-segment'
-    );
     await addContactSegmentCommand.parseAsync(
       [
         'jane@example.com',
@@ -102,9 +98,6 @@ describe('contacts add-segment command', () => {
   it('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { addContactSegmentCommand } = await import(
-      '../../../src/commands/contacts/add-segment'
-    );
     await addContactSegmentCommand.parseAsync(
       [
         'a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
@@ -124,9 +117,6 @@ describe('contacts add-segment command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { addContactSegmentCommand } = await import(
-      '../../../src/commands/contacts/add-segment'
-    );
     await expectExit1(() =>
       addContactSegmentCommand.parseAsync(
         ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
@@ -150,10 +140,6 @@ describe('contacts add-segment command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { Command } = await import('@commander-js/extra-typings');
-    const { addContactSegmentCommand } = await import(
-      '../../../src/commands/contacts/add-segment'
-    );
     const program = new Command()
       .option('--profile <name>')
       .option('--team <name>')
@@ -181,9 +167,6 @@ describe('contacts add-segment command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { addContactSegmentCommand } = await import(
-      '../../../src/commands/contacts/add-segment'
-    );
     await expectExit1(() =>
       addContactSegmentCommand.parseAsync(
         [
@@ -210,9 +193,6 @@ describe('contacts add-segment command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { addContactSegmentCommand } = await import(
-      '../../../src/commands/contacts/add-segment'
-    );
     await expectExit1(() =>
       addContactSegmentCommand.parseAsync(
         [

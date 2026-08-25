@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { updateTemplateCommand } from '../../../src/commands/templates/update';
 import * as files from '../../../src/lib/files';
 import {
   captureTestEnv,
@@ -87,9 +88,6 @@ describe('templates update command', () => {
   it('updates template name', async () => {
     spies = setupOutputSpies();
 
-    const { updateTemplateCommand } = await import(
-      '../../../src/commands/templates/update'
-    );
     await updateTemplateCommand.parseAsync(
       ['tmpl_abc123', '--name', 'Updated Name'],
       { from: 'user' },
@@ -104,9 +102,6 @@ describe('templates update command', () => {
   it('omits fields not provided from SDK payload', async () => {
     spies = setupOutputSpies();
 
-    const { updateTemplateCommand } = await import(
-      '../../../src/commands/templates/update'
-    );
     await updateTemplateCommand.parseAsync(
       ['tmpl_abc123', '--subject', 'New Subject'],
       { from: 'user' },
@@ -125,9 +120,6 @@ describe('templates update command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateTemplateCommand } = await import(
-      '../../../src/commands/templates/update'
-    );
     await expectExit1(() =>
       updateTemplateCommand.parseAsync([], { from: 'user' }),
     );
@@ -145,9 +137,6 @@ describe('templates update command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateTemplateCommand } = await import(
-      '../../../src/commands/templates/update'
-    );
     await expectExit1(() =>
       updateTemplateCommand.parseAsync(
         ['tmpl_abc123', '--react-email', './emails/welcome.tsx', '--html', ''],
@@ -166,9 +155,6 @@ describe('templates update command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateTemplateCommand } = await import(
-      '../../../src/commands/templates/update'
-    );
     await expectExit1(() =>
       updateTemplateCommand.parseAsync(
         ['tmpl_abc123', '--html', '', '--html-file', '/fake/template.html'],
@@ -185,9 +171,6 @@ describe('templates update command', () => {
     spies = setupOutputSpies();
     readFileSpy = vi.spyOn(files, 'readFile').mockReturnValue('From file');
 
-    const { updateTemplateCommand } = await import(
-      '../../../src/commands/templates/update'
-    );
     await updateTemplateCommand.parseAsync(
       ['tmpl_abc123', '--text', '', '--text-file', '/fake/body.txt'],
       { from: 'user' },

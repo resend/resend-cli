@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { verifyDomainCommand } from '../../../src/commands/domains/verify';
 import {
   captureTestEnv,
   expectExit1,
@@ -54,9 +55,6 @@ describe('domains verify command', () => {
   it('calls SDK verify with correct id', async () => {
     spies = setupOutputSpies();
 
-    const { verifyDomainCommand } = await import(
-      '../../../src/commands/domains/verify'
-    );
     await verifyDomainCommand.parseAsync(['test-domain-id'], { from: 'user' });
 
     expect(mockVerify).toHaveBeenCalledWith('test-domain-id');
@@ -65,9 +63,6 @@ describe('domains verify command', () => {
   it('outputs JSON object in non-interactive mode (stdout not a TTY)', async () => {
     spies = setupOutputSpies();
 
-    const { verifyDomainCommand } = await import(
-      '../../../src/commands/domains/verify'
-    );
     await verifyDomainCommand.parseAsync(['test-domain-id'], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -83,9 +78,6 @@ describe('domains verify command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { verifyDomainCommand } = await import(
-      '../../../src/commands/domains/verify'
-    );
     await expectExit1(() =>
       verifyDomainCommand.parseAsync(['test-domain-id'], { from: 'user' }),
     );
@@ -105,9 +97,6 @@ describe('domains verify command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { verifyDomainCommand } = await import(
-      '../../../src/commands/domains/verify'
-    );
     await expectExit1(() =>
       verifyDomainCommand.parseAsync(['test-domain-id'], { from: 'user' }),
     );

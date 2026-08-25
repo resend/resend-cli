@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { deleteDomainCommand } from '../../../src/commands/domains/delete';
 import {
   captureTestEnv,
   expectExit1,
@@ -54,9 +55,6 @@ describe('domains delete command', () => {
   it('deletes domain with --yes flag', async () => {
     spies = setupOutputSpies();
 
-    const { deleteDomainCommand } = await import(
-      '../../../src/commands/domains/delete'
-    );
     await deleteDomainCommand.parseAsync(['test-domain-id', '--yes'], {
       from: 'user',
     });
@@ -67,9 +65,6 @@ describe('domains delete command', () => {
   it('outputs deleted domain JSON on success', async () => {
     spies = setupOutputSpies();
 
-    const { deleteDomainCommand } = await import(
-      '../../../src/commands/domains/delete'
-    );
     await deleteDomainCommand.parseAsync(['test-domain-id', '--yes'], {
       from: 'user',
     });
@@ -85,9 +80,6 @@ describe('domains delete command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteDomainCommand } = await import(
-      '../../../src/commands/domains/delete'
-    );
     await expectExit1(() =>
       deleteDomainCommand.parseAsync(['test-domain-id'], { from: 'user' }),
     );
@@ -101,9 +93,6 @@ describe('domains delete command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteDomainCommand } = await import(
-      '../../../src/commands/domains/delete'
-    );
     await expectExit1(() =>
       deleteDomainCommand.parseAsync(['test-domain-id'], { from: 'user' }),
     );
@@ -118,9 +107,6 @@ describe('domains delete command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteDomainCommand } = await import(
-      '../../../src/commands/domains/delete'
-    );
     await expectExit1(() =>
       deleteDomainCommand.parseAsync(['test-domain-id', '--yes'], {
         from: 'user',
@@ -142,9 +128,6 @@ describe('domains delete command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { deleteDomainCommand } = await import(
-      '../../../src/commands/domains/delete'
-    );
     await expectExit1(() =>
       deleteDomainCommand.parseAsync(['test-domain-id', '--yes'], {
         from: 'user',

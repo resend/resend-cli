@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { listContactSegmentsCommand } from '../../../src/commands/contacts/segments';
 import {
   captureTestEnv,
   expectExit1,
@@ -66,9 +67,6 @@ describe('contacts segments command', () => {
   it('lists segments by contact ID', async () => {
     spies = setupOutputSpies();
 
-    const { listContactSegmentsCommand } = await import(
-      '../../../src/commands/contacts/segments'
-    );
     await listContactSegmentsCommand.parseAsync(
       ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
       {
@@ -85,9 +83,6 @@ describe('contacts segments command', () => {
   it('lists segments by contact email', async () => {
     spies = setupOutputSpies();
 
-    const { listContactSegmentsCommand } = await import(
-      '../../../src/commands/contacts/segments'
-    );
     await listContactSegmentsCommand.parseAsync(['jane@example.com'], {
       from: 'user',
     });
@@ -100,9 +95,6 @@ describe('contacts segments command', () => {
   it('outputs JSON list when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { listContactSegmentsCommand } = await import(
-      '../../../src/commands/contacts/segments'
-    );
     await listContactSegmentsCommand.parseAsync(
       ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
       {
@@ -123,9 +115,6 @@ describe('contacts segments command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listContactSegmentsCommand } = await import(
-      '../../../src/commands/contacts/segments'
-    );
     await expectExit1(() =>
       listContactSegmentsCommand.parseAsync(
         ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
@@ -150,9 +139,6 @@ describe('contacts segments command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { listContactSegmentsCommand } = await import(
-      '../../../src/commands/contacts/segments'
-    );
     await expectExit1(() =>
       listContactSegmentsCommand.parseAsync(
         ['a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],

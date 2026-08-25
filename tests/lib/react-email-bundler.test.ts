@@ -8,6 +8,7 @@ import {
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { bundleReactEmail } from '../../src/lib/react-email-bundler';
 
 const mockBuild = vi.fn(
   async (opts: { outdir: string; entryPoints: string[] }) => {
@@ -22,8 +23,6 @@ const mockBuild = vi.fn(
 vi.mock('../../src/lib/esbuild/load-esbuild', () => ({
   loadEsbuild: () => ({ build: mockBuild }),
 }));
-
-const { bundleReactEmail } = await import('../../src/lib/react-email-bundler');
 
 const createdDirs: string[] = [];
 

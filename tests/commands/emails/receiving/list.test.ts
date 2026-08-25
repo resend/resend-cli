@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { listReceivingCommand } from '../../../../src/commands/emails/receiving/list';
 import {
   captureTestEnv,
   expectExit1,
@@ -71,9 +72,6 @@ describe('emails receiving list command', () => {
   it('calls SDK list with default pagination', async () => {
     spies = setupOutputSpies();
 
-    const { listReceivingCommand } = await import(
-      '../../../../src/commands/emails/receiving/list'
-    );
     await listReceivingCommand.parseAsync([], { from: 'user' });
 
     expect(mockList).toHaveBeenCalledTimes(1);
@@ -84,9 +82,6 @@ describe('emails receiving list command', () => {
   it('passes --limit to pagination options', async () => {
     spies = setupOutputSpies();
 
-    const { listReceivingCommand } = await import(
-      '../../../../src/commands/emails/receiving/list'
-    );
     await listReceivingCommand.parseAsync(['--limit', '5'], { from: 'user' });
 
     const args = mockList.mock.calls[0][0] as Record<string, unknown>;
@@ -96,9 +91,6 @@ describe('emails receiving list command', () => {
   it('passes --after cursor to pagination options', async () => {
     spies = setupOutputSpies();
 
-    const { listReceivingCommand } = await import(
-      '../../../../src/commands/emails/receiving/list'
-    );
     await listReceivingCommand.parseAsync(['--after', 'rcv_cursor123'], {
       from: 'user',
     });
@@ -110,9 +102,6 @@ describe('emails receiving list command', () => {
   it('outputs JSON list with received email data when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { listReceivingCommand } = await import(
-      '../../../../src/commands/emails/receiving/list'
-    );
     await listReceivingCommand.parseAsync([], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -129,9 +118,6 @@ describe('emails receiving list command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listReceivingCommand } = await import(
-      '../../../../src/commands/emails/receiving/list'
-    );
     await expectExit1(() =>
       listReceivingCommand.parseAsync(['--limit', '200'], { from: 'user' }),
     );
@@ -147,9 +133,6 @@ describe('emails receiving list command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listReceivingCommand } = await import(
-      '../../../../src/commands/emails/receiving/list'
-    );
     await expectExit1(() =>
       listReceivingCommand.parseAsync([], { from: 'user' }),
     );
@@ -169,9 +152,6 @@ describe('emails receiving list command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { listReceivingCommand } = await import(
-      '../../../../src/commands/emails/receiving/list'
-    );
     await expectExit1(() =>
       listReceivingCommand.parseAsync([], { from: 'user' }),
     );

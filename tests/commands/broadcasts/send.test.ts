@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { sendBroadcastCommand } from '../../../src/commands/broadcasts/send';
 import {
   captureTestEnv,
   expectExit1,
@@ -54,9 +55,6 @@ describe('broadcasts send command', () => {
   it('sends broadcast by id', async () => {
     spies = setupOutputSpies();
 
-    const { sendBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/send'
-    );
     await sendBroadcastCommand.parseAsync(
       ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
       { from: 'user' },
@@ -71,9 +69,6 @@ describe('broadcasts send command', () => {
   it('outputs JSON id when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { sendBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/send'
-    );
     await sendBroadcastCommand.parseAsync(
       ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
       { from: 'user' },
@@ -87,9 +82,6 @@ describe('broadcasts send command', () => {
   it('passes --scheduled-at to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { sendBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/send'
-    );
     await sendBroadcastCommand.parseAsync(
       ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--scheduled-at', 'in 1 hour'],
       { from: 'user' },
@@ -102,9 +94,6 @@ describe('broadcasts send command', () => {
   it('does not pass scheduledAt when flag absent', async () => {
     spies = setupOutputSpies();
 
-    const { sendBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/send'
-    );
     await sendBroadcastCommand.parseAsync(
       ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
       { from: 'user' },
@@ -121,9 +110,6 @@ describe('broadcasts send command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { sendBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/send'
-    );
     await expectExit1(() =>
       sendBroadcastCommand.parseAsync(
         ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
@@ -146,9 +132,6 @@ describe('broadcasts send command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { sendBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/send'
-    );
     await expectExit1(() =>
       sendBroadcastCommand.parseAsync(
         ['00000000-0000-0000-0000-00000000bad0'],

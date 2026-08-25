@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { listApiKeysCommand } from '../../../src/commands/api-keys/list';
 import {
   captureTestEnv,
   expectExit1,
@@ -79,9 +80,6 @@ describe('api-keys list command', () => {
   it('uses default limit of 10 when not specified', async () => {
     spies = setupOutputSpies();
 
-    const { listApiKeysCommand } = await import(
-      '../../../src/commands/api-keys/list'
-    );
     await listApiKeysCommand.parseAsync([], { from: 'user' });
 
     expect(mockList).toHaveBeenCalledTimes(1);
@@ -91,9 +89,6 @@ describe('api-keys list command', () => {
   it('outputs JSON list when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { listApiKeysCommand } = await import(
-      '../../../src/commands/api-keys/list'
-    );
     await listApiKeysCommand.parseAsync([], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -107,9 +102,6 @@ describe('api-keys list command', () => {
   it('passes limit to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { listApiKeysCommand } = await import(
-      '../../../src/commands/api-keys/list'
-    );
     await listApiKeysCommand.parseAsync(['--limit', '25'], { from: 'user' });
 
     expect(getFirstCallArgs()).toMatchObject({ limit: 25 });
@@ -118,9 +110,6 @@ describe('api-keys list command', () => {
   it('passes after cursor to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { listApiKeysCommand } = await import(
-      '../../../src/commands/api-keys/list'
-    );
     await listApiKeysCommand.parseAsync(['--after', 'some-cursor'], {
       from: 'user',
     });
@@ -133,9 +122,6 @@ describe('api-keys list command', () => {
   it('passes before cursor to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { listApiKeysCommand } = await import(
-      '../../../src/commands/api-keys/list'
-    );
     await listApiKeysCommand.parseAsync(['--before', 'some-cursor'], {
       from: 'user',
     });
@@ -150,9 +136,6 @@ describe('api-keys list command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listApiKeysCommand } = await import(
-      '../../../src/commands/api-keys/list'
-    );
     await expectExit1(() =>
       listApiKeysCommand.parseAsync(
         ['--after', 'cursor_after', '--before', 'cursor_before'],
@@ -172,9 +155,6 @@ describe('api-keys list command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listApiKeysCommand } = await import(
-      '../../../src/commands/api-keys/list'
-    );
     await expectExit1(() =>
       listApiKeysCommand.parseAsync([], { from: 'user' }),
     );
@@ -194,9 +174,6 @@ describe('api-keys list command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { listApiKeysCommand } = await import(
-      '../../../src/commands/api-keys/list'
-    );
     await expectExit1(() =>
       listApiKeysCommand.parseAsync([], { from: 'user' }),
     );

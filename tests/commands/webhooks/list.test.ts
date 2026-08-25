@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { listWebhooksCommand } from '../../../src/commands/webhooks/list';
 import {
   captureTestEnv,
   expectExit1,
@@ -66,9 +67,6 @@ describe('webhooks list command', () => {
   it('calls SDK list method with default pagination', async () => {
     spies = setupOutputSpies();
 
-    const { listWebhooksCommand } = await import(
-      '../../../src/commands/webhooks/list'
-    );
     await listWebhooksCommand.parseAsync([], { from: 'user' });
 
     expect(mockList).toHaveBeenCalledTimes(1);
@@ -79,9 +77,6 @@ describe('webhooks list command', () => {
   it('passes --limit to pagination options', async () => {
     spies = setupOutputSpies();
 
-    const { listWebhooksCommand } = await import(
-      '../../../src/commands/webhooks/list'
-    );
     await listWebhooksCommand.parseAsync(['--limit', '5'], { from: 'user' });
 
     const args = mockList.mock.calls[0][0] as Record<string, unknown>;
@@ -91,9 +86,6 @@ describe('webhooks list command', () => {
   it('passes --after cursor to pagination options', async () => {
     spies = setupOutputSpies();
 
-    const { listWebhooksCommand } = await import(
-      '../../../src/commands/webhooks/list'
-    );
     await listWebhooksCommand.parseAsync(['--after', 'wh_cursor123'], {
       from: 'user',
     });
@@ -105,9 +97,6 @@ describe('webhooks list command', () => {
   it('outputs JSON list with webhook data when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { listWebhooksCommand } = await import(
-      '../../../src/commands/webhooks/list'
-    );
     await listWebhooksCommand.parseAsync([], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -125,9 +114,6 @@ describe('webhooks list command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listWebhooksCommand } = await import(
-      '../../../src/commands/webhooks/list'
-    );
     await expectExit1(() =>
       listWebhooksCommand.parseAsync(['--limit', '200'], { from: 'user' }),
     );
@@ -143,9 +129,6 @@ describe('webhooks list command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listWebhooksCommand } = await import(
-      '../../../src/commands/webhooks/list'
-    );
     await expectExit1(() =>
       listWebhooksCommand.parseAsync([], { from: 'user' }),
     );
@@ -165,9 +148,6 @@ describe('webhooks list command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { listWebhooksCommand } = await import(
-      '../../../src/commands/webhooks/list'
-    );
     await expectExit1(() =>
       listWebhooksCommand.parseAsync([], { from: 'user' }),
     );

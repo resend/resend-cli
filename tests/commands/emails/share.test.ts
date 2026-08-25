@@ -9,6 +9,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { shareCommand } from '../../../src/commands/emails/share';
 import {
   captureTestEnv,
   expectExit1,
@@ -60,7 +61,6 @@ describe('emails share command', () => {
   it('calls SDK share with correct id and no options', async () => {
     spies = setupOutputSpies();
 
-    const { shareCommand } = await import('../../../src/commands/emails/share');
     await shareCommand.parseAsync(['test-email-id'], { from: 'user' });
 
     expect(mockShare).toHaveBeenCalledWith('test-email-id', undefined);
@@ -69,7 +69,6 @@ describe('emails share command', () => {
   it('calls SDK share with expiresIn when --expires-in is passed', async () => {
     spies = setupOutputSpies();
 
-    const { shareCommand } = await import('../../../src/commands/emails/share');
     await shareCommand.parseAsync(['test-email-id', '--expires-in', '1 day'], {
       from: 'user',
     });
@@ -82,7 +81,6 @@ describe('emails share command', () => {
   it('passes an empty --expires-in through to the SDK instead of dropping it', async () => {
     spies = setupOutputSpies();
 
-    const { shareCommand } = await import('../../../src/commands/emails/share');
     await shareCommand.parseAsync(['test-email-id', '--expires-in', ''], {
       from: 'user',
     });
@@ -93,7 +91,6 @@ describe('emails share command', () => {
   it('outputs JSON object in non-interactive mode', async () => {
     spies = setupOutputSpies();
 
-    const { shareCommand } = await import('../../../src/commands/emails/share');
     await shareCommand.parseAsync(['test-email-id'], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -113,7 +110,6 @@ describe('emails share command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { shareCommand } = await import('../../../src/commands/emails/share');
     await expectExit1(() =>
       shareCommand.parseAsync(['test-email-id'], { from: 'user' }),
     );
@@ -133,7 +129,6 @@ describe('emails share command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { shareCommand } = await import('../../../src/commands/emails/share');
     await expectExit1(() =>
       shareCommand.parseAsync(['test-email-id'], { from: 'user' }),
     );

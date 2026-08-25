@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { deleteSegmentCommand } from '../../../src/commands/segments/delete';
 import {
   captureTestEnv,
   expectExit1,
@@ -58,9 +59,6 @@ describe('segments delete command', () => {
   it('deletes segment with --yes flag', async () => {
     spies = setupOutputSpies();
 
-    const { deleteSegmentCommand } = await import(
-      '../../../src/commands/segments/delete'
-    );
     await deleteSegmentCommand.parseAsync(
       ['3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c', '--yes'],
       {
@@ -77,9 +75,6 @@ describe('segments delete command', () => {
   it('outputs synthesized JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { deleteSegmentCommand } = await import(
-      '../../../src/commands/segments/delete'
-    );
     await deleteSegmentCommand.parseAsync(
       ['3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c', '--yes'],
       {
@@ -99,9 +94,6 @@ describe('segments delete command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteSegmentCommand } = await import(
-      '../../../src/commands/segments/delete'
-    );
     await expectExit1(() =>
       deleteSegmentCommand.parseAsync(
         ['3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c'],
@@ -118,9 +110,6 @@ describe('segments delete command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteSegmentCommand } = await import(
-      '../../../src/commands/segments/delete'
-    );
     await expectExit1(() =>
       deleteSegmentCommand.parseAsync(
         ['3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c'],
@@ -138,9 +127,6 @@ describe('segments delete command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteSegmentCommand } = await import(
-      '../../../src/commands/segments/delete'
-    );
     await expectExit1(() =>
       deleteSegmentCommand.parseAsync(
         ['3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c', '--yes'],
@@ -165,9 +151,6 @@ describe('segments delete command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { deleteSegmentCommand } = await import(
-      '../../../src/commands/segments/delete'
-    );
     await expectExit1(() =>
       deleteSegmentCommand.parseAsync(
         ['00000000-0000-0000-0000-000000000000', '--yes'],

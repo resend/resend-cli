@@ -10,6 +10,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { applyCareerCommand } from '../../../src/commands/careers/apply';
 import {
   captureTestEnv,
   expectExit1,
@@ -70,9 +71,6 @@ describe('careers apply command', () => {
   it('submits a multipart application to /careers/:id', async () => {
     spies = setupOutputSpies();
 
-    const { applyCareerCommand } = await import(
-      '../../../src/commands/careers/apply'
-    );
     await applyCareerCommand.parseAsync(
       [
         'job-posting-123',
@@ -112,9 +110,6 @@ describe('careers apply command', () => {
   it('outputs the API response as JSON when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { applyCareerCommand } = await import(
-      '../../../src/commands/careers/apply'
-    );
     await applyCareerCommand.parseAsync(['job-posting-123', ...requiredFlags], {
       from: 'user',
     });
@@ -128,9 +123,6 @@ describe('careers apply command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { applyCareerCommand } = await import(
-      '../../../src/commands/careers/apply'
-    );
     await expectExit1(() =>
       applyCareerCommand.parseAsync([...requiredFlags], { from: 'user' }),
     );
@@ -151,9 +143,6 @@ describe('careers apply command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { applyCareerCommand } = await import(
-      '../../../src/commands/careers/apply'
-    );
     await expectExit1(() =>
       applyCareerCommand.parseAsync(['job-posting-123', ...flags], {
         from: 'user',
@@ -169,9 +158,6 @@ describe('careers apply command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { applyCareerCommand } = await import(
-      '../../../src/commands/careers/apply'
-    );
     await expectExit1(() =>
       applyCareerCommand.parseAsync(
         ['job-posting-123', ...requiredFlags, '--field', 'no-separator'],
@@ -188,9 +174,6 @@ describe('careers apply command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { applyCareerCommand } = await import(
-      '../../../src/commands/careers/apply'
-    );
     await expectExit1(() =>
       applyCareerCommand.parseAsync(
         [
@@ -226,9 +209,6 @@ describe('careers apply command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { applyCareerCommand } = await import(
-      '../../../src/commands/careers/apply'
-    );
     await expectExit1(() =>
       applyCareerCommand.parseAsync(['job-posting-123', ...requiredFlags], {
         from: 'user',
@@ -247,9 +227,6 @@ describe('careers apply command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { applyCareerCommand } = await import(
-      '../../../src/commands/careers/apply'
-    );
     await expectExit1(() =>
       applyCareerCommand.parseAsync(['job-posting-123', ...requiredFlags], {
         from: 'user',

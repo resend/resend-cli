@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { deleteSuppressionCommand } from '../../../src/commands/suppressions/delete';
 import {
   captureTestEnv,
   expectExit1,
@@ -53,9 +54,6 @@ describe('suppressions delete command', () => {
 
   it('removes a suppression by email with --yes', async () => {
     spies = setupOutputSpies();
-    const { deleteSuppressionCommand } = await import(
-      '../../../src/commands/suppressions/delete'
-    );
     await deleteSuppressionCommand.parseAsync(['spam@example.com', '--yes'], {
       from: 'user',
     });
@@ -65,9 +63,6 @@ describe('suppressions delete command', () => {
 
   it('outputs synthesized deleted JSON on success', async () => {
     spies = setupOutputSpies();
-    const { deleteSuppressionCommand } = await import(
-      '../../../src/commands/suppressions/delete'
-    );
     await deleteSuppressionCommand.parseAsync(['sup-1', '--yes'], {
       from: 'user',
     });
@@ -84,9 +79,6 @@ describe('suppressions delete command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteSuppressionCommand } = await import(
-      '../../../src/commands/suppressions/delete'
-    );
     await expectExit1(() =>
       deleteSuppressionCommand.parseAsync(['sup-1'], { from: 'user' }),
     );
@@ -105,9 +97,6 @@ describe('suppressions delete command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { deleteSuppressionCommand } = await import(
-      '../../../src/commands/suppressions/delete'
-    );
     await expectExit1(() =>
       deleteSuppressionCommand.parseAsync(['sup-1', '--yes'], { from: 'user' }),
     );

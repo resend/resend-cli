@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { cancelBroadcastCommand } from '../../../src/commands/broadcasts/cancel';
 import {
   captureTestEnv,
   expectExit1,
@@ -54,9 +55,6 @@ describe('broadcasts cancel command', () => {
   it('cancels broadcast by id', async () => {
     spies = setupOutputSpies();
 
-    const { cancelBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/cancel'
-    );
     await cancelBroadcastCommand.parseAsync(
       ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
       { from: 'user' },
@@ -71,9 +69,6 @@ describe('broadcasts cancel command', () => {
   it('outputs JSON id when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { cancelBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/cancel'
-    );
     await cancelBroadcastCommand.parseAsync(
       ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
       { from: 'user' },
@@ -92,9 +87,6 @@ describe('broadcasts cancel command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { cancelBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/cancel'
-    );
     await expectExit1(() =>
       cancelBroadcastCommand.parseAsync(
         ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6'],
@@ -120,9 +112,6 @@ describe('broadcasts cancel command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { cancelBroadcastCommand } = await import(
-      '../../../src/commands/broadcasts/cancel'
-    );
     await expectExit1(() =>
       cancelBroadcastCommand.parseAsync(
         ['00000000-0000-0000-0000-00000000bad0'],

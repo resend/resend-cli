@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { listContactImportsCommand } from '../../../../src/commands/contacts/imports/list';
 import {
   captureTestEnv,
   expectExit1,
@@ -60,9 +61,6 @@ describe('contacts imports list command', () => {
   it('calls SDK imports.list with the default limit and outputs JSON', async () => {
     spies = setupOutputSpies();
 
-    const { listContactImportsCommand } = await import(
-      '../../../../src/commands/contacts/imports/list'
-    );
     await listContactImportsCommand.parseAsync([], { from: 'user' });
 
     expect(mockList).toHaveBeenCalledWith({ limit: 10 });
@@ -75,9 +73,6 @@ describe('contacts imports list command', () => {
   it('passes --status filter to the SDK', async () => {
     spies = setupOutputSpies();
 
-    const { listContactImportsCommand } = await import(
-      '../../../../src/commands/contacts/imports/list'
-    );
     await listContactImportsCommand.parseAsync(['--status', 'completed'], {
       from: 'user',
     });
@@ -88,9 +83,6 @@ describe('contacts imports list command', () => {
   it('passes --after cursor to the SDK', async () => {
     spies = setupOutputSpies();
 
-    const { listContactImportsCommand } = await import(
-      '../../../../src/commands/contacts/imports/list'
-    );
     await listContactImportsCommand.parseAsync(
       ['--after', '479e3145-dd38-476b-932c-529ceb705947'],
       { from: 'user' },
@@ -107,9 +99,6 @@ describe('contacts imports list command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listContactImportsCommand } = await import(
-      '../../../../src/commands/contacts/imports/list'
-    );
     await expectExit1(() =>
       listContactImportsCommand.parseAsync(['--limit', '999'], {
         from: 'user',
@@ -126,9 +115,6 @@ describe('contacts imports list command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listContactImportsCommand } = await import(
-      '../../../../src/commands/contacts/imports/list'
-    );
     await expectExit1(() =>
       listContactImportsCommand.parseAsync([], { from: 'user' }),
     );

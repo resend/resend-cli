@@ -7,6 +7,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
+import { listBroadcastsCommand } from '../../../src/commands/broadcasts/list';
 import {
   captureTestEnv,
   expectExit1,
@@ -69,9 +70,6 @@ describe('broadcasts list command', () => {
   it('lists broadcasts', async () => {
     spies = setupOutputSpies();
 
-    const { listBroadcastsCommand } = await import(
-      '../../../src/commands/broadcasts/list'
-    );
     await listBroadcastsCommand.parseAsync([], { from: 'user' });
 
     expect(mockList).toHaveBeenCalledTimes(1);
@@ -80,9 +78,6 @@ describe('broadcasts list command', () => {
   it('outputs JSON list when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { listBroadcastsCommand } = await import(
-      '../../../src/commands/broadcasts/list'
-    );
     await listBroadcastsCommand.parseAsync([], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -95,9 +90,6 @@ describe('broadcasts list command', () => {
   it('passes --limit to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { listBroadcastsCommand } = await import(
-      '../../../src/commands/broadcasts/list'
-    );
     await listBroadcastsCommand.parseAsync(['--limit', '5'], { from: 'user' });
 
     const opts = mockList.mock.calls[0][0] as Record<string, unknown>;
@@ -107,9 +99,6 @@ describe('broadcasts list command', () => {
   it('passes --after cursor to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { listBroadcastsCommand } = await import(
-      '../../../src/commands/broadcasts/list'
-    );
     await listBroadcastsCommand.parseAsync(
       ['--after', 'c0c0c0c0-d1d1-e2e2-f3f3-a4a4a4a4a4a4'],
       {
@@ -124,9 +113,6 @@ describe('broadcasts list command', () => {
   it('passes --before cursor to SDK', async () => {
     spies = setupOutputSpies();
 
-    const { listBroadcastsCommand } = await import(
-      '../../../src/commands/broadcasts/list'
-    );
     await listBroadcastsCommand.parseAsync(
       ['--before', 'c0c0c0c0-d1d1-e2e2-f3f3-a4a4a4a4a4a4'],
       {
@@ -146,9 +132,6 @@ describe('broadcasts list command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { listBroadcastsCommand } = await import(
-      '../../../src/commands/broadcasts/list'
-    );
     await expectExit1(() =>
       listBroadcastsCommand.parseAsync(['--limit', '999'], { from: 'user' }),
     );
@@ -164,9 +147,6 @@ describe('broadcasts list command', () => {
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listBroadcastsCommand } = await import(
-      '../../../src/commands/broadcasts/list'
-    );
     await expectExit1(() =>
       listBroadcastsCommand.parseAsync([], { from: 'user' }),
     );
@@ -186,9 +166,6 @@ describe('broadcasts list command', () => {
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { listBroadcastsCommand } = await import(
-      '../../../src/commands/broadcasts/list'
-    );
     await expectExit1(() =>
       listBroadcastsCommand.parseAsync([], { from: 'user' }),
     );
