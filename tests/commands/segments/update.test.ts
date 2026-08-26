@@ -139,6 +139,45 @@ describe('segments update command', () => {
     expect(output).toContain('missing_name');
   });
 
+  it('errors with missing_name when --name is an empty string, even in TTY', async () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const program = new Command()
+      .option('--profile <name>')
+      .option('--team <name>')
+      .option('--json')
+      .option('--api-key <key>')
+      .option('-q, --quiet')
+      .addCommand(updateSegmentCommand);
+    commandRef = updateSegmentCommand as unknown as { parent: unknown };
+
+    await expectExit1(() =>
+      program.parseAsync(
+        [
+          'update',
+          '3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c',
+          '--name',
+          '',
+          '--json',
+        ],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('missing_name');
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
   it('does not call SDK when missing_name error is raised', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});

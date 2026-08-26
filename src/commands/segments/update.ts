@@ -2,6 +2,7 @@ import { Command } from '@commander-js/extra-typings';
 import { runWrite } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
+import { outputError } from '../../lib/output';
 import { pickId, requireText } from '../../lib/prompts';
 import { segmentPickerConfig } from './utils';
 
@@ -40,6 +41,13 @@ export const updateSegmentCommand = new Command('update')
       { message: 'Missing --name flag.', code: 'missing_name' },
       globalOpts,
     );
+
+    if (!name) {
+      outputError(
+        { message: 'Name is required.', code: 'missing_name' },
+        { json: globalOpts.json },
+      );
+    }
 
     await runWrite(
       {
