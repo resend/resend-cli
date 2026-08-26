@@ -153,7 +153,7 @@ Auth resolves: `--api-key` flag > `RESEND_API_KEY` env > config file (`resend lo
 | `broadcasts` | create, send, get, update, delete, list, cancel, open, clicked-links, recipients |
 | `contacts` | create, update, delete, segments, topics, imports |
 | `contact-properties` | create, update, delete, list |
-| `segments` | create, get, list, delete, contacts |
+| `segments` | create, get, list, update, delete, contacts |
 | `templates` | create, publish, duplicate, delete, list |
 | `topics` | create, update, delete, list |
 | `webhooks` | create, update, listen, delete, list |
