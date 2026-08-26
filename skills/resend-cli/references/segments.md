@@ -38,7 +38,7 @@ Rename a segment.
 |------|------|----------|-------------|
 | `--name <name>` | string | Yes (non-interactive) | New segment name |
 
-**Output:** `{"object":"segment","id":"...","name":"..."}`
+**Output:** `{"object":"segment","id":"..."}`
 
 ---
 
