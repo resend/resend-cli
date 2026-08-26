@@ -234,6 +234,19 @@ async function promptField(field: CareerField): Promise<string | undefined> {
     return result === SKIP_OPTION ? undefined : result;
   }
 
+  if (field.type === 'Boolean') {
+    const options = [
+      ...(field.required ? [] : [{ value: SKIP_OPTION, label: 'Skip' }]),
+      { value: 'true', label: 'Yes' },
+      { value: 'false', label: 'No' },
+    ];
+    const result = await p.select({ message, options });
+    if (p.isCancel(result)) {
+      cancelAndExit('Application cancelled.');
+    }
+    return result === SKIP_OPTION ? undefined : result;
+  }
+
   const result = await p.text({
     message,
     ...(field.description ? { placeholder: field.description } : {}),
@@ -290,12 +303,19 @@ async function confirmSubmission(
   answers: Map<string, string>,
   resumePath: string,
 ): Promise<void> {
-  const titleByPath = new Map(
-    job.fields.map((field) => [field.path, field.title]),
-  );
+  const fieldByPath = new Map(job.fields.map((field) => [field.path, field]));
   const lines = [...answers.entries()].map(([path, value]) => {
-    const label = titleByPath.get(path) ?? path;
-    return `${label}: ${truncate(value, 80)}`;
+    const field = fieldByPath.get(path);
+    const label = field?.title ?? path;
+    const display =
+      field?.type === 'Boolean'
+        ? value === 'true'
+          ? 'Yes'
+          : value === 'false'
+            ? 'No'
+            : value
+        : value;
+    return `${label}: ${truncate(display, 80)}`;
   });
   lines.push(`Resume: ${basename(resumePath)}`);
 
