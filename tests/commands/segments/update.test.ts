@@ -22,7 +22,6 @@ const mockPatch = vi.fn(async () => ({
   data: {
     object: 'segment' as const,
     id: '3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c',
-    name: 'Active Subscribers',
   },
   error: null,
 }));
@@ -90,7 +89,6 @@ describe('segments update command', () => {
     const parsed = JSON.parse(output);
     expect(parsed.object).toBe('segment');
     expect(parsed.id).toBe('3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c');
-    expect(parsed.name).toBe('Active Subscribers');
   });
 
   it('errors with missing_name when --name absent in non-interactive mode', async () => {

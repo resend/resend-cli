@@ -13,7 +13,7 @@ export const updateSegmentCommand = new Command('update')
     'after',
     buildHelpText({
       context: `Non-interactive: --name is required (no prompts when stdin/stdout is not a TTY).`,
-      output: `  {"object":"segment","id":"<uuid>","name":"<name>"}`,
+      output: `  {"object":"segment","id":"<uuid>"}`,
       errorCodes: ['auth_error', 'missing_name', 'update_error'],
       examples: [
         'resend segments update 78261eea-8f8b-4381-83c6-79fa7120f1cf --name "Active Subscribers"',
@@ -45,10 +45,9 @@ export const updateSegmentCommand = new Command('update')
       {
         loading: 'Updating segment...',
         sdkCall: (resend) =>
-          resend.patch<{ object: 'segment'; id: string; name: string }>(
-            `/segments/${id}`,
-            { name },
-          ),
+          resend.patch<{ object: 'segment'; id: string }>(`/segments/${id}`, {
+            name,
+          }),
         errorCode: 'update_error',
         successMsg: `Segment updated: ${id}`,
       },
