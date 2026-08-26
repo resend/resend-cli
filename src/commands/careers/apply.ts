@@ -308,7 +308,13 @@ async function confirmSubmission(
     const field = fieldByPath.get(path);
     const label = field?.title ?? path;
     const display =
-      field?.type === 'Boolean' ? (value === 'true' ? 'Yes' : 'No') : value;
+      field?.type === 'Boolean'
+        ? value === 'true'
+          ? 'Yes'
+          : value === 'false'
+            ? 'No'
+            : value
+        : value;
     return `${label}: ${truncate(display, 80)}`;
   });
   lines.push(`Resume: ${basename(resumePath)}`);
