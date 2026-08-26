@@ -9,6 +9,7 @@ import { outputError, outputResult } from '../../lib/output';
 import { cancelAndExit, pickItem } from '../../lib/prompts';
 import { withSpinner } from '../../lib/spinner';
 import { isInteractive } from '../../lib/tty';
+import { COUNTRY_NAMES } from './countries';
 import { type Career, type CareerField, careerPickerConfig } from './utils';
 
 const RESUME_MAX_BYTES = 10 * 1024 * 1024;
@@ -241,6 +242,24 @@ async function promptField(field: CareerField): Promise<string | undefined> {
       { value: 'false', label: 'No' },
     ];
     const result = await p.select({ message, options });
+    if (p.isCancel(result)) {
+      cancelAndExit('Application cancelled.');
+    }
+    return result === SKIP_OPTION ? undefined : result;
+  }
+
+  // Location questions are country-only; the API geocodes the country name.
+  if (field.type === 'Location') {
+    const options = [
+      ...(field.required ? [] : [{ value: SKIP_OPTION, label: 'Skip' }]),
+      ...COUNTRY_NAMES.map((name) => ({ value: name, label: name })),
+    ];
+    const result = await p.autocomplete({
+      message,
+      options,
+      maxItems: 8,
+      placeholder: 'Start typing a country...',
+    });
     if (p.isCancel(result)) {
       cancelAndExit('Application cancelled.');
     }
