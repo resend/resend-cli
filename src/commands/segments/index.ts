@@ -5,6 +5,7 @@ import { createSegmentCommand } from './create';
 import { deleteSegmentCommand } from './delete';
 import { getSegmentCommand } from './get';
 import { listSegmentsCommand } from './list';
+import { updateSegmentCommand } from './update';
 
 export const segmentsCommand = new Command('segments')
   .description('Manage segments')
@@ -18,13 +19,12 @@ Contacts can belong to multiple segments.
 Segment membership is managed through the contacts namespace:
   resend contacts add-segment <contactId> --segment-id <segmentId>
   resend contacts remove-segment <contactId> <segmentId>
-  resend contacts segments <contactId>
-
-There is no "update" endpoint — to rename a segment, delete it and recreate.`,
+  resend contacts segments <contactId>`,
       examples: [
         'resend segments list',
         'resend segments create --name "Newsletter Subscribers"',
         'resend segments get 78261eea-8f8b-4381-83c6-79fa7120f1cf',
+        'resend segments update 78261eea-8f8b-4381-83c6-79fa7120f1cf --name "Active Subscribers"',
         'resend segments contacts 78261eea-8f8b-4381-83c6-79fa7120f1cf',
         'resend segments delete 78261eea-8f8b-4381-83c6-79fa7120f1cf --yes',
       ],
@@ -34,4 +34,5 @@ There is no "update" endpoint — to rename a segment, delete it and recreate.`,
   .addCommand(createSegmentCommand)
   .addCommand(getSegmentCommand)
   .addCommand(listSegmentsCommand, { isDefault: true })
+  .addCommand(updateSegmentCommand)
   .addCommand(deleteSegmentCommand);

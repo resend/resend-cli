@@ -28,6 +28,20 @@ Detailed flag specifications for `resend segments` commands.
 
 ---
 
+## segments update
+
+Rename a segment.
+
+**Argument:** `[id]` — Segment UUID (interactive picker if omitted)
+
+| Flag | Type | Required | Description |
+|------|------|----------|-------------|
+| `--name <name>` | string | Yes (non-interactive) | New segment name |
+
+**Output:** `{"object":"segment","id":"..."}`
+
+---
+
 ## segments delete
 
 **Argument:** `<id>` — Segment UUID
