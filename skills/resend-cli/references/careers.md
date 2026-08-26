@@ -40,6 +40,7 @@ Interactive mode walks through every question in the job's application form; fla
 **Notes:**
 - Applying twice with the same email fails with `apply_error` ("An application has already been submitted...").
 - The resume is required by the API for every position.
+- Yes/no questions (`Boolean` fields on the job posting) take `true` or `false` via `--field`; interactive mode prompts with a Yes/No select.
 
 **Example (non-interactive):**
 ```bash
