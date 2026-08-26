@@ -44,10 +44,7 @@ export const updateSegmentCommand = new Command('update')
     await runWrite(
       {
         loading: 'Updating segment...',
-        sdkCall: (resend) =>
-          resend.patch<{ object: 'segment'; id: string }>(`/segments/${id}`, {
-            name,
-          }),
+        sdkCall: (resend) => resend.segments.update(id, { name }),
         errorCode: 'update_error',
         successMsg: `Segment updated: ${id}`,
       },

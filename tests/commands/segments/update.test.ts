@@ -18,7 +18,7 @@ import {
   setupOutputSpies,
 } from '../../helpers';
 
-const mockPatch = vi.fn(async () => ({
+const mockUpdate = vi.fn(async () => ({
   data: {
     object: 'segment' as const,
     id: '3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c',
@@ -29,7 +29,7 @@ const mockPatch = vi.fn(async () => ({
 vi.mock('resend', () => ({
   Resend: class MockResend {
     constructor(public key: string) {}
-    patch = mockPatch;
+    segments = { update: mockUpdate };
   },
 }));
 
@@ -43,7 +43,7 @@ describe('segments update command', () => {
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
-    mockPatch.mockClear();
+    mockUpdate.mockClear();
   });
 
   afterEach(() => {
@@ -69,11 +69,11 @@ describe('segments update command', () => {
       { from: 'user' },
     );
 
-    expect(mockPatch).toHaveBeenCalledTimes(1);
-    expect(mockPatch.mock.calls[0][0]).toBe(
-      '/segments/3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c',
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
+    expect(mockUpdate.mock.calls[0][0]).toBe(
+      '3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c',
     );
-    const payload = mockPatch.mock.calls[0][1] as Record<string, unknown>;
+    const payload = mockUpdate.mock.calls[0][1] as Record<string, unknown>;
     expect(payload.name).toBe('Active Subscribers');
   });
 
@@ -151,7 +151,7 @@ describe('segments update command', () => {
       ),
     );
 
-    expect(mockPatch).not.toHaveBeenCalled();
+    expect(mockUpdate).not.toHaveBeenCalled();
   });
 
   it('errors with auth_error when no API key', async () => {
@@ -178,7 +178,7 @@ describe('segments update command', () => {
 
   it('errors with update_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockPatch.mockResolvedValueOnce(
+    mockUpdate.mockResolvedValueOnce(
       mockSdkError('Segment not found', 'not_found'),
     );
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
