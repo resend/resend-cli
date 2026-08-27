@@ -7,11 +7,10 @@ Multi-step recipes for common Resend CLI tasks.
 ## 1. Initial Setup
 
 ```bash
-# Install (pick one — prefer a package manager)
+# Install (pick one)
 npm install -g resend-cli                          # npm
 brew install resend/cli/resend                     # Homebrew (macOS / Linux)
-curl -fsSL https://resend.com/install.sh | bash   # install script (executes a remote script)
-irm https://resend.com/install.ps1 | iex           # Windows PowerShell (executes a remote script)
+# Other install methods: https://resend.com/docs/cli
 
 # Authenticate — pass the key from an env var or secret manager;
 # never type a literal key (it lands in shell history)

@@ -13,7 +13,7 @@ metadata:
   author: resend
   # Skill version is independent from the CLI/package.json version —
   # bump it on skill content changes, not CLI releases.
-  version: "2.8.0"
+  version: "2.9.0"
   homepage: https://resend.com/docs/cli-agents
   source: https://github.com/resend/resend-cli
   openclaw:
@@ -87,17 +87,7 @@ npm install -g resend-cli
 brew install resend/cli/resend
 ```
 
-**Install script** — note: these download and execute a remote script. Prefer npm or Homebrew when available.
-
-```bash
-# macOS / Linux
-curl -fsSL https://resend.com/install.sh | bash
-```
-
-```powershell
-# Windows PowerShell
-irm https://resend.com/install.ps1 | iex
-```
+Other install methods (installer scripts for macOS, Linux, and Windows) are documented at [resend.com/docs/cli](https://resend.com/docs/cli).
 
 After installing, verify:
 ```bash
@@ -122,7 +112,7 @@ The CLI auto-detects non-TTY environments and outputs JSON — no `--json` flag 
 
 ## Authentication
 
-Auth resolves: `--api-key` flag > `RESEND_API_KEY` env > config file (`resend login --key`). Use `--profile` or `RESEND_PROFILE` for multi-profile.
+Auth resolves: `RESEND_API_KEY` env > config file (`resend login --key`). Use `--profile` or `RESEND_PROFILE` for multi-profile.
 
 **Credential safety:**
 - Never write a literal API key into a command, script, or file — it ends up in shell history, logs, and transcripts. Reference the environment (`"$RESEND_API_KEY"`) or use a stored profile (`resend login`).
@@ -132,7 +122,6 @@ Auth resolves: `--api-key` flag > `RESEND_API_KEY` env > config file (`resend lo
 
 | Flag | Description |
 |------|-------------|
-| `--api-key <key>` | Override API key for this invocation |
 | `-p, --profile <name>` | Select stored profile |
 | `--json` | Force JSON output (auto in non-TTY) |
 | `-q, --quiet` | Suppress spinners/status (implies `--json`) |
