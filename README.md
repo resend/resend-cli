@@ -438,11 +438,13 @@ Use `all` with `--events` to subscribe to every event.
 - `update`
 - `delete`
 - `listen`
+- `events` (`list`, `get`, `attempts`)
 
 #### Aliases
 
 - `webhooks ls` → `list`
 - `webhooks rm` → `delete`
+- `webhooks events ls` → `webhooks events list`
 
 ---
 
@@ -560,6 +562,32 @@ ngrok http 4318
 resend webhooks listen --url https://xxxx.ngrok-free.app
 resend webhooks listen --url https://xxxx.ngrok-free.app --forward-to localhost:3000/api/webhooks/resend
 resend webhooks listen --url https://xxxx.ngrok-free.app --port 8080 --events email.sent email.bounced
+```
+
+#### **`resend webhooks events`**
+
+Inspects what Resend already delivered to a webhook. Use it to debug an endpoint that is missing events:
+
+1. `resend webhooks events list <webhook-id>` — find the event
+2. `resend webhooks events get <webhook-id> <event-id>` — see the payload we sent
+3. `resend webhooks events attempts <webhook-id> <event-id>` — see what your endpoint returned
+
+Running `resend webhooks events <webhook-id>` with no subcommand runs `list`.
+
+Both list subcommands paginate forward only — there is no `--before`.
+
+| Flag               | Description                                              |
+| ------------------ | -------------------------------------------------------- |
+| `--limit <n>`      | Max results to return (`1`–`100`, default `10`)          |
+| `--after <cursor>` | Return results after this ID (next page)                 |
+
+`events list` reports each event's `type`, `status` (`pending`, `attempting`, `success`, `failed`), and `created_at`. `events get` adds `next_attempt_at` and the payload that was sent. `events attempts` reports the `http_status_code` and response body your endpoint returned for each try.
+
+```bash
+resend webhooks events list wh_abc123
+resend webhooks events list wh_abc123 --limit 50 --json
+resend webhooks events get wh_abc123 msg_1srOrx2ZWZBpBUvZwXKQmoEYga2
+resend webhooks events attempts wh_abc123 msg_1srOrx2ZWZBpBUvZwXKQmoEYga2
 ```
 
 ---
