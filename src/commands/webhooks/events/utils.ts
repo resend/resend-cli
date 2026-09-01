@@ -36,8 +36,6 @@ export function renderWebhookEventAttemptsTable(
   attempts: ListWebhookEventAttemptsResponseSuccess['data'],
 ): string {
   const rows = attempts.map((a) => {
-    // The response is whatever the customer's endpoint returned — often a
-    // multi-line HTML error page. Newlines would break the table box.
     const response = a.response.replace(/\s+/g, ' ').trim();
     return [
       String(a.http_status_code),
