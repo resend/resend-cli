@@ -2,11 +2,7 @@ import { Command } from '@commander-js/extra-typings';
 import { runList } from '../../../lib/actions';
 import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
-import {
-  buildPaginationOpts,
-  parseLimitOpt,
-  printPaginationHint,
-} from '../../../lib/pagination';
+import { parseLimitOpt, printPaginationHint } from '../../../lib/pagination';
 import { pickId } from '../../../lib/prompts';
 import { webhookPickerConfig } from '../utils';
 import {
@@ -53,12 +49,6 @@ This endpoint paginates forward only — there is no --before cursor.`,
       globalOpts,
     );
     const limit = parseLimitOpt(opts.limit, globalOpts);
-    const paginationOpts = buildPaginationOpts(
-      limit,
-      opts.after,
-      undefined,
-      globalOpts,
-    );
 
     await runList(
       {
@@ -67,7 +57,8 @@ This endpoint paginates forward only — there is no --before cursor.`,
           resend.webhooks.events.attempts.list({
             webhookId,
             eventId,
-            ...paginationOpts,
+            limit,
+            ...(opts.after && { after: opts.after }),
           }),
         onInteractive: (list) => {
           console.log(renderWebhookEventAttemptsTable(list.data));

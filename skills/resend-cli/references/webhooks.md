@@ -73,7 +73,7 @@ Lists the events Resend delivered to a webhook, most recent first.
 
 **No `--before`.** These endpoints paginate forward only.
 
-**`status` values:** `pending` (queued), `attempting` (a retry is scheduled), `success`, `failed` (retries exhausted).
+**`status` values:** `pending`, `attempting`, `success`, `failed`.
 
 ---
 
