@@ -45,7 +45,7 @@ export function renderWebhookEventAttemptsTable(
     ];
   });
   return renderTable(
-    ['Status', 'Sent', 'Response', 'ID'],
+    ['HTTP', 'Sent', 'Response', 'ID'],
     rows,
     '(no delivery attempts)',
   );

@@ -13,10 +13,8 @@ describe('renderWebhookEventAttemptsTable', () => {
       },
     ]);
 
-    const rows = table
-      .split('\n')
-      .filter((line) => line.includes('atmpt_2ZbUCwvGmIT4mLIN6d3Yz0Ainbd'));
-    expect(rows).toHaveLength(1);
-    expect(rows[0]).toContain('<html> <body> Internal Server Error');
+    expect(table).toContain(
+      '<html> <body> Internal Server Error </body> </html>',
+    );
   });
 });
