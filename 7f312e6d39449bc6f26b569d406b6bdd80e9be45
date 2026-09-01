@@ -1,0 +1,22 @@
+src/commands/domains/claim/create.ts
+  s_a6cd714394bc21::t_a3faeae31cd0d9 22-29
+  s_a6cd714394bc21::t_1062c469870722 62-70
+tests/commands/domains/claim/create.test.ts
+  s_a6cd714394bc21::t_0d6ca1d8eef273 105-164
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "7f312e6d39449bc6f26b569d406b6bdd80e9be45",
+  "prompts": {},
+  "sessions": {
+    "s_a6cd714394bc21": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a62b2e71-32c2-4f96-be76-1e3903e0a2b0",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "João Melo <jopcmelo@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+skills/resend-cli/SKILL.md
+  s_a6cd714394bc21::t_1322b920fe377d 142
+src/commands/domains/claim/create.ts
+  s_a6cd714394bc21::t_d602141e4a3ce9 54
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "08cc7bab48445d9f9d4c2d5c8c99f215c8b40b02",
+  "prompts": {},
+  "sessions": {
+    "s_a6cd714394bc21": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a62b2e71-32c2-4f96-be76-1e3903e0a2b0",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "João Melo <jopcmelo@gmail.com>"
+    }
+  }
+}

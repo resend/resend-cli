@@ -1,0 +1,23 @@
+tests/commands/domains/claim/get.test.ts
+  s_a6cd714394bc21::t_9cec283dea8a51 1-106
+tests/commands/domains/claim/verify.test.ts
+  s_a6cd714394bc21::t_9cec283dea8a51 1-106
+tests/commands/domains/claim/create.test.ts
+  s_a6cd714394bc21::t_9cec283dea8a51 1-128
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "4eb37ae4308d7564b07b5547d2055289f8f7a79f",
+  "prompts": {},
+  "sessions": {
+    "s_a6cd714394bc21": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a62b2e71-32c2-4f96-be76-1e3903e0a2b0",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "João Melo <jopcmelo@gmail.com>"
+    }
+  }
+}

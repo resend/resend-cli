@@ -1,0 +1,25 @@
+src/lib/esbuild/rendering-utilities-exporter.ts
+  d98af6e1d23d4bcc 37-42,45
+skills/resend-cli/references/error-codes.md
+  d98af6e1d23d4bcc 23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "2cacb8c41b672016d4e8f1ef826944a88be97bf7",
+  "prompts": {
+    "d98af6e1d23d4bcc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cf73dae1-6002-4e36-ada9-85de22e6a54e",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "João Melo",
+      "messages": [],
+      "total_additions": 8,
+      "total_deletions": 3,
+      "accepted_lines": 8,
+      "overriden_lines": 0
+    }
+  }
+}
