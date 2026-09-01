@@ -2,6 +2,7 @@ import { Command } from '@commander-js/extra-typings';
 import { buildHelpText } from '../../lib/help-text';
 import { createWebhookCommand } from './create';
 import { deleteWebhookCommand } from './delete';
+import { webhookEventsCommand } from './events';
 import { getWebhookCommand } from './get';
 import { listWebhooksCommand } from './list';
 import { listenWebhookCommand } from './listen';
@@ -25,18 +26,23 @@ Event categories (19 total):
 
 Signature verification (Svix):
   Each delivery includes headers: svix-id, svix-timestamp, svix-signature
-  Verify payloads in your application using: resend.webhooks.verify({ payload, headers, webhookSecret })`,
+  Verify payloads in your application using: resend.webhooks.verify({ payload, headers, webhookSecret })
+
+Delivery history:
+  Inspect what Resend sent and what your endpoint returned with "resend webhooks events".`,
       examples: [
         'resend webhooks list',
         'resend webhooks create --endpoint https://app.example.com/hooks/resend --events all',
         'resend webhooks get wh_abc123',
         'resend webhooks update wh_abc123 --status disabled',
         'resend webhooks delete wh_abc123 --yes',
+        'resend webhooks events list wh_abc123',
       ],
     }),
   )
   .addCommand(createWebhookCommand)
   .addCommand(getWebhookCommand)
+  .addCommand(webhookEventsCommand)
   .addCommand(listenWebhookCommand)
   .addCommand(listWebhooksCommand, { isDefault: true })
   .addCommand(updateWebhookCommand)
