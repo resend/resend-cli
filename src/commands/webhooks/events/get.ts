@@ -46,7 +46,9 @@ payload is the JSON body that was sent to your endpoint.`,
           console.log(`${event.type} - ${event.status}`);
           console.log(`ID:           ${event.id}`);
           console.log(`Created:      ${event.created_at}`);
-          console.log(`Next attempt: ${event.next_attempt_at ?? '(none)'}`);
+          console.log(
+            `Next attempt: ${event.next_attempt_at ?? 'none scheduled'}`,
+          );
           console.log(`\nPayload:\n${JSON.stringify(event.payload, null, 2)}`);
         },
       },

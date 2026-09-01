@@ -35,12 +35,17 @@ export function renderWebhookEventsTable(
 export function renderWebhookEventAttemptsTable(
   attempts: ListWebhookEventAttemptsResponseSuccess['data'],
 ): string {
-  const rows = attempts.map((a) => [
-    String(a.http_status_code),
-    a.sent_at,
-    a.response.length > 60 ? `${a.response.slice(0, 57)}...` : a.response,
-    a.id,
-  ]);
+  const rows = attempts.map((a) => {
+    // The response is whatever the customer's endpoint returned — often a
+    // multi-line HTML error page. Newlines would break the table box.
+    const response = a.response.replace(/\s+/g, ' ').trim();
+    return [
+      String(a.http_status_code),
+      a.sent_at,
+      response.length > 60 ? `${response.slice(0, 57)}...` : response,
+      a.id,
+    ];
+  });
   return renderTable(
     ['Status', 'Sent', 'Response', 'ID'],
     rows,
