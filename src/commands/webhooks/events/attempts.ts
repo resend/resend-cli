@@ -58,7 +58,7 @@ This endpoint paginates forward only — there is no --before cursor.`,
             webhookId,
             eventId,
             limit,
-            ...(opts.after && { after: opts.after }),
+            ...(opts.after !== undefined && { after: opts.after }),
           }),
         onInteractive: (list) => {
           console.log(renderWebhookEventAttemptsTable(list.data));
