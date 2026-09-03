@@ -13,14 +13,8 @@ export const replayWebhookEventCommand = new Command('replay')
   .addHelpText(
     'after',
     buildHelpText({
-      context: `Queues one more delivery of the event to the webhook — the same action as
-the Replay button in the dashboard.
-
-Manual replays do not schedule automatic retries. If the endpoint fails again,
-run replay again.
-
-The webhook must be enabled to replay events to it. Re-enable it first with:
-resend webhooks update <webhook-id> --status enabled`,
+      context: `Queues one more delivery of the event. Does not schedule automatic retries.
+The webhook must be enabled — re-enable it first with: resend webhooks update <webhook-id> --status enabled`,
       output: `  {"object":"webhook_event","id":"msg_..."}`,
       errorCodes: ['auth_error', 'replay_error'],
       examples: [

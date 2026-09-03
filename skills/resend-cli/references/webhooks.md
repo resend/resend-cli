@@ -108,15 +108,11 @@ Lists the delivery attempts for one event, most recent first. Each attempt recor
 
 ## webhooks events replay
 
-Queues one more delivery of the event to the webhook — the same action as the
-dashboard's Replay button.
+Queues one more delivery of the event. Does not schedule automatic retries.
 
 **Arguments:** `[webhookId]` `[eventId]`
 
-**Manual replays do not schedule automatic retries.** Run replay again if the
-endpoint fails again.
-
-**The webhook must be enabled.** Re-enable it first with
+The webhook must be enabled — re-enable it first with
 `resend webhooks update <webhook-id> --status enabled`.
 
 Returns `{"object":"webhook_event","id":"<event-id>"}` — no `type`, `status`,
