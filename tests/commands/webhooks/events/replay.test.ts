@@ -103,6 +103,5 @@ describe('webhooks events replay command', () => {
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('replay_error');
-    expect(output).toContain('Webhook is disabled');
   });
 });

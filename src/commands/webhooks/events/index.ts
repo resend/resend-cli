@@ -6,7 +6,7 @@ import { listWebhookEventsCommand } from './list';
 import { replayWebhookEventCommand } from './replay';
 
 export const webhookEventsCommand = new Command('events')
-  .description('Inspect the events Resend delivered to a webhook')
+  .description('Inspect or replay the events Resend delivered to a webhook')
   .addHelpText(
     'after',
     buildHelpText({
