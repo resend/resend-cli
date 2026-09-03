@@ -582,7 +582,7 @@ Both list subcommands paginate forward only — there is no `--before`.
 | `--limit <n>`      | Max results to return (`1`–`100`, default `10`)          |
 | `--after <cursor>` | Return results after this ID (next page)                 |
 
-`events list` reports each event's `type`, `status` (`pending`, `attempting`, `success`, `failed`), and `created_at`. `events get` adds `next_attempt_at` and the payload that was sent. `events attempts` reports the `http_status_code` and response body your endpoint returned for each try. `events replay` queues one more delivery attempt and returns `{"object":"webhook_event","id":"<event-id>"}`; it does not schedule automatic retries.
+`events list` reports each event's `type`, `status` (`pending`, `attempting`, `success`, `failed`), and `created_at`. `events get` adds `next_attempt_at` and the payload that was sent. `events attempts` reports the `http_status_code` and response body your endpoint returned for each try. `events replay` queues one more delivery attempt and returns `{"object":"webhook_event","id":"<event-id>"}`; it does not schedule automatic retries, and the webhook must be enabled (`resend webhooks update <id> --status enabled`) or it returns `validation_error`.
 
 ```bash
 resend webhooks events list wh_abc123

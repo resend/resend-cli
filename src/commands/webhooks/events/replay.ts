@@ -17,7 +17,10 @@ export const replayWebhookEventCommand = new Command('replay')
 the Replay button in the dashboard.
 
 Manual replays do not schedule automatic retries. If the endpoint fails again,
-run replay again.`,
+run replay again.
+
+The webhook must be enabled. A disabled webhook returns validation_error;
+re-enable it first with: resend webhooks update <id> --status enabled`,
       output: `  {"object":"webhook_event","id":"msg_..."}`,
       errorCodes: ['auth_error', 'replay_error'],
       examples: [
