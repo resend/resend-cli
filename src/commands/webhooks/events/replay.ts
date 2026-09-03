@@ -19,8 +19,9 @@ the Replay button in the dashboard.
 Manual replays do not schedule automatic retries. If the endpoint fails again,
 run replay again.
 
-The webhook must be enabled. A disabled webhook returns validation_error;
-re-enable it first with: resend webhooks update <id> --status enabled`,
+The webhook must be enabled. Replaying a disabled webhook's event fails with
+replay_error ("Webhook is disabled"); re-enable it first with:
+resend webhooks update <webhook-id> --status enabled`,
       output: `  {"object":"webhook_event","id":"msg_..."}`,
       errorCodes: ['auth_error', 'replay_error'],
       examples: [
