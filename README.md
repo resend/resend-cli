@@ -438,7 +438,7 @@ Use `all` with `--events` to subscribe to every event.
 - `update`
 - `delete`
 - `listen`
-- `events` (`list`, `get`, `attempts`)
+- `events` (`list`, `get`, `attempts`, `replay`)
 
 #### Aliases
 
@@ -571,6 +571,7 @@ Inspects what Resend already delivered to a webhook. Use it to debug an endpoint
 1. `resend webhooks events list <webhook-id>` — find the event
 2. `resend webhooks events get <webhook-id> <event-id>` — see the payload we sent
 3. `resend webhooks events attempts <webhook-id> <event-id>` — see what your endpoint returned
+4. `resend webhooks events replay <webhook-id> <event-id>` — queue another delivery
 
 Running `resend webhooks events <webhook-id>` with no subcommand runs `list`.
 
@@ -581,13 +582,14 @@ Both list subcommands paginate forward only — there is no `--before`.
 | `--limit <n>`      | Max results to return (`1`–`100`, default `10`)          |
 | `--after <cursor>` | Return results after this ID (next page)                 |
 
-`events list` reports each event's `type`, `status` (`pending`, `attempting`, `success`, `failed`), and `created_at`. `events get` adds `next_attempt_at` and the payload that was sent. `events attempts` reports the `http_status_code` and response body your endpoint returned for each try.
+`events list` reports each event's `type`, `status` (`pending`, `attempting`, `success`, `failed`), and `created_at`. `events get` adds `next_attempt_at` and the payload that was sent. `events attempts` reports the `http_status_code` and response body your endpoint returned for each try. `events replay` queues one more delivery attempt and returns `{"object":"webhook_event","id":"<event-id>"}`; it does not schedule automatic retries.
 
 ```bash
 resend webhooks events list wh_abc123
 resend webhooks events list wh_abc123 --limit 50 --json
 resend webhooks events get wh_abc123 msg_1srOrx2ZWZBpBUvZwXKQmoEYga2
 resend webhooks events attempts wh_abc123 msg_1srOrx2ZWZBpBUvZwXKQmoEYga2
+resend webhooks events replay wh_abc123 msg_1srOrx2ZWZBpBUvZwXKQmoEYga2
 ```
 
 ---

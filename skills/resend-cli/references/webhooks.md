@@ -102,6 +102,22 @@ Lists the delivery attempts for one event, most recent first. Each attempt recor
 1. `resend webhooks events list <webhook-id>` — find the event
 2. `resend webhooks events get <webhook-id> <event-id>` — see what we sent
 3. `resend webhooks events attempts <webhook-id> <event-id>` — see what your endpoint returned
+4. `resend webhooks events replay <webhook-id> <event-id>` — queue another delivery
+
+---
+
+## webhooks events replay
+
+Queues one more delivery of the event to the webhook — the same action as the
+dashboard's Replay button.
+
+**Arguments:** `[webhookId]` `[eventId]`
+
+**Manual replays do not schedule automatic retries.** Run replay again if the
+endpoint fails again.
+
+Returns `{"object":"webhook_event","id":"<event-id>"}` — no `type`, `status`,
+or `payload` (use `events get` for those).
 
 ---
 
