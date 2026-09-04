@@ -102,6 +102,21 @@ Lists the delivery attempts for one event, most recent first. Each attempt recor
 1. `resend webhooks events list <webhook-id>` — find the event
 2. `resend webhooks events get <webhook-id> <event-id>` — see what we sent
 3. `resend webhooks events attempts <webhook-id> <event-id>` — see what your endpoint returned
+4. `resend webhooks events replay <webhook-id> <event-id>` — queue another delivery
+
+---
+
+## webhooks events replay
+
+Queues one more delivery of the event. Does not schedule automatic retries.
+
+**Arguments:** `[webhookId]` `[eventId]`
+
+The webhook must be enabled — re-enable it first with
+`resend webhooks update <webhook-id> --status enabled`.
+
+Returns `{"object":"webhook_event","id":"<event-id>"}` — no `type`, `status`,
+or `payload` (use `events get` for those).
 
 ---
 
