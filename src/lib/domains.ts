@@ -18,7 +18,7 @@ export async function fetchVerifiedDomains(resend: Resend): Promise<string[]> {
   }
 }
 
-const FROM_PREFIXES = ['noreply', 'hello'];
+const FROM_PREFIXES = ['hello', 'support'];
 
 export async function promptForFromAddress(domains: string[]): Promise<string> {
   let domain: string;

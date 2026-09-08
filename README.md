@@ -301,7 +301,7 @@ resend emails send \
   --text "See attached." \
   --cc manager@example.com \
   --bcc delivered+1@resend.dev \
-  --reply-to noreply@example.com
+  --reply-to support@example.com
 ```
 
 **Overriding the API key for one send:**
