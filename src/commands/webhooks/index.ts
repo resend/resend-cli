@@ -6,6 +6,7 @@ import { webhookEventsCommand } from './events';
 import { getWebhookCommand } from './get';
 import { listWebhooksCommand } from './list';
 import { listenWebhookCommand } from './listen';
+import { rotateWebhookSigningSecretCommand } from './rotate-signing-secret';
 import { updateWebhookCommand } from './update';
 
 export const webhooksCommand = new Command('webhooks')
@@ -27,6 +28,7 @@ Event categories (19 total):
 Signature verification (Svix):
   Each delivery includes headers: svix-id, svix-timestamp, svix-signature
   Verify payloads in your application using: resend.webhooks.verify({ payload, headers, webhookSecret })
+  Rotate a secret with "resend webhooks rotate-signing-secret <id>"; the new one is shown once.
 
 Delivery history:
   Inspect what Resend sent and what your endpoint returned with "resend webhooks events".`,
@@ -35,6 +37,7 @@ Delivery history:
         'resend webhooks create --endpoint https://app.example.com/hooks/resend --events all',
         'resend webhooks get wh_abc123',
         'resend webhooks update wh_abc123 --status disabled',
+        'resend webhooks rotate-signing-secret wh_abc123',
         'resend webhooks delete wh_abc123 --yes',
         'resend webhooks events list wh_abc123',
       ],
@@ -46,4 +49,5 @@ Delivery history:
   .addCommand(listenWebhookCommand)
   .addCommand(listWebhooksCommand, { isDefault: true })
   .addCommand(updateWebhookCommand)
+  .addCommand(rotateWebhookSigningSecretCommand)
   .addCommand(deleteWebhookCommand);

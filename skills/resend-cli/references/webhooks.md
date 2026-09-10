@@ -34,7 +34,7 @@ Detailed flag specifications for `resend webhooks` commands.
 
 **Argument:** `<id>` — Webhook ID
 
-**Note:** `signing_secret` is NOT returned by get (only at creation).
+**Note:** `signing_secret` is NOT returned by get (only at creation or rotation).
 
 ---
 
@@ -57,6 +57,19 @@ Detailed flag specifications for `resend webhooks` commands.
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
 | `--yes` | boolean | Yes (non-interactive) | Skip confirmation |
+
+---
+
+## webhooks rotate-signing-secret
+
+**Argument:** `<id>` — Webhook ID
+
+Generates a new signing secret. For 24 hours, payloads are signed with both the
+new and the previous secret, so either one verifies them. After that, only the
+new secret does.
+
+Returns `{"object":"webhook","id":"<uuid>","signing_secret":"whsec_..."}` —
+**shown once only**, save immediately.
 
 ---
 
