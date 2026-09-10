@@ -539,7 +539,7 @@ To pause delivery temporarily, prefer `resend webhooks update <id> --status disa
 
 #### **`resend webhooks rotate-signing-secret`**
 
-Generates a new signing secret for the webhook and returns it. Payloads delivered after the rotation are signed with the new secret. Like `create`, the `signing_secret` is shown once — save it immediately.
+Generates a new signing secret for the webhook and returns it. For 24 hours, payloads are signed with both the new and the previous secret, so either one verifies them. After that, only the new secret does. Like `create`, the `signing_secret` is shown once — save it immediately.
 
 Omit the ID in a terminal to pick from a list.
 

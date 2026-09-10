@@ -64,8 +64,9 @@ Detailed flag specifications for `resend webhooks` commands.
 
 **Argument:** `<id>` — Webhook ID
 
-Generates a new signing secret. Payloads delivered after the rotation are signed
-with the new secret.
+Generates a new signing secret. For 24 hours, payloads are signed with both the
+new and the previous secret, so either one verifies them. After that, only the
+new secret does.
 
 Returns `{"object":"webhook","id":"<uuid>","signing_secret":"whsec_..."}` —
 **shown once only**, save immediately.

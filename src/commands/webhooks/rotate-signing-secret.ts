@@ -14,8 +14,9 @@ export const rotateWebhookSigningSecretCommand = new Command(
   .addHelpText(
     'after',
     buildHelpText({
-      context: `Generates a new signing secret and returns it. Payloads delivered after the
-rotation are signed with the new secret, so update your verification code with it.
+      context: `Generates a new signing secret and returns it. For 24 hours, payloads are
+signed with both the new and the previous secret, so either one verifies them.
+After that, only the new secret does. Update your verification code within that window.
 
 The signing_secret in the response is shown ONCE — save it immediately.`,
       output: `  {"object":"webhook","id":"<uuid>","signing_secret":"<whsec_...>"}`,
