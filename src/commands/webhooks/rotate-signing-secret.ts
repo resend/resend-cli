@@ -1,5 +1,4 @@
 import { Command } from '@commander-js/extra-typings';
-import type { CreateWebhookResponse } from 'resend';
 import { runCreate } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
@@ -34,14 +33,7 @@ The signing_secret in the response is shown ONCE — save it immediately.`,
     await runCreate(
       {
         loading: 'Rotating webhook signing secret...',
-        sdkCall: (resend) =>
-          (
-            resend.webhooks as unknown as {
-              rotateSigningSecret: (
-                id: string,
-              ) => Promise<CreateWebhookResponse>;
-            }
-          ).rotateSigningSecret(id),
+        sdkCall: (resend) => resend.webhooks.rotateSigningSecret(id),
         onInteractive: (d) => {
           console.log(`Webhook signing secret rotated`);
           console.log(`ID:             ${d.id}`);
