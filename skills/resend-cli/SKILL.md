@@ -139,7 +139,7 @@ Auth resolves: `RESEND_API_KEY` env > config file (`resend login --key`). Use `-
 | `api-keys` | create, list, update, delete |
 | `automations` | create, get, list, update, delete, duplicate, stop, open, runs |
 | `events` | create, get, list, update, delete, send, open |
-| `broadcasts` | create, send, get, update, delete, list, cancel, open, clicked-links, recipients |
+| `broadcasts` | create, send, get, update, delete, list, cancel, duplicate, open, clicked-links, recipients |
 | `contacts` | create, update, delete, segments, topics, imports |
 | `contact-properties` | create, update, delete, list |
 | `segments` | create, get, list, update, delete, contacts |
