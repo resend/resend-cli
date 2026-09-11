@@ -42,8 +42,8 @@ Available event types (19 total):
   Domain:      domain.created, domain.updated, domain.deleted
   Suppression: suppression.added, suppression.removed
 
-The signing_secret in the response is shown ONCE — save it immediately to verify
-webhook payloads using Svix signature headers (svix-id, svix-timestamp, svix-signature).
+Use the signing_secret in the response to verify webhook payloads using Svix
+signature headers (svix-id, svix-timestamp, svix-signature). "resend webhooks get" returns it again.
 Use resend.webhooks.verify() in your application to validate incoming payloads.
 
 Non-interactive: --endpoint and --events are required.`,
@@ -122,7 +122,6 @@ Non-interactive: --endpoint and --events are required.`,
           console.log(`Webhook created`);
           console.log(`ID:             ${d.id}`);
           console.log(`Signing Secret: ${d.signing_secret}`);
-          console.log(`Save the signing secret — it is only shown once.`);
         },
       },
       globalOpts,

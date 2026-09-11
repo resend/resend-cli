@@ -473,7 +473,7 @@ resend webhooks list --after wh_abc123 --json
 
 Registers a new endpoint.
 
-The endpoint must use **HTTPS**. The **`signing_secret`** in the response is shown **once**. Store it immediately to verify incoming payloads.
+The endpoint must use **HTTPS**. Use the **`signing_secret`** in the response to verify incoming payloads. `resend webhooks get` returns it again.
 
 In interactive mode, the CLI can prompt for endpoint and events. In non-interactive mode (pipes, CI, `--json`), **`--endpoint` and `--events` are required.**
 
@@ -539,7 +539,7 @@ To pause delivery temporarily, prefer `resend webhooks update <id> --status disa
 
 #### **`resend webhooks rotate-signing-secret`**
 
-Generates a new signing secret for the webhook and returns it. For 24 hours, payloads are signed with both the new and the previous secret, so either one verifies them. After that, only the new secret does. Like `create`, the `signing_secret` is shown once — save it immediately.
+Generates a new signing secret for the webhook and returns it. For 24 hours, payloads are signed with both the new and the previous secret, so either one verifies them. After that, only the new secret does.
 
 Omit the ID in a terminal to pick from a list.
 

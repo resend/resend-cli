@@ -15,9 +15,7 @@ export const rotateWebhookSigningSecretCommand = new Command(
     buildHelpText({
       context: `Generates a new signing secret and returns it. For 24 hours, payloads are
 signed with both the new and the previous secret, so either one verifies them.
-After that, only the new secret does. Update your verification code within that window.
-
-The signing_secret in the response is shown ONCE — save it immediately.`,
+After that, only the new secret does. Update your verification code within that window.`,
       output: `  {"object":"webhook","id":"<uuid>","signing_secret":"<whsec_...>"}`,
       errorCodes: ['auth_error', 'create_error'],
       examples: [
@@ -38,7 +36,6 @@ The signing_secret in the response is shown ONCE — save it immediately.`,
           console.log(`Webhook signing secret rotated`);
           console.log(`ID:             ${d.id}`);
           console.log(`Signing Secret: ${d.signing_secret}`);
-          console.log(`Save the signing secret — it is only shown once.`);
         },
       },
       globalOpts,

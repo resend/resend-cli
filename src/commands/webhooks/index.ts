@@ -28,7 +28,7 @@ Event categories (19 total):
 Signature verification (Svix):
   Each delivery includes headers: svix-id, svix-timestamp, svix-signature
   Verify payloads in your application using: resend.webhooks.verify({ payload, headers, webhookSecret })
-  Rotate a secret with "resend webhooks rotate-signing-secret <id>"; the new one is shown once.
+  Rotate a secret with "resend webhooks rotate-signing-secret <id>"; "resend webhooks get" returns the current one.
 
 Delivery history:
   Inspect what Resend sent and what your endpoint returned with "resend webhooks events".`,

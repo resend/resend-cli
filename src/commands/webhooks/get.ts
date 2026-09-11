@@ -11,8 +11,7 @@ export const getWebhookCommand = new Command('get')
   .addHelpText(
     'after',
     buildHelpText({
-      context: `Note: The signing_secret is not returned by the get endpoint.
-To rotate secrets, delete the webhook and recreate it.`,
+      context: `The response includes the signing_secret. Rotate it with "resend webhooks rotate-signing-secret <id>".`,
       output: `  {"object":"webhook","id":"<uuid>","endpoint":"<url>","events":["<event>"],"status":"enabled|disabled","created_at":"<date>","signing_secret":"<whsec_...>"}`,
       errorCodes: ['auth_error', 'fetch_error'],
       examples: [
