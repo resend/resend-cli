@@ -102,6 +102,14 @@ Cancelling a queued broadcast stops it mid-send — emails already sent are not 
 
 ---
 
+## broadcasts duplicate
+
+**Argument:** `<id>` — Broadcast ID
+
+The copy is a draft named `<name> (copy)`, truncated to 70 characters, with the same segment, topic, from, subject, reply-to, preview text, and content. Any broadcast can be duplicated, including sent ones.
+
+---
+
 ## broadcasts delete
 
 **Argument:** `<id>` — Broadcast ID
