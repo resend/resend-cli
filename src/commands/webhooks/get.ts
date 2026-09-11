@@ -31,7 +31,9 @@ export const getWebhookCommand = new Command('get')
           console.log(`${d.endpoint}`);
           console.log(`ID:             ${d.id}`);
           console.log(`Status:         ${d.status}`);
-          console.log(`Events:         ${(d.events ?? []).join(', ') || '(none)'}`);
+          console.log(
+            `Events:         ${(d.events ?? []).join(', ') || '(none)'}`,
+          );
           console.log(`Created:        ${d.created_at}`);
           console.log(`Signing Secret: ${d.signing_secret}`);
         },
