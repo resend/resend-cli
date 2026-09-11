@@ -499,7 +499,7 @@ resend webhooks get wh_abc123
 resend webhooks get wh_abc123 --json
 ```
 
-The signing secret is not returned from `get`. Use `resend webhooks rotate-signing-secret <id>` to get a new one.
+The response includes the signing secret. Use `resend webhooks rotate-signing-secret <id>` to replace it.
 
 #### **`resend webhooks update`**
 
