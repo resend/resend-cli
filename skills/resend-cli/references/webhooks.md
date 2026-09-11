@@ -26,7 +26,7 @@ Detailed flag specifications for `resend webhooks` commands.
 - Contact: `contact.created`, `contact.updated`, `contact.deleted`
 - Domain: `domain.created`, `domain.updated`, `domain.deleted`
 
-**Output includes `signing_secret`** — shown once only. Save immediately.
+**Output includes `signing_secret`.** `webhooks get` returns it again.
 
 ---
 
@@ -34,7 +34,7 @@ Detailed flag specifications for `resend webhooks` commands.
 
 **Argument:** `<id>` — Webhook ID
 
-**Note:** `signing_secret` is NOT returned by get (only at creation or rotation).
+Returns the webhook including its `signing_secret`.
 
 ---
 
@@ -68,8 +68,7 @@ Generates a new signing secret. For 24 hours, payloads are signed with both the
 new and the previous secret, so either one verifies them. After that, only the
 new secret does.
 
-Returns `{"object":"webhook","id":"<uuid>","signing_secret":"whsec_..."}` —
-**shown once only**, save immediately.
+Returns `{"object":"webhook","id":"<uuid>","signing_secret":"whsec_..."}`.
 
 ---
 

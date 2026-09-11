@@ -165,7 +165,7 @@ resend webhooks create \
   --endpoint https://yourapp.com/webhooks/resend \
   --events email.delivered email.bounced email.complained
 
-# IMPORTANT: Save the signing_secret from output — shown once only
+# Use the signing_secret from output to verify payloads; "resend webhooks get" returns it again
 
 # Or subscribe to all events
 resend webhooks create \

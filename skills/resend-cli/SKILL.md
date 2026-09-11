@@ -13,7 +13,7 @@ metadata:
   author: resend
   # Skill version is independent from the CLI/package.json version —
   # bump it on skill content changes, not CLI releases.
-  version: "2.12.0"
+  version: "2.12.1"
   homepage: https://resend.com/docs/cli-agents
   source: https://github.com/resend/resend-cli
   openclaw:
@@ -158,7 +158,7 @@ Read the matching reference file for detailed flags and output shapes.
 | # | Mistake | Fix |
 |---|---------|-----|
 | 1 | **Forgetting `--yes` on delete commands** | All `delete`/`rm` subcommands require `--yes` in non-interactive mode — otherwise the CLI exits with an error |
-| 2 | **Not saving webhook `signing_secret`** | `webhooks create` shows the secret once only — it cannot be retrieved later. Capture it from command output immediately |
+| 2 | **Losing the webhook `signing_secret`** | `webhooks create` returns it, and `webhooks get` returns it again. Use `webhooks rotate-signing-secret` if it leaked |
 | 3 | **Omitting `--quiet` in CI** | Without `-q`, spinners and status text still go to stderr (not stdout). Use `-q` for JSON on stdout with no spinner noise on stderr |
 | 4 | **Passing `--scheduled-at` as a flag to batch** | There is no `--scheduled-at` flag on `emails batch` — set `scheduled_at` per-email in the JSON file instead |
 | 5 | **Expecting `domains list` to include DNS records** | List returns summaries only — use `domains get <id>` for the full `records[]` array |
