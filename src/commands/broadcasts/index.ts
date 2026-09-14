@@ -4,6 +4,7 @@ import { cancelBroadcastCommand } from './cancel';
 import { clickedLinksBroadcastCommand } from './clicked-links';
 import { createBroadcastCommand } from './create';
 import { deleteBroadcastCommand } from './delete';
+import { duplicateBroadcastCommand } from './duplicate';
 import { getBroadcastCommand } from './get';
 import { listBroadcastsCommand } from './list';
 import { openBroadcastCommand } from './open';
@@ -40,6 +41,7 @@ Scheduling:
         'resend broadcasts recipients d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6 --type opened',
         'resend broadcasts update d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6 --subject "Updated Subject"',
         'resend broadcasts cancel d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+        'resend broadcasts duplicate d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
         'resend broadcasts delete d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6 --yes',
         'resend broadcasts open',
         'resend broadcasts open d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
@@ -55,5 +57,6 @@ Scheduling:
   .addCommand(recipientsBroadcastCommand)
   .addCommand(updateBroadcastCommand)
   .addCommand(cancelBroadcastCommand)
+  .addCommand(duplicateBroadcastCommand)
   .addCommand(deleteBroadcastCommand)
   .addCommand(clickedLinksBroadcastCommand);
