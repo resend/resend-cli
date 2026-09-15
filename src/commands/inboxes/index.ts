@@ -5,6 +5,7 @@ import { createInboxCommand } from './create';
 import { deleteInboxCommand } from './delete';
 import { getInboxCommand } from './get';
 import { listInboxesCommand } from './list';
+import { inboxThreadsCommand } from './threads/index';
 import { updateInboxCommand } from './update';
 
 export const inboxesCommand = new Command('inboxes')
@@ -25,6 +26,7 @@ Inboxes require a full-access API key — sending-only keys are rejected.`,
         'resend inboxes list',
         'resend inboxes create --email-address support@yourdomain.com',
         'resend inboxes get 78261eea-8f8b-4381-83c6-79fa7120f1cf',
+        'resend inboxes threads list 78261eea-8f8b-4381-83c6-79fa7120f1cf',
         'resend inboxes update 78261eea-8f8b-4381-83c6-79fa7120f1cf --name "Support"',
         'resend inboxes delete 78261eea-8f8b-4381-83c6-79fa7120f1cf --yes',
       ],
@@ -33,5 +35,6 @@ Inboxes require a full-access API key — sending-only keys are rejected.`,
   .addCommand(createInboxCommand)
   .addCommand(getInboxCommand)
   .addCommand(listInboxesCommand, { isDefault: true })
+  .addCommand(inboxThreadsCommand)
   .addCommand(updateInboxCommand)
   .addCommand(deleteInboxCommand);
