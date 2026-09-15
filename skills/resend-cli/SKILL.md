@@ -59,6 +59,7 @@ references:
   - references/logs.md
   - references/careers.md
   - references/suppressions.md
+  - references/inboxes.md
   - references/webhooks.md
   - references/auth.md
   - references/workflows.md
@@ -136,6 +137,7 @@ Auth resolves: `RESEND_API_KEY` env > config file (`resend login --key`). Use `-
 | `logs` | list, get, open |
 | `careers` | list, apply — browse open positions at Resend and apply |
 | `suppressions` _(beta)_ | list, add, get, delete, batch — requires account enrollment |
+| `inboxes` _(beta)_ | create, list, get, update, delete — requires account enrollment |
 | `api-keys` | create, list, update, delete |
 | `automations` | create, get, list, update, delete, duplicate, stop, open, runs |
 | `events` | create, get, list, update, delete, send, open |
@@ -221,6 +223,7 @@ resend doctor -q
 - **Viewing API request logs** → [references/logs.md](references/logs.md)
 - **Browsing or applying to jobs at Resend** → [references/careers.md](references/careers.md)
 - **Managing the suppression list** (beta) → [references/suppressions.md](references/suppressions.md)
+- **Managing inboxes and received email** (beta) → [references/inboxes.md](references/inboxes.md)
 - **Creating automations or sending events** → [references/automations.md](references/automations.md)
 - **Setting up webhooks or listening for events** → [references/webhooks.md](references/webhooks.md)
 - **Auth, profiles, or health checks** → [references/auth.md](references/auth.md)
