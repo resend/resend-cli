@@ -17,6 +17,7 @@ import { doctorCommand } from './commands/doctor';
 import { domainsCommand } from './commands/domains/index';
 import { emailsCommand } from './commands/emails/index';
 import { eventsCommand } from './commands/events/index';
+import { inboxesCommand } from './commands/inboxes/index';
 import { logsCommand } from './commands/logs/index';
 import { oauthGrantsCommand } from './commands/oauth-grants/index';
 import { openCommand } from './commands/open';
@@ -143,9 +144,10 @@ ${pc.gray('Examples:')}
   .addCommand(domainsCommand)
   .addCommand(logsCommand)
   .addCommand(careersCommand)
+  .addCommand(suppressionsCommand)
   // Visible pre-GA with a [beta] marker in its description — the API gates usage
   // per account, so non-enabled users see the command but get an API error until enrolled.
-  .addCommand(suppressionsCommand)
+  .addCommand(inboxesCommand)
   .addCommand(apiKeysCommand)
   .addCommand(webhooksCommand)
   .addCommand(oauthGrantsCommand)
