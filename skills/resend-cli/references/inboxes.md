@@ -67,6 +67,56 @@ Update an inbox's name. The email address cannot be changed after creation.
 
 ---
 
+## inboxes threads list
+
+List threads in an inbox (default subcommand of `resend inboxes threads`).
+Pages are fixed at 50 threads, newest activity first — there is no `--limit`.
+
+**Argument:** `<inboxId>` — inbox UUID (required in non-interactive mode)
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--folder <folder>` | string | `inbox` | One of `inbox`, `archive`, `spam`, `sent`, `trash` |
+| `--query <text>` | string | — | Search subject, sender, and label names |
+| `--from <sender>` | string | — | Filter by sender address or name |
+| `--label <labelId>` | string | — | Filter by label **UUID** (not name); repeat for multiple |
+| `--cursor <cursor>` | string | — | `next_cursor` from a previous response |
+
+**Alias:** `ls`
+
+**Output:** `{"object":"list","has_more":false,"next_cursor":"<cursor>"|null,"data":[{"id":"<uuid>","subject":"<subject>"|null,"from":"<sender>"|null,"to":[],"cc":[],"bcc":[],"labels":[],"message_count":1,"has_attachment":false,"has_draft":false,"read":false,"received_at":"<date>"}]}`
+
+---
+
+## inboxes threads get
+
+Retrieve a thread with every message inline, including `html` and `text`
+bodies. Use the message `id` values as the email ID for replies.
+
+**Arguments:** `<inboxId> <threadId>` (required in non-interactive mode)
+
+**Output:** `{"object":"inbox_thread","id":"<uuid>","subject":"<subject>"|null,"folder":"inbox","labels":[],"read":true,"messages":{"has_more":false,"data":[{"id":"<uuid>","direction":"inbound|outbound","from":"<sender>","to":[],"subject":"<subject>"|null,"html":"<html>"|null,"text":"<text>"|null,"attachments":[],"read":true,"received_at":"<date>"}]}}`
+
+---
+
+## inboxes threads emails reply
+
+Reply to a specific email in a thread. The reply is sent from the inbox
+address to the sender of the original email.
+
+**Arguments:** `<inboxId> <threadId> <emailId>` — all required; the email ID
+comes from `inboxes threads get`
+
+| Flag | Type | Required | Description |
+|------|------|----------|-------------|
+| `--text <text>` | string | One of text/html | Plain text reply body |
+| `--html <html>` | string | One of text/html | HTML reply body |
+| `--subject <subject>` | string | No | Override the reply subject |
+
+**Output:** `{"id":"<uuid>","email_id":"<uuid>","direction":"outbound","from":"<inbox-address>","to":["<recipient>"],"text":"<text>"|null,"html":"<html>"|null,"read":true,"received_at":"<date>"}`
+
+---
+
 ## inboxes delete
 
 Delete an inbox. Its threads and messages are removed and the address stops
