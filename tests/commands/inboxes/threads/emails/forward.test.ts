@@ -70,8 +70,11 @@ describe('inboxes threads emails forward command', () => {
 
     await forwardInboxThreadEmailCommand.parseAsync(
       [
+        '--inbox-id',
         INBOX_ID,
+        '--thread-id',
         THREAD_ID,
+        '--email-id',
         EMAIL_ID,
         '--to',
         'a@example.com',
@@ -96,7 +99,14 @@ describe('inboxes threads emails forward command', () => {
 
     await expectExit1(() =>
       forwardInboxThreadEmailCommand.parseAsync(
-        [INBOX_ID, THREAD_ID, EMAIL_ID],
+        [
+          '--inbox-id',
+          INBOX_ID,
+          '--thread-id',
+          THREAD_ID,
+          '--email-id',
+          EMAIL_ID,
+        ],
         { from: 'user' },
       ),
     );
@@ -116,7 +126,16 @@ describe('inboxes threads emails forward command', () => {
 
     await expectExit1(() =>
       forwardInboxThreadEmailCommand.parseAsync(
-        [INBOX_ID, THREAD_ID, EMAIL_ID, '--to', 'a@example.com'],
+        [
+          '--inbox-id',
+          INBOX_ID,
+          '--thread-id',
+          THREAD_ID,
+          '--email-id',
+          EMAIL_ID,
+          '--to',
+          'a@example.com',
+        ],
         { from: 'user' },
       ),
     );

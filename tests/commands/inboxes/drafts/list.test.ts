@@ -73,9 +73,12 @@ describe('inboxes drafts list command', () => {
   it('lists drafts and passes --cursor', async () => {
     spies = setupOutputSpies();
 
-    await listInboxDraftsCommand.parseAsync([INBOX_ID, '--cursor', 'abc123'], {
-      from: 'user',
-    });
+    await listInboxDraftsCommand.parseAsync(
+      ['--inbox-id', INBOX_ID, '--cursor', 'abc123'],
+      {
+        from: 'user',
+      },
+    );
 
     expect(mockList).toHaveBeenCalledWith({
       inboxId: INBOX_ID,
@@ -95,7 +98,9 @@ describe('inboxes drafts list command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      listInboxDraftsCommand.parseAsync([INBOX_ID], { from: 'user' }),
+      listInboxDraftsCommand.parseAsync(['--inbox-id', INBOX_ID], {
+        from: 'user',
+      }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

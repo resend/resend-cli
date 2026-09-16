@@ -10,8 +10,8 @@ import { inboxThreadPickerConfig } from './utils';
 
 export const updateInboxThreadCommand = new Command('update')
   .description('Mark a thread read or unread, move it, or apply a label')
-  .argument('[inboxId]', 'Inbox UUID')
-  .argument('[threadId]', 'Thread UUID')
+  .option('--inbox-id <id>', 'Inbox UUID')
+  .option('--thread-id <id>', 'Thread UUID')
   .option('--read', 'Mark every message in the thread as read')
   .option('--unread', 'Mark every message in the thread as unread')
   .addOption(
@@ -33,13 +33,13 @@ Threads cannot be moved to "sent".`,
         'update_error',
       ],
       examples: [
-        'resend inboxes threads update <inboxId> <threadId> --read',
-        'resend inboxes threads update <inboxId> <threadId> --folder archive --json',
-        'resend inboxes threads update <inboxId> <threadId> --label-id <labelId> --json',
+        'resend inboxes threads update --inbox-id <inboxId> --thread-id <threadId> --read',
+        'resend inboxes threads update --inbox-id <inboxId> --thread-id <threadId> --folder archive --json',
+        'resend inboxes threads update --inbox-id <inboxId> --thread-id <threadId> --label-id <labelId> --json',
       ],
     }),
   )
-  .action(async (inboxIdArg, threadIdArg, opts, cmd) => {
+  .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
     if (opts.read && opts.unread) {
@@ -64,9 +64,9 @@ Threads cannot be moved to "sent".`,
       );
     }
 
-    const inboxId = await pickId(inboxIdArg, inboxPickerConfig, globalOpts);
+    const inboxId = await pickId(opts.inboxId, inboxPickerConfig, globalOpts);
     const threadId = await pickId(
-      threadIdArg,
+      opts.threadId,
       inboxThreadPickerConfig(inboxId),
       globalOpts,
     );

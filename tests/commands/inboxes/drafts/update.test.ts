@@ -69,7 +69,16 @@ describe('inboxes drafts update command', () => {
     setupOutputSpies();
 
     await updateInboxDraftCommand.parseAsync(
-      [INBOX_ID, DRAFT_ID, '--subject', 'Updated', '--text', 'New body'],
+      [
+        '--inbox-id',
+        INBOX_ID,
+        '--draft-id',
+        DRAFT_ID,
+        '--subject',
+        'Updated',
+        '--text',
+        'New body',
+      ],
       { from: 'user' },
     );
 
@@ -87,9 +96,12 @@ describe('inboxes drafts update command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      updateInboxDraftCommand.parseAsync([INBOX_ID, DRAFT_ID], {
-        from: 'user',
-      }),
+      updateInboxDraftCommand.parseAsync(
+        ['--inbox-id', INBOX_ID, '--draft-id', DRAFT_ID],
+        {
+          from: 'user',
+        },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -106,9 +118,12 @@ describe('inboxes drafts update command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      updateInboxDraftCommand.parseAsync([INBOX_ID, DRAFT_ID, '--text', 'x'], {
-        from: 'user',
-      }),
+      updateInboxDraftCommand.parseAsync(
+        ['--inbox-id', INBOX_ID, '--draft-id', DRAFT_ID, '--text', 'x'],
+        {
+          from: 'user',
+        },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

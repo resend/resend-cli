@@ -54,9 +54,12 @@ describe('inboxes labels delete command', () => {
   it('deletes a label with --yes and outputs synthesized JSON', async () => {
     spies = setupOutputSpies();
 
-    await deleteInboxLabelCommand.parseAsync([INBOX_ID, LABEL_ID, '--yes'], {
-      from: 'user',
-    });
+    await deleteInboxLabelCommand.parseAsync(
+      ['--inbox-id', INBOX_ID, '--label-id', LABEL_ID, '--yes'],
+      {
+        from: 'user',
+      },
+    );
 
     expect(mockRemove).toHaveBeenCalledWith({
       inboxId: INBOX_ID,
@@ -74,9 +77,12 @@ describe('inboxes labels delete command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      deleteInboxLabelCommand.parseAsync([INBOX_ID, LABEL_ID], {
-        from: 'user',
-      }),
+      deleteInboxLabelCommand.parseAsync(
+        ['--inbox-id', INBOX_ID, '--label-id', LABEL_ID],
+        {
+          from: 'user',
+        },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

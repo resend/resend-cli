@@ -79,7 +79,9 @@ describe('inboxes threads list command', () => {
   it('lists threads for an inbox', async () => {
     spies = setupOutputSpies();
 
-    await listInboxThreadsCommand.parseAsync([INBOX_ID], { from: 'user' });
+    await listInboxThreadsCommand.parseAsync(['--inbox-id', INBOX_ID], {
+      from: 'user',
+    });
 
     expect(mockList).toHaveBeenCalledTimes(1);
     const args = mockList.mock.calls[0][0] as Record<string, unknown>;
@@ -92,6 +94,7 @@ describe('inboxes threads list command', () => {
 
     await listInboxThreadsCommand.parseAsync(
       [
+        '--inbox-id',
         INBOX_ID,
         '--folder',
         'archive',
@@ -120,7 +123,9 @@ describe('inboxes threads list command', () => {
   it('outputs JSON list when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    await listInboxThreadsCommand.parseAsync([INBOX_ID], { from: 'user' });
+    await listInboxThreadsCommand.parseAsync(['--inbox-id', INBOX_ID], {
+      from: 'user',
+    });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
@@ -151,7 +156,9 @@ describe('inboxes threads list command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      listInboxThreadsCommand.parseAsync([INBOX_ID], { from: 'user' }),
+      listInboxThreadsCommand.parseAsync(['--inbox-id', INBOX_ID], {
+        from: 'user',
+      }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

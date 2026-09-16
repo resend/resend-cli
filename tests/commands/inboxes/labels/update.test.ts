@@ -58,7 +58,16 @@ describe('inboxes labels update command', () => {
     setupOutputSpies();
 
     await updateInboxLabelCommand.parseAsync(
-      [INBOX_ID, LABEL_ID, '--name', 'Renamed', '--color', 'crimson'],
+      [
+        '--inbox-id',
+        INBOX_ID,
+        '--label-id',
+        LABEL_ID,
+        '--name',
+        'Renamed',
+        '--color',
+        'crimson',
+      ],
       { from: 'user' },
     );
 
@@ -76,9 +85,12 @@ describe('inboxes labels update command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      updateInboxLabelCommand.parseAsync([INBOX_ID, LABEL_ID], {
-        from: 'user',
-      }),
+      updateInboxLabelCommand.parseAsync(
+        ['--inbox-id', INBOX_ID, '--label-id', LABEL_ID],
+        {
+          from: 'user',
+        },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -96,7 +108,7 @@ describe('inboxes labels update command', () => {
 
     await expectExit1(() =>
       updateInboxLabelCommand.parseAsync(
-        [INBOX_ID, LABEL_ID, '--name', 'Renamed'],
+        ['--inbox-id', INBOX_ID, '--label-id', LABEL_ID, '--name', 'Renamed'],
         { from: 'user' },
       ),
     );

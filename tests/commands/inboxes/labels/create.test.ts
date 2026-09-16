@@ -64,7 +64,7 @@ describe('inboxes labels create command', () => {
     setupOutputSpies();
 
     await createInboxLabelCommand.parseAsync(
-      [INBOX_ID, '--name', 'Billing', '--color', 'teal'],
+      ['--inbox-id', INBOX_ID, '--name', 'Billing', '--color', 'teal'],
       { from: 'user' },
     );
 
@@ -78,9 +78,12 @@ describe('inboxes labels create command', () => {
   it('omits color when not provided', async () => {
     setupOutputSpies();
 
-    await createInboxLabelCommand.parseAsync([INBOX_ID, '--name', 'Billing'], {
-      from: 'user',
-    });
+    await createInboxLabelCommand.parseAsync(
+      ['--inbox-id', INBOX_ID, '--name', 'Billing'],
+      {
+        from: 'user',
+      },
+    );
 
     const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.color).toBeUndefined();
@@ -92,7 +95,9 @@ describe('inboxes labels create command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      createInboxLabelCommand.parseAsync([INBOX_ID], { from: 'user' }),
+      createInboxLabelCommand.parseAsync(['--inbox-id', INBOX_ID], {
+        from: 'user',
+      }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -109,9 +114,12 @@ describe('inboxes labels create command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      createInboxLabelCommand.parseAsync([INBOX_ID, '--name', 'Billing'], {
-        from: 'user',
-      }),
+      createInboxLabelCommand.parseAsync(
+        ['--inbox-id', INBOX_ID, '--name', 'Billing'],
+        {
+          from: 'user',
+        },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

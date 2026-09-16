@@ -74,7 +74,16 @@ describe('inboxes threads emails reply command', () => {
     spies = setupOutputSpies();
 
     await replyInboxThreadEmailCommand.parseAsync(
-      [INBOX_ID, THREAD_ID, EMAIL_ID, '--text', 'You were only charged once.'],
+      [
+        '--inbox-id',
+        INBOX_ID,
+        '--thread-id',
+        THREAD_ID,
+        '--email-id',
+        EMAIL_ID,
+        '--text',
+        'You were only charged once.',
+      ],
       { from: 'user' },
     );
 
@@ -92,8 +101,11 @@ describe('inboxes threads emails reply command', () => {
 
     await replyInboxThreadEmailCommand.parseAsync(
       [
+        '--inbox-id',
         INBOX_ID,
+        '--thread-id',
         THREAD_ID,
+        '--email-id',
         EMAIL_ID,
         '--html',
         '<p>Done</p>',
@@ -112,7 +124,16 @@ describe('inboxes threads emails reply command', () => {
     spies = setupOutputSpies();
 
     await replyInboxThreadEmailCommand.parseAsync(
-      [INBOX_ID, THREAD_ID, EMAIL_ID, '--text', 'ok'],
+      [
+        '--inbox-id',
+        INBOX_ID,
+        '--thread-id',
+        THREAD_ID,
+        '--email-id',
+        EMAIL_ID,
+        '--text',
+        'ok',
+      ],
       { from: 'user' },
     );
 
@@ -128,9 +149,19 @@ describe('inboxes threads emails reply command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      replyInboxThreadEmailCommand.parseAsync([INBOX_ID, THREAD_ID, EMAIL_ID], {
-        from: 'user',
-      }),
+      replyInboxThreadEmailCommand.parseAsync(
+        [
+          '--inbox-id',
+          INBOX_ID,
+          '--thread-id',
+          THREAD_ID,
+          '--email-id',
+          EMAIL_ID,
+        ],
+        {
+          from: 'user',
+        },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -148,7 +179,16 @@ describe('inboxes threads emails reply command', () => {
 
     await expectExit1(() =>
       replyInboxThreadEmailCommand.parseAsync(
-        [INBOX_ID, THREAD_ID, EMAIL_ID, '--text', 'ok'],
+        [
+          '--inbox-id',
+          INBOX_ID,
+          '--thread-id',
+          THREAD_ID,
+          '--email-id',
+          EMAIL_ID,
+          '--text',
+          'ok',
+        ],
         { from: 'user' },
       ),
     );

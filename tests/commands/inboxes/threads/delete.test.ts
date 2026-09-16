@@ -54,9 +54,12 @@ describe('inboxes threads delete command', () => {
   it('deletes a thread with --yes and outputs synthesized JSON', async () => {
     spies = setupOutputSpies();
 
-    await deleteInboxThreadCommand.parseAsync([INBOX_ID, THREAD_ID, '--yes'], {
-      from: 'user',
-    });
+    await deleteInboxThreadCommand.parseAsync(
+      ['--inbox-id', INBOX_ID, '--thread-id', THREAD_ID, '--yes'],
+      {
+        from: 'user',
+      },
+    );
 
     expect(mockRemove).toHaveBeenCalledWith({
       inboxId: INBOX_ID,
@@ -74,9 +77,12 @@ describe('inboxes threads delete command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      deleteInboxThreadCommand.parseAsync([INBOX_ID, THREAD_ID], {
-        from: 'user',
-      }),
+      deleteInboxThreadCommand.parseAsync(
+        ['--inbox-id', INBOX_ID, '--thread-id', THREAD_ID],
+        {
+          from: 'user',
+        },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

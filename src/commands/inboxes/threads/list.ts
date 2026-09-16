@@ -15,7 +15,7 @@ const collectLabels = (value: string, previous: string[]) => [
 export const listInboxThreadsCommand = new Command('list')
   .alias('ls')
   .description('List threads in an inbox')
-  .argument('[inboxId]', 'Inbox UUID')
+  .option('--inbox-id <id>', 'Inbox UUID')
   .addOption(
     new Option('--folder <folder>', 'Folder to list (default: inbox)').choices(
       INBOX_MESSAGE_FOLDERS,
@@ -40,15 +40,15 @@ previous response as --cursor to fetch the next page.
       output: `  {"object":"list","has_more":false,"next_cursor":"<cursor>|null","data":[{"id":"<uuid>","subject":"<subject>|null","from":"<sender>|null","to":[],"cc":[],"bcc":[],"labels":[],"message_count":1,"has_attachment":false,"has_draft":false,"read":false,"received_at":"<date>"}]}`,
       errorCodes: ['auth_error', 'list_error'],
       examples: [
-        'resend inboxes threads list 78261eea-8f8b-4381-83c6-79fa7120f1cf',
-        'resend inboxes threads list 78261eea-8f8b-4381-83c6-79fa7120f1cf --folder archive --json',
-        'resend inboxes threads list 78261eea-8f8b-4381-83c6-79fa7120f1cf --query billing --json',
+        'resend inboxes threads list --inbox-id 78261eea-8f8b-4381-83c6-79fa7120f1cf',
+        'resend inboxes threads list --inbox-id 78261eea-8f8b-4381-83c6-79fa7120f1cf --folder archive --json',
+        'resend inboxes threads list --inbox-id 78261eea-8f8b-4381-83c6-79fa7120f1cf --query billing --json',
       ],
     }),
   )
-  .action(async (inboxIdArg, opts, cmd) => {
+  .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const inboxId = await pickId(inboxIdArg, inboxPickerConfig, globalOpts);
+    const inboxId = await pickId(opts.inboxId, inboxPickerConfig, globalOpts);
     await runList(
       {
         loading: 'Fetching threads...',
@@ -65,7 +65,7 @@ previous response as --cursor to fetch the next page.
           console.log(renderThreadsTable(list.data));
           if (list.has_more && list.next_cursor) {
             console.log(
-              `\nFetch the next page:\n$ resend inboxes threads list ${inboxId} --cursor ${list.next_cursor}`,
+              `\nFetch the next page:\n$ resend inboxes threads list --inbox-id ${inboxId} --cursor ${list.next_cursor}`,
             );
           }
         },

@@ -9,7 +9,7 @@ import { renderLabelsTable } from './utils';
 export const listInboxLabelsCommand = new Command('list')
   .alias('ls')
   .description('List labels in an inbox')
-  .argument('[inboxId]', 'Inbox UUID')
+  .option('--inbox-id <id>', 'Inbox UUID')
   .addHelpText(
     'after',
     buildHelpText({
@@ -18,14 +18,14 @@ export const listInboxLabelsCommand = new Command('list')
       output: `  {"object":"list","has_more":false,"data":[{"id":"<uuid>","name":"<name>","color":"cyan|teal|grass|lime|yellow|orange|iris|plum|crimson|bronze|mauve","created_at":"<date>"}]}`,
       errorCodes: ['auth_error', 'list_error'],
       examples: [
-        'resend inboxes labels list 78261eea-8f8b-4381-83c6-79fa7120f1cf',
-        'resend inboxes labels list 78261eea-8f8b-4381-83c6-79fa7120f1cf --json',
+        'resend inboxes labels list --inbox-id 78261eea-8f8b-4381-83c6-79fa7120f1cf',
+        'resend inboxes labels list --inbox-id 78261eea-8f8b-4381-83c6-79fa7120f1cf --json',
       ],
     }),
   )
-  .action(async (inboxIdArg, _opts, cmd) => {
+  .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const inboxId = await pickId(inboxIdArg, inboxPickerConfig, globalOpts);
+    const inboxId = await pickId(opts.inboxId, inboxPickerConfig, globalOpts);
     await runList(
       {
         loading: 'Fetching labels...',

@@ -8,7 +8,7 @@ import { inboxPickerConfig } from '../utils';
 
 export const createInboxLabelCommand = new Command('create')
   .description('Create a label in an inbox')
-  .argument('[inboxId]', 'Inbox UUID')
+  .option('--inbox-id <id>', 'Inbox UUID')
   .option('--name <name>', 'Label name (required, max 64 characters)')
   .addOption(
     new Option('--color <color>', 'Label color (random when omitted)').choices(
@@ -24,14 +24,14 @@ Non-interactive: --name is required.`,
       output: `  {"object":"inbox_label","id":"<uuid>","name":"<name>","color":"<color>","created_at":"<date>"}`,
       errorCodes: ['auth_error', 'missing_name', 'create_error'],
       examples: [
-        'resend inboxes labels create <inboxId> --name "Billing"',
-        'resend inboxes labels create <inboxId> --name "Urgent" --color crimson --json',
+        'resend inboxes labels create --inbox-id <inboxId> --name "Billing"',
+        'resend inboxes labels create --inbox-id <inboxId> --name "Urgent" --color crimson --json',
       ],
     }),
   )
-  .action(async (inboxIdArg, opts, cmd) => {
+  .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const inboxId = await pickId(inboxIdArg, inboxPickerConfig, globalOpts);
+    const inboxId = await pickId(opts.inboxId, inboxPickerConfig, globalOpts);
 
     const name = await requireText(
       opts.name,

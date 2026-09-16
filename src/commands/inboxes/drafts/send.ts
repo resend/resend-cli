@@ -8,8 +8,8 @@ import { inboxDraftPickerConfig } from './utils';
 
 export const sendInboxDraftCommand = new Command('send')
   .description('Send a draft')
-  .argument('[inboxId]', 'Inbox UUID')
-  .argument('[draftId]', 'Draft UUID')
+  .option('--inbox-id <id>', 'Inbox UUID')
+  .option('--draft-id <id>', 'Draft UUID')
   .addHelpText(
     'after',
     buildHelpText({
@@ -18,16 +18,16 @@ export const sendInboxDraftCommand = new Command('send')
       output: `  {"object":"inbox_draft","id":"<uuid>","thread_id":"<uuid>","email_id":"<uuid>"}`,
       errorCodes: ['auth_error', 'send_error'],
       examples: [
-        'resend inboxes drafts send <inboxId> <draftId>',
-        'resend inboxes drafts send <inboxId> <draftId> --json',
+        'resend inboxes drafts send --inbox-id <inboxId> --draft-id <draftId>',
+        'resend inboxes drafts send --inbox-id <inboxId> --draft-id <draftId> --json',
       ],
     }),
   )
-  .action(async (inboxIdArg, draftIdArg, _opts, cmd) => {
+  .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const inboxId = await pickId(inboxIdArg, inboxPickerConfig, globalOpts);
+    const inboxId = await pickId(opts.inboxId, inboxPickerConfig, globalOpts);
     const draftId = await pickId(
-      draftIdArg,
+      opts.draftId,
       inboxDraftPickerConfig(inboxId),
       globalOpts,
     );
