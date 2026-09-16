@@ -72,7 +72,7 @@ Update an inbox's name. The email address cannot be changed after creation.
 List threads in an inbox (default subcommand of `resend inboxes threads`).
 Pages are fixed at 50 threads, newest activity first — there is no `--limit`.
 
-**Argument:** `<inboxId>` — inbox UUID (required in non-interactive mode)
+**Flags:** `--inbox-id <id>` — required in non-interactive mode
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
@@ -93,7 +93,7 @@ Pages are fixed at 50 threads, newest activity first — there is no `--limit`.
 Retrieve a thread with every message inline, including `html` and `text`
 bodies. Use the message `id` values as the email ID for replies.
 
-**Arguments:** `<inboxId> <threadId>` (required in non-interactive mode)
+**Flags:** `--inbox-id <id> --thread-id <id>` — required in non-interactive mode
 
 **Output:** `{"object":"inbox_thread","id":"<uuid>","subject":"<subject>"|null,"folder":"inbox","labels":[],"read":true,"messages":{"has_more":false,"data":[{"id":"<uuid>","direction":"inbound|outbound","from":"<sender>","to":[],"subject":"<subject>"|null,"html":"<html>"|null,"text":"<text>"|null,"attachments":[],"read":true,"received_at":"<date>"}]}}`
 
@@ -104,7 +104,7 @@ bodies. Use the message `id` values as the email ID for replies.
 Mark a thread read/unread, move it, or apply a label. At least one option is
 required.
 
-**Arguments:** `<inboxId> <threadId>` (required in non-interactive mode)
+**Flags:** `--inbox-id <id> --thread-id <id>` — required in non-interactive mode
 
 | Flag | Type | Description |
 |------|------|-------------|
@@ -121,7 +121,7 @@ required.
 
 Delete a thread and all of its messages.
 
-**Arguments:** `<inboxId> <threadId>`
+**Flags:** `--inbox-id <id> --thread-id <id>` — required in non-interactive mode
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
@@ -137,7 +137,7 @@ Delete a thread and all of its messages.
 
 Retrieve a single email from a thread.
 
-**Arguments:** `<inboxId> <threadId> <emailId>` — all required
+**Flags:** `--inbox-id <id> --thread-id <id> --email-id <id>` — required in non-interactive mode
 
 **Output:** `{"id":"<uuid>","direction":"inbound|outbound","from":"<sender>","to":[],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>"|null,"html":"<html>"|null,"text":"<text>"|null,"attachments":[{"id":"<id>","filename":"<name>"|null,"size":123}],"read":true,"received_at":"<date>"}`
 
@@ -148,8 +148,8 @@ Retrieve a single email from a thread.
 Reply to a specific email in a thread. The reply is sent from the inbox
 address to the sender of the original email.
 
-**Arguments:** `<inboxId> <threadId> <emailId>` — all required; the email ID
-comes from `inboxes threads get`
+**Flags:** `--inbox-id <id> --thread-id <id> --email-id <id>` — required in
+non-interactive mode; the email ID comes from `inboxes threads get`
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
@@ -165,7 +165,7 @@ comes from `inboxes threads get`
 
 Forward an email to other recipients from the inbox address.
 
-**Arguments:** `<inboxId> <threadId> <emailId>` — all required
+**Flags:** `--inbox-id <id> --thread-id <id> --email-id <id>` — required in non-interactive mode
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
@@ -184,7 +184,7 @@ List all labels in an inbox (not paginated; default subcommand of
 `resend inboxes labels`). Use label IDs with `threads update --label-id` and
 `threads list --label`.
 
-**Argument:** `<inboxId>`
+**Flags:** `--inbox-id <id>` — required in non-interactive mode
 
 **Alias:** `ls`
 
@@ -196,7 +196,7 @@ List all labels in an inbox (not paginated; default subcommand of
 
 Create a label. An inbox can have up to 100 labels.
 
-**Argument:** `<inboxId>`
+**Flags:** `--inbox-id <id>` — required in non-interactive mode
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
@@ -211,7 +211,7 @@ Create a label. An inbox can have up to 100 labels.
 
 Update a label's name or color. At least one option is required.
 
-**Arguments:** `<inboxId> <labelId>`
+**Flags:** `--inbox-id <id> --label-id <id>` — required in non-interactive mode
 
 | Flag | Type | Description |
 |------|------|-------------|
@@ -226,7 +226,7 @@ Update a label's name or color. At least one option is required.
 
 Delete a label. It is removed from every thread that has it.
 
-**Arguments:** `<inboxId> <labelId>`
+**Flags:** `--inbox-id <id> --label-id <id>` — required in non-interactive mode
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
@@ -243,7 +243,7 @@ Delete a label. It is removed from every thread that has it.
 List drafts in an inbox (default subcommand of `resend inboxes drafts`).
 Opaque cursor pagination like threads — no `--limit`.
 
-**Argument:** `<inboxId>`
+**Flags:** `--inbox-id <id>` — required in non-interactive mode
 
 | Flag | Type | Description |
 |------|------|-------------|
@@ -261,7 +261,7 @@ Create a standalone draft, or a reply draft when `--thread-id` and
 `--reply-to-email-id` are passed **together**. At least one content field is
 required.
 
-**Argument:** `<inboxId>`
+**Flags:** `--inbox-id <id>` — required in non-interactive mode
 
 | Flag | Type | Description |
 |------|------|-------------|
@@ -282,7 +282,7 @@ required.
 
 Retrieve a draft, including its full body.
 
-**Arguments:** `<inboxId> <draftId>`
+**Flags:** `--inbox-id <id> --draft-id <id>` — required in non-interactive mode
 
 **Output:** same shape as `drafts create`.
 
@@ -294,7 +294,7 @@ Update a draft's recipients, subject, or body. At least one option is
 required; provided fields replace existing values. Same flags as
 `drafts create` minus `--thread-id`/`--reply-to-email-id`.
 
-**Arguments:** `<inboxId> <draftId>`
+**Flags:** `--inbox-id <id> --draft-id <id>` — required in non-interactive mode
 
 **Output:** same shape as `drafts create`.
 
@@ -304,7 +304,7 @@ required; provided fields replace existing values. Same flags as
 
 Delete a draft.
 
-**Arguments:** `<inboxId> <draftId>`
+**Flags:** `--inbox-id <id> --draft-id <id>` — required in non-interactive mode
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
@@ -321,7 +321,7 @@ Delete a draft.
 Send a draft from the inbox address. The draft must have recipients and a
 body.
 
-**Arguments:** `<inboxId> <draftId>`
+**Flags:** `--inbox-id <id> --draft-id <id>` — required in non-interactive mode
 
 **Output:** `{"object":"inbox_draft","id":"<uuid>","thread_id":"<uuid>","email_id":"<uuid>"}`
 

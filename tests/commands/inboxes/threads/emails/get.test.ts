@@ -72,7 +72,14 @@ describe('inboxes threads emails get command', () => {
     spies = setupOutputSpies();
 
     await getInboxThreadEmailCommand.parseAsync(
-      [INBOX_ID, THREAD_ID, EMAIL_ID],
+      [
+        '--inbox-id',
+        INBOX_ID,
+        '--thread-id',
+        THREAD_ID,
+        '--email-id',
+        EMAIL_ID,
+      ],
       { from: 'user' },
     );
 
@@ -96,9 +103,19 @@ describe('inboxes threads emails get command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      getInboxThreadEmailCommand.parseAsync([INBOX_ID, THREAD_ID, EMAIL_ID], {
-        from: 'user',
-      }),
+      getInboxThreadEmailCommand.parseAsync(
+        [
+          '--inbox-id',
+          INBOX_ID,
+          '--thread-id',
+          THREAD_ID,
+          '--email-id',
+          EMAIL_ID,
+        ],
+        {
+          from: 'user',
+        },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

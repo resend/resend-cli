@@ -72,6 +72,7 @@ describe('inboxes drafts create command', () => {
 
     await createInboxDraftCommand.parseAsync(
       [
+        '--inbox-id',
         INBOX_ID,
         '--to',
         'user@example.com',
@@ -97,6 +98,7 @@ describe('inboxes drafts create command', () => {
 
     await createInboxDraftCommand.parseAsync(
       [
+        '--inbox-id',
         INBOX_ID,
         '--text',
         'Reply body',
@@ -120,7 +122,7 @@ describe('inboxes drafts create command', () => {
 
     await expectExit1(() =>
       createInboxDraftCommand.parseAsync(
-        [INBOX_ID, '--text', 'x', '--thread-id', THREAD_ID],
+        ['--inbox-id', INBOX_ID, '--text', 'x', '--thread-id', THREAD_ID],
         { from: 'user' },
       ),
     );
@@ -136,7 +138,9 @@ describe('inboxes drafts create command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      createInboxDraftCommand.parseAsync([INBOX_ID], { from: 'user' }),
+      createInboxDraftCommand.parseAsync(['--inbox-id', INBOX_ID], {
+        from: 'user',
+      }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -153,9 +157,12 @@ describe('inboxes drafts create command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      createInboxDraftCommand.parseAsync([INBOX_ID, '--text', 'x'], {
-        from: 'user',
-      }),
+      createInboxDraftCommand.parseAsync(
+        ['--inbox-id', INBOX_ID, '--text', 'x'],
+        {
+          from: 'user',
+        },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

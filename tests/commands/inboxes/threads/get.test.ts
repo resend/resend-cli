@@ -84,9 +84,12 @@ describe('inboxes threads get command', () => {
   it('fetches a thread with messages and outputs JSON', async () => {
     spies = setupOutputSpies();
 
-    await getInboxThreadCommand.parseAsync([INBOX_ID, THREAD_ID], {
-      from: 'user',
-    });
+    await getInboxThreadCommand.parseAsync(
+      ['--inbox-id', INBOX_ID, '--thread-id', THREAD_ID],
+      {
+        from: 'user',
+      },
+    );
 
     expect(mockGet).toHaveBeenCalledWith({
       inboxId: INBOX_ID,
@@ -104,7 +107,9 @@ describe('inboxes threads get command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      getInboxThreadCommand.parseAsync([INBOX_ID], { from: 'user' }),
+      getInboxThreadCommand.parseAsync(['--inbox-id', INBOX_ID], {
+        from: 'user',
+      }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -121,9 +126,12 @@ describe('inboxes threads get command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      getInboxThreadCommand.parseAsync([INBOX_ID, THREAD_ID], {
-        from: 'user',
-      }),
+      getInboxThreadCommand.parseAsync(
+        ['--inbox-id', INBOX_ID, '--thread-id', THREAD_ID],
+        {
+          from: 'user',
+        },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

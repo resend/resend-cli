@@ -66,7 +66,9 @@ describe('inboxes labels list command', () => {
   it('lists labels and outputs JSON', async () => {
     spies = setupOutputSpies();
 
-    await listInboxLabelsCommand.parseAsync([INBOX_ID], { from: 'user' });
+    await listInboxLabelsCommand.parseAsync(['--inbox-id', INBOX_ID], {
+      from: 'user',
+    });
 
     expect(mockList).toHaveBeenCalledWith({ inboxId: INBOX_ID });
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -83,7 +85,9 @@ describe('inboxes labels list command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      listInboxLabelsCommand.parseAsync([INBOX_ID], { from: 'user' }),
+      listInboxLabelsCommand.parseAsync(['--inbox-id', INBOX_ID], {
+        from: 'user',
+      }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

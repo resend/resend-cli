@@ -65,7 +65,15 @@ describe('inboxes threads update command', () => {
     setupOutputSpies();
 
     await updateInboxThreadCommand.parseAsync(
-      [INBOX_ID, THREAD_ID, '--read', '--folder', 'archive'],
+      [
+        '--inbox-id',
+        INBOX_ID,
+        '--thread-id',
+        THREAD_ID,
+        '--read',
+        '--folder',
+        'archive',
+      ],
       { from: 'user' },
     );
 
@@ -81,7 +89,15 @@ describe('inboxes threads update command', () => {
     setupOutputSpies();
 
     await updateInboxThreadCommand.parseAsync(
-      [INBOX_ID, THREAD_ID, '--unread', '--label-id', 'label-1'],
+      [
+        '--inbox-id',
+        INBOX_ID,
+        '--thread-id',
+        THREAD_ID,
+        '--unread',
+        '--label-id',
+        'label-1',
+      ],
       { from: 'user' },
     );
 
@@ -97,7 +113,14 @@ describe('inboxes threads update command', () => {
 
     await expectExit1(() =>
       updateInboxThreadCommand.parseAsync(
-        [INBOX_ID, THREAD_ID, '--read', '--unread'],
+        [
+          '--inbox-id',
+          INBOX_ID,
+          '--thread-id',
+          THREAD_ID,
+          '--read',
+          '--unread',
+        ],
         { from: 'user' },
       ),
     );
@@ -113,9 +136,12 @@ describe('inboxes threads update command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      updateInboxThreadCommand.parseAsync([INBOX_ID, THREAD_ID], {
-        from: 'user',
-      }),
+      updateInboxThreadCommand.parseAsync(
+        ['--inbox-id', INBOX_ID, '--thread-id', THREAD_ID],
+        {
+          from: 'user',
+        },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -132,9 +158,12 @@ describe('inboxes threads update command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      updateInboxThreadCommand.parseAsync([INBOX_ID, THREAD_ID, '--read'], {
-        from: 'user',
-      }),
+      updateInboxThreadCommand.parseAsync(
+        ['--inbox-id', INBOX_ID, '--thread-id', THREAD_ID, '--read'],
+        {
+          from: 'user',
+        },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

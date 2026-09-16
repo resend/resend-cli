@@ -9,7 +9,7 @@ import { renderDraftsTable } from './utils';
 export const listInboxDraftsCommand = new Command('list')
   .alias('ls')
   .description('List drafts in an inbox')
-  .argument('[inboxId]', 'Inbox UUID')
+  .option('--inbox-id <id>', 'Inbox UUID')
   .option('--cursor <cursor>', 'Pagination cursor from a previous response')
   .addHelpText(
     'after',
@@ -19,14 +19,14 @@ export const listInboxDraftsCommand = new Command('list')
       output: `  {"object":"list","has_more":false,"next_cursor":"<cursor>|null","data":[{"id":"<uuid>","type":"standalone|reply","to":["<address>"]|null,"cc":[],"bcc":[],"subject":"<subject>|null","snippet":"<text>|null","thread_id":"<uuid>|null","reply_to_email_id":"<uuid>|null","updated_at":"<date>"}]}`,
       errorCodes: ['auth_error', 'list_error'],
       examples: [
-        'resend inboxes drafts list 78261eea-8f8b-4381-83c6-79fa7120f1cf',
-        'resend inboxes drafts list 78261eea-8f8b-4381-83c6-79fa7120f1cf --json',
+        'resend inboxes drafts list --inbox-id 78261eea-8f8b-4381-83c6-79fa7120f1cf',
+        'resend inboxes drafts list --inbox-id 78261eea-8f8b-4381-83c6-79fa7120f1cf --json',
       ],
     }),
   )
-  .action(async (inboxIdArg, opts, cmd) => {
+  .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const inboxId = await pickId(inboxIdArg, inboxPickerConfig, globalOpts);
+    const inboxId = await pickId(opts.inboxId, inboxPickerConfig, globalOpts);
     await runList(
       {
         loading: 'Fetching drafts...',

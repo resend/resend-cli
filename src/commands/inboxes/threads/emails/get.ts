@@ -2,25 +2,40 @@ import { Command } from '@commander-js/extra-typings';
 import { runGet } from '../../../../lib/actions';
 import type { GlobalOpts } from '../../../../lib/client';
 import { buildHelpText } from '../../../../lib/help-text';
+import { pickId, requireText } from '../../../../lib/prompts';
+import { inboxPickerConfig } from '../../utils';
+import { inboxThreadPickerConfig } from '../utils';
 
 export const getInboxThreadEmailCommand = new Command('get')
   .description('Retrieve a single email from a thread')
-  .argument('<inboxId>', 'Inbox UUID')
-  .argument('<threadId>', 'Thread UUID')
-  .argument('<emailId>', 'Email UUID (from "threads get")')
+  .option('--inbox-id <id>', 'Inbox UUID')
+  .option('--thread-id <id>', 'Thread UUID')
+  .option('--email-id <id>', 'Email UUID (from "threads get")')
   .addHelpText(
     'after',
     buildHelpText({
       output: `  {"id":"<uuid>","direction":"inbound|outbound","from":"<sender>","to":[],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>|null","html":"<html>|null","text":"<text>|null","attachments":[{"id":"<id>","filename":"<name>|null","size":123}],"read":true,"received_at":"<date>"}`,
-      errorCodes: ['auth_error', 'fetch_error'],
+      errorCodes: ['auth_error', 'missing_id', 'fetch_error'],
       examples: [
-        'resend inboxes threads emails get <inboxId> <threadId> <emailId>',
-        'resend inboxes threads emails get <inboxId> <threadId> <emailId> --json',
+        'resend inboxes threads emails get --inbox-id <inboxId> --thread-id <threadId> --email-id <emailId>',
+        'resend inboxes threads emails get --inbox-id <inboxId> --thread-id <threadId> --email-id <emailId> --json',
       ],
     }),
   )
-  .action(async (inboxId, threadId, emailId, _opts, cmd) => {
+  .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const inboxId = await pickId(opts.inboxId, inboxPickerConfig, globalOpts);
+    const threadId = await pickId(
+      opts.threadId,
+      inboxThreadPickerConfig(inboxId),
+      globalOpts,
+    );
+    const emailId = await requireText(
+      opts.emailId,
+      { message: 'Email ID', placeholder: 'from "threads get"' },
+      { message: 'Missing --email-id flag.', code: 'missing_id' },
+      globalOpts,
+    );
     await runGet(
       {
         loading: 'Fetching email...',

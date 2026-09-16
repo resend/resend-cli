@@ -62,9 +62,12 @@ describe('inboxes drafts send command', () => {
   it('sends a draft and outputs JSON with email_id', async () => {
     spies = setupOutputSpies();
 
-    await sendInboxDraftCommand.parseAsync([INBOX_ID, DRAFT_ID], {
-      from: 'user',
-    });
+    await sendInboxDraftCommand.parseAsync(
+      ['--inbox-id', INBOX_ID, '--draft-id', DRAFT_ID],
+      {
+        from: 'user',
+      },
+    );
 
     expect(mockSend).toHaveBeenCalledWith({
       inboxId: INBOX_ID,
@@ -85,9 +88,12 @@ describe('inboxes drafts send command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      sendInboxDraftCommand.parseAsync([INBOX_ID, DRAFT_ID], {
-        from: 'user',
-      }),
+      sendInboxDraftCommand.parseAsync(
+        ['--inbox-id', INBOX_ID, '--draft-id', DRAFT_ID],
+        {
+          from: 'user',
+        },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

@@ -14,7 +14,7 @@ const collectRecipients = (value: string, previous: string[]) => [
 
 export const createInboxDraftCommand = new Command('create')
   .description('Create a draft in an inbox')
-  .argument('[inboxId]', 'Inbox UUID')
+  .option('--inbox-id <id>', 'Inbox UUID')
   .option(
     '--to <address>',
     'Recipient address (repeat the flag for multiple recipients)',
@@ -60,12 +60,12 @@ Send the draft later with "resend inboxes drafts send".`,
         'create_error',
       ],
       examples: [
-        'resend inboxes drafts create <inboxId> --to user@example.com --subject "Hello" --text "Draft body"',
-        'resend inboxes drafts create <inboxId> --thread-id <threadId> --reply-to-email-id <emailId> --text "Reply draft" --json',
+        'resend inboxes drafts create --inbox-id <inboxId> --to user@example.com --subject "Hello" --text "Draft body"',
+        'resend inboxes drafts create --inbox-id <inboxId> --thread-id <threadId> --reply-to-email-id <emailId> --text "Reply draft" --json',
       ],
     }),
   )
-  .action(async (inboxIdArg, opts, cmd) => {
+  .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
     if (Boolean(opts.threadId) !== Boolean(opts.replyToEmailId)) {
@@ -97,7 +97,7 @@ Send the draft later with "resend inboxes drafts send".`,
       );
     }
 
-    const inboxId = await pickId(inboxIdArg, inboxPickerConfig, globalOpts);
+    const inboxId = await pickId(opts.inboxId, inboxPickerConfig, globalOpts);
 
     // The SDK requires at least one content field and pairs threadId with
     // replyToEmailId at the type level; both are guaranteed by the guards
