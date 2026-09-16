@@ -13,7 +13,7 @@ metadata:
   author: resend
   # Skill version is independent from the CLI/package.json version —
   # bump it on skill content changes, not CLI releases.
-  version: "2.15.0"
+  version: "2.16.0"
   homepage: https://resend.com/docs/cli-agents
   source: https://github.com/resend/resend-cli
   openclaw:
@@ -137,7 +137,7 @@ Auth resolves: `RESEND_API_KEY` env > config file (`resend login --key`). Use `-
 | `logs` | list, get, open |
 | `careers` | list, apply — browse open positions at Resend and apply |
 | `suppressions` _(beta)_ | list, add, get, delete, batch — requires account enrollment |
-| `inboxes` _(beta)_ | create, list, get, update, delete, threads (list, get, emails reply) — requires account enrollment |
+| `inboxes` _(beta)_ | create, list, get, update, delete, threads (list, get, update, delete, emails get/reply/forward), labels, drafts — requires account enrollment |
 | `api-keys` | create, list, update, delete |
 | `automations` | create, get, list, update, delete, duplicate, stop, open, runs |
 | `events` | create, get, list, update, delete, send, open |

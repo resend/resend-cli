@@ -3,7 +3,9 @@ import pc from 'picocolors';
 import { buildHelpText } from '../../lib/help-text';
 import { createInboxCommand } from './create';
 import { deleteInboxCommand } from './delete';
+import { inboxDraftsCommand } from './drafts/index';
 import { getInboxCommand } from './get';
+import { inboxLabelsCommand } from './labels/index';
 import { listInboxesCommand } from './list';
 import { inboxThreadsCommand } from './threads/index';
 import { updateInboxCommand } from './update';
@@ -36,5 +38,7 @@ Inboxes require a full-access API key — sending-only keys are rejected.`,
   .addCommand(getInboxCommand)
   .addCommand(listInboxesCommand, { isDefault: true })
   .addCommand(inboxThreadsCommand)
+  .addCommand(inboxLabelsCommand)
+  .addCommand(inboxDraftsCommand)
   .addCommand(updateInboxCommand)
   .addCommand(deleteInboxCommand);
