@@ -10,8 +10,8 @@ import { inboxThreadPickerConfig } from './utils';
 
 export const updateInboxThreadCommand = new Command('update')
   .description('Mark a thread read or unread, move it, or apply a label')
-  .option('--inbox-id <id>', 'Inbox UUID')
-  .option('--thread-id <id>', 'Thread UUID')
+  .option('--inbox_id <id>', 'Inbox UUID')
+  .option('--thread_id <id>', 'Thread UUID')
   .option('--read', 'Mark every message in the thread as read')
   .option('--unread', 'Mark every message in the thread as unread')
   .addOption(
@@ -19,11 +19,11 @@ export const updateInboxThreadCommand = new Command('update')
       MOVE_THREAD_FOLDERS,
     ),
   )
-  .option('--label-id <labelId>', 'Apply this label (UUID) to the thread')
+  .option('--label_id <label_id>', 'Apply this label (UUID) to the thread')
   .addHelpText(
     'after',
     buildHelpText({
-      context: `At least one of --read/--unread, --folder, or --label-id is required.
+      context: `At least one of --read/--unread, --folder, or --label_id is required.
 Threads cannot be moved to "sent".`,
       output: `  {"object":"inbox_thread","id":"<uuid>","subject":"<subject>|null","folder":"inbox|archive|spam|sent|trash","labels":[],"read":true}`,
       errorCodes: [
@@ -33,9 +33,9 @@ Threads cannot be moved to "sent".`,
         'update_error',
       ],
       examples: [
-        'resend inboxes threads update --inbox-id <inboxId> --thread-id <threadId> --read',
-        'resend inboxes threads update --inbox-id <inboxId> --thread-id <threadId> --folder archive --json',
-        'resend inboxes threads update --inbox-id <inboxId> --thread-id <threadId> --label-id <labelId> --json',
+        'resend inboxes threads update --inbox_id <inbox_id> --thread_id <thread_id> --read',
+        'resend inboxes threads update --inbox_id <inbox_id> --thread_id <thread_id> --folder archive --json',
+        'resend inboxes threads update --inbox_id <inbox_id> --thread_id <thread_id> --label_id <label_id> --json',
       ],
     }),
   )
@@ -53,20 +53,20 @@ Threads cannot be moved to "sent".`,
     }
 
     const read = opts.read ? true : opts.unread ? false : undefined;
-    if (read === undefined && !opts.folder && !opts.labelId) {
+    if (read === undefined && !opts.folder && !opts.label_id) {
       outputError(
         {
           message:
-            'Provide at least one option to update: --read/--unread, --folder, or --label-id.',
+            'Provide at least one option to update: --read/--unread, --folder, or --label_id.',
           code: 'no_changes',
         },
         { json: globalOpts.json },
       );
     }
 
-    const inboxId = await pickId(opts.inboxId, inboxPickerConfig, globalOpts);
+    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
     const threadId = await pickId(
-      opts.threadId,
+      opts.thread_id,
       inboxThreadPickerConfig(inboxId),
       globalOpts,
     );
@@ -79,7 +79,7 @@ Threads cannot be moved to "sent".`,
       threadId,
       ...(read !== undefined && { read }),
       ...(opts.folder && { folder: opts.folder }),
-      ...(opts.labelId && { labelId: opts.labelId }),
+      ...(opts.label_id && { labelId: opts.label_id }),
     } as UpdateInboxThreadOptions;
 
     await runWrite(

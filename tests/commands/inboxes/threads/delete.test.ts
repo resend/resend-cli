@@ -55,7 +55,7 @@ describe('inboxes threads delete command', () => {
     spies = setupOutputSpies();
 
     await deleteInboxThreadCommand.parseAsync(
-      ['--inbox-id', INBOX_ID, '--thread-id', THREAD_ID, '--yes'],
+      ['--inbox_id', INBOX_ID, '--thread_id', THREAD_ID, '--yes'],
       {
         from: 'user',
       },
@@ -78,7 +78,7 @@ describe('inboxes threads delete command', () => {
 
     await expectExit1(() =>
       deleteInboxThreadCommand.parseAsync(
-        ['--inbox-id', INBOX_ID, '--thread-id', THREAD_ID],
+        ['--inbox_id', INBOX_ID, '--thread_id', THREAD_ID],
         {
           from: 'user',
         },

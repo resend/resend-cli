@@ -15,10 +15,10 @@ export const inboxThreadsCommand = new Command('threads')
 "get" returns a thread with full message bodies, "update" marks read/unread,
 moves, or labels a thread, and "emails" works with individual messages.`,
       examples: [
-        'resend inboxes threads list --inbox-id <inboxId>',
-        'resend inboxes threads get --inbox-id <inboxId> --thread-id <threadId>',
-        'resend inboxes threads update --inbox-id <inboxId> --thread-id <threadId> --read',
-        'resend inboxes threads emails reply --inbox-id <inboxId> --thread-id <threadId> --email-id <emailId> --text "Thanks!"',
+        'resend inboxes threads list --inbox_id <inbox_id>',
+        'resend inboxes threads get --inbox_id <inbox_id> --thread_id <thread_id>',
+        'resend inboxes threads update --inbox_id <inbox_id> --thread_id <thread_id> --read',
+        'resend inboxes threads emails reply --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --text "Thanks!"',
       ],
     }),
   )

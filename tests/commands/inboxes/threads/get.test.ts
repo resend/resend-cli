@@ -85,7 +85,7 @@ describe('inboxes threads get command', () => {
     spies = setupOutputSpies();
 
     await getInboxThreadCommand.parseAsync(
-      ['--inbox-id', INBOX_ID, '--thread-id', THREAD_ID],
+      ['--inbox_id', INBOX_ID, '--thread_id', THREAD_ID],
       {
         from: 'user',
       },
@@ -107,7 +107,7 @@ describe('inboxes threads get command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      getInboxThreadCommand.parseAsync(['--inbox-id', INBOX_ID], {
+      getInboxThreadCommand.parseAsync(['--inbox_id', INBOX_ID], {
         from: 'user',
       }),
     );
@@ -127,7 +127,7 @@ describe('inboxes threads get command', () => {
 
     await expectExit1(() =>
       getInboxThreadCommand.parseAsync(
-        ['--inbox-id', INBOX_ID, '--thread-id', THREAD_ID],
+        ['--inbox_id', INBOX_ID, '--thread_id', THREAD_ID],
         {
           from: 'user',
         },

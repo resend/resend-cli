@@ -26,9 +26,9 @@ Received messages are grouped into threads inside the inbox.
 Inboxes require a full-access API key — sending-only keys are rejected.`,
       examples: [
         'resend inboxes list',
-        'resend inboxes create --email-address support@yourdomain.com',
+        'resend inboxes create --email_address support@yourdomain.com',
         'resend inboxes get 78261eea-8f8b-4381-83c6-79fa7120f1cf',
-        'resend inboxes threads list --inbox-id 78261eea-8f8b-4381-83c6-79fa7120f1cf',
+        'resend inboxes threads list --inbox_id 78261eea-8f8b-4381-83c6-79fa7120f1cf',
         'resend inboxes update 78261eea-8f8b-4381-83c6-79fa7120f1cf --name "Support"',
         'resend inboxes delete 78261eea-8f8b-4381-83c6-79fa7120f1cf --yes',
       ],

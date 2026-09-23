@@ -8,32 +8,32 @@ import { inboxThreadPickerConfig } from '../utils';
 
 export const getInboxThreadEmailCommand = new Command('get')
   .description('Retrieve a single email from a thread')
-  .option('--inbox-id <id>', 'Inbox UUID')
-  .option('--thread-id <id>', 'Thread UUID')
-  .option('--email-id <id>', 'Email UUID (from "threads get")')
+  .option('--inbox_id <id>', 'Inbox UUID')
+  .option('--thread_id <id>', 'Thread UUID')
+  .option('--email_id <id>', 'Email UUID (from "threads get")')
   .addHelpText(
     'after',
     buildHelpText({
       output: `  {"id":"<uuid>","direction":"inbound|outbound","from":"<sender>","to":[],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>|null","html":"<html>|null","text":"<text>|null","attachments":[{"id":"<id>","filename":"<name>|null","size":123}],"read":true,"received_at":"<date>"}`,
       errorCodes: ['auth_error', 'missing_id', 'fetch_error'],
       examples: [
-        'resend inboxes threads emails get --inbox-id <inboxId> --thread-id <threadId> --email-id <emailId>',
-        'resend inboxes threads emails get --inbox-id <inboxId> --thread-id <threadId> --email-id <emailId> --json',
+        'resend inboxes threads emails get --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id>',
+        'resend inboxes threads emails get --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --json',
       ],
     }),
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const inboxId = await pickId(opts.inboxId, inboxPickerConfig, globalOpts);
+    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
     const threadId = await pickId(
-      opts.threadId,
+      opts.thread_id,
       inboxThreadPickerConfig(inboxId),
       globalOpts,
     );
     const emailId = await requireText(
-      opts.emailId,
+      opts.email_id,
       { message: 'Email ID', placeholder: 'from "threads get"' },
-      { message: 'Missing --email-id flag.', code: 'missing_id' },
+      { message: 'Missing --email_id flag.', code: 'missing_id' },
       globalOpts,
     );
     await runGet(

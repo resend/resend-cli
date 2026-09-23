@@ -64,7 +64,7 @@ describe('inboxes labels create command', () => {
     setupOutputSpies();
 
     await createInboxLabelCommand.parseAsync(
-      ['--inbox-id', INBOX_ID, '--name', 'Billing', '--color', 'teal'],
+      ['--inbox_id', INBOX_ID, '--name', 'Billing', '--color', 'teal'],
       { from: 'user' },
     );
 
@@ -79,7 +79,7 @@ describe('inboxes labels create command', () => {
     setupOutputSpies();
 
     await createInboxLabelCommand.parseAsync(
-      ['--inbox-id', INBOX_ID, '--name', 'Billing'],
+      ['--inbox_id', INBOX_ID, '--name', 'Billing'],
       {
         from: 'user',
       },
@@ -95,7 +95,7 @@ describe('inboxes labels create command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      createInboxLabelCommand.parseAsync(['--inbox-id', INBOX_ID], {
+      createInboxLabelCommand.parseAsync(['--inbox_id', INBOX_ID], {
         from: 'user',
       }),
     );
@@ -115,7 +115,7 @@ describe('inboxes labels create command', () => {
 
     await expectExit1(() =>
       createInboxLabelCommand.parseAsync(
-        ['--inbox-id', INBOX_ID, '--name', 'Billing'],
+        ['--inbox_id', INBOX_ID, '--name', 'Billing'],
         {
           from: 'user',
         },

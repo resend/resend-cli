@@ -55,7 +55,7 @@ describe('inboxes labels delete command', () => {
     spies = setupOutputSpies();
 
     await deleteInboxLabelCommand.parseAsync(
-      ['--inbox-id', INBOX_ID, '--label-id', LABEL_ID, '--yes'],
+      ['--inbox_id', INBOX_ID, '--label_id', LABEL_ID, '--yes'],
       {
         from: 'user',
       },
@@ -78,7 +78,7 @@ describe('inboxes labels delete command', () => {
 
     await expectExit1(() =>
       deleteInboxLabelCommand.parseAsync(
-        ['--inbox-id', INBOX_ID, '--label-id', LABEL_ID],
+        ['--inbox_id', INBOX_ID, '--label_id', LABEL_ID],
         {
           from: 'user',
         },

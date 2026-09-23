@@ -14,9 +14,9 @@ const collectRecipients = (value: string, previous: string[]) => [
 
 export const forwardInboxThreadEmailCommand = new Command('forward')
   .description('Forward an email in a thread to other recipients')
-  .option('--inbox-id <id>', 'Inbox UUID')
-  .option('--thread-id <id>', 'Thread UUID')
-  .option('--email-id <id>', 'Email UUID to forward (from "threads get")')
+  .option('--inbox_id <id>', 'Inbox UUID')
+  .option('--thread_id <id>', 'Thread UUID')
+  .option('--email_id <id>', 'Email UUID to forward (from "threads get")')
   .option(
     '--to <address>',
     'Recipient address (repeat the flag for multiple recipients)',
@@ -34,8 +34,8 @@ export const forwardInboxThreadEmailCommand = new Command('forward')
       output: `  {"id":"<uuid>","email_id":"<uuid>","direction":"outbound","from":"<inbox-address>","to":["<recipient>"],"text":"<text>|null","html":"<html>|null","attachments":[],"read":true,"received_at":"<date>"}`,
       errorCodes: ['auth_error', 'missing_id', 'missing_to', 'create_error'],
       examples: [
-        'resend inboxes threads emails forward --inbox-id <inboxId> --thread-id <threadId> --email-id <emailId> --to teammate@example.com',
-        'resend inboxes threads emails forward --inbox-id <inboxId> --thread-id <threadId> --email-id <emailId> --to a@x.com --to b@x.com --text "FYI" --json',
+        'resend inboxes threads emails forward --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --to teammate@example.com',
+        'resend inboxes threads emails forward --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --to a@x.com --to b@x.com --text "FYI" --json',
       ],
     }),
   )
@@ -52,16 +52,16 @@ export const forwardInboxThreadEmailCommand = new Command('forward')
       );
     }
 
-    const inboxId = await pickId(opts.inboxId, inboxPickerConfig, globalOpts);
+    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
     const threadId = await pickId(
-      opts.threadId,
+      opts.thread_id,
       inboxThreadPickerConfig(inboxId),
       globalOpts,
     );
     const emailId = await requireText(
-      opts.emailId,
+      opts.email_id,
       { message: 'Email ID to forward', placeholder: 'from "threads get"' },
-      { message: 'Missing --email-id flag.', code: 'missing_id' },
+      { message: 'Missing --email_id flag.', code: 'missing_id' },
       globalOpts,
     );
 

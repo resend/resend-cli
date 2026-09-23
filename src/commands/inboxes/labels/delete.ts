@@ -9,8 +9,8 @@ import { inboxLabelPickerConfig } from './utils';
 export const deleteInboxLabelCommand = new Command('delete')
   .alias('rm')
   .description('Delete a label')
-  .option('--inbox-id <id>', 'Inbox UUID')
-  .option('--label-id <id>', 'Label UUID')
+  .option('--inbox_id <id>', 'Inbox UUID')
+  .option('--label_id <id>', 'Label UUID')
   .option(
     '--yes',
     'Skip the confirmation prompt (required in non-interactive mode)',
@@ -25,16 +25,16 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
       output: `  {"object":"inbox_label","id":"<uuid>","deleted":true}`,
       errorCodes: ['auth_error', 'confirmation_required', 'delete_error'],
       examples: [
-        'resend inboxes labels delete --inbox-id <inboxId> --label-id <labelId> --yes',
-        'resend inboxes labels delete --inbox-id <inboxId> --label-id <labelId> --yes --json',
+        'resend inboxes labels delete --inbox_id <inbox_id> --label_id <label_id> --yes',
+        'resend inboxes labels delete --inbox_id <inbox_id> --label_id <label_id> --yes --json',
       ],
     }),
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const inboxId = await pickId(opts.inboxId, inboxPickerConfig, globalOpts);
+    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
     const picked = await pickItem(
-      opts.labelId,
+      opts.label_id,
       inboxLabelPickerConfig(inboxId),
       globalOpts,
     );

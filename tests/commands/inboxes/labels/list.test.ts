@@ -66,7 +66,7 @@ describe('inboxes labels list command', () => {
   it('lists labels and outputs JSON', async () => {
     spies = setupOutputSpies();
 
-    await listInboxLabelsCommand.parseAsync(['--inbox-id', INBOX_ID], {
+    await listInboxLabelsCommand.parseAsync(['--inbox_id', INBOX_ID], {
       from: 'user',
     });
 
@@ -85,7 +85,7 @@ describe('inboxes labels list command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      listInboxLabelsCommand.parseAsync(['--inbox-id', INBOX_ID], {
+      listInboxLabelsCommand.parseAsync(['--inbox_id', INBOX_ID], {
         from: 'user',
       }),
     );

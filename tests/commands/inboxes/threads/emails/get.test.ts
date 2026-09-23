@@ -73,11 +73,11 @@ describe('inboxes threads emails get command', () => {
 
     await getInboxThreadEmailCommand.parseAsync(
       [
-        '--inbox-id',
+        '--inbox_id',
         INBOX_ID,
-        '--thread-id',
+        '--thread_id',
         THREAD_ID,
-        '--email-id',
+        '--email_id',
         EMAIL_ID,
       ],
       { from: 'user' },
@@ -105,11 +105,11 @@ describe('inboxes threads emails get command', () => {
     await expectExit1(() =>
       getInboxThreadEmailCommand.parseAsync(
         [
-          '--inbox-id',
+          '--inbox_id',
           INBOX_ID,
-          '--thread-id',
+          '--thread_id',
           THREAD_ID,
-          '--email-id',
+          '--email_id',
           EMAIL_ID,
         ],
         {

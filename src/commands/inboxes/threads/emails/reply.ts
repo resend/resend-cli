@@ -9,9 +9,9 @@ import { inboxThreadPickerConfig } from '../utils';
 
 export const replyInboxThreadEmailCommand = new Command('reply')
   .description('Reply to an email in a thread')
-  .option('--inbox-id <id>', 'Inbox UUID')
-  .option('--thread-id <id>', 'Thread UUID')
-  .option('--email-id <id>', 'Email UUID to reply to (from "threads get")')
+  .option('--inbox_id <id>', 'Inbox UUID')
+  .option('--thread_id <id>', 'Thread UUID')
+  .option('--email_id <id>', 'Email UUID to reply to (from "threads get")')
   .option('--text <text>', 'Plain text body of the reply')
   .option('--html <html>', 'HTML body of the reply')
   .option('--subject <subject>', 'Override the reply subject')
@@ -28,8 +28,8 @@ At least one of --text or --html is required.`,
         'create_error',
       ],
       examples: [
-        'resend inboxes threads emails reply --inbox-id <inboxId> --thread-id <threadId> --email-id <emailId> --text "On it — reply to follow."',
-        'resend inboxes threads emails reply --inbox-id <inboxId> --thread-id <threadId> --email-id <emailId> --html "<p>Done!</p>" --json',
+        'resend inboxes threads emails reply --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --text "On it — reply to follow."',
+        'resend inboxes threads emails reply --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --html "<p>Done!</p>" --json',
       ],
     }),
   )
@@ -47,16 +47,16 @@ At least one of --text or --html is required.`,
       );
     }
 
-    const inboxId = await pickId(opts.inboxId, inboxPickerConfig, globalOpts);
+    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
     const threadId = await pickId(
-      opts.threadId,
+      opts.thread_id,
       inboxThreadPickerConfig(inboxId),
       globalOpts,
     );
     const emailId = await requireText(
-      opts.emailId,
+      opts.email_id,
       { message: 'Email ID to reply to', placeholder: 'from "threads get"' },
-      { message: 'Missing --email-id flag.', code: 'missing_id' },
+      { message: 'Missing --email_id flag.', code: 'missing_id' },
       globalOpts,
     );
 

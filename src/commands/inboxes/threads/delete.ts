@@ -9,8 +9,8 @@ import { inboxThreadPickerConfig } from './utils';
 export const deleteInboxThreadCommand = new Command('delete')
   .alias('rm')
   .description('Delete a thread and all of its messages')
-  .option('--inbox-id <id>', 'Inbox UUID')
-  .option('--thread-id <id>', 'Thread UUID')
+  .option('--inbox_id <id>', 'Inbox UUID')
+  .option('--thread_id <id>', 'Thread UUID')
   .option(
     '--yes',
     'Skip the confirmation prompt (required in non-interactive mode)',
@@ -23,16 +23,16 @@ export const deleteInboxThreadCommand = new Command('delete')
       output: `  {"object":"inbox_thread","id":"<uuid>","deleted":true}`,
       errorCodes: ['auth_error', 'confirmation_required', 'delete_error'],
       examples: [
-        'resend inboxes threads delete --inbox-id <inboxId> --thread-id <threadId> --yes',
-        'resend inboxes threads delete --inbox-id <inboxId> --thread-id <threadId> --yes --json',
+        'resend inboxes threads delete --inbox_id <inbox_id> --thread_id <thread_id> --yes',
+        'resend inboxes threads delete --inbox_id <inbox_id> --thread_id <thread_id> --yes --json',
       ],
     }),
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const inboxId = await pickId(opts.inboxId, inboxPickerConfig, globalOpts);
+    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
     const picked = await pickItem(
-      opts.threadId,
+      opts.thread_id,
       inboxThreadPickerConfig(inboxId),
       globalOpts,
     );

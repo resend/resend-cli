@@ -61,11 +61,11 @@ describe('inboxes create command', () => {
     exitSpy = undefined;
   });
 
-  it('creates inbox with --email-address', async () => {
+  it('creates inbox with --email_address', async () => {
     spies = setupOutputSpies();
 
     await createInboxCommand.parseAsync(
-      ['--email-address', 'support@acme.dev'],
+      ['--email_address', 'support@acme.dev'],
       { from: 'user' },
     );
 
@@ -76,15 +76,17 @@ describe('inboxes create command', () => {
     expect(args.forwarding).toBeUndefined();
   });
 
-  it('passes --name and --forwarding to the SDK', async () => {
+  it('passes --name, --friendly_name, and --forwarding to the SDK', async () => {
     spies = setupOutputSpies();
 
     await createInboxCommand.parseAsync(
       [
-        '--email-address',
+        '--email_address',
         'support@acme.dev',
         '--name',
         'Support',
+        '--friendly_name',
+        'Ada from Support',
         '--forwarding',
       ],
       { from: 'user' },
@@ -92,6 +94,7 @@ describe('inboxes create command', () => {
 
     const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.name).toBe('Support');
+    expect(args.friendlyName).toBe('Ada from Support');
     expect(args.forwarding).toBe(true);
   });
 
@@ -99,7 +102,7 @@ describe('inboxes create command', () => {
     spies = setupOutputSpies();
 
     await createInboxCommand.parseAsync(
-      ['--email-address', 'support@acme.dev'],
+      ['--email_address', 'support@acme.dev'],
       { from: 'user' },
     );
 
@@ -132,7 +135,7 @@ describe('inboxes create command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      createInboxCommand.parseAsync(['--email-address', 'support@acme.dev'], {
+      createInboxCommand.parseAsync(['--email_address', 'support@acme.dev'], {
         from: 'user',
       }),
     );

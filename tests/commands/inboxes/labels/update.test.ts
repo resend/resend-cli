@@ -59,9 +59,9 @@ describe('inboxes labels update command', () => {
 
     await updateInboxLabelCommand.parseAsync(
       [
-        '--inbox-id',
+        '--inbox_id',
         INBOX_ID,
-        '--label-id',
+        '--label_id',
         LABEL_ID,
         '--name',
         'Renamed',
@@ -86,7 +86,7 @@ describe('inboxes labels update command', () => {
 
     await expectExit1(() =>
       updateInboxLabelCommand.parseAsync(
-        ['--inbox-id', INBOX_ID, '--label-id', LABEL_ID],
+        ['--inbox_id', INBOX_ID, '--label_id', LABEL_ID],
         {
           from: 'user',
         },
@@ -108,7 +108,7 @@ describe('inboxes labels update command', () => {
 
     await expectExit1(() =>
       updateInboxLabelCommand.parseAsync(
-        ['--inbox-id', INBOX_ID, '--label-id', LABEL_ID, '--name', 'Renamed'],
+        ['--inbox_id', INBOX_ID, '--label_id', LABEL_ID, '--name', 'Renamed'],
         { from: 'user' },
       ),
     );

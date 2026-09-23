@@ -8,24 +8,24 @@ import { inboxDraftPickerConfig } from './utils';
 
 export const getInboxDraftCommand = new Command('get')
   .description('Retrieve a draft by ID')
-  .option('--inbox-id <id>', 'Inbox UUID')
-  .option('--draft-id <id>', 'Draft UUID')
+  .option('--inbox_id <id>', 'Inbox UUID')
+  .option('--draft_id <id>', 'Draft UUID')
   .addHelpText(
     'after',
     buildHelpText({
       output: `  {"object":"inbox_draft","id":"<uuid>","type":"standalone|reply","to":["<address>"]|null,"cc":[],"bcc":[],"subject":"<subject>|null","html":"<html>|null","text":"<text>|null","thread_id":"<uuid>|null","reply_to_email_id":"<uuid>|null","email_id":"<uuid>|null","created_at":"<date>","updated_at":"<date>"}`,
       errorCodes: ['auth_error', 'fetch_error'],
       examples: [
-        'resend inboxes drafts get --inbox-id <inboxId> --draft-id <draftId>',
-        'resend inboxes drafts get --inbox-id <inboxId> --draft-id <draftId> --json',
+        'resend inboxes drafts get --inbox_id <inbox_id> --draft_id <draft_id>',
+        'resend inboxes drafts get --inbox_id <inbox_id> --draft_id <draft_id> --json',
       ],
     }),
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const inboxId = await pickId(opts.inboxId, inboxPickerConfig, globalOpts);
+    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
     const draftId = await pickId(
-      opts.draftId,
+      opts.draft_id,
       inboxDraftPickerConfig(inboxId),
       globalOpts,
     );

@@ -66,9 +66,9 @@ describe('inboxes threads update command', () => {
 
     await updateInboxThreadCommand.parseAsync(
       [
-        '--inbox-id',
+        '--inbox_id',
         INBOX_ID,
-        '--thread-id',
+        '--thread_id',
         THREAD_ID,
         '--read',
         '--folder',
@@ -85,17 +85,17 @@ describe('inboxes threads update command', () => {
     expect(args.folder).toBe('archive');
   });
 
-  it('maps --unread to read: false and passes --label-id', async () => {
+  it('maps --unread to read: false and passes --label_id', async () => {
     setupOutputSpies();
 
     await updateInboxThreadCommand.parseAsync(
       [
-        '--inbox-id',
+        '--inbox_id',
         INBOX_ID,
-        '--thread-id',
+        '--thread_id',
         THREAD_ID,
         '--unread',
-        '--label-id',
+        '--label_id',
         'label-1',
       ],
       { from: 'user' },
@@ -114,9 +114,9 @@ describe('inboxes threads update command', () => {
     await expectExit1(() =>
       updateInboxThreadCommand.parseAsync(
         [
-          '--inbox-id',
+          '--inbox_id',
           INBOX_ID,
-          '--thread-id',
+          '--thread_id',
           THREAD_ID,
           '--read',
           '--unread',
@@ -137,7 +137,7 @@ describe('inboxes threads update command', () => {
 
     await expectExit1(() =>
       updateInboxThreadCommand.parseAsync(
-        ['--inbox-id', INBOX_ID, '--thread-id', THREAD_ID],
+        ['--inbox_id', INBOX_ID, '--thread_id', THREAD_ID],
         {
           from: 'user',
         },
@@ -159,7 +159,7 @@ describe('inboxes threads update command', () => {
 
     await expectExit1(() =>
       updateInboxThreadCommand.parseAsync(
-        ['--inbox-id', INBOX_ID, '--thread-id', THREAD_ID, '--read'],
+        ['--inbox_id', INBOX_ID, '--thread_id', THREAD_ID, '--read'],
         {
           from: 'user',
         },

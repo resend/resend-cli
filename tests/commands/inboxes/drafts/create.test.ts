@@ -72,7 +72,7 @@ describe('inboxes drafts create command', () => {
 
     await createInboxDraftCommand.parseAsync(
       [
-        '--inbox-id',
+        '--inbox_id',
         INBOX_ID,
         '--to',
         'user@example.com',
@@ -98,13 +98,13 @@ describe('inboxes drafts create command', () => {
 
     await createInboxDraftCommand.parseAsync(
       [
-        '--inbox-id',
+        '--inbox_id',
         INBOX_ID,
         '--text',
         'Reply body',
-        '--thread-id',
+        '--thread_id',
         THREAD_ID,
-        '--reply-to-email-id',
+        '--reply_to_email_id',
         EMAIL_ID,
       ],
       { from: 'user' },
@@ -115,14 +115,14 @@ describe('inboxes drafts create command', () => {
     expect(args.replyToEmailId).toBe(EMAIL_ID);
   });
 
-  it('errors with invalid_options when --thread-id lacks --reply-to-email-id', async () => {
+  it('errors with invalid_options when --thread_id lacks --reply_to_email_id', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
       createInboxDraftCommand.parseAsync(
-        ['--inbox-id', INBOX_ID, '--text', 'x', '--thread-id', THREAD_ID],
+        ['--inbox_id', INBOX_ID, '--text', 'x', '--thread_id', THREAD_ID],
         { from: 'user' },
       ),
     );
@@ -138,7 +138,7 @@ describe('inboxes drafts create command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      createInboxDraftCommand.parseAsync(['--inbox-id', INBOX_ID], {
+      createInboxDraftCommand.parseAsync(['--inbox_id', INBOX_ID], {
         from: 'user',
       }),
     );
@@ -158,7 +158,7 @@ describe('inboxes drafts create command', () => {
 
     await expectExit1(() =>
       createInboxDraftCommand.parseAsync(
-        ['--inbox-id', INBOX_ID, '--text', 'x'],
+        ['--inbox_id', INBOX_ID, '--text', 'x'],
         {
           from: 'user',
         },

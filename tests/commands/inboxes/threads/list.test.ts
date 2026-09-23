@@ -79,7 +79,7 @@ describe('inboxes threads list command', () => {
   it('lists threads for an inbox', async () => {
     spies = setupOutputSpies();
 
-    await listInboxThreadsCommand.parseAsync(['--inbox-id', INBOX_ID], {
+    await listInboxThreadsCommand.parseAsync(['--inbox_id', INBOX_ID], {
       from: 'user',
     });
 
@@ -94,7 +94,7 @@ describe('inboxes threads list command', () => {
 
     await listInboxThreadsCommand.parseAsync(
       [
-        '--inbox-id',
+        '--inbox_id',
         INBOX_ID,
         '--folder',
         'archive',
@@ -123,7 +123,7 @@ describe('inboxes threads list command', () => {
   it('outputs JSON list when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    await listInboxThreadsCommand.parseAsync(['--inbox-id', INBOX_ID], {
+    await listInboxThreadsCommand.parseAsync(['--inbox_id', INBOX_ID], {
       from: 'user',
     });
 
@@ -156,7 +156,7 @@ describe('inboxes threads list command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      listInboxThreadsCommand.parseAsync(['--inbox-id', INBOX_ID], {
+      listInboxThreadsCommand.parseAsync(['--inbox_id', INBOX_ID], {
         from: 'user',
       }),
     );

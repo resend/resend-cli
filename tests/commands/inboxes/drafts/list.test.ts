@@ -74,7 +74,7 @@ describe('inboxes drafts list command', () => {
     spies = setupOutputSpies();
 
     await listInboxDraftsCommand.parseAsync(
-      ['--inbox-id', INBOX_ID, '--cursor', 'abc123'],
+      ['--inbox_id', INBOX_ID, '--cursor', 'abc123'],
       {
         from: 'user',
       },
@@ -98,7 +98,7 @@ describe('inboxes drafts list command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      listInboxDraftsCommand.parseAsync(['--inbox-id', INBOX_ID], {
+      listInboxDraftsCommand.parseAsync(['--inbox_id', INBOX_ID], {
         from: 'user',
       }),
     );

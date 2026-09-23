@@ -70,9 +70,9 @@ describe('inboxes drafts update command', () => {
 
     await updateInboxDraftCommand.parseAsync(
       [
-        '--inbox-id',
+        '--inbox_id',
         INBOX_ID,
-        '--draft-id',
+        '--draft_id',
         DRAFT_ID,
         '--subject',
         'Updated',
@@ -97,7 +97,7 @@ describe('inboxes drafts update command', () => {
 
     await expectExit1(() =>
       updateInboxDraftCommand.parseAsync(
-        ['--inbox-id', INBOX_ID, '--draft-id', DRAFT_ID],
+        ['--inbox_id', INBOX_ID, '--draft_id', DRAFT_ID],
         {
           from: 'user',
         },
@@ -119,7 +119,7 @@ describe('inboxes drafts update command', () => {
 
     await expectExit1(() =>
       updateInboxDraftCommand.parseAsync(
-        ['--inbox-id', INBOX_ID, '--draft-id', DRAFT_ID, '--text', 'x'],
+        ['--inbox_id', INBOX_ID, '--draft_id', DRAFT_ID, '--text', 'x'],
         {
           from: 'user',
         },

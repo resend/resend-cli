@@ -10,8 +10,8 @@ import { inboxLabelPickerConfig } from './utils';
 
 export const updateInboxLabelCommand = new Command('update')
   .description("Update a label's name or color")
-  .option('--inbox-id <id>', 'Inbox UUID')
-  .option('--label-id <id>', 'Label UUID')
+  .option('--inbox_id <id>', 'Inbox UUID')
+  .option('--label_id <id>', 'Label UUID')
   .option('--name <name>', 'New label name (max 64 characters)')
   .addOption(
     new Option('--color <color>', 'New label color').choices(
@@ -25,8 +25,8 @@ export const updateInboxLabelCommand = new Command('update')
       output: `  {"object":"inbox_label","id":"<uuid>"}`,
       errorCodes: ['auth_error', 'no_changes', 'update_error'],
       examples: [
-        'resend inboxes labels update --inbox-id <inboxId> --label-id <labelId> --name "Billing"',
-        'resend inboxes labels update --inbox-id <inboxId> --label-id <labelId> --color teal --json',
+        'resend inboxes labels update --inbox_id <inbox_id> --label_id <label_id> --name "Billing"',
+        'resend inboxes labels update --inbox_id <inbox_id> --label_id <label_id> --color teal --json',
       ],
     }),
   )
@@ -43,9 +43,9 @@ export const updateInboxLabelCommand = new Command('update')
       );
     }
 
-    const inboxId = await pickId(opts.inboxId, inboxPickerConfig, globalOpts);
+    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
     const labelId = await pickId(
-      opts.labelId,
+      opts.label_id,
       inboxLabelPickerConfig(inboxId),
       globalOpts,
     );

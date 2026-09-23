@@ -63,6 +63,20 @@ describe('inboxes update command', () => {
     expect(mockUpdate.mock.calls[0][1]).toEqual({ name: 'Support' });
   });
 
+  it('updates the friendly name with --friendly_name', async () => {
+    spies = setupOutputSpies();
+
+    await updateInboxCommand.parseAsync(
+      [INBOX_ID, '--friendly_name', 'Ada from Support'],
+      { from: 'user' },
+    );
+
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
+    expect(mockUpdate.mock.calls[0][1]).toEqual({
+      friendlyName: 'Ada from Support',
+    });
+  });
+
   it('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
@@ -75,7 +89,7 @@ describe('inboxes update command', () => {
     expect(parsed.id).toBe(INBOX_ID);
   });
 
-  it('errors with no_changes when --name is absent', async () => {
+  it('errors with no_changes when no update option is passed', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();

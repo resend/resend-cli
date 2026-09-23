@@ -63,7 +63,7 @@ describe('inboxes drafts send command', () => {
     spies = setupOutputSpies();
 
     await sendInboxDraftCommand.parseAsync(
-      ['--inbox-id', INBOX_ID, '--draft-id', DRAFT_ID],
+      ['--inbox_id', INBOX_ID, '--draft_id', DRAFT_ID],
       {
         from: 'user',
       },
@@ -89,7 +89,7 @@ describe('inboxes drafts send command', () => {
 
     await expectExit1(() =>
       sendInboxDraftCommand.parseAsync(
-        ['--inbox-id', INBOX_ID, '--draft-id', DRAFT_ID],
+        ['--inbox_id', INBOX_ID, '--draft_id', DRAFT_ID],
         {
           from: 'user',
         },

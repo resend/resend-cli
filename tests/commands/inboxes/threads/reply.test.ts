@@ -75,11 +75,11 @@ describe('inboxes threads emails reply command', () => {
 
     await replyInboxThreadEmailCommand.parseAsync(
       [
-        '--inbox-id',
+        '--inbox_id',
         INBOX_ID,
-        '--thread-id',
+        '--thread_id',
         THREAD_ID,
-        '--email-id',
+        '--email_id',
         EMAIL_ID,
         '--text',
         'You were only charged once.',
@@ -101,11 +101,11 @@ describe('inboxes threads emails reply command', () => {
 
     await replyInboxThreadEmailCommand.parseAsync(
       [
-        '--inbox-id',
+        '--inbox_id',
         INBOX_ID,
-        '--thread-id',
+        '--thread_id',
         THREAD_ID,
-        '--email-id',
+        '--email_id',
         EMAIL_ID,
         '--html',
         '<p>Done</p>',
@@ -125,11 +125,11 @@ describe('inboxes threads emails reply command', () => {
 
     await replyInboxThreadEmailCommand.parseAsync(
       [
-        '--inbox-id',
+        '--inbox_id',
         INBOX_ID,
-        '--thread-id',
+        '--thread_id',
         THREAD_ID,
-        '--email-id',
+        '--email_id',
         EMAIL_ID,
         '--text',
         'ok',
@@ -151,11 +151,11 @@ describe('inboxes threads emails reply command', () => {
     await expectExit1(() =>
       replyInboxThreadEmailCommand.parseAsync(
         [
-          '--inbox-id',
+          '--inbox_id',
           INBOX_ID,
-          '--thread-id',
+          '--thread_id',
           THREAD_ID,
-          '--email-id',
+          '--email_id',
           EMAIL_ID,
         ],
         {
@@ -180,11 +180,11 @@ describe('inboxes threads emails reply command', () => {
     await expectExit1(() =>
       replyInboxThreadEmailCommand.parseAsync(
         [
-          '--inbox-id',
+          '--inbox_id',
           INBOX_ID,
-          '--thread-id',
+          '--thread_id',
           THREAD_ID,
-          '--email-id',
+          '--email_id',
           EMAIL_ID,
           '--text',
           'ok',

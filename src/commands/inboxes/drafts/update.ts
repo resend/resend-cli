@@ -15,8 +15,8 @@ const collectRecipients = (value: string, previous: string[]) => [
 
 export const updateInboxDraftCommand = new Command('update')
   .description("Update a draft's recipients, subject, or body")
-  .option('--inbox-id <id>', 'Inbox UUID')
-  .option('--draft-id <id>', 'Draft UUID')
+  .option('--inbox_id <id>', 'Inbox UUID')
+  .option('--draft_id <id>', 'Draft UUID')
   .option(
     '--to <address>',
     'Replace recipients (repeatable)',
@@ -46,8 +46,8 @@ export const updateInboxDraftCommand = new Command('update')
       output: `  {"object":"inbox_draft","id":"<uuid>","type":"standalone|reply","to":["<address>"]|null,"cc":[],"bcc":[],"subject":"<subject>|null","html":"<html>|null","text":"<text>|null","thread_id":"<uuid>|null","reply_to_email_id":"<uuid>|null","email_id":"<uuid>|null","created_at":"<date>","updated_at":"<date>"}`,
       errorCodes: ['auth_error', 'no_changes', 'update_error'],
       examples: [
-        'resend inboxes drafts update --inbox-id <inboxId> --draft-id <draftId> --subject "Updated subject"',
-        'resend inboxes drafts update --inbox-id <inboxId> --draft-id <draftId> --text "New body" --json',
+        'resend inboxes drafts update --inbox_id <inbox_id> --draft_id <draft_id> --subject "Updated subject"',
+        'resend inboxes drafts update --inbox_id <inbox_id> --draft_id <draft_id> --text "New body" --json',
       ],
     }),
   )
@@ -72,9 +72,9 @@ export const updateInboxDraftCommand = new Command('update')
       );
     }
 
-    const inboxId = await pickId(opts.inboxId, inboxPickerConfig, globalOpts);
+    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
     const draftId = await pickId(
-      opts.draftId,
+      opts.draft_id,
       inboxDraftPickerConfig(inboxId),
       globalOpts,
     );

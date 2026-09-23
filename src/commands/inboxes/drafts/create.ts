@@ -14,7 +14,7 @@ const collectRecipients = (value: string, previous: string[]) => [
 
 export const createInboxDraftCommand = new Command('create')
   .description('Create a draft in an inbox')
-  .option('--inbox-id <id>', 'Inbox UUID')
+  .option('--inbox_id <id>', 'Inbox UUID')
   .option(
     '--to <address>',
     'Recipient address (repeat the flag for multiple recipients)',
@@ -37,18 +37,18 @@ export const createInboxDraftCommand = new Command('create')
   .option('--text <text>', 'Plain text body')
   .option('--html <html>', 'HTML body')
   .option(
-    '--thread-id <threadId>',
-    'Thread to reply to (requires --reply-to-email-id)',
+    '--thread_id <thread_id>',
+    'Thread to reply to (requires --reply_to_email_id)',
   )
   .option(
-    '--reply-to-email-id <emailId>',
-    'Email the draft replies to (requires --thread-id)',
+    '--reply_to_email_id <email_id>',
+    'Email the draft replies to (requires --thread_id)',
   )
   .addHelpText(
     'after',
     buildHelpText({
-      context: `Creates a standalone draft, or a reply draft when --thread-id and
---reply-to-email-id are passed together. At least one content field
+      context: `Creates a standalone draft, or a reply draft when --thread_id and
+--reply_to_email_id are passed together. At least one content field
 (--to, --cc, --bcc, --subject, --text, --html) is required.
 
 Send the draft later with "resend inboxes drafts send".`,
@@ -60,19 +60,19 @@ Send the draft later with "resend inboxes drafts send".`,
         'create_error',
       ],
       examples: [
-        'resend inboxes drafts create --inbox-id <inboxId> --to user@example.com --subject "Hello" --text "Draft body"',
-        'resend inboxes drafts create --inbox-id <inboxId> --thread-id <threadId> --reply-to-email-id <emailId> --text "Reply draft" --json',
+        'resend inboxes drafts create --inbox_id <inbox_id> --to user@example.com --subject "Hello" --text "Draft body"',
+        'resend inboxes drafts create --inbox_id <inbox_id> --thread_id <thread_id> --reply_to_email_id <email_id> --text "Reply draft" --json',
       ],
     }),
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
-    if (Boolean(opts.threadId) !== Boolean(opts.replyToEmailId)) {
+    if (Boolean(opts.thread_id) !== Boolean(opts.reply_to_email_id)) {
       outputError(
         {
           message:
-            '--thread-id and --reply-to-email-id must be provided together.',
+            '--thread_id and --reply_to_email_id must be provided together.',
           code: 'invalid_options',
         },
         { json: globalOpts.json },
@@ -97,7 +97,7 @@ Send the draft later with "resend inboxes drafts send".`,
       );
     }
 
-    const inboxId = await pickId(opts.inboxId, inboxPickerConfig, globalOpts);
+    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
 
     // The SDK requires at least one content field and pairs threadId with
     // replyToEmailId at the type level; both are guaranteed by the guards
@@ -110,9 +110,9 @@ Send the draft later with "resend inboxes drafts send".`,
       ...(opts.subject !== undefined && { subject: opts.subject }),
       ...(opts.text !== undefined && { text: opts.text }),
       ...(opts.html !== undefined && { html: opts.html }),
-      ...(opts.threadId && {
-        threadId: opts.threadId,
-        replyToEmailId: opts.replyToEmailId,
+      ...(opts.thread_id && {
+        threadId: opts.thread_id,
+        replyToEmailId: opts.reply_to_email_id,
       }),
     } as CreateInboxDraftOptions;
 

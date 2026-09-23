@@ -55,7 +55,7 @@ describe('inboxes drafts delete command', () => {
     spies = setupOutputSpies();
 
     await deleteInboxDraftCommand.parseAsync(
-      ['--inbox-id', INBOX_ID, '--draft-id', DRAFT_ID, '--yes'],
+      ['--inbox_id', INBOX_ID, '--draft_id', DRAFT_ID, '--yes'],
       {
         from: 'user',
       },
@@ -78,7 +78,7 @@ describe('inboxes drafts delete command', () => {
 
     await expectExit1(() =>
       deleteInboxDraftCommand.parseAsync(
-        ['--inbox-id', INBOX_ID, '--draft-id', DRAFT_ID],
+        ['--inbox_id', INBOX_ID, '--draft_id', DRAFT_ID],
         {
           from: 'user',
         },
