@@ -29,27 +29,24 @@ const mockGet = vi.fn(async () => ({
     folder: 'inbox' as const,
     labels: [],
     read: false,
-    messages: {
-      has_more: false,
-      data: [
-        {
-          id: EMAIL_ID,
-          direction: 'inbound' as const,
-          from: 'Customer <customer@example.com>',
-          to: ['support@acme.dev'],
-          cc: [],
-          bcc: [],
-          reply_to: [],
-          subject: 'Billing question',
-          message_id: null,
-          html: null,
-          text: 'Was I charged twice?',
-          attachments: [],
-          read: false,
-          received_at: '2026-09-15T00:00:00.000Z',
-        },
-      ],
-    },
+    messages: [
+      {
+        id: EMAIL_ID,
+        direction: 'inbound' as const,
+        from: 'Customer <customer@example.com>',
+        to: ['support@acme.dev'],
+        cc: [],
+        bcc: [],
+        reply_to: [],
+        subject: 'Billing question',
+        message_id: null,
+        html: null,
+        text: 'Was I charged twice?',
+        attachments: [],
+        read: false,
+        received_at: '2026-09-15T00:00:00.000Z',
+      },
+    ],
   },
   error: null,
 }));
@@ -98,7 +95,7 @@ describe('inboxes threads get command', () => {
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
     expect(parsed.id).toBe(THREAD_ID);
-    expect(parsed.messages.data[0].text).toBe('Was I charged twice?');
+    expect(parsed.messages[0].text).toBe('Was I charged twice?');
   });
 
   it('errors with missing_id when thread ID absent in non-interactive mode', async () => {

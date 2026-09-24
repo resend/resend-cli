@@ -24,7 +24,6 @@ const mockList = vi.fn(async () => ({
   data: {
     object: 'list' as const,
     has_more: false,
-    next_cursor: null,
     data: [
       {
         id: THREAD_ID,
@@ -87,9 +86,10 @@ describe('inboxes threads list command', () => {
     const args = mockList.mock.calls[0][0] as Record<string, unknown>;
     expect(args.inboxId).toBe(INBOX_ID);
     expect(args.folder).toBeUndefined();
+    expect(args.limit).toBe(10);
   });
 
-  it('passes folder, query, from, labels, and cursor filters', async () => {
+  it('passes folder, query, from, labels, and pagination options', async () => {
     spies = setupOutputSpies();
 
     await listInboxThreadsCommand.parseAsync(
@@ -106,8 +106,10 @@ describe('inboxes threads list command', () => {
         'label-1',
         '--label',
         'label-2',
-        '--cursor',
-        'abc123',
+        '--limit',
+        '25',
+        '--after',
+        THREAD_ID,
       ],
       { from: 'user' },
     );
@@ -117,7 +119,8 @@ describe('inboxes threads list command', () => {
     expect(args.query).toBe('billing');
     expect(args.from).toBe('customer@example.com');
     expect(args.label).toEqual(['label-1', 'label-2']);
-    expect(args.cursor).toBe('abc123');
+    expect(args.limit).toBe(25);
+    expect(args.after).toBe(THREAD_ID);
   });
 
   it('outputs JSON list when non-interactive', async () => {

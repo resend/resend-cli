@@ -15,7 +15,7 @@ export const getInboxThreadCommand = new Command('get')
     buildHelpText({
       context:
         'Returns the thread summary and every message in the thread, including html and text bodies.',
-      output: `  {"object":"inbox_thread","id":"<uuid>","subject":"<subject>|null","folder":"inbox|archive|spam|sent|trash","labels":[],"read":true,"messages":{"has_more":false,"data":[{"id":"<uuid>","direction":"inbound|outbound","from":"<sender>","to":[],"subject":"<subject>|null","html":"<html>|null","text":"<text>|null","attachments":[],"read":true,"received_at":"<date>"}]}}`,
+      output: `  {"object":"inbox_thread","id":"<uuid>","subject":"<subject>|null","folder":"inbox|archive|spam|sent|trash","labels":[],"read":true,"messages":[{"id":"<uuid>","direction":"inbound|outbound","from":"<sender>","to":[],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>|null","message_id":"<message-id>|null","html":"<html>|null","text":"<text>|null","attachments":[],"read":true,"received_at":"<date>"}]}`,
       errorCodes: ['auth_error', 'fetch_error'],
       examples: [
         'resend inboxes threads get --inbox_id 78261eea-8f8b-4381-83c6-79fa7120f1cf --thread_id 3deaccfa-f572-443c-be6f-92b74f9d5c48',
@@ -43,7 +43,7 @@ export const getInboxThreadCommand = new Command('get')
             console.log(`Labels: ${data.labels.map((l) => l.name).join(', ')}`);
           }
           console.log(`Read: ${data.read ? 'yes' : 'no'}`);
-          for (const message of data.messages.data) {
+          for (const message of data.messages) {
             console.log('');
             console.log(
               `[${message.direction}] ${message.from} · ${message.received_at}`,

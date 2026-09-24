@@ -24,7 +24,6 @@ const mockList = vi.fn(async () => ({
   data: {
     object: 'list' as const,
     has_more: false,
-    next_cursor: null,
     data: [
       {
         id: DRAFT_ID,
@@ -70,11 +69,11 @@ describe('inboxes drafts list command', () => {
     exitSpy = undefined;
   });
 
-  it('lists drafts and passes --cursor', async () => {
+  it('lists drafts and passes pagination options', async () => {
     spies = setupOutputSpies();
 
     await listInboxDraftsCommand.parseAsync(
-      ['--inbox_id', INBOX_ID, '--cursor', 'abc123'],
+      ['--inbox_id', INBOX_ID, '--limit', '25', '--after', DRAFT_ID],
       {
         from: 'user',
       },
@@ -82,7 +81,8 @@ describe('inboxes drafts list command', () => {
 
     expect(mockList).toHaveBeenCalledWith({
       inboxId: INBOX_ID,
-      cursor: 'abc123',
+      limit: 25,
+      after: DRAFT_ID,
     });
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);

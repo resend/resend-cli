@@ -2,19 +2,14 @@ import type { InboxDraftListItem } from 'resend';
 import type { PickerConfig } from '../../../lib/prompts';
 import { renderTable } from '../../../lib/table';
 
-// Drafts paginate with an opaque cursor rather than item IDs, so the picker
-// only offers the first page.
 export function inboxDraftPickerConfig(
   inboxId: string,
 ): PickerConfig<InboxDraftListItem> {
   return {
     resource: 'draft',
     resourcePlural: 'drafts',
-    fetchItems: (resend) =>
-      resend.inboxes.drafts.list({ inboxId }).then((r) => ({
-        ...r,
-        data: r.data ? { data: r.data.data, has_more: false } : null,
-      })),
+    fetchItems: (resend, { limit, after }) =>
+      resend.inboxes.drafts.list({ inboxId, limit, ...(after && { after }) }),
     display: (d) => ({
       label: d.subject ?? d.to?.join(', ') ?? '(no subject)',
       hint: d.id,

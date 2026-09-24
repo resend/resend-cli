@@ -73,7 +73,7 @@ The email address cannot be changed after creation.
 ## inboxes threads list
 
 List threads in an inbox (default subcommand of `resend inboxes threads`).
-Pages are fixed at 50 threads, newest activity first — there is no `--limit`.
+Threads are ordered by newest activity first.
 
 **Flags:** `--inbox_id <id>` — required in non-interactive mode
 
@@ -83,11 +83,13 @@ Pages are fixed at 50 threads, newest activity first — there is no `--limit`.
 | `--query <text>` | string | — | Search subject, sender, and label names |
 | `--from <sender>` | string | — | Filter by sender address or name |
 | `--label <label_id>` | string | — | Filter by label **UUID** (not name); repeat for multiple |
-| `--cursor <cursor>` | string | — | `next_cursor` from a previous response |
+| `--limit <n>` | number | 10 | Max results, 1-100 |
+| `--after <cursor>` | string | — | Forward pagination cursor (a thread ID) |
+| `--before <cursor>` | string | — | Backward pagination cursor (a thread ID) |
 
 **Alias:** `ls`
 
-**Output:** `{"object":"list","has_more":false,"next_cursor":"<cursor>"|null,"data":[{"id":"<uuid>","subject":"<subject>"|null,"from":"<sender>"|null,"to":[],"cc":[],"bcc":[],"labels":[],"message_count":1,"has_attachment":false,"has_draft":false,"read":false,"received_at":"<date>"}]}`
+**Output:** `{"object":"list","has_more":false,"data":[{"id":"<uuid>","subject":"<subject>"|null,"from":"<sender>"|null,"to":[],"cc":[],"bcc":[],"labels":[],"message_count":1,"has_attachment":false,"has_draft":false,"read":false,"received_at":"<date>"}]}`
 
 ---
 
@@ -98,7 +100,7 @@ bodies. Use the message `id` values as the email ID for replies.
 
 **Flags:** `--inbox_id <id> --thread_id <id>` — required in non-interactive mode
 
-**Output:** `{"object":"inbox_thread","id":"<uuid>","subject":"<subject>"|null,"folder":"inbox","labels":[],"read":true,"messages":{"has_more":false,"data":[{"id":"<uuid>","direction":"inbound|outbound","from":"<sender>","to":[],"subject":"<subject>"|null,"html":"<html>"|null,"text":"<text>"|null,"attachments":[],"read":true,"received_at":"<date>"}]}}`
+**Output:** `{"object":"inbox_thread","id":"<uuid>","subject":"<subject>"|null,"folder":"inbox","labels":[],"read":true,"messages":[{"id":"<uuid>","direction":"inbound|outbound","from":"<sender>","to":[],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>"|null,"message_id":"<message-id>"|null,"html":"<html>"|null,"text":"<text>"|null,"attachments":[],"read":true,"received_at":"<date>"}]}`
 
 ---
 
@@ -142,7 +144,7 @@ Retrieve a single email from a thread.
 
 **Flags:** `--inbox_id <id> --thread_id <id> --email_id <id>` — required in non-interactive mode
 
-**Output:** `{"id":"<uuid>","direction":"inbound|outbound","from":"<sender>","to":[],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>"|null,"html":"<html>"|null,"text":"<text>"|null,"attachments":[{"id":"<id>","filename":"<name>"|null,"size":123}],"read":true,"received_at":"<date>"}`
+**Output:** `{"id":"<uuid>","direction":"inbound|outbound","from":"<sender>","to":[],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>"|null,"message_id":"<message-id>"|null,"html":"<html>"|null,"text":"<text>"|null,"attachments":[{"id":"<id>","filename":"<name>"|null,"size":123}],"read":true,"received_at":"<date>"}`
 
 ---
 
@@ -191,7 +193,7 @@ List all labels in an inbox (not paginated; default subcommand of
 
 **Alias:** `ls`
 
-**Output:** `{"object":"list","has_more":false,"data":[{"id":"<uuid>","name":"<name>","color":"<color>","created_at":"<date>"}]}`
+**Output:** `{"object":"list","data":[{"id":"<uuid>","name":"<name>","color":"<color>","created_at":"<date>"}]}`
 
 ---
 
@@ -244,17 +246,18 @@ Delete a label. It is removed from every thread that has it.
 ## inboxes drafts list
 
 List drafts in an inbox (default subcommand of `resend inboxes drafts`).
-Opaque cursor pagination like threads — no `--limit`.
 
 **Flags:** `--inbox_id <id>` — required in non-interactive mode
 
-| Flag | Type | Description |
-|------|------|-------------|
-| `--cursor <cursor>` | string | `next_cursor` from a previous response |
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--limit <n>` | number | 10 | Max results, 1-100 |
+| `--after <cursor>` | string | — | Forward pagination cursor (a draft ID) |
+| `--before <cursor>` | string | — | Backward pagination cursor (a draft ID) |
 
 **Alias:** `ls`
 
-**Output:** `{"object":"list","has_more":false,"next_cursor":"<cursor>"|null,"data":[{"id":"<uuid>","type":"standalone|reply","to":["<address>"]|null,"cc":[],"bcc":[],"subject":"<subject>"|null,"snippet":"<text>"|null,"thread_id":"<uuid>"|null,"reply_to_email_id":"<uuid>"|null,"updated_at":"<date>"}]}`
+**Output:** `{"object":"list","has_more":false,"data":[{"id":"<uuid>","type":"standalone|reply","to":["<address>"]|null,"cc":[],"bcc":[],"subject":"<subject>"|null,"snippet":"<text>"|null,"thread_id":"<uuid>"|null,"reply_to_email_id":"<uuid>"|null,"updated_at":"<date>"}]}`
 
 ---
 

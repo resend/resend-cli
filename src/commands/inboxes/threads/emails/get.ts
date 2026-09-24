@@ -14,7 +14,7 @@ export const getInboxThreadEmailCommand = new Command('get')
   .addHelpText(
     'after',
     buildHelpText({
-      output: `  {"id":"<uuid>","direction":"inbound|outbound","from":"<sender>","to":[],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>|null","html":"<html>|null","text":"<text>|null","attachments":[{"id":"<id>","filename":"<name>|null","size":123}],"read":true,"received_at":"<date>"}`,
+      output: `  {"id":"<uuid>","direction":"inbound|outbound","from":"<sender>","to":[],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>|null","message_id":"<message-id>|null","html":"<html>|null","text":"<text>|null","attachments":[{"id":"<id>","filename":"<name>|null","size":123}],"read":true,"received_at":"<date>"}`,
       errorCodes: ['auth_error', 'missing_id', 'fetch_error'],
       examples: [
         'resend inboxes threads emails get --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id>',
