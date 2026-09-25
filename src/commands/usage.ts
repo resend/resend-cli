@@ -7,12 +7,8 @@ import { renderTable } from '../lib/table';
 
 const numberFormat = new Intl.NumberFormat('en-US');
 
-function formatNumber(value: number): string {
-  return numberFormat.format(value);
-}
-
 function formatLimit(limit: number | null): string {
-  return limit === null ? '—' : formatNumber(limit);
+  return limit === null ? '—' : numberFormat.format(limit);
 }
 
 function renderUsageTable(data: GetUsageResponseSuccess): string {
@@ -27,23 +23,23 @@ function renderUsageTable(data: GetUsageResponseSuccess): string {
   const rows = [
     [
       'emails_daily',
-      formatNumber(data.emails.daily.used),
+      numberFormat.format(data.emails.daily.used),
       formatLimit(data.emails.daily.limit),
-      formatNumber(data.emails.daily.sent),
-      formatNumber(data.emails.daily.received),
+      numberFormat.format(data.emails.daily.sent),
+      numberFormat.format(data.emails.daily.received),
       data.emails.daily.resets_at,
     ],
     [
       'emails_monthly',
-      formatNumber(data.emails.monthly.used),
+      numberFormat.format(data.emails.monthly.used),
       formatLimit(data.emails.monthly.limit),
-      formatNumber(data.emails.monthly.sent),
-      formatNumber(data.emails.monthly.received),
+      numberFormat.format(data.emails.monthly.sent),
+      numberFormat.format(data.emails.monthly.received),
       data.emails.monthly.resets_at,
     ],
     [
       'contacts',
-      formatNumber(data.contacts.used),
+      numberFormat.format(data.contacts.used),
       formatLimit(data.contacts.limit),
       '',
       '',
@@ -51,7 +47,7 @@ function renderUsageTable(data: GetUsageResponseSuccess): string {
     ],
     [
       'segments',
-      formatNumber(data.segments.used),
+      numberFormat.format(data.segments.used),
       formatLimit(data.segments.limit),
       '',
       '',
@@ -59,7 +55,7 @@ function renderUsageTable(data: GetUsageResponseSuccess): string {
     ],
     [
       'broadcasts',
-      formatNumber(data.broadcasts.used),
+      numberFormat.format(data.broadcasts.used),
       formatLimit(data.broadcasts.limit),
       '',
       '',
@@ -67,7 +63,7 @@ function renderUsageTable(data: GetUsageResponseSuccess): string {
     ],
     [
       'ai_credits',
-      formatNumber(data.ai_credits.used),
+      numberFormat.format(data.ai_credits.used),
       formatLimit(data.ai_credits.limit),
       '',
       '',
@@ -75,7 +71,7 @@ function renderUsageTable(data: GetUsageResponseSuccess): string {
     ],
     [
       'automation_runs',
-      formatNumber(data.automation_runs.used),
+      numberFormat.format(data.automation_runs.used),
       formatLimit(data.automation_runs.limit),
       '',
       '',
@@ -83,7 +79,7 @@ function renderUsageTable(data: GetUsageResponseSuccess): string {
     ],
     [
       'domains',
-      formatNumber(data.domains.used),
+      numberFormat.format(data.domains.used),
       formatLimit(data.domains.limit),
       '',
       '',
@@ -91,8 +87,8 @@ function renderUsageTable(data: GetUsageResponseSuccess): string {
     ],
     [
       'rate_limit',
-      '',
-      `${formatNumber(data.rate_limit.limit)} / ${data.rate_limit.duration}`,
+      '—',
+      `${numberFormat.format(data.rate_limit.limit)} requests / ${data.rate_limit.duration}`,
       '',
       '',
       '',
