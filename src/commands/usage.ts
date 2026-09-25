@@ -71,7 +71,7 @@ function renderUsageTable(data: GetUsageResponseSuccess): string {
       formatLimit(data.ai_credits.limit),
       '',
       '',
-      '',
+      data.ai_credits.next_increase_at ?? '',
     ],
     [
       'automation_runs',
@@ -89,18 +89,16 @@ function renderUsageTable(data: GetUsageResponseSuccess): string {
       '',
       '',
     ],
+    [
+      'rate_limit',
+      '',
+      `${formatNumber(data.rate_limit.limit)} / ${data.rate_limit.duration}`,
+      '',
+      '',
+      '',
+    ],
   ];
   return renderTable(headers, rows);
-}
-
-function renderNotes(data: GetUsageResponseSuccess): string[] {
-  const notes: string[] = [];
-  if (data.ai_credits.next_increase_at) {
-    notes.push(
-      `ai_credits next increase at ${data.ai_credits.next_increase_at}`,
-    );
-  }
-  return notes;
 }
 
 export const usageCommand = new Command('usage')
@@ -123,17 +121,6 @@ export const usageCommand = new Command('usage')
         sdkCall: (resend) => resend.usage.get(),
         onInteractive: (data) => {
           console.log(renderUsageTable(data));
-          const notes = renderNotes(data);
-          if (notes.length > 0) {
-            console.log();
-            for (const note of notes) {
-              console.log(note);
-            }
-          }
-          console.log();
-          console.log(
-            `Rate limit: ${formatNumber(data.rate_limit.limit)} requests / ${data.rate_limit.duration}`,
-          );
         },
       },
       globalOpts,
