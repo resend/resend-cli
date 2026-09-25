@@ -15,70 +15,86 @@ function formatLimit(limit: number | null): string {
   return limit === null ? '—' : formatNumber(limit);
 }
 
-function renderEmailsTable(emails: GetUsageResponseSuccess['emails']): string {
-  const headers = ['Period', 'Used', 'Limit', 'Sent', 'Received', 'Resets At'];
-  const rows = [
-    [
-      'daily',
-      formatNumber(emails.daily.used),
-      formatLimit(emails.daily.limit),
-      formatNumber(emails.daily.sent),
-      formatNumber(emails.daily.received),
-      emails.daily.resets_at,
-    ],
-    [
-      'monthly',
-      formatNumber(emails.monthly.used),
-      formatLimit(emails.monthly.limit),
-      formatNumber(emails.monthly.sent),
-      formatNumber(emails.monthly.received),
-      emails.monthly.resets_at,
-    ],
+function renderUsageTable(data: GetUsageResponseSuccess): string {
+  const headers = [
+    'Resource',
+    'Used',
+    'Limit',
+    'Sent',
+    'Received',
+    'Resets At',
   ];
-  return renderTable(headers, rows);
-}
-
-function renderResourcesTable(data: GetUsageResponseSuccess): string {
-  const headers = ['Resource', 'Used', 'Limit'];
   const rows = [
+    [
+      'emails_daily',
+      formatNumber(data.emails.daily.used),
+      formatLimit(data.emails.daily.limit),
+      formatNumber(data.emails.daily.sent),
+      formatNumber(data.emails.daily.received),
+      data.emails.daily.resets_at,
+    ],
+    [
+      'emails_monthly',
+      formatNumber(data.emails.monthly.used),
+      formatLimit(data.emails.monthly.limit),
+      formatNumber(data.emails.monthly.sent),
+      formatNumber(data.emails.monthly.received),
+      data.emails.monthly.resets_at,
+    ],
     [
       'contacts',
       formatNumber(data.contacts.used),
       formatLimit(data.contacts.limit),
+      '',
+      '',
+      '',
     ],
     [
       'segments',
       formatNumber(data.segments.used),
       formatLimit(data.segments.limit),
+      '',
+      '',
+      '',
     ],
     [
       'broadcasts',
       formatNumber(data.broadcasts.used),
       formatLimit(data.broadcasts.limit),
+      '',
+      '',
+      '',
     ],
     [
       'ai_credits',
       formatNumber(data.ai_credits.used),
       formatLimit(data.ai_credits.limit),
+      '',
+      '',
+      '',
     ],
     [
       'automation_runs',
       formatNumber(data.automation_runs.used),
       formatLimit(data.automation_runs.limit),
+      '',
+      '',
+      data.automation_runs.resets_at,
     ],
     [
       'domains',
       formatNumber(data.domains.used),
       formatLimit(data.domains.limit),
+      '',
+      '',
+      '',
     ],
   ];
   return renderTable(headers, rows);
 }
 
 function renderNotes(data: GetUsageResponseSuccess): string[] {
-  const notes: string[] = [
-    `automation_runs resets at ${data.automation_runs.resets_at}`,
-  ];
+  const notes: string[] = [];
   if (data.ai_credits.next_increase_at) {
     notes.push(
       `ai_credits next increase at ${data.ai_credits.next_increase_at}`,
@@ -106,11 +122,7 @@ export const usageCommand = new Command('usage')
         loading: 'Fetching usage...',
         sdkCall: (resend) => resend.usage.get(),
         onInteractive: (data) => {
-          console.log('Emails:');
-          console.log(renderEmailsTable(data.emails));
-          console.log();
-          console.log('Other resources:');
-          console.log(renderResourcesTable(data));
+          console.log(renderUsageTable(data));
           const notes = renderNotes(data);
           if (notes.length > 0) {
             console.log();
