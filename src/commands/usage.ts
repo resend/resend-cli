@@ -5,8 +5,14 @@ import type { GlobalOpts } from '../lib/client';
 import { buildHelpText } from '../lib/help-text';
 import { renderTable } from '../lib/table';
 
+const numberFormat = new Intl.NumberFormat('en-US');
+
+function formatNumber(value: number): string {
+  return numberFormat.format(value);
+}
+
 function formatLimit(limit: number | null): string {
-  return limit === null ? '—' : String(limit);
+  return limit === null ? '—' : formatNumber(limit);
 }
 
 function renderEmailsTable(emails: GetUsageResponseSuccess['emails']): string {
@@ -14,18 +20,18 @@ function renderEmailsTable(emails: GetUsageResponseSuccess['emails']): string {
   const rows = [
     [
       'daily',
-      String(emails.daily.used),
+      formatNumber(emails.daily.used),
       formatLimit(emails.daily.limit),
-      String(emails.daily.sent),
-      String(emails.daily.received),
+      formatNumber(emails.daily.sent),
+      formatNumber(emails.daily.received),
       emails.daily.resets_at,
     ],
     [
       'monthly',
-      String(emails.monthly.used),
+      formatNumber(emails.monthly.used),
       formatLimit(emails.monthly.limit),
-      String(emails.monthly.sent),
-      String(emails.monthly.received),
+      formatNumber(emails.monthly.sent),
+      formatNumber(emails.monthly.received),
       emails.monthly.resets_at,
     ],
   ];
@@ -33,43 +39,52 @@ function renderEmailsTable(emails: GetUsageResponseSuccess['emails']): string {
 }
 
 function renderResourcesTable(data: GetUsageResponseSuccess): string {
-  const headers = ['Resource', 'Used', 'Limit', 'Notes'];
+  const headers = ['Resource', 'Used', 'Limit'];
   const rows = [
     [
       'contacts',
-      String(data.contacts.used),
+      formatNumber(data.contacts.used),
       formatLimit(data.contacts.limit),
-      '',
     ],
     [
       'segments',
-      String(data.segments.used),
+      formatNumber(data.segments.used),
       formatLimit(data.segments.limit),
-      '',
     ],
     [
       'broadcasts',
-      String(data.broadcasts.used),
+      formatNumber(data.broadcasts.used),
       formatLimit(data.broadcasts.limit),
-      '',
     ],
     [
       'ai_credits',
-      String(data.ai_credits.used),
+      formatNumber(data.ai_credits.used),
       formatLimit(data.ai_credits.limit),
-      data.ai_credits.next_increase_at
-        ? `next increase ${data.ai_credits.next_increase_at}`
-        : '',
     ],
     [
       'automation_runs',
-      String(data.automation_runs.used),
+      formatNumber(data.automation_runs.used),
       formatLimit(data.automation_runs.limit),
-      `resets ${data.automation_runs.resets_at}`,
     ],
-    ['domains', String(data.domains.used), formatLimit(data.domains.limit), ''],
+    [
+      'domains',
+      formatNumber(data.domains.used),
+      formatLimit(data.domains.limit),
+    ],
   ];
   return renderTable(headers, rows);
+}
+
+function renderNotes(data: GetUsageResponseSuccess): string[] {
+  const notes: string[] = [
+    `automation_runs resets at ${data.automation_runs.resets_at}`,
+  ];
+  if (data.ai_credits.next_increase_at) {
+    notes.push(
+      `ai_credits next increase at ${data.ai_credits.next_increase_at}`,
+    );
+  }
+  return notes;
 }
 
 export const usageCommand = new Command('usage')
@@ -96,9 +111,16 @@ export const usageCommand = new Command('usage')
           console.log();
           console.log('Other resources:');
           console.log(renderResourcesTable(data));
+          const notes = renderNotes(data);
+          if (notes.length > 0) {
+            console.log();
+            for (const note of notes) {
+              console.log(note);
+            }
+          }
           console.log();
           console.log(
-            `Rate limit: ${data.rate_limit.limit} requests / ${data.rate_limit.duration}`,
+            `Rate limit: ${formatNumber(data.rate_limit.limit)} requests / ${data.rate_limit.duration}`,
           );
         },
       },
