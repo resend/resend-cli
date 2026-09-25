@@ -25,6 +25,7 @@ import { suppressionsCommand } from './commands/suppressions/index';
 import { templatesCommand } from './commands/templates/index';
 import { topicsCommand } from './commands/topics/index';
 import { updateCommand } from './commands/update';
+import { usageCommand } from './commands/usage';
 import { webhooksCommand } from './commands/webhooks/index';
 import { whoamiCommand } from './commands/whoami';
 import { setupCliExitHandler } from './lib/cli-exit';
@@ -142,6 +143,7 @@ ${pc.gray('Examples:')}
   .addCommand(topicsCommand)
   .addCommand(domainsCommand)
   .addCommand(logsCommand)
+  .addCommand(usageCommand)
   .addCommand(careersCommand)
   // Visible pre-GA with a [beta] marker in its description — the API gates usage
   // per account, so non-enabled users see the command but get an API error until enrolled.
