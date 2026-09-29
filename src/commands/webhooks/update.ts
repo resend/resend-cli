@@ -19,7 +19,7 @@ export const updateWebhookCommand = new Command('update')
   .option('--endpoint <endpoint>', 'New HTTPS URL for this webhook')
   .option(
     '--events <events...>',
-    'Replace the full event subscription list (comma or space-separated). Use "all" for all 17 events.',
+    'Replace the full event subscription list (comma or space-separated). Use "all" for all 23 events.',
   )
   .addOption(
     new Option(
