@@ -33,7 +33,7 @@ export const updateWebhookCommand = new Command('update')
       context: `At least one of --endpoint, --events, or --status must be provided.
 
 --events replaces the entire event list (it is not additive).
-Use "all" as a shorthand for all 17 event types.
+Use "all" as a shorthand for all 23 event types.
 
 --status controls whether events are delivered to this endpoint:
   enabled   Events are delivered (default on creation)
