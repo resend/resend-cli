@@ -21,11 +21,12 @@ Detailed flag specifications for `resend webhooks` commands.
 | `--endpoint <url>` | string | Yes (non-interactive) | HTTPS webhook URL |
 | `--events <events...>` | string[] | Yes (non-interactive) | Event types or `all` |
 
-**All 19 events:**
+**All 23 events:**
 - Email: `email.sent`, `email.delivered`, `email.delivery_delayed`, `email.bounced`, `email.complained`, `email.opened`, `email.clicked`, `email.failed`, `email.scheduled`, `email.suppressed`, `email.received`
-- Contact: `contact.created`, `contact.updated`, `contact.deleted`
+- Contact: `contact.created`, `contact.updated`, `contact.deleted`, `contact.topics.updated`
 - Domain: `domain.created`, `domain.updated`, `domain.deleted`
 - Suppression: `suppression.added`, `suppression.removed`
+- Topic: `topic.created`, `topic.updated`, `topic.deleted`
 
 **Output includes `signing_secret`.** `webhooks get` returns it again.
 
