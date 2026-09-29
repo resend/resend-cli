@@ -17,11 +17,15 @@ export const ALL_WEBHOOK_EVENTS: WebhookEvent[] = [
   'contact.created',
   'contact.updated',
   'contact.deleted',
+  'contact.topics.updated',
   'domain.created',
   'domain.updated',
   'domain.deleted',
   'suppression.added',
   'suppression.removed',
+  'topic.created',
+  'topic.updated',
+  'topic.deleted',
 ];
 
 export function normalizeEvents(raw: string[]): string[] {

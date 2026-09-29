@@ -78,7 +78,7 @@ describe('webhooks update command', () => {
     expect(payload.events).toEqual(['email.sent', 'email.bounced']);
   });
 
-  it('expands "all" shorthand in --events to 19 events', async () => {
+  it('expands "all" shorthand in --events to 23 events', async () => {
     spies = setupOutputSpies();
 
     await updateWebhookCommand.parseAsync(['wh_abc123', '--events', 'all'], {
@@ -86,7 +86,7 @@ describe('webhooks update command', () => {
     });
 
     const payload = mockUpdate.mock.calls[0][1] as Record<string, unknown>;
-    expect(payload.events).toHaveLength(19);
+    expect(payload.events).toHaveLength(23);
   });
 
   it('updates status with --status flag', async () => {

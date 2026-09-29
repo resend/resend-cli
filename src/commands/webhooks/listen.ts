@@ -45,7 +45,7 @@ function summarizeEvent(body: Record<string, unknown>): {
     if (from || to) {
       detail = `${from} -> ${to}`;
     }
-  } else if (type.startsWith('domain.')) {
+  } else if (type.startsWith('domain.') || type.startsWith('topic.')) {
     detail = safeTerminalText((data.name as string) ?? '');
   } else if (type.startsWith('contact.') || type.startsWith('suppression.')) {
     detail = safeTerminalText((data.email as string) ?? '');
