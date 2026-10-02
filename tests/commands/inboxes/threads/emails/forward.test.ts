@@ -111,13 +111,15 @@ describe('inboxes threads emails forward command', () => {
         'e@example.com',
         '--bcc',
         'd@example.com',
+        '--bcc',
+        'f@example.com',
       ],
       { from: 'user' },
     );
 
     const args = mockForward.mock.calls[0][0] as Record<string, unknown>;
     expect(args.cc).toEqual(['c@example.com', 'e@example.com']);
-    expect(args.bcc).toEqual(['d@example.com']);
+    expect(args.bcc).toEqual(['d@example.com', 'f@example.com']);
   });
 
   it('omits cc and bcc when the flags are absent', async () => {

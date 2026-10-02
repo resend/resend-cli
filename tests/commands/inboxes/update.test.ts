@@ -77,6 +77,17 @@ describe('inboxes update command', () => {
     });
   });
 
+  it('clears the from name with an empty --from_name', async () => {
+    spies = setupOutputSpies();
+
+    await updateInboxCommand.parseAsync([INBOX_ID, '--from_name', ''], {
+      from: 'user',
+    });
+
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
+    expect(mockUpdate.mock.calls[0][1]).toEqual({ fromName: '' });
+  });
+
   it('outputs JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 

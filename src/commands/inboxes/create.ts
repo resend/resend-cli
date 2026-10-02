@@ -58,7 +58,7 @@ Non-interactive: --email_address is required.`,
           resend.inboxes.create({
             emailAddress,
             ...(opts.name && { name: opts.name }),
-            ...(opts.from_name && { fromName: opts.from_name }),
+            ...(opts.from_name !== undefined && { fromName: opts.from_name }),
             ...(opts.forwarding && { forwarding: true }),
           }),
         onInteractive: (data) => {

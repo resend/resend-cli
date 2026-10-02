@@ -19,6 +19,7 @@ export const updateInboxCommand = new Command('update')
     'after',
     buildHelpText({
       context: `At least one of --name or --from_name is required.
+Pass --from_name "" to clear the from name.
 
 Note: the email address cannot be changed after creation.
 To use a different address, create a new inbox.`,
@@ -34,7 +35,7 @@ To use a different address, create a new inbox.`,
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const id = await pickId(idArg, inboxPickerConfig, globalOpts);
 
-    if (!opts.name && !opts.from_name) {
+    if (!opts.name && opts.from_name === undefined) {
       outputError(
         {
           message:
@@ -50,7 +51,7 @@ To use a different address, create a new inbox.`,
     // conditional spreads.
     const payload = {
       ...(opts.name && { name: opts.name }),
-      ...(opts.from_name && { fromName: opts.from_name }),
+      ...(opts.from_name !== undefined && { fromName: opts.from_name }),
     } as UpdateInboxOptions;
 
     await runWrite(

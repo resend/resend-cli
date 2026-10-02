@@ -65,7 +65,7 @@ The email address cannot be changed after creation.
 | Flag | Type | Description |
 |------|------|-------------|
 | `--name <name>` | string | New inbox name (max 64 chars) |
-| `--from_name <name>` | string | New name used when sending from this inbox. A plain name, not `Name <email>` |
+| `--from_name <name>` | string | New name used when sending from this inbox. A plain name, not `Name <email>`. Pass `""` to clear it |
 
 **Output:** `{"object":"inbox","id":"<uuid>"}`
 
