@@ -13,7 +13,7 @@ export const updateInboxCommand = new Command('update')
   .option('--name <name>', 'New inbox name')
   .option(
     '--from_name <name>',
-    'New name used when sending from this inbox, e.g. "Ada from Support"',
+    'New name used when sending from this inbox, e.g. "Ada from Support" (a plain name, not "Name <email>")',
   )
   .addHelpText(
     'after',

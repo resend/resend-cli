@@ -38,9 +38,10 @@ export const replyInboxThreadEmailCommand = new Command('reply')
   .addHelpText(
     'after',
     buildHelpText({
-      context: `Sends the reply from the inbox address to the sender of the original email.
+      context: `Sends the reply from the inbox address. The recipient comes from the original email.
 At least one of --text or --html is required.
---cc and --bcc are not copied from the original email; pass them to add recipients.`,
+--cc and --bcc are not copied from the original email; pass them to add recipients.
+The total number of recipients cannot exceed 50.`,
       output: `  {"id":"<uuid>","email_id":"<uuid>","direction":"outbound","from":"<inbox-address>","to":["<recipient>"],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>|null","message_id":"<message-id>|null","html":"<html>|null","text":"<text>|null","attachments":[],"read":true,"received_at":"<date>"}`,
       errorCodes: [
         'auth_error',

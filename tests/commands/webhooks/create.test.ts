@@ -95,6 +95,9 @@ describe('webhooks create command', () => {
     expect(args.events).toContain('email.sent');
     expect(args.events).toContain('contact.created');
     expect(args.events).toContain('domain.deleted');
+    expect(args.events).toContain('inbox.email.received');
+    expect(args.events).toContain('inbox.draft.deleted');
+    expect(new Set(args.events as string[]).size).toBe(37);
   });
 
   it('outputs JSON with id and signing_secret when non-interactive', async () => {

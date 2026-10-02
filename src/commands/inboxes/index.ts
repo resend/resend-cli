@@ -12,7 +12,7 @@ import { updateInboxCommand } from './update';
 
 export const inboxesCommand = new Command('inboxes')
   .description(
-    `${pc.cyan('● beta')} · Manage inboxes — email addresses at your domains that receive mail (request access to enable)`,
+    `${pc.cyan('● beta')} · Manage inboxes — email addresses at your domains that send and receive mail (request access to enable)`,
   )
   .addHelpText(
     'after',
@@ -20,7 +20,7 @@ export const inboxesCommand = new Command('inboxes')
       context: `Beta: this command requires inboxes to be enabled on your account.
 Not enabled yet? Reach out to Resend to join the beta. Calls return an API error until then.
 
-An inbox is an email address at one of your verified domains that can receive email.
+An inbox is an email address at one of your verified domains that sends and receives email.
 Received messages are grouped into threads inside the inbox.
 
 Inboxes require a full-access API key — sending-only keys are rejected.`,

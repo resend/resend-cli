@@ -107,6 +107,7 @@ Non-interactive: --endpoint and --events are required.`,
           { json: globalOpts.json },
         );
       }
+      // clack's Option type distributes over the union, and TS rejects the 37-member WebhookEvent union there.
       const result = await p.multiselect<string>({
         message: 'Select event types to subscribe to',
         options: ALL_WEBHOOK_EVENTS.map((e) => ({ value: e, label: e })),

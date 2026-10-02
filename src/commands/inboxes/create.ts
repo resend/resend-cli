@@ -13,7 +13,7 @@ export const createInboxCommand = new Command('create')
   .option('--name <name>', 'Inbox name shown in the dashboard')
   .option(
     '--from_name <name>',
-    'Name used when sending from this inbox, e.g. "Ada from Support"',
+    'Name used when sending from this inbox, e.g. "Ada from Support" (a plain name, not "Name <email>")',
   )
   .option(
     '--forwarding',
@@ -22,7 +22,8 @@ export const createInboxCommand = new Command('create')
   .addHelpText(
     'after',
     buildHelpText({
-      context: `The address must belong to one of your verified domains with receiving enabled.
+      context: `The address must belong to one of your verified domains.
+Receiving must be enabled on the domain, unless you pass --forwarding.
 
 Non-interactive: --email_address is required.`,
       output: `  {"object":"inbox","id":"<uuid>","name":"<name>","email_address":"<address>","domain_id":"<uuid>","receiving_address":"<address>|null","from_name":"<name>|null","unread":0,"drafts":0,"last_received":"<date>|null","created_at":"<date>"}`,

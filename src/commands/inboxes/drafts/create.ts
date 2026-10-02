@@ -48,8 +48,10 @@ export const createInboxDraftCommand = new Command('create')
     'after',
     buildHelpText({
       context: `Creates a standalone draft, or a reply draft when --thread_id and
---reply_to_email_id are passed together. At least one content field
-(--to, --cc, --bcc, --subject, --text, --html) is required.
+--reply_to_email_id are passed together. A reply draft does not copy
+recipients from the email it replies to, so set --to before you send it.
+At least one content field (--to, --cc, --bcc, --subject, --text, --html)
+is required. Combined recipients cannot exceed 50.
 
 Send the draft later with "resend inboxes drafts send".`,
       output: `  {"object":"inbox_draft","id":"<uuid>","type":"standalone|reply","to":["<address>"]|null,"cc":[],"bcc":[],"subject":"<subject>|null","html":"<html>|null","text":"<text>|null","thread_id":"<uuid>|null","reply_to_email_id":"<uuid>|null","email_id":null,"created_at":"<date>","updated_at":"<date>"}`,
@@ -61,7 +63,7 @@ Send the draft later with "resend inboxes drafts send".`,
       ],
       examples: [
         'resend inboxes drafts create --inbox_id <inbox_id> --to user@example.com --subject "Hello" --text "Draft body"',
-        'resend inboxes drafts create --inbox_id <inbox_id> --thread_id <thread_id> --reply_to_email_id <email_id> --text "Reply draft" --json',
+        'resend inboxes drafts create --inbox_id <inbox_id> --thread_id <thread_id> --reply_to_email_id <email_id> --to customer@example.com --text "Reply draft" --json',
       ],
     }),
   )

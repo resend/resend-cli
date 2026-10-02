@@ -87,6 +87,8 @@ describe('webhooks update command', () => {
 
     const payload = mockUpdate.mock.calls[0][1] as Record<string, unknown>;
     expect(payload.events).toHaveLength(37);
+    expect(payload.events).toContain('inbox.thread.created');
+    expect(new Set(payload.events as string[]).size).toBe(37);
   });
 
   it('updates status with --status flag', async () => {

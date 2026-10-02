@@ -111,6 +111,19 @@ describe('inboxes threads emails list command', () => {
     expect(args.after).toBe(EMAIL_ID);
   });
 
+  it('passes --before to the SDK', async () => {
+    spies = setupOutputSpies();
+
+    await listInboxThreadEmailsCommand.parseAsync(
+      ['--inbox_id', INBOX_ID, '--thread_id', THREAD_ID, '--before', EMAIL_ID],
+      { from: 'user' },
+    );
+
+    const args = mockList.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.before).toBe(EMAIL_ID);
+    expect(args).not.toHaveProperty('after');
+  });
+
   it('outputs JSON list with bodies when non-interactive', async () => {
     spies = setupOutputSpies();
 
@@ -149,6 +162,22 @@ describe('inboxes threads emails list command', () => {
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('invalid_pagination');
+    expect(mockList).not.toHaveBeenCalled();
+  });
+
+  it('errors with missing_id when inbox ID absent in non-interactive mode', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    await expectExit1(() =>
+      listInboxThreadEmailsCommand.parseAsync(['--thread_id', THREAD_ID], {
+        from: 'user',
+      }),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('missing_id');
     expect(mockList).not.toHaveBeenCalled();
   });
 

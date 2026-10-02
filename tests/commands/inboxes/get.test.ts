@@ -63,6 +63,14 @@ describe('inboxes get command', () => {
     exitSpy = undefined;
   });
 
+  it('fetches inbox by email address', async () => {
+    spies = setupOutputSpies();
+
+    await getInboxCommand.parseAsync(['support@acme.dev'], { from: 'user' });
+
+    expect(mockGet).toHaveBeenCalledWith('support@acme.dev');
+  });
+
   it('fetches inbox by ID and outputs JSON when non-interactive', async () => {
     spies = setupOutputSpies();
 

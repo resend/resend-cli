@@ -6,9 +6,10 @@ Detailed flag specifications for `resend inboxes` commands.
 > `--help` but return an API error unless inboxes is enabled for your account.
 > Reach out to Resend to join the beta.
 
-An inbox is an email address at one of your verified domains (with receiving
-enabled) that can receive email. Received messages are grouped into threads
-inside the inbox. Inboxes require a **full-access** API key — sending-only keys
+An inbox is an email address at one of your verified domains that sends and
+receives email. Receiving must be enabled on the domain, unless the inbox is
+created with `--forwarding`. Received messages are grouped into threads inside
+the inbox. Inboxes require a **full-access** API key — sending-only keys
 are rejected.
 
 ---
@@ -21,7 +22,7 @@ Create a new inbox at one of your verified domains.
 |------|------|----------|-------------|
 | `--email_address <address>` | string | Yes (non-interactive) | Address for the inbox, e.g. `support@yourdomain.com` |
 | `--name <name>` | string | No | Inbox name shown in the dashboard (max 64 chars) |
-| `--from_name <name>` | string | No | Name used when sending from this inbox, e.g. `Ada from Support` |
+| `--from_name <name>` | string | No | Name used when sending from this inbox, e.g. `Ada from Support`. A plain name, not `Name <email>` |
 | `--forwarding` | boolean | No | Receive mail without an MX record — Resend returns a `receiving_address` to forward mail to |
 
 **Output:** `{"object":"inbox","id":"<uuid>","name":"<name>","email_address":"<address>","domain_id":"<uuid>","receiving_address":"<address>"|null,"from_name":"<name>"|null,"unread":0,"drafts":0,"last_received":"<date>"|null,"created_at":"<date>"}`
@@ -64,7 +65,7 @@ The email address cannot be changed after creation.
 | Flag | Type | Description |
 |------|------|-------------|
 | `--name <name>` | string | New inbox name (max 64 chars) |
-| `--from_name <name>` | string | New name used when sending from this inbox |
+| `--from_name <name>` | string | New name used when sending from this inbox. A plain name, not `Name <email>` |
 
 **Output:** `{"object":"inbox","id":"<uuid>"}`
 
@@ -99,7 +100,7 @@ Retrieve a thread's summary. To read its messages, use
 
 **Flags:** `--inbox_id <id> --thread_id <id>` — required in non-interactive mode
 
-**Output:** `{"object":"inbox_thread","id":"<uuid>","subject":"<subject>"|null,"folder":"inbox","labels":[],"read":true}`
+**Output:** `{"object":"inbox_thread","id":"<uuid>","subject":"<subject>"|null,"folder":"inbox|archive|spam|sent|trash","labels":[],"read":true}`
 
 ---
 
@@ -163,14 +164,15 @@ Retrieve a single email from a thread.
 
 **Flags:** `--inbox_id <id> --thread_id <id> --email_id <id>` — required in non-interactive mode
 
-**Output:** `{"id":"<uuid>","direction":"inbound|outbound","from":"<sender>","to":[],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>"|null,"message_id":"<message-id>"|null,"html":"<html>"|null,"text":"<text>"|null,"attachments":[{"id":"<id>","filename":"<name>"|null,"size":123}],"read":true,"received_at":"<date>"}`
+**Output:** `{"id":"<uuid>","direction":"inbound|outbound","from":"<sender>","to":[],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>"|null,"message_id":"<message-id>"|null,"html":"<html>"|null,"text":"<text>"|null,"attachments":[{"id":"<id>","filename":"<name>"|null,"size":123|null}],"read":true,"received_at":"<date>"}`
 
 ---
 
 ## inboxes threads emails reply
 
 Reply to a specific email in a thread. The reply is sent from the inbox
-address to the sender of the original email.
+address. The recipient comes from the original email. The total number of
+recipients cannot exceed 50.
 
 **Flags:** `--inbox_id <id> --thread_id <id> --email_id <id>` — required in
 non-interactive mode; the email ID comes from `inboxes threads emails list`
@@ -289,8 +291,9 @@ List drafts in an inbox (default subcommand of `resend inboxes drafts`).
 ## inboxes drafts create
 
 Create a standalone draft, or a reply draft when `--thread_id` and
-`--reply_to_email_id` are passed **together**. At least one content field is
-required.
+`--reply_to_email_id` are passed **together**. A reply draft does not copy
+recipients from the email it replies to, so set `--to` before you send it. At
+least one content field is required. Combined recipients cannot exceed 50.
 
 **Flags:** `--inbox_id <id>` — required in non-interactive mode
 
