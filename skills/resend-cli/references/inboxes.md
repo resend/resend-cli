@@ -21,10 +21,10 @@ Create a new inbox at one of your verified domains.
 |------|------|----------|-------------|
 | `--email_address <address>` | string | Yes (non-interactive) | Address for the inbox, e.g. `support@yourdomain.com` |
 | `--name <name>` | string | No | Inbox name shown in the dashboard (max 64 chars) |
-| `--friendly_name <name>` | string | No | Name used when sending from this inbox, e.g. `Ada from Support` |
-| `--forwarding` | boolean | No | Enable forwarding — received emails are also forwarded to a generated forwarding address |
+| `--from_name <name>` | string | No | Name used when sending from this inbox, e.g. `Ada from Support` |
+| `--forwarding` | boolean | No | Receive mail without an MX record — Resend returns a `receiving_address` to forward mail to |
 
-**Output:** `{"object":"inbox","id":"<uuid>","name":"<name>","email_address":"<address>","domain_id":"<uuid>","forwarding_address":"<address>"|null,"unread":0,"created_at":"<date>"}`
+**Output:** `{"object":"inbox","id":"<uuid>","name":"<name>","email_address":"<address>","domain_id":"<uuid>","receiving_address":"<address>"|null,"from_name":"<name>"|null,"unread":0,"drafts":0,"last_received":"<date>"|null,"created_at":"<date>"}`
 
 ---
 
@@ -40,23 +40,23 @@ List all inboxes (default subcommand — `resend inboxes` alone runs it).
 
 **Alias:** `ls`
 
-**Output:** `{"object":"list","has_more":false,"data":[{"id":"<uuid>","name":"<name>"|null,"email_address":"<address>","unread":0,"last_received":"<date>"|null}]}`
+**Output:** `{"object":"list","has_more":false,"data":[{"id":"<uuid>","name":"<name>"|null,"email_address":"<address>","from_name":"<name>"|null,"unread":0,"last_received":"<date>"|null}]}`
 
 ---
 
 ## inboxes get
 
-Retrieve a single inbox.
+Retrieve a single inbox by ID or email address.
 
-**Argument:** `<id>` — inbox UUID (required in non-interactive mode)
+**Argument:** `<id>` — inbox UUID or inbox email address, e.g. `support@yourdomain.com` (required in non-interactive mode)
 
-**Output:** `{"object":"inbox","id":"<uuid>","name":"<name>"|null,"email_address":"<address>","forwarding_address":"<address>"|null,"unread":0,"drafts":0,"last_received":"<date>"|null}`
+**Output:** `{"object":"inbox","id":"<uuid>","name":"<name>","email_address":"<address>","domain_id":"<uuid>","receiving_address":"<address>"|null,"from_name":"<name>"|null,"unread":0,"drafts":0,"last_received":"<date>"|null,"created_at":"<date>"}`
 
 ---
 
 ## inboxes update
 
-Update an inbox's name or friendly name. At least one option is required.
+Update an inbox's name or from name. At least one option is required.
 The email address cannot be changed after creation.
 
 **Argument:** `<id>` — inbox UUID
@@ -64,7 +64,7 @@ The email address cannot be changed after creation.
 | Flag | Type | Description |
 |------|------|-------------|
 | `--name <name>` | string | New inbox name (max 64 chars) |
-| `--friendly_name <name>` | string | New name used when sending from this inbox |
+| `--from_name <name>` | string | New name used when sending from this inbox |
 
 **Output:** `{"object":"inbox","id":"<uuid>"}`
 
@@ -80,8 +80,7 @@ Threads are ordered by newest activity first.
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--folder <folder>` | string | `inbox` | One of `inbox`, `archive`, `spam`, `sent`, `trash` |
-| `--query <text>` | string | — | Search subject, sender, and label names |
-| `--from <sender>` | string | — | Filter by sender address or name |
+| `--query <text>` | string | — | Case-insensitive match against thread subjects and label names |
 | `--label <label_id>` | string | — | Filter by label **UUID** (not name); repeat for multiple |
 | `--limit <n>` | number | 10 | Max results, 1-100 |
 | `--after <cursor>` | string | — | Forward pagination cursor (a thread ID) |
@@ -95,12 +94,12 @@ Threads are ordered by newest activity first.
 
 ## inboxes threads get
 
-Retrieve a thread with every message inline, including `html` and `text`
-bodies. Use the message `id` values as the email ID for replies.
+Retrieve a thread's summary. To read its messages, use
+`inboxes threads emails list`.
 
 **Flags:** `--inbox_id <id> --thread_id <id>` — required in non-interactive mode
 
-**Output:** `{"object":"inbox_thread","id":"<uuid>","subject":"<subject>"|null,"folder":"inbox","labels":[],"read":true,"messages":[{"id":"<uuid>","direction":"inbound|outbound","from":"<sender>","to":[],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>"|null,"message_id":"<message-id>"|null,"html":"<html>"|null,"text":"<text>"|null,"attachments":[],"read":true,"received_at":"<date>"}]}`
+**Output:** `{"object":"inbox_thread","id":"<uuid>","subject":"<subject>"|null,"folder":"inbox","labels":[],"read":true}`
 
 ---
 
@@ -138,6 +137,26 @@ Delete a thread and all of its messages.
 
 ---
 
+## inboxes threads emails list
+
+List the emails in a thread, oldest first, with their `html` and `text` bodies
+(default subcommand of `resend inboxes threads emails`). Use the email `id`
+values with `emails get`, `reply`, and `forward`.
+
+**Flags:** `--inbox_id <id> --thread_id <id>` — required in non-interactive mode
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--limit <n>` | number | 10 | Max results, 1-100 |
+| `--after <cursor>` | string | — | Forward pagination cursor (an email ID) |
+| `--before <cursor>` | string | — | Backward pagination cursor (an email ID) |
+
+**Alias:** `ls`
+
+**Output:** `{"object":"list","has_more":false,"data":[{"id":"<uuid>","direction":"inbound|outbound","from":"<sender>","to":[],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>"|null,"message_id":"<message-id>"|null,"html":"<html>"|null,"text":"<text>"|null,"attachments":[],"read":true,"received_at":"<date>"}]}`
+
+---
+
 ## inboxes threads emails get
 
 Retrieve a single email from a thread.
@@ -154,15 +173,17 @@ Reply to a specific email in a thread. The reply is sent from the inbox
 address to the sender of the original email.
 
 **Flags:** `--inbox_id <id> --thread_id <id> --email_id <id>` — required in
-non-interactive mode; the email ID comes from `inboxes threads get`
+non-interactive mode; the email ID comes from `inboxes threads emails list`
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
+| `--cc <address>` | string | No | Cc address; repeat for multiple. Not copied from the original email |
+| `--bcc <address>` | string | No | Bcc address; repeat for multiple. Not copied from the original email |
 | `--text <text>` | string | One of text/html | Plain text reply body |
 | `--html <html>` | string | One of text/html | HTML reply body |
 | `--subject <subject>` | string | No | Override the reply subject |
 
-**Output:** `{"id":"<uuid>","email_id":"<uuid>","direction":"outbound","from":"<inbox-address>","to":["<recipient>"],"text":"<text>"|null,"html":"<html>"|null,"read":true,"received_at":"<date>"}`
+**Output:** `{"id":"<uuid>","email_id":"<uuid>","direction":"outbound","from":"<inbox-address>","to":["<recipient>"],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>"|null,"message_id":"<message-id>"|null,"html":"<html>"|null,"text":"<text>"|null,"attachments":[],"read":true,"received_at":"<date>"}`
 
 ---
 
@@ -175,11 +196,15 @@ Forward an email to other recipients from the inbox address.
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
 | `--to <address>` | string | Yes | Recipient; repeat the flag for multiple |
+| `--cc <address>` | string | No | Cc address; repeat for multiple |
+| `--bcc <address>` | string | No | Bcc address; repeat for multiple |
 | `--text <text>` | string | No | Plain text note to include |
 | `--html <html>` | string | No | HTML note to include |
 | `--subject <subject>` | string | No | Override the forwarded subject |
 
-**Output:** `{"id":"<uuid>","email_id":"<uuid>","direction":"outbound","from":"<inbox-address>","to":["<recipient>"],"text":"<text>"|null,"html":"<html>"|null,"attachments":[],"read":true,"received_at":"<date>"}`
+`--to`, `--cc`, and `--bcc` combined cannot exceed 50 recipients.
+
+**Output:** `{"id":"<uuid>","email_id":"<uuid>","direction":"outbound","from":"<inbox-address>","to":["<recipient>"],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>"|null,"message_id":"<message-id>"|null,"html":"<html>"|null,"text":"<text>"|null,"attachments":[],"read":true,"received_at":"<date>"}`
 
 ---
 

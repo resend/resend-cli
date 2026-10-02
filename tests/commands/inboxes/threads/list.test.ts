@@ -89,7 +89,7 @@ describe('inboxes threads list command', () => {
     expect(args.limit).toBe(10);
   });
 
-  it('passes folder, query, from, labels, and pagination options', async () => {
+  it('passes folder, query, labels, and pagination options', async () => {
     spies = setupOutputSpies();
 
     await listInboxThreadsCommand.parseAsync(
@@ -100,8 +100,6 @@ describe('inboxes threads list command', () => {
         'archive',
         '--query',
         'billing',
-        '--from',
-        'customer@example.com',
         '--label',
         'label-1',
         '--label',
@@ -117,7 +115,6 @@ describe('inboxes threads list command', () => {
     const args = mockList.mock.calls[0][0] as Record<string, unknown>;
     expect(args.folder).toBe('archive');
     expect(args.query).toBe('billing');
-    expect(args.from).toBe('customer@example.com');
     expect(args.label).toEqual(['label-1', 'label-2']);
     expect(args.limit).toBe(25);
     expect(args.after).toBe(THREAD_ID);

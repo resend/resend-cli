@@ -28,7 +28,7 @@ const mockList = vi.fn(async () => ({
         id: INBOX_ID,
         name: 'Support',
         email_address: 'support@acme.dev',
-        friendly_name: null,
+        from_name: null,
         unread: 2,
         last_received: '2026-09-15T00:00:00.000Z',
       },

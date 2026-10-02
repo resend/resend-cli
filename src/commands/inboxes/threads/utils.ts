@@ -1,4 +1,4 @@
-import type { InboxThread } from 'resend';
+import type { InboxMessage, InboxThread } from 'resend';
 import type { PickerConfig } from '../../../lib/prompts';
 import { renderTable } from '../../../lib/table';
 
@@ -27,5 +27,20 @@ export function renderThreadsTable(threads: InboxThread[]): string {
     ['From', 'Subject', 'Read', 'Msgs', 'Received', 'ID'],
     rows,
     '(no threads)',
+  );
+}
+
+export function renderThreadEmailsTable(emails: InboxMessage[]): string {
+  const rows = emails.map((e) => [
+    e.direction,
+    e.from,
+    e.subject ?? '(no subject)',
+    e.received_at,
+    e.id,
+  ]);
+  return renderTable(
+    ['Direction', 'From', 'Subject', 'Received', 'ID'],
+    rows,
+    '(no emails)',
   );
 }

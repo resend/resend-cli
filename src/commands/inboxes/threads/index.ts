@@ -12,11 +12,12 @@ export const inboxThreadsCommand = new Command('threads')
     'after',
     buildHelpText({
       context: `Received messages are grouped into threads. "list" shows threads in a folder,
-"get" returns a thread with full message bodies, "update" marks read/unread,
-moves, or labels a thread, and "emails" works with individual messages.`,
+"get" returns one thread's summary, "update" marks read/unread, moves, or
+labels a thread, and "emails" lists and works with the messages in a thread.`,
       examples: [
         'resend inboxes threads list --inbox_id <inbox_id>',
         'resend inboxes threads get --inbox_id <inbox_id> --thread_id <thread_id>',
+        'resend inboxes threads emails list --inbox_id <inbox_id> --thread_id <thread_id>',
         'resend inboxes threads update --inbox_id <inbox_id> --thread_id <thread_id> --read',
         'resend inboxes threads emails reply --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --text "Thanks!"',
       ],

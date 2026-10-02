@@ -26,6 +26,20 @@ export const ALL_WEBHOOK_EVENTS: WebhookEvent[] = [
   'topic.created',
   'topic.updated',
   'topic.deleted',
+  'inbox.created',
+  'inbox.updated',
+  'inbox.deleted',
+  'inbox.thread.created',
+  'inbox.email.received',
+  'inbox.email.sent',
+  'inbox.thread.folder.updated',
+  'inbox.thread.assigned',
+  'inbox.thread.unassigned',
+  'inbox.thread.labels.updated',
+  'inbox.draft.created',
+  'inbox.draft.updated',
+  'inbox.draft.sent',
+  'inbox.draft.deleted',
 ];
 
 export function normalizeEvents(raw: string[]): string[] {

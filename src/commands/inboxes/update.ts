@@ -8,17 +8,17 @@ import { pickId } from '../../lib/prompts';
 import { inboxPickerConfig } from './utils';
 
 export const updateInboxCommand = new Command('update')
-  .description("Update an inbox's name or friendly name")
+  .description("Update an inbox's name or from name")
   .argument('[id]', 'Inbox UUID')
   .option('--name <name>', 'New inbox name')
   .option(
-    '--friendly_name <name>',
+    '--from_name <name>',
     'New name used when sending from this inbox, e.g. "Ada from Support"',
   )
   .addHelpText(
     'after',
     buildHelpText({
-      context: `At least one of --name or --friendly_name is required.
+      context: `At least one of --name or --from_name is required.
 
 Note: the email address cannot be changed after creation.
 To use a different address, create a new inbox.`,
@@ -26,7 +26,7 @@ To use a different address, create a new inbox.`,
       errorCodes: ['auth_error', 'no_changes', 'update_error'],
       examples: [
         'resend inboxes update 78261eea-8f8b-4381-83c6-79fa7120f1cf --name "Support"',
-        'resend inboxes update 78261eea-8f8b-4381-83c6-79fa7120f1cf --friendly_name "Ada from Support" --json',
+        'resend inboxes update 78261eea-8f8b-4381-83c6-79fa7120f1cf --from_name "Ada from Support" --json',
       ],
     }),
   )
@@ -34,11 +34,11 @@ To use a different address, create a new inbox.`,
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const id = await pickId(idArg, inboxPickerConfig, globalOpts);
 
-    if (!opts.name && !opts.friendly_name) {
+    if (!opts.name && !opts.from_name) {
       outputError(
         {
           message:
-            'Provide at least one option to update: --name or --friendly_name.',
+            'Provide at least one option to update: --name or --from_name.',
           code: 'no_changes',
         },
         { json: globalOpts.json },
@@ -50,7 +50,7 @@ To use a different address, create a new inbox.`,
     // conditional spreads.
     const payload = {
       ...(opts.name && { name: opts.name }),
-      ...(opts.friendly_name && { friendlyName: opts.friendly_name }),
+      ...(opts.from_name && { fromName: opts.from_name }),
     } as UpdateInboxOptions;
 
     await runWrite(

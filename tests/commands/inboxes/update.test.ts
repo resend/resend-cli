@@ -63,17 +63,17 @@ describe('inboxes update command', () => {
     expect(mockUpdate.mock.calls[0][1]).toEqual({ name: 'Support' });
   });
 
-  it('updates the friendly name with --friendly_name', async () => {
+  it('updates the from name with --from_name', async () => {
     spies = setupOutputSpies();
 
     await updateInboxCommand.parseAsync(
-      [INBOX_ID, '--friendly_name', 'Ada from Support'],
+      [INBOX_ID, '--from_name', 'Ada from Support'],
       { from: 'user' },
     );
 
     expect(mockUpdate).toHaveBeenCalledTimes(1);
     expect(mockUpdate.mock.calls[0][1]).toEqual({
-      friendlyName: 'Ada from Support',
+      fromName: 'Ada from Support',
     });
   });
 

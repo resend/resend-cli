@@ -19,7 +19,7 @@ export const createWebhookCommand = new Command('create')
   )
   .option(
     '--events <events...>',
-    'Event types to subscribe to (comma or space-separated). Use "all" for all 23 events.',
+    'Event types to subscribe to (comma or space-separated). Use "all" for all 37 events.',
   )
   .addHelpText(
     'after',
@@ -34,7 +34,7 @@ Events fire per-recipient: a batch email to 3 recipients generates 3 email.sent 
   resend webhooks create --endpoint https://... --events email.sent,email.delivered
   resend webhooks create --endpoint https://... --events all
 
-Available event types (23 total):
+Available event types (37 total):
   Email:       email.sent, email.delivered, email.delivery_delayed, email.bounced,
                email.complained, email.opened, email.clicked, email.failed,
                email.scheduled, email.suppressed, email.received
@@ -43,6 +43,11 @@ Available event types (23 total):
   Domain:      domain.created, domain.updated, domain.deleted
   Suppression: suppression.added, suppression.removed
   Topic:       topic.created, topic.updated, topic.deleted
+  Inbox:       inbox.created, inbox.updated, inbox.deleted, inbox.thread.created,
+               inbox.email.received, inbox.email.sent, inbox.thread.folder.updated,
+               inbox.thread.assigned, inbox.thread.unassigned,
+               inbox.thread.labels.updated, inbox.draft.created, inbox.draft.updated,
+               inbox.draft.sent, inbox.draft.deleted (beta)
 
 Use the signing_secret in the response to verify webhook payloads using Svix
 signature headers (svix-id, svix-timestamp, svix-signature). "resend webhooks get" returns it again.
@@ -102,14 +107,14 @@ Non-interactive: --endpoint and --events are required.`,
           { json: globalOpts.json },
         );
       }
-      const result = await p.multiselect({
+      const result = await p.multiselect<string>({
         message: 'Select event types to subscribe to',
         options: ALL_WEBHOOK_EVENTS.map((e) => ({ value: e, label: e })),
       });
       if (p.isCancel(result)) {
         cancelAndExit('Cancelled.');
       }
-      selectedEvents = result;
+      selectedEvents = result as WebhookEvent[];
     }
 
     await runCreate(

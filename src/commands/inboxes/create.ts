@@ -12,12 +12,12 @@ export const createInboxCommand = new Command('create')
   )
   .option('--name <name>', 'Inbox name shown in the dashboard')
   .option(
-    '--friendly_name <name>',
+    '--from_name <name>',
     'Name used when sending from this inbox, e.g. "Ada from Support"',
   )
   .option(
     '--forwarding',
-    'Enable forwarding — received emails are also forwarded to a generated forwarding address',
+    'Receive mail without an MX record — Resend returns a receiving address to forward mail to',
   )
   .addHelpText(
     'after',
@@ -25,11 +25,11 @@ export const createInboxCommand = new Command('create')
       context: `The address must belong to one of your verified domains with receiving enabled.
 
 Non-interactive: --email_address is required.`,
-      output: `  {"object":"inbox","id":"<uuid>","name":"<name>","email_address":"<address>","domain_id":"<uuid>","forwarding_address":"<address>|null","unread":0,"created_at":"<date>"}`,
+      output: `  {"object":"inbox","id":"<uuid>","name":"<name>","email_address":"<address>","domain_id":"<uuid>","receiving_address":"<address>|null","from_name":"<name>|null","unread":0,"drafts":0,"last_received":"<date>|null","created_at":"<date>"}`,
       errorCodes: ['auth_error', 'missing_email_address', 'create_error'],
       examples: [
         'resend inboxes create --email_address support@yourdomain.com',
-        'resend inboxes create --email_address hello@yourdomain.com --name "Hello" --friendly_name "Team Hello" --forwarding',
+        'resend inboxes create --email_address hello@yourdomain.com --name "Hello" --from_name "Team Hello" --forwarding',
         'resend inboxes create --email_address support@yourdomain.com --json',
       ],
     }),
@@ -57,14 +57,14 @@ Non-interactive: --email_address is required.`,
           resend.inboxes.create({
             emailAddress,
             ...(opts.name && { name: opts.name }),
-            ...(opts.friendly_name && { friendlyName: opts.friendly_name }),
+            ...(opts.from_name && { fromName: opts.from_name }),
             ...(opts.forwarding && { forwarding: true }),
           }),
         onInteractive: (data) => {
           console.log(`Inbox created: ${data.id}`);
           console.log(`Email address: ${data.email_address}`);
-          if (data.forwarding_address) {
-            console.log(`Forwarding address: ${data.forwarding_address}`);
+          if (data.receiving_address) {
+            console.log(`Receiving address: ${data.receiving_address}`);
           }
         },
       },

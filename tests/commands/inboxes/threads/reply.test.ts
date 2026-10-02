@@ -120,6 +120,56 @@ describe('inboxes threads emails reply command', () => {
     expect(args.subject).toBe('Re: hi');
   });
 
+  it('passes repeated --cc and --bcc to the SDK', async () => {
+    spies = setupOutputSpies();
+
+    await replyInboxThreadEmailCommand.parseAsync(
+      [
+        '--inbox_id',
+        INBOX_ID,
+        '--thread_id',
+        THREAD_ID,
+        '--email_id',
+        EMAIL_ID,
+        '--text',
+        'Looping in finance.',
+        '--cc',
+        'finance@example.com',
+        '--cc',
+        'ops@example.com',
+        '--bcc',
+        'audit@example.com',
+      ],
+      { from: 'user' },
+    );
+
+    const args = mockReply.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.cc).toEqual(['finance@example.com', 'ops@example.com']);
+    expect(args.bcc).toEqual(['audit@example.com']);
+  });
+
+  it('omits cc and bcc when the flags are absent', async () => {
+    spies = setupOutputSpies();
+
+    await replyInboxThreadEmailCommand.parseAsync(
+      [
+        '--inbox_id',
+        INBOX_ID,
+        '--thread_id',
+        THREAD_ID,
+        '--email_id',
+        EMAIL_ID,
+        '--text',
+        'Thanks!',
+      ],
+      { from: 'user' },
+    );
+
+    const args = mockReply.mock.calls[0][0] as Record<string, unknown>;
+    expect(args).not.toHaveProperty('cc');
+    expect(args).not.toHaveProperty('bcc');
+  });
+
   it('outputs JSON with email_id when non-interactive', async () => {
     spies = setupOutputSpies();
 

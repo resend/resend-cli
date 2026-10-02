@@ -10,7 +10,7 @@ export const getInboxThreadEmailCommand = new Command('get')
   .description('Retrieve a single email from a thread')
   .option('--inbox_id <id>', 'Inbox UUID')
   .option('--thread_id <id>', 'Thread UUID')
-  .option('--email_id <id>', 'Email UUID (from "threads get")')
+  .option('--email_id <id>', 'Email UUID (from "threads emails list")')
   .addHelpText(
     'after',
     buildHelpText({
@@ -32,7 +32,7 @@ export const getInboxThreadEmailCommand = new Command('get')
     );
     const emailId = await requireText(
       opts.email_id,
-      { message: 'Email ID', placeholder: 'from "threads get"' },
+      { message: 'Email ID', placeholder: 'from "threads emails list"' },
       { message: 'Missing --email_id flag.', code: 'missing_id' },
       globalOpts,
     );

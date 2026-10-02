@@ -26,9 +26,11 @@ const mockCreate = vi.fn(async () => ({
     name: 'support@acme.dev',
     email_address: 'support@acme.dev',
     domain_id: 'd91cd9bd-1176-453e-8fc1-35364d380206',
-    forwarding_address: null,
-    friendly_name: null,
+    receiving_address: null,
+    from_name: null,
     unread: 0,
+    drafts: 0,
+    last_received: null,
     created_at: '2026-09-15T00:00:00.000Z',
   },
   error: null,
@@ -76,7 +78,7 @@ describe('inboxes create command', () => {
     expect(args.forwarding).toBeUndefined();
   });
 
-  it('passes --name, --friendly_name, and --forwarding to the SDK', async () => {
+  it('passes --name, --from_name, and --forwarding to the SDK', async () => {
     spies = setupOutputSpies();
 
     await createInboxCommand.parseAsync(
@@ -85,7 +87,7 @@ describe('inboxes create command', () => {
         'support@acme.dev',
         '--name',
         'Support',
-        '--friendly_name',
+        '--from_name',
         'Ada from Support',
         '--forwarding',
       ],
@@ -94,7 +96,7 @@ describe('inboxes create command', () => {
 
     const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.name).toBe('Support');
-    expect(args.friendlyName).toBe('Ada from Support');
+    expect(args.fromName).toBe('Ada from Support');
     expect(args.forwarding).toBe(true);
   });
 

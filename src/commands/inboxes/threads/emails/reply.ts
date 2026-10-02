@@ -7,11 +7,31 @@ import { pickId, requireText } from '../../../../lib/prompts';
 import { inboxPickerConfig } from '../../utils';
 import { inboxThreadPickerConfig } from '../utils';
 
+const collectRecipients = (value: string, previous: string[]) => [
+  ...previous,
+  value,
+];
+
 export const replyInboxThreadEmailCommand = new Command('reply')
   .description('Reply to an email in a thread')
   .option('--inbox_id <id>', 'Inbox UUID')
   .option('--thread_id <id>', 'Thread UUID')
-  .option('--email_id <id>', 'Email UUID to reply to (from "threads get")')
+  .option(
+    '--email_id <id>',
+    'Email UUID to reply to (from "threads emails list")',
+  )
+  .option(
+    '--cc <address>',
+    'Cc address (repeat the flag for multiple addresses)',
+    collectRecipients,
+    [] as string[],
+  )
+  .option(
+    '--bcc <address>',
+    'Bcc address (repeat the flag for multiple addresses)',
+    collectRecipients,
+    [] as string[],
+  )
   .option('--text <text>', 'Plain text body of the reply')
   .option('--html <html>', 'HTML body of the reply')
   .option('--subject <subject>', 'Override the reply subject')
@@ -19,8 +39,9 @@ export const replyInboxThreadEmailCommand = new Command('reply')
     'after',
     buildHelpText({
       context: `Sends the reply from the inbox address to the sender of the original email.
-At least one of --text or --html is required.`,
-      output: `  {"id":"<uuid>","email_id":"<uuid>","direction":"outbound","from":"<inbox-address>","to":["<recipient>"],"text":"<text>|null","html":"<html>|null","read":true,"received_at":"<date>"}`,
+At least one of --text or --html is required.
+--cc and --bcc are not copied from the original email; pass them to add recipients.`,
+      output: `  {"id":"<uuid>","email_id":"<uuid>","direction":"outbound","from":"<inbox-address>","to":["<recipient>"],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>|null","message_id":"<message-id>|null","html":"<html>|null","text":"<text>|null","attachments":[],"read":true,"received_at":"<date>"}`,
       errorCodes: [
         'auth_error',
         'missing_id',
@@ -30,6 +51,7 @@ At least one of --text or --html is required.`,
       examples: [
         'resend inboxes threads emails reply --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --text "On it — reply to follow."',
         'resend inboxes threads emails reply --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --html "<p>Done!</p>" --json',
+        'resend inboxes threads emails reply --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --text "Looping in finance." --cc finance@example.com',
       ],
     }),
   )
@@ -55,7 +77,10 @@ At least one of --text or --html is required.`,
     );
     const emailId = await requireText(
       opts.email_id,
-      { message: 'Email ID to reply to', placeholder: 'from "threads get"' },
+      {
+        message: 'Email ID to reply to',
+        placeholder: 'from "threads emails list"',
+      },
       { message: 'Missing --email_id flag.', code: 'missing_id' },
       globalOpts,
     );
@@ -76,6 +101,8 @@ At least one of --text or --html is required.`,
             threadId,
             emailId,
             ...body,
+            ...(opts.cc.length > 0 && { cc: opts.cc }),
+            ...(opts.bcc.length > 0 && { bcc: opts.bcc }),
             ...(opts.subject && { subject: opts.subject }),
           }),
         onInteractive: (data) => {

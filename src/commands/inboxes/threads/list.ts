@@ -26,8 +26,10 @@ export const listInboxThreadsCommand = new Command('list')
       INBOX_MESSAGE_FOLDERS,
     ),
   )
-  .option('--query <text>', 'Search subject, sender, and label names')
-  .option('--from <sender>', 'Filter by sender address or name')
+  .option(
+    '--query <text>',
+    'Case-insensitive match against thread subjects and label names',
+  )
   .option(
     '--label <label_id>',
     'Filter by label UUID (repeat the flag for multiple labels)',
@@ -83,7 +85,6 @@ previous page as --after to fetch the next page.
             inboxId,
             ...(opts.folder && { folder: opts.folder }),
             ...(opts.query && { query: opts.query }),
-            ...(opts.from && { from: opts.from }),
             ...(opts.label.length > 0 && { label: opts.label }),
             ...paginationOpts,
           }),
@@ -98,7 +99,6 @@ previous page as --after to fetch the next page.
               `--inbox_id ${inboxId}`,
               opts.folder && `--folder ${opts.folder}`,
               opts.query && `--query ${opts.query}`,
-              opts.from && `--from ${opts.from}`,
               ...opts.label.map((label) => `--label ${label}`),
             ]
               .filter(Boolean)
