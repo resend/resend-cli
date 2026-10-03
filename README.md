@@ -693,12 +693,14 @@ Prints the CLI command tree as JSON for scripting and AI agents. In an interacti
 
 ## Dry-run (no API call)
 
-`--dry-run` is only implemented where agents most often need to **validate a complex payload** before a high-impact send:
+`--dry-run` is available where agents most often need to **validate a complex payload** before a high-impact send. It prints the request payload to stdout without calling the API, and does not require an API key (or verify your key's permissions).
 
 - **`resend emails send ... --dry-run`** — validates inputs and prints `{ "dryRun": true, "request": { ... } }` without sending. Attachments appear as `filename` and `byteLength` only.
 - **`resend broadcasts create ... --dry-run`** — same for the broadcast create payload.
+- **`resend emails batch --file ./emails.json --dry-run`** — parses and normalises the JSON array, resolves any `--react-email` template, then prints the request payload without sending. No API key required.
+- **`resend broadcasts send <id> --dry-run`** — prints `{ "dryRun": true, "request": { ... } }` (including `scheduledAt` when set) without sending. No API key required.
 
-Other write commands (batch, `broadcasts send`, webhooks, contacts, etc.) do not support `--dry-run` yet. If that would help your workflow, open an issue — likely next candidates are **`emails batch`** (large JSON files) and **`broadcasts send`** (confirm id + schedule before delivery).
+Other write commands (webhooks, contacts, etc.) do not support `--dry-run` yet. If that would help your workflow, open an issue.
 
 ---
 
