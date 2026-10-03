@@ -142,4 +142,63 @@ describe('broadcasts send command', () => {
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('send_error');
   });
+
+  it('--dry-run prints request without calling the API', async () => {
+    spies = setupOutputSpies();
+
+    await sendBroadcastCommand.parseAsync(
+      ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--dry-run'],
+      { from: 'user' },
+    );
+
+    expect(mockSend).not.toHaveBeenCalled();
+    const output = spies.logSpy.mock.calls[0][0] as string;
+    const parsed = JSON.parse(output);
+    expect(parsed.dryRun).toBe(true);
+    expect(parsed.request).toEqual({
+      id: 'd1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+    });
+  });
+
+  it('--dry-run includes scheduledAt in request when flag is set', async () => {
+    spies = setupOutputSpies();
+
+    await sendBroadcastCommand.parseAsync(
+      [
+        'd1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
+        '--scheduled-at',
+        'in 1 hour',
+        '--dry-run',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockSend).not.toHaveBeenCalled();
+    const output = spies.logSpy.mock.calls[0][0] as string;
+    const parsed = JSON.parse(output);
+    expect(parsed.dryRun).toBe(true);
+    expect(parsed.request.scheduledAt).toBe('in 1 hour');
+  });
+
+  it('--dry-run works without an API key', async () => {
+    setNonInteractive();
+    delete process.env.RESEND_API_KEY;
+    process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
+
+    await sendBroadcastCommand.parseAsync(
+      ['d1c2b3a4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', '--dry-run'],
+      { from: 'user' },
+    );
+
+    expect(mockSend).not.toHaveBeenCalled();
+    const output = logSpy.mock.calls[0][0] as string;
+    const parsed = JSON.parse(output);
+    expect(parsed.dryRun).toBe(true);
+
+    logSpy.mockRestore();
+  });
 });

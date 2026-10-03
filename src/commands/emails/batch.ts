@@ -24,6 +24,10 @@ export const batchCommand = new Command('batch')
     '--idempotency-key <key>',
     'Deduplicate this batch request using this key',
   )
+  .option(
+    '--dry-run',
+    'Validate input and print the request JSON without calling the API',
+  )
   .addOption(
     new Option(
       '--batch-validation <mode>',
@@ -49,6 +53,7 @@ export const batchCommand = new Command('batch')
       ],
       examples: [
         'resend emails batch --file ./emails.json',
+        'resend emails batch --file ./emails.json --dry-run',
         'resend emails batch --file ./emails.json --batch-validation permissive',
         'echo \'[{"from":"onboarding@resend.dev","to":["delivered@resend.dev"],"subject":"Hi","text":"Hello"}]\' | resend emails batch --file -',
       ],
@@ -56,10 +61,6 @@ export const batchCommand = new Command('batch')
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-
-    const resend = await requireClient(globalOpts, {
-      permission: 'sending_access',
-    });
 
     const filePath = await requireText(
       opts.file,
@@ -147,6 +148,47 @@ export const batchCommand = new Command('batch')
         }
       }
     }
+
+    if (opts.dryRun) {
+      if (emails.length === 0) {
+        outputError(
+          {
+            message: 'Batch cannot be empty. Provide at least one email object.',
+            code: 'invalid_format',
+          },
+          { json: globalOpts.json },
+        );
+      }
+
+      const requestPayload = emails.map((email) => {
+        const payload = email as Record<string, unknown>;
+        if (!payload.attachments || !Array.isArray(payload.attachments)) {
+          return payload;
+        }
+        const { attachments, ...rest } = payload;
+        return {
+          ...rest,
+          attachments: attachments.map((a: any) => {
+            if (typeof a !== 'object' || a === null) return a;
+            const { content, ...aRest } = a;
+            return {
+              ...aRest,
+              ...(content && { byteLength: Buffer.from(content).length }),
+            };
+          }),
+        };
+      });
+
+      outputResult(
+        { dryRun: true, request: requestPayload },
+        { json: globalOpts.json },
+      );
+      return;
+    }
+
+    const resend = await requireClient(globalOpts, {
+      permission: 'sending_access',
+    });
 
     const batchData = await withSpinner(
       'Sending batch...',
