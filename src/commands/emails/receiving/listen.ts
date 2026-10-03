@@ -8,6 +8,7 @@ import { buildHelpText } from '../../../lib/help-text';
 import { errorMessage, outputError } from '../../../lib/output';
 import { safeTerminalText } from '../../../lib/safe-terminal-text';
 import { createSpinner } from '../../../lib/spinner';
+import { truncate } from '../../../lib/truncate';
 import { isInteractive } from '../../../lib/tty';
 import { withRetry } from '../../../lib/with-retry';
 import { type BoundedSet, createBoundedSet } from '../../../utils/bounded-set';
@@ -29,8 +30,7 @@ const displayEmail = (email: ListReceivingEmail, jsonMode: boolean): void => {
     const to = email.to.map(safeTerminalText).join(', ');
     const ts = pc.dim(`[${timestamp()}]`);
     const rawSubject = safeTerminalText(email.subject);
-    const subject =
-      rawSubject.length > 50 ? `${rawSubject.slice(0, 47)}...` : rawSubject;
+    const subject = truncate(rawSubject, 50);
     const from = safeTerminalText(email.from);
     const id = safeTerminalText(email.id);
     process.stderr.write(

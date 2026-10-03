@@ -8,6 +8,7 @@ import {
   vi,
 } from 'vitest';
 import { listReceivingCommand } from '../../../../src/commands/emails/receiving/list';
+import { renderReceivingEmailsTable } from '../../../../src/commands/emails/receiving/utils';
 import {
   captureTestEnv,
   expectExit1,
@@ -16,6 +17,9 @@ import {
   setNonInteractive,
   setupOutputSpies,
 } from '../../../helpers';
+
+const LONE_SURROGATE =
+  /[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/;
 
 const mockList = vi.fn(async () => ({
   data: {
@@ -158,5 +162,25 @@ describe('emails receiving list command', () => {
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('list_error');
+  });
+
+  it('does not leave a lone surrogate when truncating an emoji subject', () => {
+    const subject = `${'a'.repeat(46)}😀${'b'.repeat(10)}`;
+    const table = renderReceivingEmailsTable([
+      {
+        id: 'rcv_1',
+        to: ['inbox@example.com'],
+        from: 'sender@example.com',
+        subject,
+        created_at: '2026-02-18 12:00:00+00',
+        message_id: '<m@example.com>',
+        bcc: null,
+        cc: null,
+        reply_to: null,
+        attachments: [],
+      },
+    ]);
+    expect(table).not.toMatch(LONE_SURROGATE);
+    expect(table).toContain(`${'a'.repeat(46)}...`);
   });
 });

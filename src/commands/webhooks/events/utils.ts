@@ -4,6 +4,7 @@ import type {
 } from 'resend';
 import type { PickerConfig } from '../../../lib/prompts';
 import { renderTable } from '../../../lib/table';
+import { truncate } from '../../../lib/truncate';
 
 export function webhookEventPickerConfig(
   webhookId: string,
@@ -40,7 +41,7 @@ export function renderWebhookEventAttemptsTable(
     return [
       String(a.http_status_code),
       a.sent_at,
-      response.length > 60 ? `${response.slice(0, 57)}...` : response,
+      truncate(response, 60),
       a.id,
     ];
   });

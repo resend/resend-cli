@@ -8,6 +8,7 @@ import { buildHelpText } from '../../lib/help-text';
 import { outputError, outputResult } from '../../lib/output';
 import { cancelAndExit, pickItem } from '../../lib/prompts';
 import { withSpinner } from '../../lib/spinner';
+import { truncate } from '../../lib/truncate';
 import { isInteractive } from '../../lib/tty';
 import { COUNTRY_NAMES } from './countries';
 import { type Career, type CareerField, careerPickerConfig } from './utils';
@@ -334,7 +335,7 @@ async function confirmSubmission(
             ? 'No'
             : value
         : value;
-    return `${label}: ${truncate(display, 80)}`;
+    return `${label}: ${truncate(display.replace(/\s+/g, ' ').trim(), 80)}`;
   });
   lines.push(`Resume: ${basename(resumePath)}`);
 
@@ -344,13 +345,6 @@ async function confirmSubmission(
   if (p.isCancel(confirmed) || !confirmed) {
     cancelAndExit('Application not submitted.');
   }
-}
-
-function truncate(value: string, max: number): string {
-  const singleLine = value.replace(/\s+/g, ' ').trim();
-  return singleLine.length > max
-    ? `${singleLine.slice(0, max - 3)}...`
-    : singleLine;
 }
 
 function readResume(

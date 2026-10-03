@@ -3,6 +3,7 @@ import { runGet } from '../../../lib/actions';
 import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { pickId } from '../../../lib/prompts';
+import { truncate } from '../../../lib/truncate';
 import { receivedEmailPickerConfig } from './utils';
 
 export const getReceivingCommand = new Command('get')
@@ -40,10 +41,7 @@ export const getReceivingCommand = new Command('get')
             console.log(`Files:   ${data.attachments.length} attachment(s)`);
           }
           if (data.text) {
-            const snippet =
-              data.text.length > 200
-                ? `${data.text.slice(0, 197)}...`
-                : data.text;
+            const snippet = truncate(data.text, 200);
             console.log(`${snippet}`);
           } else if (data.html) {
             console.log(

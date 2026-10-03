@@ -1,6 +1,7 @@
 import type { Webhook, WebhookEvent } from 'resend';
 import type { PickerConfig } from '../../lib/prompts';
 import { renderTable } from '../../lib/table';
+import { truncate } from '../../lib/truncate';
 
 export const ALL_WEBHOOK_EVENTS: WebhookEvent[] = [
   'email.sent',
@@ -49,9 +50,7 @@ export const webhookPickerConfig: PickerConfig<{
 export function renderWebhooksTable(webhooks: Webhook[]): string {
   const rows = webhooks.map((w) => {
     const eventsStr = (w.events ?? []).join(', ');
-    const events =
-      eventsStr.length > 60 ? `${eventsStr.slice(0, 57)}...` : eventsStr;
-    return [w.endpoint, events, w.status, w.id];
+    return [w.endpoint, truncate(eventsStr, 60), w.status, w.id];
   });
   return renderTable(
     ['Endpoint', 'Events', 'Status', 'ID'],

@@ -8,6 +8,7 @@ import {
   printPaginationHint,
 } from '../../lib/pagination';
 import { renderTable } from '../../lib/table';
+import { truncate } from '../../lib/truncate';
 
 type SentEmail = {
   id: string;
@@ -22,9 +23,8 @@ type SentEmail = {
 function renderSentEmailsTable(emails: SentEmail[]): string {
   const rows = emails.map((e) => {
     const to = e.to.join(', ');
-    const toStr = to.length > 40 ? `${to.slice(0, 37)}...` : to;
-    const subject =
-      e.subject.length > 50 ? `${e.subject.slice(0, 47)}...` : e.subject;
+    const toStr = truncate(to, 40);
+    const subject = truncate(e.subject, 50);
     return [e.from, toStr, subject, e.last_event ?? '—', e.created_at, e.id];
   });
   return renderTable(

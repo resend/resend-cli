@@ -3,6 +3,7 @@ import { runGet } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { pickId } from '../../lib/prompts';
+import { truncate } from '../../lib/truncate';
 import { templatePickerConfig } from './utils';
 
 export const getTemplateCommand = new Command('get')
@@ -45,10 +46,7 @@ export const getTemplateCommand = new Command('get')
             console.log(`Reply-To: ${data.reply_to.join(', ')}`);
           }
           if (data.html) {
-            const snippet =
-              data.html.length > 200
-                ? `${data.html.slice(0, 197)}...`
-                : data.html;
+            const snippet = truncate(data.html, 200);
             console.log(`HTML: ${snippet}`);
           }
           if (data.variables?.length) {
