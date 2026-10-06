@@ -27,8 +27,8 @@ importers:
         specifier: 1.1.1
         version: 1.1.1
       resend:
-        specifier: 6.32.1-preview-inboxes.1
-        version: 6.32.1-preview-inboxes.1
+        specifier: 6.32.1-preview-inboxes.2
+        version: 6.32.1-preview-inboxes.2
     devDependencies:
       '@biomejs/biome':
         specifier: 2.4.11
@@ -1226,8 +1226,8 @@ packages:
     resolution: {integrity: sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q==}
     engines: {node: '>=0.10.0'}
 
-  resend@6.32.1-preview-inboxes.1:
-    resolution: {integrity: sha512-j306ikDlw8oSWiV8Opuaig2W23I0qepNrMe3ed37zkR5qB6VTGcp46U0ogo8nK7lNuql3aESRCWIB0LFEq17mA==}
+  resend@6.32.1-preview-inboxes.2:
+    resolution: {integrity: sha512-um+1zSOWxafJCQyR2N9r03zBnFl1WrkIP7qgyWZsC/YOXDEJbAv5P9cgO2FvkKLSsaqAnb5NJ4Dq+X5LBIDZbg==}
     engines: {node: '>=20'}
     peerDependencies:
       '@react-email/render': '*'
@@ -2431,7 +2431,7 @@ snapshots:
 
   require-directory@2.1.1: {}
 
-  resend@6.32.1-preview-inboxes.1:
+  resend@6.32.1-preview-inboxes.2:
     dependencies:
       postal-mime: 2.7.6
       standardwebhooks: 1.1.1

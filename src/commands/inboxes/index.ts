@@ -1,6 +1,7 @@
 import { Command } from '@commander-js/extra-typings';
 import pc from 'picocolors';
 import { buildHelpText } from '../../lib/help-text';
+import { inboxAgentCommand } from './agent/index';
 import { createInboxCommand } from './create';
 import { deleteInboxCommand } from './delete';
 import { inboxDraftsCommand } from './drafts/index';
@@ -40,5 +41,6 @@ Inboxes require a full-access API key — sending-only keys are rejected.`,
   .addCommand(inboxThreadsCommand)
   .addCommand(inboxLabelsCommand)
   .addCommand(inboxDraftsCommand)
+  .addCommand(inboxAgentCommand)
   .addCommand(updateInboxCommand)
   .addCommand(deleteInboxCommand);

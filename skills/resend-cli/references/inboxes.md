@@ -361,6 +361,34 @@ body.
 
 ---
 
+## inboxes agent get
+
+Retrieve an inbox's agent settings (default subcommand of `resend inboxes agent`).
+An inbox without a configured agent returns empty settings.
+
+**Flags:** `--inbox_id <id>` — required in non-interactive mode
+
+**Output:** `{"object":"inbox_agent","instructions":"<text>"|null,"tone":"<tone>"|null,"enabled_actions":["draft_reply"]}`
+
+---
+
+## inboxes agent update
+
+Update an inbox's agent settings. At least one option is required. Omitted
+fields keep their current value.
+
+**Flags:** `--inbox_id <id>` — required in non-interactive mode
+
+| Flag | Type | Description |
+|------|------|-------------|
+| `--instructions <text>` | string | Instructions the agent follows (max 4000 chars). Pass `""` to clear them |
+| `--tone <tone>` | string | Tone the agent writes in, e.g. `friendly and concise` (max 64 chars). Pass `""` to clear it |
+| `--enabled_actions <actions...>` | string[] | Replaces the whole set (comma or space-separated). One or more of `draft_reply`, `forward_thread`, `add_labels`, `assign_thread`, `mark_as_spam`, `archive_thread`, `delete_thread`. Pass `""` to disable all actions |
+
+**Output:** `{"object":"inbox_agent","id":"<uuid>"}`
+
+---
+
 ## inboxes delete
 
 Delete an inbox. Its threads and messages are removed and the address stops
