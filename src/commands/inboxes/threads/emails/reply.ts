@@ -35,6 +35,10 @@ export const replyInboxThreadEmailCommand = new Command('reply')
   .option('--text <text>', 'Plain text body of the reply')
   .option('--html <html>', 'HTML body of the reply')
   .option('--subject <subject>', 'Override the reply subject')
+  .option(
+    '--idempotency-key <key>',
+    'Deduplicate this send request using this key',
+  )
   .addHelpText(
     'after',
     buildHelpText({
@@ -97,15 +101,20 @@ The total number of recipients cannot exceed 50.`,
       {
         loading: 'Sending reply...',
         sdkCall: (resend) =>
-          resend.inboxes.threads.emails.reply({
-            inboxId,
-            threadId,
-            emailId,
-            ...body,
-            ...(opts.cc.length > 0 && { cc: opts.cc }),
-            ...(opts.bcc.length > 0 && { bcc: opts.bcc }),
-            ...(opts.subject && { subject: opts.subject }),
-          }),
+          resend.inboxes.threads.emails.reply(
+            {
+              inboxId,
+              threadId,
+              emailId,
+              ...body,
+              ...(opts.cc.length > 0 && { cc: opts.cc }),
+              ...(opts.bcc.length > 0 && { bcc: opts.bcc }),
+              ...(opts.subject && { subject: opts.subject }),
+            },
+            opts.idempotencyKey
+              ? { idempotencyKey: opts.idempotencyKey }
+              : undefined,
+          ),
         onInteractive: (data) => {
           console.log(`Reply sent: ${data.email_id}`);
           console.log(`To: ${data.to.join(', ')}`);

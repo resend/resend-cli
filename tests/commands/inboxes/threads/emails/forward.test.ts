@@ -144,6 +144,30 @@ describe('inboxes threads emails forward command', () => {
     expect(args).not.toHaveProperty('bcc');
   });
 
+  it('passes idempotencyKey as second arg to threads.emails.forward', async () => {
+    setupOutputSpies();
+
+    await forwardInboxThreadEmailCommand.parseAsync(
+      [
+        '--inbox_id',
+        INBOX_ID,
+        '--thread_id',
+        THREAD_ID,
+        '--email_id',
+        EMAIL_ID,
+        '--to',
+        'a@example.com',
+        '--idempotency-key',
+        'my-key-123',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockForward).toHaveBeenCalledTimes(1);
+    const opts = mockForward.mock.calls[0][1] as Record<string, unknown>;
+    expect(opts?.idempotencyKey).toBe('my-key-123');
+  });
+
   it('errors with missing_to when no recipient is given', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
