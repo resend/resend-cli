@@ -171,7 +171,7 @@ Retrieve a single email from a thread.
 ## inboxes threads emails reply
 
 Reply to a specific email in a thread. The reply is sent from the inbox
-address. The recipient comes from the original email. The total number of
+address. The recipients come from the original email. The total number of
 recipients cannot exceed 50.
 
 **Flags:** `--inbox_id <id> --thread_id <id> --email_id <id>` — required in
@@ -179,7 +179,7 @@ non-interactive mode; the email ID comes from `inboxes threads emails list`
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
-| `--cc <address>` | string | No | Cc address; repeat for multiple. Not copied from the original email |
+| `--cc <address>` | string | No | Cc address; repeat for multiple. Not copied from the original email, except with `--reply-all` |
 | `--bcc <address>` | string | No | Bcc address; repeat for multiple. Not copied from the original email |
 | `--text <text>` | string | One of text/html | Plain text reply body |
 | `--html <html>` | string | One of text/html | HTML reply body |

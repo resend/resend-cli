@@ -46,9 +46,10 @@ export const replyInboxThreadEmailCommand = new Command('reply')
   .addHelpText(
     'after',
     buildHelpText({
-      context: `Sends the reply from the inbox address. The recipient comes from the original email.
+      context: `Sends the reply from the inbox address. The recipients come from the original email.
 At least one of --text or --html is required.
---cc and --bcc are not copied from the original email; pass them to add recipients.
+--cc and --bcc are not copied from the original email, unless you pass --reply-all,
+which copies cc. Pass --cc and --bcc to add recipients.
 --reply-all keeps the sender in "to" and carries the other "to" and "cc" recipients
 of the original email into "cc", without the inbox address.
 The total number of recipients cannot exceed 50.`,
@@ -126,6 +127,9 @@ The total number of recipients cannot exceed 50.`,
         onInteractive: (data) => {
           console.log(`Reply sent: ${data.email_id}`);
           console.log(`To: ${data.to.join(', ')}`);
+          if (data.cc.length > 0) {
+            console.log(`Cc: ${data.cc.join(', ')}`);
+          }
         },
       },
       globalOpts,
