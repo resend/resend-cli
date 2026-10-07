@@ -10,6 +10,10 @@ export const sendInboxDraftCommand = new Command('send')
   .description('Send a draft')
   .option('--inbox_id <id>', 'Inbox UUID')
   .option('--draft_id <id>', 'Draft UUID')
+  .option(
+    '--idempotency-key <key>',
+    'Deduplicate this send request using this key',
+  )
   .addHelpText(
     'after',
     buildHelpText({
@@ -34,7 +38,13 @@ export const sendInboxDraftCommand = new Command('send')
     await runWrite(
       {
         loading: 'Sending draft...',
-        sdkCall: (resend) => resend.inboxes.drafts.send({ inboxId, draftId }),
+        sdkCall: (resend) =>
+          resend.inboxes.drafts.send(
+            { inboxId, draftId },
+            opts.idempotencyKey
+              ? { idempotencyKey: opts.idempotencyKey }
+              : undefined,
+          ),
         errorCode: 'send_error',
         successMsg: `Draft sent: ${draftId}`,
       },

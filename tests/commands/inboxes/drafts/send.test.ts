@@ -69,14 +69,34 @@ describe('inboxes drafts send command', () => {
       },
     );
 
-    expect(mockSend).toHaveBeenCalledWith({
-      inboxId: INBOX_ID,
-      draftId: DRAFT_ID,
-    });
+    expect(mockSend).toHaveBeenCalledWith(
+      { inboxId: INBOX_ID, draftId: DRAFT_ID },
+      undefined,
+    );
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
     expect(parsed.email_id).toBe(EMAIL_ID);
     expect(parsed.thread_id).toBe(THREAD_ID);
+  });
+
+  it('passes idempotencyKey as second arg to drafts.send', async () => {
+    spies = setupOutputSpies();
+
+    await sendInboxDraftCommand.parseAsync(
+      [
+        '--inbox_id',
+        INBOX_ID,
+        '--draft_id',
+        DRAFT_ID,
+        '--idempotency-key',
+        'my-key-123',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    const opts = mockSend.mock.calls[0][1] as Record<string, unknown>;
+    expect(opts?.idempotencyKey).toBe('my-key-123');
   });
 
   it('errors with send_error when SDK returns an error', async () => {

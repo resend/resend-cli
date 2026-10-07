@@ -193,6 +193,30 @@ describe('inboxes threads emails reply command', () => {
     expect(parsed.direction).toBe('outbound');
   });
 
+  it('passes idempotencyKey as second arg to threads.emails.reply', async () => {
+    spies = setupOutputSpies();
+
+    await replyInboxThreadEmailCommand.parseAsync(
+      [
+        '--inbox_id',
+        INBOX_ID,
+        '--thread_id',
+        THREAD_ID,
+        '--email_id',
+        EMAIL_ID,
+        '--text',
+        'ok',
+        '--idempotency-key',
+        'my-key-123',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockReply).toHaveBeenCalledTimes(1);
+    const opts = mockReply.mock.calls[0][1] as Record<string, unknown>;
+    expect(opts?.idempotencyKey).toBe('my-key-123');
+  });
+
   it('errors with missing_content when neither --text nor --html given', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});

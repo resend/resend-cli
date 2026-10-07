@@ -41,6 +41,10 @@ export const forwardInboxThreadEmailCommand = new Command('forward')
   .option('--text <text>', 'Plain text note to include with the forward')
   .option('--html <html>', 'HTML note to include with the forward')
   .option('--subject <subject>', 'Override the forwarded subject')
+  .option(
+    '--idempotency-key <key>',
+    'Deduplicate this send request using this key',
+  )
   .addHelpText(
     'after',
     buildHelpText({
@@ -87,17 +91,22 @@ export const forwardInboxThreadEmailCommand = new Command('forward')
       {
         loading: 'Forwarding email...',
         sdkCall: (resend) =>
-          resend.inboxes.threads.emails.forward({
-            inboxId,
-            threadId,
-            emailId,
-            to: opts.to,
-            ...(opts.cc.length > 0 && { cc: opts.cc }),
-            ...(opts.bcc.length > 0 && { bcc: opts.bcc }),
-            ...(opts.text && { text: opts.text }),
-            ...(opts.html && { html: opts.html }),
-            ...(opts.subject && { subject: opts.subject }),
-          }),
+          resend.inboxes.threads.emails.forward(
+            {
+              inboxId,
+              threadId,
+              emailId,
+              to: opts.to,
+              ...(opts.cc.length > 0 && { cc: opts.cc }),
+              ...(opts.bcc.length > 0 && { bcc: opts.bcc }),
+              ...(opts.text && { text: opts.text }),
+              ...(opts.html && { html: opts.html }),
+              ...(opts.subject && { subject: opts.subject }),
+            },
+            opts.idempotencyKey
+              ? { idempotencyKey: opts.idempotencyKey }
+              : undefined,
+          ),
         onInteractive: (data) => {
           console.log(`Email forwarded: ${data.email_id}`);
           console.log(`To: ${data.to.join(', ')}`);
