@@ -152,7 +152,7 @@ Auth resolves: `RESEND_API_KEY` env > config file (`resend login --key`). Use `-
 
 Read the matching reference file for detailed flags and output shapes.
 
-**Dry-run:** Only `emails send` and `broadcasts create` support `--dry-run` (payload validation before send/create). They print `{ "dryRun": true, "request": { ... } }` on stdout without calling the API. There is no `--dry-run` on `emails batch`, `broadcasts send`, or other commands yet.
+**Dry-run:** Only `emails send` and `broadcasts create` support `--dry-run` (payload validation before send/create). They print `{ "dryRun": true, "request": { ... } }` on stdout without calling the API. Other commands do not support `--dry-run`.
 
 ## Common Mistakes
 
