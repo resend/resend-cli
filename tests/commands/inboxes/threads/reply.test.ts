@@ -170,6 +170,49 @@ describe('inboxes threads emails reply command', () => {
     expect(args).not.toHaveProperty('bcc');
   });
 
+  it('passes --reply-all to the SDK as replyAll', async () => {
+    spies = setupOutputSpies();
+
+    await replyInboxThreadEmailCommand.parseAsync(
+      [
+        '--inbox_id',
+        INBOX_ID,
+        '--thread_id',
+        THREAD_ID,
+        '--email_id',
+        EMAIL_ID,
+        '--text',
+        'Thanks, all.',
+        '--reply-all',
+      ],
+      { from: 'user' },
+    );
+
+    const args = mockReply.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.replyAll).toBe(true);
+  });
+
+  it('omits replyAll when --reply-all is absent', async () => {
+    spies = setupOutputSpies();
+
+    await replyInboxThreadEmailCommand.parseAsync(
+      [
+        '--inbox_id',
+        INBOX_ID,
+        '--thread_id',
+        THREAD_ID,
+        '--email_id',
+        EMAIL_ID,
+        '--text',
+        'Thanks!',
+      ],
+      { from: 'user' },
+    );
+
+    const args = mockReply.mock.calls[0][0] as Record<string, unknown>;
+    expect(args).not.toHaveProperty('replyAll');
+  });
+
   it('outputs JSON with email_id when non-interactive', async () => {
     spies = setupOutputSpies();
 
