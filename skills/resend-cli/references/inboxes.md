@@ -184,6 +184,7 @@ non-interactive mode; the email ID comes from `inboxes threads emails list`
 | `--text <text>` | string | One of text/html | Plain text reply body |
 | `--html <html>` | string | One of text/html | HTML reply body |
 | `--subject <subject>` | string | No | Override the reply subject |
+| `--reply-all` | boolean | No | Reply to everyone on the original email. The sender stays in `to`; the other `to` and `cc` recipients go to `cc`, without the inbox address |
 | `--idempotency-key <key>` | string | No | Deduplicate request |
 
 **Output:** `{"id":"<uuid>","email_id":"<uuid>","direction":"outbound","from":"<inbox-address>","to":["<recipient>"],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>"|null,"message_id":"<message-id>"|null,"html":"<html>"|null,"text":"<text>"|null,"attachments":[],"read":true,"received_at":"<date>"}`
