@@ -37,7 +37,7 @@ export const replyInboxThreadEmailCommand = new Command('reply')
   .option('--subject <subject>', 'Override the reply subject')
   .option(
     '--reply-all',
-    'Reply to everyone on the original email, not only the sender',
+    'Reply to everyone on the original email, not only its author',
   )
   .option(
     '--idempotency-key <key>',
@@ -46,13 +46,15 @@ export const replyInboxThreadEmailCommand = new Command('reply')
   .addHelpText(
     'after',
     buildHelpText({
-      context: `Sends the reply from the inbox address. The recipients come from the original email.
+      context: `Sends the reply from the inbox address. The reply goes to the author of the
+original email, or its Reply-To address if it has one. If the inbox sent the original
+email, the reply goes to that email's "to" recipients.
 At least one of --text or --html is required.
---cc and --bcc are not copied from the original email, unless you pass --reply-all,
-which copies cc. Pass --cc and --bcc to add recipients.
---reply-all keeps the sender in "to" and carries the other "to" and "cc" recipients
-of the original email into "cc", without the inbox address.
-The total number of recipients cannot exceed 50.`,
+--reply-all also adds the original "to" and "cc" recipients, without the inbox address.
+Bcc is never copied.
+--cc and --bcc add recipients. With --reply-all, --cc merges with the copied cc,
+without duplicates.
+The total number of recipients cannot exceed 50, counted after --reply-all adds everyone.`,
       output: `  {"id":"<uuid>","email_id":"<uuid>","direction":"outbound","from":"<inbox-address>","to":["<recipient>"],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>|null","message_id":"<message-id>|null","html":"<html>|null","text":"<text>|null","attachments":[],"read":true,"received_at":"<date>"}`,
       errorCodes: [
         'auth_error',
