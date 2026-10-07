@@ -171,20 +171,22 @@ Retrieve a single email from a thread.
 ## inboxes threads emails reply
 
 Reply to a specific email in a thread. The reply is sent from the inbox
-address. The recipients come from the original email. The total number of
-recipients cannot exceed 50.
+address. It goes to the author of the original email, or its Reply-To address
+if it has one. If the inbox sent the original email, it goes to that email's
+`to` recipients. The total number of recipients cannot exceed 50, counted after
+`--reply-all` adds everyone.
 
 **Flags:** `--inbox_id <id> --thread_id <id> --email_id <id>` — required in
 non-interactive mode; the email ID comes from `inboxes threads emails list`
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
-| `--cc <address>` | string | No | Cc address; repeat for multiple. Not copied from the original email, except with `--reply-all` |
+| `--cc <address>` | string | No | Cc address; repeat for multiple. Not copied from the original email, except with `--reply-all`, which merges them without duplicates |
 | `--bcc <address>` | string | No | Bcc address; repeat for multiple. Not copied from the original email |
 | `--text <text>` | string | One of text/html | Plain text reply body |
 | `--html <html>` | string | One of text/html | HTML reply body |
 | `--subject <subject>` | string | No | Override the reply subject |
-| `--reply-all` | boolean | No | Reply to everyone on the original email. The sender stays in `to`; the other `to` and `cc` recipients go to `cc`, without the inbox address |
+| `--reply-all` | boolean | No | Reply to everyone on the original email: the author (or its Reply-To address) and the original `to` and `cc` recipients, without the inbox address. Bcc is never copied |
 | `--idempotency-key <key>` | string | No | Deduplicate request |
 
 **Output:** `{"id":"<uuid>","email_id":"<uuid>","direction":"outbound","from":"<inbox-address>","to":["<recipient>"],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>"|null,"message_id":"<message-id>"|null,"html":"<html>"|null,"text":"<text>"|null,"attachments":[],"read":true,"received_at":"<date>"}`
