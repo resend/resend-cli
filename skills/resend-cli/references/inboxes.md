@@ -82,16 +82,48 @@ Threads are ordered by newest activity first.
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--folder <folder>` | string | `inbox` | One of `inbox`, `archive`, `spam`, `sent`, `trash` |
-| `--query <text>` | string | — | Case-insensitive match against thread subjects and label names |
+| `--folder <folder>` | string | `inbox`, or `inbox`, `archive`, `sent` with `--label` | One of `inbox`, `archive`, `spam`, `sent`, `trash`; repeat for multiple |
 | `--label <label_id>` | string | — | Filter by label **UUID** (not name); repeat for multiple |
+| `--read` | boolean | — | Only threads where every email is read |
+| `--unread` | boolean | — | Only threads with at least one unread email |
 | `--limit <n>` | number | 10 | Max results, 1-100 |
 | `--after <cursor>` | string | — | Forward pagination cursor (a thread ID) |
 | `--before <cursor>` | string | — | Backward pagination cursor (a thread ID) |
 
+A thread matches a folder when any of its emails is in it. `spam` and `trash`
+are only included when you name them.
+
 **Alias:** `ls`
 
-**Output:** `{"object":"list","has_more":false,"data":[{"id":"<uuid>","subject":"<subject>"|null,"from":"<sender>"|null,"to":[],"cc":[],"bcc":[],"labels":[],"message_count":1,"has_attachment":false,"has_draft":false,"read":false,"received_at":"<date>"}]}`
+**Output:** `{"object":"list","has_more":false,"data":[{"id":"<uuid>","subject":"<subject>"|null,"from":"<sender>"|null,"to":[],"cc":[],"bcc":[],"labels":[],"message_count":1,"has_attachment":false,"has_draft":false,"read":false,"received_at":"<date>","folder":"inbox|archive|spam|sent|trash"}]}`
+
+---
+
+## inboxes threads search
+
+Search threads by text, people, attachments, and dates. Results are ordered by
+newest activity first and paginate like `threads list`. Search can be up to
+about a minute behind new emails; use `threads list` to browse exactly.
+
+**Flags:** `--inbox_id <id>` — required in non-interactive mode
+
+| Flag | Type | Description |
+|------|------|-------------|
+| `--query <text>` | string | Text to find in subject, body, sender, recipients, and attachment names. Every word must match; quote a phrase to match it exactly, prefix a word with `-` to exclude it. Max 256 characters |
+| `--from <address>` | string | Sender address or name, partial match; repeat for multiple (max 20) |
+| `--to <address>` | string | Recipient, matched like `--from` |
+| `--cc <address>` | string | Cc recipient, matched like `--from` |
+| `--bcc <address>` | string | Bcc recipient, matched like `--from` |
+| `--has_attachment` | boolean | Only emails with an attachment |
+| `--without_attachment` | boolean | Only emails without an attachment |
+| `--start_date <date>` | string | Emails sent on or after this date (`2026-09-01` or ISO 8601) |
+| `--end_date <date>` | string | Emails sent on or before this date; a date covers the whole day |
+
+Also takes `--folder`, `--label`, `--read`, `--unread`, `--limit`, `--after`,
+and `--before`, same as `threads list`.
+
+**Output:** same as `threads list`, plus `"matched_email_id":"<uuid>"|null` and
+`"highlights":{"subject":["<snippet>"],"body":["<snippet>"]}` on each thread.
 
 ---
 

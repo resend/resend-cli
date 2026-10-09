@@ -1,6 +1,55 @@
-import type { InboxMessage, InboxThread } from 'resend';
+import type {
+  InboxMessage,
+  InboxMessageFolder,
+  InboxThread,
+  ListInboxThreadsOptions,
+} from 'resend';
+import type { GlobalOpts } from '../../../lib/client';
+import { outputError } from '../../../lib/output';
 import type { PickerConfig } from '../../../lib/prompts';
 import { renderTable } from '../../../lib/table';
+
+export const collectValues = (value: string, previous: string[]) => [
+  ...previous,
+  value,
+];
+
+type ThreadFilterOpts = {
+  folder?: InboxMessageFolder[];
+  label: string[];
+  read?: true;
+  unread?: true;
+};
+
+export function threadFilters(
+  opts: ThreadFilterOpts,
+  globalOpts: GlobalOpts,
+): Pick<ListInboxThreadsOptions, 'folders' | 'labels' | 'read'> {
+  if (opts.read && opts.unread) {
+    outputError(
+      {
+        message: 'Use either --read or --unread, not both.',
+        code: 'invalid_options',
+      },
+      { json: globalOpts.json },
+    );
+  }
+
+  return {
+    folders: opts.folder,
+    labels: opts.label.length > 0 ? opts.label : undefined,
+    read: opts.read ? true : opts.unread ? false : undefined,
+  };
+}
+
+export function threadFilterFlags(opts: ThreadFilterOpts): string[] {
+  return [
+    ...(opts.folder ?? []).map((folder) => `--folder ${folder}`),
+    ...opts.label.map((label) => `--label ${label}`),
+    ...(opts.read ? ['--read'] : []),
+    ...(opts.unread ? ['--unread'] : []),
+  ];
+}
 
 export function inboxThreadPickerConfig(
   inboxId: string,

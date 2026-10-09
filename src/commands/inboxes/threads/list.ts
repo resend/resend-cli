@@ -10,32 +10,31 @@ import {
 } from '../../../lib/pagination';
 import { pickId } from '../../../lib/prompts';
 import { inboxPickerConfig } from '../utils';
-import { renderThreadsTable } from './utils';
-
-const collectLabels = (value: string, previous: string[]) => [
-  ...previous,
-  value,
-];
+import {
+  collectValues,
+  renderThreadsTable,
+  threadFilterFlags,
+  threadFilters,
+} from './utils';
 
 export const listInboxThreadsCommand = new Command('list')
   .alias('ls')
   .description('List threads in an inbox')
   .option('--inbox_id <id>', 'Inbox UUID')
   .addOption(
-    new Option('--folder <folder>', 'Folder to list (default: inbox)').choices(
-      INBOX_MESSAGE_FOLDERS,
-    ),
-  )
-  .option(
-    '--query <text>',
-    'Case-insensitive match against thread subjects and label names',
+    new Option(
+      '--folder <folder...>',
+      'Folder to list (default: inbox, or inbox, archive and sent with --label). Repeat the flag for multiple folders',
+    ).choices(INBOX_MESSAGE_FOLDERS),
   )
   .option(
     '--label <label_id>',
     'Filter by label UUID (repeat the flag for multiple labels)',
-    collectLabels,
+    collectValues,
     [] as string[],
   )
+  .option('--read', 'Only threads where every email is read')
+  .option('--unread', 'Only threads with at least one unread email')
   .option('--limit <n>', 'Maximum number of threads to return (1-100)', '10')
   .option(
     '--after <cursor>',
@@ -51,24 +50,28 @@ export const listInboxThreadsCommand = new Command('list')
       context: `Threads are ordered by newest activity first. Pass the last thread ID of the
 previous page as --after to fetch the next page.
 
---label takes label UUIDs (from "resend inboxes labels list"), not label names.`,
-      output: `  {"object":"list","has_more":false,"data":[{"id":"<uuid>","subject":"<subject>|null","from":"<sender>|null","to":[],"cc":[],"bcc":[],"labels":[],"message_count":1,"has_attachment":false,"has_draft":false,"read":false,"received_at":"<date>"}]}`,
+--label takes label UUIDs (from "resend inboxes labels list"), not label names.
+To find threads by text, people, attachments, or dates, use
+"resend inboxes threads search".`,
+      output: `  {"object":"list","has_more":false,"data":[{"id":"<uuid>","subject":"<subject>|null","from":"<sender>|null","to":[],"cc":[],"bcc":[],"labels":[],"message_count":1,"has_attachment":false,"has_draft":false,"read":false,"received_at":"<date>","folder":"inbox|archive|spam|sent|trash"}]}`,
       errorCodes: [
         'auth_error',
+        'invalid_options',
         'invalid_limit',
         'invalid_pagination',
         'list_error',
       ],
       examples: [
         'resend inboxes threads list --inbox_id 78261eea-8f8b-4381-83c6-79fa7120f1cf',
-        'resend inboxes threads list --inbox_id 78261eea-8f8b-4381-83c6-79fa7120f1cf --folder archive --json',
-        'resend inboxes threads list --inbox_id 78261eea-8f8b-4381-83c6-79fa7120f1cf --query billing --json',
+        'resend inboxes threads list --inbox_id 78261eea-8f8b-4381-83c6-79fa7120f1cf --folder inbox --folder archive --json',
+        'resend inboxes threads list --inbox_id 78261eea-8f8b-4381-83c6-79fa7120f1cf --label <label_id> --unread --json',
         'resend inboxes threads list --inbox_id 78261eea-8f8b-4381-83c6-79fa7120f1cf --limit 25 --after <thread_id> --json',
       ],
     }),
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const filters = threadFilters(opts, globalOpts);
     const limit = parseLimitOpt(opts.limit, globalOpts);
     const paginationOpts = buildPaginationOpts(
       limit,
@@ -83,9 +86,7 @@ previous page as --after to fetch the next page.
         sdkCall: (resend) =>
           resend.inboxes.threads.list({
             inboxId,
-            ...(opts.folder && { folder: opts.folder }),
-            ...(opts.query && { query: opts.query }),
-            ...(opts.label.length > 0 && { label: opts.label }),
+            ...filters,
             ...paginationOpts,
           }),
         onInteractive: (list) => {
@@ -97,12 +98,8 @@ previous page as --after to fetch the next page.
             profile: globalOpts.profile,
             extraFlags: [
               `--inbox_id ${inboxId}`,
-              opts.folder && `--folder ${opts.folder}`,
-              opts.query && `--query ${opts.query}`,
-              ...opts.label.map((label) => `--label ${label}`),
-            ]
-              .filter(Boolean)
-              .join(' '),
+              ...threadFilterFlags(opts),
+            ].join(' '),
           });
         },
       },

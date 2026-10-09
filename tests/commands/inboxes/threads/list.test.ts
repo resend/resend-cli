@@ -38,6 +38,7 @@ const mockList = vi.fn(async () => ({
         has_draft: false,
         read: false,
         received_at: '2026-09-15T00:00:00.000Z',
+        folder: 'inbox' as const,
       },
     ],
   },
@@ -85,11 +86,13 @@ describe('inboxes threads list command', () => {
     expect(mockList).toHaveBeenCalledTimes(1);
     const args = mockList.mock.calls[0][0] as Record<string, unknown>;
     expect(args.inboxId).toBe(INBOX_ID);
-    expect(args.folder).toBeUndefined();
+    expect(args.folders).toBeUndefined();
+    expect(args.labels).toBeUndefined();
+    expect(args.read).toBeUndefined();
     expect(args.limit).toBe(10);
   });
 
-  it('passes folder, query, labels, and pagination options', async () => {
+  it('passes folders, labels, read, and pagination options', async () => {
     spies = setupOutputSpies();
 
     await listInboxThreadsCommand.parseAsync(
@@ -97,9 +100,10 @@ describe('inboxes threads list command', () => {
         '--inbox_id',
         INBOX_ID,
         '--folder',
+        'inbox',
+        '--folder',
         'archive',
-        '--query',
-        'billing',
+        '--unread',
         '--label',
         'label-1',
         '--label',
@@ -113,11 +117,28 @@ describe('inboxes threads list command', () => {
     );
 
     const args = mockList.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.folder).toBe('archive');
-    expect(args.query).toBe('billing');
-    expect(args.label).toEqual(['label-1', 'label-2']);
+    expect(args.folders).toEqual(['inbox', 'archive']);
+    expect(args.labels).toEqual(['label-1', 'label-2']);
+    expect(args.read).toBe(false);
     expect(args.limit).toBe(25);
     expect(args.after).toBe(THREAD_ID);
+  });
+
+  it('errors with invalid_options when --read and --unread are both passed', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    await expectExit1(() =>
+      listInboxThreadsCommand.parseAsync(
+        ['--inbox_id', INBOX_ID, '--read', '--unread'],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_options');
+    expect(mockList).not.toHaveBeenCalled();
   });
 
   it('outputs JSON list when non-interactive', async () => {
