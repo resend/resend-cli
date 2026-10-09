@@ -11,7 +11,11 @@ import {
 } from '../../../lib/pagination';
 import { pickId } from '../../../lib/prompts';
 import { inboxPickerConfig } from '../utils';
-import { renderThreadsTable, threadFilterFlags, threadFilters } from './utils';
+import {
+  renderThreadSearchTable,
+  threadFilterFlags,
+  threadFilters,
+} from './utils';
 
 const shellQuote = (value: string) =>
   /^[\w@.+:,=/-]+$/.test(value) ? value : `'${value.replace(/'/g, `'\\''`)}'`;
@@ -139,7 +143,7 @@ exactly and up to date, use "resend inboxes threads list".`,
             ...paginationOpts,
           }),
         onInteractive: (list) => {
-          console.log(renderThreadsTable(list.data));
+          console.log(renderThreadSearchTable(list.data));
           printPaginationHint(list, 'inboxes threads search', {
             limit,
             before: opts.before,
