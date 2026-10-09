@@ -13,6 +13,9 @@ import { pickId } from '../../../lib/prompts';
 import { inboxPickerConfig } from '../utils';
 import { renderThreadsTable, threadFilterFlags, threadFilters } from './utils';
 
+const shellQuote = (value: string) =>
+  /^[\w@.+:,=/-]+$/.test(value) ? value : `'${value.replace(/'/g, `'\\''`)}'`;
+
 export const searchInboxThreadsCommand = new Command('search')
   .description(
     'Search threads in an inbox by text, people, attachments, and dates',
@@ -144,16 +147,17 @@ exactly and up to date, use "resend inboxes threads list".`,
             profile: globalOpts.profile,
             extraFlags: [
               `--inbox_id ${inboxId}`,
-              opts.query !== undefined &&
-                `--query ${JSON.stringify(opts.query)}`,
-              opts.from && `--from ${opts.from.join(' ')}`,
-              opts.to && `--to ${opts.to.join(' ')}`,
-              opts.cc && `--cc ${opts.cc.join(' ')}`,
-              opts.bcc && `--bcc ${opts.bcc.join(' ')}`,
+              opts.query !== undefined && `--query ${shellQuote(opts.query)}`,
+              opts.from && `--from ${opts.from.map(shellQuote).join(' ')}`,
+              opts.to && `--to ${opts.to.map(shellQuote).join(' ')}`,
+              opts.cc && `--cc ${opts.cc.map(shellQuote).join(' ')}`,
+              opts.bcc && `--bcc ${opts.bcc.map(shellQuote).join(' ')}`,
               opts.has_attachment && '--has_attachment',
               opts.without_attachment && '--without_attachment',
-              opts.start_date && `--start_date ${opts.start_date}`,
-              opts.end_date && `--end_date ${opts.end_date}`,
+              opts.start_date !== undefined &&
+                `--start_date ${shellQuote(opts.start_date)}`,
+              opts.end_date !== undefined &&
+                `--end_date ${shellQuote(opts.end_date)}`,
               ...threadFilterFlags(opts),
             ]
               .filter(Boolean)

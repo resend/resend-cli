@@ -84,8 +84,8 @@ Threads are ordered by newest activity first.
 |------|------|---------|-------------|
 | `--folders <folders...>` | string[] | `inbox`, or `inbox`, `archive`, `sent` with `--labels` | One or more of `inbox`, `archive`, `spam`, `sent`, `trash` |
 | `--labels <label_ids...>` | string[] | — | One or more label **UUIDs** (not names); returns threads with any of them |
-| `--read` | boolean | — | Only threads where every email is read |
-| `--unread` | boolean | — | Only threads with at least one unread email |
+| `--read` | boolean | — | Only threads where every email is read; can't combine with `--unread` |
+| `--unread` | boolean | — | Only threads with at least one unread email; can't combine with `--read` |
 | `--limit <n>` | number | 10 | Max results, 1-100 |
 | `--after <cursor>` | string | — | Forward pagination cursor (a thread ID) |
 | `--before <cursor>` | string | — | Backward pagination cursor (a thread ID) |
@@ -114,8 +114,8 @@ about a minute behind new emails; use `threads list` to browse exactly.
 | `--to <addresses...>` | string[] | Recipients, matched like `--from` |
 | `--cc <addresses...>` | string[] | Cc recipients, matched like `--from` |
 | `--bcc <addresses...>` | string[] | Bcc recipients, matched like `--from` |
-| `--has_attachment` | boolean | Only emails with an attachment |
-| `--without_attachment` | boolean | Only emails without an attachment |
+| `--has_attachment` | boolean | Only emails with an attachment; can't combine with `--without_attachment` |
+| `--without_attachment` | boolean | Only emails without an attachment; can't combine with `--has_attachment` |
 | `--start_date <date>` | string | Emails sent on or after this date (`2026-09-01` or ISO 8601) |
 | `--end_date <date>` | string | Emails sent on or before this date; a date covers the whole day |
 
@@ -123,7 +123,9 @@ Also takes `--folders`, `--labels`, `--read`, `--unread`, `--limit`, `--after`,
 and `--before`, same as `threads list`.
 
 **Output:** same as `threads list`, plus `"matched_email_id":"<uuid>"|null` and
-`"highlights":{"subject":["<snippet>"],"body":["<snippet>"]}` on each thread.
+`"highlights"` on each thread. `highlights` only has keys where `--query`
+matched (`subject`, `body`, `from`, `to`, `cc`, `bcc`, `attachments`), each an
+array of snippets with matches wrapped in `**`, and is `{}` without `--query`.
 
 ---
 

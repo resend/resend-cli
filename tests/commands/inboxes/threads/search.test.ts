@@ -164,6 +164,49 @@ describe('inboxes threads search command', () => {
     expect(parsed.data[0].highlights.subject).toEqual(['**Billing** question']);
   });
 
+  it('shell-quotes search values in the next-page hint', async () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    delete process.env.CI;
+    delete process.env.GITHUB_ACTIONS;
+    process.env.TERM = 'xterm';
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
+    const page = await mockSearch();
+    mockSearch.mockResolvedValueOnce({
+      ...page,
+      data: { ...page.data, has_more: true },
+    });
+
+    await searchInboxThreadsCommand.parseAsync(
+      [
+        '--inbox_id',
+        INBOX_ID,
+        '--query',
+        `"q3 renewal" it's $(whoami)`,
+        '--from',
+        'Isabella Smith',
+        'carolina@example.com',
+      ],
+      { from: 'user' },
+    );
+
+    const hint = logSpy.mock.calls.map((call) => String(call[0])).join('\n');
+    logSpy.mockRestore();
+    stderrSpy.mockRestore();
+    expect(hint).toContain(
+      `--query '"q3 renewal" it'\\''s $(whoami)' --from 'Isabella Smith' carolina@example.com`,
+    );
+  });
+
   it('errors with invalid_options when both attachment flags are passed', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
