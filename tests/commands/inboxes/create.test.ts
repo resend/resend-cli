@@ -20,6 +20,11 @@ import {
 const INBOX_ID = '78261eea-8f8b-4381-83c6-79fa7120f1cf';
 
 const mockCreate = vi.fn(async () => ({
+  data: { object: 'inbox' as const, id: INBOX_ID },
+  error: null,
+}));
+
+const mockGet = vi.fn(async () => ({
   data: {
     object: 'inbox' as const,
     id: INBOX_ID,
@@ -39,7 +44,7 @@ const mockCreate = vi.fn(async () => ({
 vi.mock('resend', () => ({
   Resend: class MockResend {
     constructor(public key: string) {}
-    inboxes = { create: mockCreate };
+    inboxes = { create: mockCreate, get: mockGet };
   },
 }));
 
@@ -52,6 +57,7 @@ describe('inboxes create command', () => {
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
     mockCreate.mockClear();
+    mockGet.mockClear();
   });
 
   afterEach(() => {
@@ -100,7 +106,7 @@ describe('inboxes create command', () => {
     expect(args.forwarding).toBe(true);
   });
 
-  it('outputs JSON with id when non-interactive', async () => {
+  it('outputs the fetched inbox as JSON when non-interactive', async () => {
     spies = setupOutputSpies();
 
     await createInboxCommand.parseAsync(
@@ -108,10 +114,32 @@ describe('inboxes create command', () => {
       { from: 'user' },
     );
 
+    expect(mockGet).toHaveBeenCalledWith(INBOX_ID);
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
     expect(parsed.id).toBe(INBOX_ID);
     expect(parsed.email_address).toBe('support@acme.dev');
+    expect(parsed.receiving_address).toBeNull();
+  });
+
+  it('names the created inbox when fetching it fails', async () => {
+    setNonInteractive();
+    mockGet.mockResolvedValueOnce(
+      mockSdkError('Inbox not found.', 'not_found') as never,
+    );
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    await expectExit1(() =>
+      createInboxCommand.parseAsync(['--email_address', 'support@acme.dev'], {
+        from: 'user',
+      }),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('fetch_error');
+    expect(output).toContain(`Inbox ${INBOX_ID} was created`);
+    expect(mockCreate).toHaveBeenCalledTimes(1);
   });
 
   it('errors with missing_email_address in non-interactive mode when flag absent', async () => {
