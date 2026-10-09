@@ -1,12 +1,11 @@
 import { Command, Option } from '@commander-js/extra-typings';
-import { INBOX_LABEL_COLORS } from 'resend';
 import { runWrite } from '../../../lib/actions';
 import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { outputError } from '../../../lib/output';
 import { pickId } from '../../../lib/prompts';
 import { inboxPickerConfig } from '../utils';
-import { inboxLabelPickerConfig } from './utils';
+import { inboxLabelPickerConfig, parseLabelColor } from './utils';
 
 export const updateInboxLabelCommand = new Command('update')
   .description("Update a label's name or color")
@@ -14,9 +13,10 @@ export const updateInboxLabelCommand = new Command('update')
   .option('--label_id <id>', 'Label UUID')
   .option('--name <name>', 'New label name (max 64 characters)')
   .addOption(
-    new Option('--color <color>', 'New label color').choices(
-      INBOX_LABEL_COLORS,
-    ),
+    new Option(
+      '--color <color>',
+      'New label color as a hex code like #E93D82',
+    ).argParser(parseLabelColor),
   )
   .addHelpText(
     'after',
@@ -26,7 +26,7 @@ export const updateInboxLabelCommand = new Command('update')
       errorCodes: ['auth_error', 'no_changes', 'update_error'],
       examples: [
         'resend inboxes labels update --inbox_id <inbox_id> --label_id <label_id> --name "Billing"',
-        'resend inboxes labels update --inbox_id <inbox_id> --label_id <label_id> --color teal --json',
+        "resend inboxes labels update --inbox_id <inbox_id> --label_id <label_id> --color '#12A594' --json",
       ],
     }),
   )

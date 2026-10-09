@@ -25,16 +25,12 @@ const mockUpdate = vi.fn(async () => ({
   error: null,
 }));
 
-vi.mock('resend', async (importOriginal) => {
-  const original = await importOriginal<typeof import('resend')>();
-  return {
-    INBOX_LABEL_COLORS: original.INBOX_LABEL_COLORS,
-    Resend: class MockResend {
-      constructor(public key: string) {}
-      inboxes = { labels: { update: mockUpdate } };
-    },
-  };
-});
+vi.mock('resend', () => ({
+  Resend: class MockResend {
+    constructor(public key: string) {}
+    inboxes = { labels: { update: mockUpdate } };
+  },
+}));
 
 describe('inboxes labels update command', () => {
   const restoreEnv = captureTestEnv();
@@ -66,7 +62,7 @@ describe('inboxes labels update command', () => {
         '--name',
         'Renamed',
         '--color',
-        'crimson',
+        '#E93D82',
       ],
       { from: 'user' },
     );
@@ -76,7 +72,7 @@ describe('inboxes labels update command', () => {
     expect(args.inboxId).toBe(INBOX_ID);
     expect(args.labelId).toBe(LABEL_ID);
     expect(args.name).toBe('Renamed');
-    expect(args.color).toBe('crimson');
+    expect(args.color).toBe('#E93D82');
   });
 
   it('errors with no_changes when no option is given', async () => {

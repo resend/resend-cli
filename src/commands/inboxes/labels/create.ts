@@ -1,19 +1,20 @@
 import { Command, Option } from '@commander-js/extra-typings';
-import { INBOX_LABEL_COLORS } from 'resend';
 import { runCreate } from '../../../lib/actions';
 import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { pickId, requireText } from '../../../lib/prompts';
 import { inboxPickerConfig } from '../utils';
+import { parseLabelColor } from './utils';
 
 export const createInboxLabelCommand = new Command('create')
   .description('Create a label in an inbox')
   .option('--inbox_id <id>', 'Inbox UUID')
   .option('--name <name>', 'Label name (required, max 64 characters)')
   .addOption(
-    new Option('--color <color>', 'Label color (random when omitted)').choices(
-      INBOX_LABEL_COLORS,
-    ),
+    new Option(
+      '--color <color>',
+      'Label color as a hex code like #E93D82 (random when omitted)',
+    ).argParser(parseLabelColor),
   )
   .addHelpText(
     'after',
@@ -25,7 +26,7 @@ Non-interactive: --name is required.`,
       errorCodes: ['auth_error', 'missing_name', 'create_error'],
       examples: [
         'resend inboxes labels create --inbox_id <inbox_id> --name "Billing"',
-        'resend inboxes labels create --inbox_id <inbox_id> --name "Urgent" --color crimson --json',
+        'resend inboxes labels create --inbox_id <inbox_id> --name "Urgent" --color \'#E93D82\' --json',
       ],
     }),
   )

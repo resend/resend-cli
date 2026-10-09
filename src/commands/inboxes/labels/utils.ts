@@ -1,4 +1,5 @@
-import type { InboxLabel } from 'resend';
+import { InvalidArgumentError } from '@commander-js/extra-typings';
+import type { InboxLabel, InboxLabelColor } from 'resend';
 import type { PickerConfig } from '../../../lib/prompts';
 import { renderTable } from '../../../lib/table';
 
@@ -15,6 +16,13 @@ export function inboxLabelPickerConfig(
       })),
     display: (l) => ({ label: l.name, hint: l.id }),
   };
+}
+
+export function parseLabelColor(value: string): InboxLabelColor {
+  if (!/^#[0-9A-Fa-f]{6}$/.test(value)) {
+    throw new InvalidArgumentError('Use a hex color like #E93D82.');
+  }
+  return value as InboxLabelColor;
 }
 
 export function renderLabelsTable(labels: InboxLabel[]): string {
