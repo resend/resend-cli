@@ -15,7 +15,7 @@ export const inboxLabelsCommand = new Command('labels')
 filter with "resend inboxes threads list --inbox_id <inbox_id> --labels <label_id>".`,
       examples: [
         'resend inboxes labels list --inbox_id <inbox_id>',
-        'resend inboxes labels create --inbox_id <inbox_id> --name "Billing" --color teal',
+        'resend inboxes labels create --inbox_id <inbox_id> --name "Billing" --color \'#12A594\'',
         'resend inboxes labels delete --inbox_id <inbox_id> --label_id <label_id> --yes',
       ],
     }),

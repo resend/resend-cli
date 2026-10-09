@@ -27,7 +27,7 @@ const mockList = vi.fn(async () => ({
       {
         id: LABEL_ID,
         name: 'Billing',
-        color: 'teal' as const,
+        color: '#12A594' as const,
         created_at: '2026-09-15T00:00:00.000Z',
       },
     ],

@@ -25,21 +25,18 @@ const mockCreate = vi.fn(async () => ({
   error: null,
 }));
 
-vi.mock('resend', async (importOriginal) => {
-  const original = await importOriginal<typeof import('resend')>();
-  return {
-    INBOX_LABEL_COLORS: original.INBOX_LABEL_COLORS,
-    Resend: class MockResend {
-      constructor(public key: string) {}
-      inboxes = { labels: { create: mockCreate } };
-    },
-  };
-});
+vi.mock('resend', () => ({
+  Resend: class MockResend {
+    constructor(public key: string) {}
+    inboxes = { labels: { create: mockCreate } };
+  },
+}));
 
 describe('inboxes labels create command', () => {
   const restoreEnv = captureTestEnv();
   let errorSpy: MockInstance | undefined;
   let exitSpy: MockInstance | undefined;
+  let stderrSpy: MockInstance | undefined;
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
@@ -50,15 +47,17 @@ describe('inboxes labels create command', () => {
     restoreEnv();
     errorSpy?.mockRestore();
     exitSpy?.mockRestore();
+    stderrSpy?.mockRestore();
     errorSpy = undefined;
     exitSpy = undefined;
+    stderrSpy = undefined;
   });
 
   it('creates a label with --name and --color', async () => {
     setupOutputSpies();
 
     await createInboxLabelCommand.parseAsync(
-      ['--inbox_id', INBOX_ID, '--name', 'Billing', '--color', 'teal'],
+      ['--inbox_id', INBOX_ID, '--name', 'Billing', '--color', '#12A594'],
       { from: 'user' },
     );
 
@@ -66,7 +65,25 @@ describe('inboxes labels create command', () => {
     const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.inboxId).toBe(INBOX_ID);
     expect(args.name).toBe('Billing');
-    expect(args.color).toBe('teal');
+    expect(args.color).toBe('#12A594');
+  });
+
+  it('rejects a color that is not a hex code', async () => {
+    stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
+    exitSpy = mockExitThrow();
+
+    await expectExit1(() =>
+      createInboxLabelCommand.parseAsync(
+        ['--inbox_id', INBOX_ID, '--name', 'Billing', '--color', 'teal'],
+        { from: 'user' },
+      ),
+    );
+
+    const output = stderrSpy.mock.calls.map((c) => String(c[0])).join(' ');
+    expect(output).toContain('Use a hex color like #E93D82.');
+    expect(mockCreate).not.toHaveBeenCalled();
   });
 
   it('omits color when not provided', async () => {

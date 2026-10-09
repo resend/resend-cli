@@ -261,7 +261,7 @@ List all labels in an inbox (not paginated; default subcommand of
 
 **Alias:** `ls`
 
-**Output:** `{"object":"list","data":[{"id":"<uuid>","name":"<name>","color":"<color>","created_at":"<date>"}]}`
+**Output:** `{"object":"list","data":[{"id":"<uuid>","name":"<name>","color":"#RRGGBB","created_at":"<date>"}]}`
 
 ---
 
@@ -274,7 +274,7 @@ Create a label. An inbox can have up to 100 labels.
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
 | `--name <name>` | string | Yes (non-interactive) | Label name, max 64 characters |
-| `--color <color>` | string | No | One of `cyan`, `teal`, `grass`, `lime`, `yellow`, `orange`, `iris`, `plum`, `crimson`, `bronze`, `mauve` (random when omitted) |
+| `--color <color>` | string | No | Hex code like `'#E93D82'`, quoted so the shell keeps the `#` (random when omitted) |
 
 **Output:** `{"object":"inbox_label","id":"<uuid>"}`
 
@@ -289,7 +289,7 @@ Update a label's name or color. At least one option is required.
 | Flag | Type | Description |
 |------|------|-------------|
 | `--name <name>` | string | New label name |
-| `--color <color>` | string | New label color (same choices as create) |
+| `--color <color>` | string | New label color as a hex code (same format as create) |
 
 **Output:** `{"object":"inbox_label","id":"<uuid>"}`
 
