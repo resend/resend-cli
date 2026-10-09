@@ -23,22 +23,7 @@ const THREAD_ID = '3deaccfa-f572-443c-be6f-92b74f9d5c48';
 const EMAIL_ID = '5e0e0b3c-9497-47d3-a527-4bd5e0e2f0f5';
 
 const mockCreate = vi.fn(async () => ({
-  data: {
-    object: 'inbox_draft' as const,
-    id: DRAFT_ID,
-    type: 'standalone' as const,
-    to: ['user@example.com'],
-    cc: [],
-    bcc: [],
-    subject: 'Hello',
-    html: null,
-    text: 'Draft body',
-    thread_id: null,
-    reply_to_email_id: null,
-    email_id: null,
-    created_at: '2026-09-15T00:00:00.000Z',
-    updated_at: '2026-09-15T00:00:00.000Z',
-  },
+  data: { object: 'inbox_draft' as const, id: DRAFT_ID },
   error: null,
 }));
 

@@ -21,13 +21,7 @@ const INBOX_ID = '78261eea-8f8b-4381-83c6-79fa7120f1cf';
 const LABEL_ID = '11111111-2222-3333-4444-555555555555';
 
 const mockCreate = vi.fn(async () => ({
-  data: {
-    object: 'inbox_label' as const,
-    id: LABEL_ID,
-    name: 'Billing',
-    color: 'teal' as const,
-    created_at: '2026-09-15T00:00:00.000Z',
-  },
+  data: { object: 'inbox_label' as const, id: LABEL_ID },
   error: null,
 }));
 

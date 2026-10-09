@@ -25,6 +25,8 @@ Create a new inbox at one of your verified domains.
 | `--from_name <name>` | string | No | Name used when sending from this inbox, e.g. `Ada from Support`. A plain name, not `Name <email>` |
 | `--forwarding` | boolean | No | Receive mail without an MX record — Resend returns a `receiving_address` to forward mail to |
 
+Creates the inbox, then fetches it, so the output includes `receiving_address`.
+
 **Output:** `{"object":"inbox","id":"<uuid>","name":"<name>","email_address":"<address>","domain_id":"<uuid>","receiving_address":"<address>"|null,"from_name":"<name>"|null,"unread":0,"drafts":0,"last_received":"<date>"|null,"created_at":"<date>"}`
 
 ---
@@ -240,7 +242,7 @@ Create a label. An inbox can have up to 100 labels.
 | `--name <name>` | string | Yes (non-interactive) | Label name, max 64 characters |
 | `--color <color>` | string | No | One of `cyan`, `teal`, `grass`, `lime`, `yellow`, `orange`, `iris`, `plum`, `crimson`, `bronze`, `mauve` (random when omitted) |
 
-**Output:** `{"object":"inbox_label","id":"<uuid>","name":"<name>","color":"<color>","created_at":"<date>"}`
+**Output:** `{"object":"inbox_label","id":"<uuid>"}`
 
 ---
 
@@ -313,7 +315,7 @@ least one content field is required. Combined recipients cannot exceed 50.
 | `--thread_id <thread_id>` | string | Thread to reply to (pairs with `--reply_to_email_id`) |
 | `--reply_to_email_id <email_id>` | string | Email the draft replies to (pairs with `--thread_id`) |
 
-**Output:** `{"object":"inbox_draft","id":"<uuid>","type":"standalone|reply","to":["<address>"]|null,"cc":[],"bcc":[],"subject":"<subject>"|null,"html":"<html>"|null,"text":"<text>"|null,"thread_id":"<uuid>"|null,"reply_to_email_id":"<uuid>"|null,"email_id":null,"created_at":"<date>","updated_at":"<date>"}`
+**Output:** `{"object":"inbox_draft","id":"<uuid>"}`
 
 ---
 
@@ -323,7 +325,7 @@ Retrieve a draft, including its full body.
 
 **Flags:** `--inbox_id <id> --draft_id <id>` — required in non-interactive mode
 
-**Output:** same shape as `drafts create`.
+**Output:** `{"object":"inbox_draft","id":"<uuid>","type":"standalone|reply","to":["<address>"]|null,"cc":[],"bcc":[],"subject":"<subject>"|null,"html":"<html>"|null,"text":"<text>"|null,"thread_id":"<uuid>"|null,"reply_to_email_id":"<uuid>"|null,"email_id":null,"created_at":"<date>","updated_at":"<date>"}`
 
 ---
 
@@ -335,7 +337,7 @@ required; provided fields replace existing values. Same flags as
 
 **Flags:** `--inbox_id <id> --draft_id <id>` — required in non-interactive mode
 
-**Output:** same shape as `drafts create`.
+**Output:** same shape as `drafts get`.
 
 ---
 

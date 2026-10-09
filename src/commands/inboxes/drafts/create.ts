@@ -54,7 +54,7 @@ At least one content field (--to, --cc, --bcc, --subject, --text, --html)
 is required. Combined recipients cannot exceed 50.
 
 Send the draft later with "resend inboxes drafts send".`,
-      output: `  {"object":"inbox_draft","id":"<uuid>","type":"standalone|reply","to":["<address>"]|null,"cc":[],"bcc":[],"subject":"<subject>|null","html":"<html>|null","text":"<text>|null","thread_id":"<uuid>|null","reply_to_email_id":"<uuid>|null","email_id":null,"created_at":"<date>","updated_at":"<date>"}`,
+      output: `  {"object":"inbox_draft","id":"<uuid>"}`,
       errorCodes: [
         'auth_error',
         'invalid_options',
@@ -124,7 +124,6 @@ Send the draft later with "resend inboxes drafts send".`,
         sdkCall: (resend) => resend.inboxes.drafts.create(payload),
         onInteractive: (data) => {
           console.log(`Draft created: ${data.id}`);
-          console.log(`Type: ${data.type}`);
         },
       },
       globalOpts,

@@ -21,7 +21,7 @@ export const createInboxLabelCommand = new Command('create')
       context: `An inbox can have up to 100 labels.
 
 Non-interactive: --name is required.`,
-      output: `  {"object":"inbox_label","id":"<uuid>","name":"<name>","color":"<color>","created_at":"<date>"}`,
+      output: `  {"object":"inbox_label","id":"<uuid>"}`,
       errorCodes: ['auth_error', 'missing_name', 'create_error'],
       examples: [
         'resend inboxes labels create --inbox_id <inbox_id> --name "Billing"',
@@ -51,7 +51,6 @@ Non-interactive: --name is required.`,
           }),
         onInteractive: (data) => {
           console.log(`Label created: ${data.id}`);
-          console.log(`Name: ${data.name} (${data.color})`);
         },
       },
       globalOpts,

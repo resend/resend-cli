@@ -1,8 +1,10 @@
 import { Command } from '@commander-js/extra-typings';
-import { runCreate } from '../../lib/actions';
+import { runGet } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
+import { requireClient } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { requireText } from '../../lib/prompts';
+import { withSpinner } from '../../lib/spinner';
 
 export const createInboxCommand = new Command('create')
   .description('Create a new inbox at one of your verified domains')
@@ -27,7 +29,12 @@ Receiving must be enabled on the domain, unless you pass --forwarding.
 
 Non-interactive: --email_address is required.`,
       output: `  {"object":"inbox","id":"<uuid>","name":"<name>","email_address":"<address>","domain_id":"<uuid>","receiving_address":"<address>|null","from_name":"<name>|null","unread":0,"drafts":0,"last_received":"<date>|null","created_at":"<date>"}`,
-      errorCodes: ['auth_error', 'missing_email_address', 'create_error'],
+      errorCodes: [
+        'auth_error',
+        'missing_email_address',
+        'create_error',
+        'fetch_error',
+      ],
       examples: [
         'resend inboxes create --email_address support@yourdomain.com',
         'resend inboxes create --email_address hello@yourdomain.com --name "Hello" --from_name "Team Hello" --forwarding',
@@ -51,16 +58,36 @@ Non-interactive: --email_address is required.`,
       globalOpts,
     );
 
-    await runCreate(
+    const resend = await requireClient(globalOpts);
+    const created = await withSpinner(
+      'Creating inbox...',
+      () =>
+        resend.inboxes.create({
+          emailAddress,
+          ...(opts.name && { name: opts.name }),
+          ...(opts.from_name !== undefined && { fromName: opts.from_name }),
+          ...(opts.forwarding && { forwarding: true }),
+        }),
+      'create_error',
+      globalOpts,
+    );
+
+    await runGet(
       {
-        loading: 'Creating inbox...',
-        sdkCall: (resend) =>
-          resend.inboxes.create({
-            emailAddress,
-            ...(opts.name && { name: opts.name }),
-            ...(opts.from_name !== undefined && { fromName: opts.from_name }),
-            ...(opts.forwarding && { forwarding: true }),
-          }),
+        loading: 'Fetching inbox...',
+        sdkCall: async (client) => {
+          const response = await client.inboxes.get(created.id);
+          if (!response.error) {
+            return response;
+          }
+          return {
+            ...response,
+            error: {
+              ...response.error,
+              message: `Inbox ${created.id} was created, but fetching it failed: ${response.error.message}`,
+            },
+          };
+        },
         onInteractive: (data) => {
           console.log(`Inbox created: ${data.id}`);
           console.log(`Email address: ${data.email_address}`);
