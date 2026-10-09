@@ -36,6 +36,7 @@ describe('inboxes labels create command', () => {
   const restoreEnv = captureTestEnv();
   let errorSpy: MockInstance | undefined;
   let exitSpy: MockInstance | undefined;
+  let stderrSpy: MockInstance | undefined;
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
@@ -46,8 +47,10 @@ describe('inboxes labels create command', () => {
     restoreEnv();
     errorSpy?.mockRestore();
     exitSpy?.mockRestore();
+    stderrSpy?.mockRestore();
     errorSpy = undefined;
     exitSpy = undefined;
+    stderrSpy = undefined;
   });
 
   it('creates a label with --name and --color', async () => {
@@ -66,7 +69,7 @@ describe('inboxes labels create command', () => {
   });
 
   it('rejects a color that is not a hex code', async () => {
-    const stderrSpy = vi
+    stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);
     exitSpy = mockExitThrow();
@@ -79,7 +82,6 @@ describe('inboxes labels create command', () => {
     );
 
     const output = stderrSpy.mock.calls.map((c) => String(c[0])).join(' ');
-    stderrSpy.mockRestore();
     expect(output).toContain('Use a hex color like #E93D82.');
     expect(mockCreate).not.toHaveBeenCalled();
   });
