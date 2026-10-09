@@ -10,12 +10,7 @@ import {
 } from '../../../lib/pagination';
 import { pickId } from '../../../lib/prompts';
 import { inboxPickerConfig } from '../utils';
-import {
-  collectValues,
-  renderThreadsTable,
-  threadFilterFlags,
-  threadFilters,
-} from './utils';
+import { renderThreadsTable, threadFilterFlags, threadFilters } from './utils';
 
 export const listInboxThreadsCommand = new Command('list')
   .alias('ls')
@@ -23,15 +18,13 @@ export const listInboxThreadsCommand = new Command('list')
   .option('--inbox_id <id>', 'Inbox UUID')
   .addOption(
     new Option(
-      '--folder <folder...>',
-      'Folder to list (default: inbox, or inbox, archive and sent with --label). Repeat the flag for multiple folders',
+      '--folders <folders...>',
+      'Folders to list, one or more (default: inbox, or inbox, archive and sent with --labels)',
     ).choices(INBOX_MESSAGE_FOLDERS),
   )
   .option(
-    '--label <label_id>',
-    'Filter by label UUID (repeat the flag for multiple labels)',
-    collectValues,
-    [] as string[],
+    '--labels <label_ids...>',
+    'Label UUIDs, one or more. Returns threads with any of them',
   )
   .option('--read', 'Only threads where every email is read')
   .option('--unread', 'Only threads with at least one unread email')
@@ -50,7 +43,7 @@ export const listInboxThreadsCommand = new Command('list')
       context: `Threads are ordered by newest activity first. Pass the last thread ID of the
 previous page as --after to fetch the next page.
 
---label takes label UUIDs (from "resend inboxes labels list"), not label names.
+--labels takes label UUIDs (from "resend inboxes labels list"), not label names.
 To find threads by text, people, attachments, or dates, use
 "resend inboxes threads search".`,
       output: `  {"object":"list","has_more":false,"data":[{"id":"<uuid>","subject":"<subject>|null","from":"<sender>|null","to":[],"cc":[],"bcc":[],"labels":[],"message_count":1,"has_attachment":false,"has_draft":false,"read":false,"received_at":"<date>","folder":"inbox|archive|spam|sent|trash"}]}`,
@@ -63,8 +56,8 @@ To find threads by text, people, attachments, or dates, use
       ],
       examples: [
         'resend inboxes threads list --inbox_id 78261eea-8f8b-4381-83c6-79fa7120f1cf',
-        'resend inboxes threads list --inbox_id 78261eea-8f8b-4381-83c6-79fa7120f1cf --folder inbox --folder archive --json',
-        'resend inboxes threads list --inbox_id 78261eea-8f8b-4381-83c6-79fa7120f1cf --label <label_id> --unread --json',
+        'resend inboxes threads list --inbox_id 78261eea-8f8b-4381-83c6-79fa7120f1cf --folders inbox archive --json',
+        'resend inboxes threads list --inbox_id 78261eea-8f8b-4381-83c6-79fa7120f1cf --labels <label_id> --unread --json',
         'resend inboxes threads list --inbox_id 78261eea-8f8b-4381-83c6-79fa7120f1cf --limit 25 --after <thread_id> --json',
       ],
     }),

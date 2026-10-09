@@ -9,14 +9,9 @@ import { outputError } from '../../../lib/output';
 import type { PickerConfig } from '../../../lib/prompts';
 import { renderTable } from '../../../lib/table';
 
-export const collectValues = (value: string, previous: string[]) => [
-  ...previous,
-  value,
-];
-
 type ThreadFilterOpts = {
-  folder?: InboxMessageFolder[];
-  label: string[];
+  folders?: InboxMessageFolder[];
+  labels?: string[];
   read?: true;
   unread?: true;
 };
@@ -36,16 +31,16 @@ export function threadFilters(
   }
 
   return {
-    folders: opts.folder,
-    labels: opts.label.length > 0 ? opts.label : undefined,
+    folders: opts.folders,
+    labels: opts.labels,
     read: opts.read ? true : opts.unread ? false : undefined,
   };
 }
 
 export function threadFilterFlags(opts: ThreadFilterOpts): string[] {
   return [
-    ...(opts.folder ?? []).map((folder) => `--folder ${folder}`),
-    ...opts.label.map((label) => `--label ${label}`),
+    ...(opts.folders ? [`--folders ${opts.folders.join(' ')}`] : []),
+    ...(opts.labels ? [`--labels ${opts.labels.join(' ')}`] : []),
     ...(opts.read ? ['--read'] : []),
     ...(opts.unread ? ['--unread'] : []),
   ];

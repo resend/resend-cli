@@ -82,8 +82,8 @@ Threads are ordered by newest activity first.
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--folder <folder>` | string | `inbox`, or `inbox`, `archive`, `sent` with `--label` | One of `inbox`, `archive`, `spam`, `sent`, `trash`; repeat for multiple |
-| `--label <label_id>` | string | — | Filter by label **UUID** (not name); repeat for multiple |
+| `--folders <folders...>` | string[] | `inbox`, or `inbox`, `archive`, `sent` with `--labels` | One or more of `inbox`, `archive`, `spam`, `sent`, `trash` |
+| `--labels <label_ids...>` | string[] | — | One or more label **UUIDs** (not names); returns threads with any of them |
 | `--read` | boolean | — | Only threads where every email is read |
 | `--unread` | boolean | — | Only threads with at least one unread email |
 | `--limit <n>` | number | 10 | Max results, 1-100 |
@@ -110,16 +110,16 @@ about a minute behind new emails; use `threads list` to browse exactly.
 | Flag | Type | Description |
 |------|------|-------------|
 | `--query <text>` | string | Text to find in subject, body, sender, recipients, and attachment names. Every word must match; quote a phrase to match it exactly, prefix a word with `-` to exclude it. Max 256 characters |
-| `--from <address>` | string | Sender address or name, partial match; repeat for multiple (max 20) |
-| `--to <address>` | string | Recipient, matched like `--from` |
-| `--cc <address>` | string | Cc recipient, matched like `--from` |
-| `--bcc <address>` | string | Bcc recipient, matched like `--from` |
+| `--from <addresses...>` | string[] | One or more sender addresses or names, partial match (max 20) |
+| `--to <addresses...>` | string[] | Recipients, matched like `--from` |
+| `--cc <addresses...>` | string[] | Cc recipients, matched like `--from` |
+| `--bcc <addresses...>` | string[] | Bcc recipients, matched like `--from` |
 | `--has_attachment` | boolean | Only emails with an attachment |
 | `--without_attachment` | boolean | Only emails without an attachment |
 | `--start_date <date>` | string | Emails sent on or after this date (`2026-09-01` or ISO 8601) |
 | `--end_date <date>` | string | Emails sent on or before this date; a date covers the whole day |
 
-Also takes `--folder`, `--label`, `--read`, `--unread`, `--limit`, `--after`,
+Also takes `--folders`, `--labels`, `--read`, `--unread`, `--limit`, `--after`,
 and `--before`, same as `threads list`.
 
 **Output:** same as `threads list`, plus `"matched_email_id":"<uuid>"|null` and
@@ -253,7 +253,7 @@ Forward an email to other recipients from the inbox address.
 
 List all labels in an inbox (not paginated; default subcommand of
 `resend inboxes labels`). Use label IDs with `threads update --label_id` and
-`threads list --label`.
+`threads list --labels`.
 
 **Flags:** `--inbox_id <id>` — required in non-interactive mode
 

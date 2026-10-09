@@ -11,12 +11,7 @@ import {
 } from '../../../lib/pagination';
 import { pickId } from '../../../lib/prompts';
 import { inboxPickerConfig } from '../utils';
-import {
-  collectValues,
-  renderThreadsTable,
-  threadFilterFlags,
-  threadFilters,
-} from './utils';
+import { renderThreadsTable, threadFilterFlags, threadFilters } from './utils';
 
 export const searchInboxThreadsCommand = new Command('search')
   .description(
@@ -28,28 +23,20 @@ export const searchInboxThreadsCommand = new Command('search')
     'Text to find in the subject, body, sender, recipients, and attachment names. Every word must match. Quote a phrase to match it exactly, prefix a word with - to exclude it',
   )
   .option(
-    '--from <address>',
-    'Sender address or name, partial match (repeat for multiple)',
-    collectValues,
-    [] as string[],
+    '--from <addresses...>',
+    'Sender addresses or names, one or more, partial match',
   )
   .option(
-    '--to <address>',
-    'Recipient address or name, partial match (repeat for multiple)',
-    collectValues,
-    [] as string[],
+    '--to <addresses...>',
+    'Recipient addresses or names, one or more, partial match',
   )
   .option(
-    '--cc <address>',
-    'Cc address or name, partial match (repeat for multiple)',
-    collectValues,
-    [] as string[],
+    '--cc <addresses...>',
+    'Cc addresses or names, one or more, partial match',
   )
   .option(
-    '--bcc <address>',
-    'Bcc address or name, partial match (repeat for multiple)',
-    collectValues,
-    [] as string[],
+    '--bcc <addresses...>',
+    'Bcc addresses or names, one or more, partial match',
   )
   .option('--has_attachment', 'Only emails with an attachment')
   .option('--without_attachment', 'Only emails without an attachment')
@@ -63,15 +50,13 @@ export const searchInboxThreadsCommand = new Command('search')
   )
   .addOption(
     new Option(
-      '--folder <folder...>',
-      'Folder to search (default: inbox, or inbox, archive and sent with --label). Repeat the flag for multiple folders',
+      '--folders <folders...>',
+      'Folders to search, one or more (default: inbox, or inbox, archive and sent with --labels)',
     ).choices(INBOX_MESSAGE_FOLDERS),
   )
   .option(
-    '--label <label_id>',
-    'Filter by label UUID (repeat the flag for multiple labels)',
-    collectValues,
-    [] as string[],
+    '--labels <label_ids...>',
+    'Label UUIDs, one or more. Returns threads with any of them',
   )
   .option('--read', 'Only threads where every email is read')
   .option('--unread', 'Only threads with at least one unread email')
@@ -129,8 +114,6 @@ exactly and up to date, use "resend inboxes threads list".`,
       globalOpts,
     );
     const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
-    const listOrUndefined = (values: string[]) =>
-      values.length > 0 ? values : undefined;
     await runList(
       {
         loading: 'Searching threads...',
@@ -139,10 +122,10 @@ exactly and up to date, use "resend inboxes threads list".`,
             inboxId,
             ...filters,
             query: opts.query,
-            from: listOrUndefined(opts.from),
-            to: listOrUndefined(opts.to),
-            cc: listOrUndefined(opts.cc),
-            bcc: listOrUndefined(opts.bcc),
+            from: opts.from,
+            to: opts.to,
+            cc: opts.cc,
+            bcc: opts.bcc,
             hasAttachment: opts.has_attachment
               ? true
               : opts.without_attachment
@@ -163,10 +146,10 @@ exactly and up to date, use "resend inboxes threads list".`,
               `--inbox_id ${inboxId}`,
               opts.query !== undefined &&
                 `--query ${JSON.stringify(opts.query)}`,
-              ...opts.from.map((value) => `--from ${value}`),
-              ...opts.to.map((value) => `--to ${value}`),
-              ...opts.cc.map((value) => `--cc ${value}`),
-              ...opts.bcc.map((value) => `--bcc ${value}`),
+              opts.from && `--from ${opts.from.join(' ')}`,
+              opts.to && `--to ${opts.to.join(' ')}`,
+              opts.cc && `--cc ${opts.cc.join(' ')}`,
+              opts.bcc && `--bcc ${opts.bcc.join(' ')}`,
               opts.has_attachment && '--has_attachment',
               opts.without_attachment && '--without_attachment',
               opts.start_date && `--start_date ${opts.start_date}`,
