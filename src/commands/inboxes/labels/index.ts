@@ -12,7 +12,7 @@ export const inboxLabelsCommand = new Command('labels')
     buildHelpText({
       context: `Labels organize threads within an inbox. Apply one with
 "resend inboxes threads update --inbox_id <inbox_id> --thread_id <thread_id> --label_id <label_id>" and
-filter with "resend inboxes threads list --inbox_id <inbox_id> --label <label_id>".`,
+filter with "resend inboxes threads list --inbox_id <inbox_id> --labels <label_id>".`,
       examples: [
         'resend inboxes labels list --inbox_id <inbox_id>',
         'resend inboxes labels create --inbox_id <inbox_id> --name "Billing" --color teal',

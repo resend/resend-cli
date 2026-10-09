@@ -4,6 +4,7 @@ import { deleteInboxThreadCommand } from './delete';
 import { inboxThreadEmailsCommand } from './emails/index';
 import { getInboxThreadCommand } from './get';
 import { listInboxThreadsCommand } from './list';
+import { searchInboxThreadsCommand } from './search';
 import { updateInboxThreadCommand } from './update';
 
 export const inboxThreadsCommand = new Command('threads')
@@ -12,10 +13,12 @@ export const inboxThreadsCommand = new Command('threads')
     'after',
     buildHelpText({
       context: `Received messages are grouped into threads. "list" shows threads in a folder,
-"get" returns one thread's summary, "update" marks read/unread, moves, or
-labels a thread, and "emails" lists and works with the messages in a thread.`,
+"search" finds threads by text, people, attachments, or dates, "get" returns
+one thread's summary, "update" marks read/unread, moves, or labels a thread,
+and "emails" lists and works with the messages in a thread.`,
       examples: [
         'resend inboxes threads list --inbox_id <inbox_id>',
+        'resend inboxes threads search --inbox_id <inbox_id> --query invoice',
         'resend inboxes threads get --inbox_id <inbox_id> --thread_id <thread_id>',
         'resend inboxes threads emails list --inbox_id <inbox_id> --thread_id <thread_id>',
         'resend inboxes threads update --inbox_id <inbox_id> --thread_id <thread_id> --read',
@@ -24,6 +27,7 @@ labels a thread, and "emails" lists and works with the messages in a thread.`,
     }),
   )
   .addCommand(listInboxThreadsCommand, { isDefault: true })
+  .addCommand(searchInboxThreadsCommand)
   .addCommand(getInboxThreadCommand)
   .addCommand(updateInboxThreadCommand)
   .addCommand(deleteInboxThreadCommand)
