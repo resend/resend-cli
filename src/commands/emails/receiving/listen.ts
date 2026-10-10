@@ -47,17 +47,22 @@ type PageResult = {
 const extractNewEmails = (
   emails: ReadonlyArray<ListReceivingEmail>,
   seenIds: BoundedSet<string>,
+  completedHeadId: string | undefined,
 ): PageResult => {
-  const idx = emails.findIndex((e) => seenIds.has(e.id));
-  return idx === -1
-    ? { newEmails: emails, foundSeen: false }
-    : { newEmails: emails.slice(0, idx), foundSeen: true };
+  const idx = emails.findIndex((e) => e.id === completedHeadId);
+  const beforeBoundary = idx === -1 ? emails : emails.slice(0, idx);
+  return {
+    newEmails: beforeBoundary.filter((e) => !seenIds.has(e.id)),
+    foundSeen: idx !== -1,
+  };
 };
 
 type FetchResult = {
   readonly emails: ReadonlyArray<ListReceivingEmail>;
   readonly error?: string;
   readonly hasMore: boolean;
+  readonly completed: boolean;
+  readonly nextCursor?: string;
 };
 
 export const listenReceivingCommand = new Command('listen')
@@ -107,6 +112,10 @@ Ctrl+C exits cleanly.`,
     );
 
     const seenIds = createBoundedSet<string>();
+    // A completed range boundary must survive eviction from the ID cache.
+    let completedHeadId: string | undefined;
+    let pendingHeadId: string | undefined;
+    let resumeCursor: string | undefined;
     let consecutiveErrors = 0;
 
     try {
@@ -125,6 +134,7 @@ Ctrl+C exits cleanly.`,
       for (const email of data.data) {
         seenIds.add(email.id);
       }
+      completedHeadId = data.data[0]?.id;
 
       spinner.stop('Ready');
     } catch (err) {
@@ -170,38 +180,67 @@ Ctrl+C exits cleanly.`,
       pagesLeft: number,
     ): Promise<FetchResult> => {
       if (pagesLeft <= 0) {
-        return { emails: accumulated, hasMore: true };
+        return {
+          emails: accumulated,
+          hasMore: true,
+          completed: false,
+          nextCursor: cursor,
+        };
       }
 
       const params = cursor
         ? { limit: PAGE_SIZE, after: cursor }
         : { limit: PAGE_SIZE };
-      const { data, error } = await withRetry(() =>
-        resend.emails.receiving.list(params),
-      );
+      try {
+        const { data, error } = await withRetry(() =>
+          resend.emails.receiving.list(params),
+        );
 
-      if (error || !data) {
+        if (error || !data) {
+          return {
+            emails: accumulated,
+            error: error?.message ?? 'Empty response',
+            hasMore: false,
+            completed: false,
+            nextCursor: cursor,
+          };
+        }
+
+        const { newEmails, foundSeen } = extractNewEmails(
+          data.data,
+          seenIds,
+          completedHeadId,
+        );
+        const allEmails = [...accumulated, ...newEmails];
+        if (cursor === undefined && pendingHeadId === undefined) {
+          pendingHeadId = data.data[0]?.id;
+        }
+
+        if (foundSeen || !data.has_more) {
+          return { emails: allEmails, hasMore: false, completed: true };
+        }
+
+        const nextCursor = data.data[data.data.length - 1]?.id;
+        if (!nextCursor) {
+          // Retry this page on the next tick without restarting the range.
+          return {
+            emails: allEmails,
+            hasMore: true,
+            completed: false,
+            nextCursor: cursor,
+          };
+        }
+        return fetchPages(nextCursor, allEmails, pagesLeft - 1);
+      } catch (err) {
+        // Preserve successful pages even when a later page throws.
         return {
           emails: accumulated,
-          error: error?.message ?? 'Empty response',
+          error: errorMessage(err, 'Unknown error'),
           hasMore: false,
+          completed: false,
+          nextCursor: cursor,
         };
       }
-
-      const { newEmails, foundSeen } = extractNewEmails(data.data, seenIds);
-      const allEmails = [...accumulated, ...newEmails];
-
-      if (foundSeen || !data.has_more) {
-        return { emails: allEmails, hasMore: false };
-      }
-
-      const nextCursor = data.data[data.data.length - 1]?.id;
-      if (!nextCursor) {
-        // Empty page with has_more: true would cause the next call to omit
-        // `after` and re-fetch from the head. Bail instead.
-        return { emails: allEmails, hasMore: true };
-      }
-      return fetchPages(nextCursor, allEmails, pagesLeft - 1);
     };
 
     let timeoutHandle: ReturnType<typeof setTimeout>;
@@ -219,7 +258,12 @@ Ctrl+C exits cleanly.`,
 
     const poll = async (): Promise<void> => {
       try {
-        const result = await fetchPages(undefined, [], MAX_PAGES_PER_POLL);
+        const result = await fetchPages(resumeCursor, [], MAX_PAGES_PER_POLL);
+        resumeCursor = result.nextCursor;
+        if (result.completed) {
+          completedHeadId = pendingHeadId ?? completedHeadId;
+          pendingHeadId = undefined;
+        }
 
         if (result.error) {
           handlePollError(result.error);
