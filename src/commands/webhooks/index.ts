@@ -30,7 +30,7 @@ Event categories (37 total):
                inbox.email.received, inbox.email.sent, inbox.thread.folder.updated,
                inbox.thread.assigned, inbox.thread.unassigned,
                inbox.thread.labels.updated, inbox.draft.created, inbox.draft.updated,
-               inbox.draft.sent, inbox.draft.deleted (beta)
+               inbox.draft.sent, inbox.draft.deleted
 
 Signature verification (Svix):
   Each delivery includes headers: svix-id, svix-timestamp, svix-signature

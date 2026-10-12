@@ -27,7 +27,7 @@ Detailed flag specifications for `resend webhooks` commands.
 - Domain: `domain.created`, `domain.updated`, `domain.deleted`
 - Suppression: `suppression.added`, `suppression.removed`
 - Topic: `topic.created`, `topic.updated`, `topic.deleted`
-- Inbox (beta): `inbox.created`, `inbox.updated`, `inbox.deleted`, `inbox.thread.created`, `inbox.email.received`, `inbox.email.sent`, `inbox.thread.folder.updated`, `inbox.thread.assigned`, `inbox.thread.unassigned`, `inbox.thread.labels.updated`, `inbox.draft.created`, `inbox.draft.updated`, `inbox.draft.sent`, `inbox.draft.deleted`
+- Inbox: `inbox.created`, `inbox.updated`, `inbox.deleted`, `inbox.thread.created`, `inbox.email.received`, `inbox.email.sent`, `inbox.thread.folder.updated`, `inbox.thread.assigned`, `inbox.thread.unassigned`, `inbox.thread.labels.updated`, `inbox.draft.created`, `inbox.draft.updated`, `inbox.draft.sent`, `inbox.draft.deleted`
 
 **Output includes `signing_secret`.** `webhooks get` returns it again.
 
