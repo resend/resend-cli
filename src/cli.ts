@@ -147,8 +147,6 @@ ${pc.gray('Examples:')}
   .addCommand(usageCommand)
   .addCommand(careersCommand)
   .addCommand(suppressionsCommand)
-  // Visible pre-GA with a [beta] marker in its description — the API gates usage
-  // per account, so non-enabled users see the command but get an API error until enrolled.
   .addCommand(inboxesCommand)
   .addCommand(apiKeysCommand)
   .addCommand(webhooksCommand)
