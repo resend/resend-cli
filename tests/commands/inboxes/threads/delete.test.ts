@@ -51,7 +51,7 @@ describe('inboxes threads delete command', () => {
     exitSpy = undefined;
   });
 
-  it('deletes a thread with --yes and outputs synthesized JSON', async () => {
+  it('deletes a thread with --yes and outputs the API response', async () => {
     spies = setupOutputSpies();
 
     await deleteInboxThreadCommand.parseAsync(
@@ -69,6 +69,26 @@ describe('inboxes threads delete command', () => {
     const parsed = JSON.parse(output);
     expect(parsed.object).toBe('inbox_thread');
     expect(parsed.deleted).toBe(true);
+  });
+
+  it('outputs deleted false when the thread was already in trash', async () => {
+    spies = setupOutputSpies();
+    mockRemove.mockResolvedValueOnce({
+      data: { object: 'inbox_thread' as const, id: THREAD_ID, deleted: false },
+      error: null,
+    } as never);
+
+    await deleteInboxThreadCommand.parseAsync(
+      ['--inbox_id', INBOX_ID, '--thread_id', THREAD_ID, '--yes'],
+      { from: 'user' },
+    );
+
+    const output = spies.logSpy.mock.calls[0][0] as string;
+    expect(JSON.parse(output)).toEqual({
+      object: 'inbox_thread',
+      id: THREAD_ID,
+      deleted: false,
+    });
   });
 
   it('errors with confirmation_required when --yes absent in non-interactive mode', async () => {

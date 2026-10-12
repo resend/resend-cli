@@ -165,7 +165,10 @@ deadline.
 
 ## inboxes threads delete
 
-Delete a thread and all of its messages.
+Move a thread to `trash` and schedule it for deletion in 30 days. This is
+reversible. To restore the thread, move it to `inbox`, `archive`, or `spam`
+with `threads update --folder`, which also clears the deletion deadline.
+`deleted` is `false` when the thread was already in trash.
 
 **Flags:** `--inbox_id <id> --thread_id <id>` — required in non-interactive mode
 
