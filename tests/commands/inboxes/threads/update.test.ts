@@ -106,6 +106,31 @@ describe('inboxes threads update command', () => {
     expect(args.labelId).toBe('label-1');
   });
 
+  it('passes --add_label_ids and --remove_label_ids', async () => {
+    setupOutputSpies();
+
+    await updateInboxThreadCommand.parseAsync(
+      [
+        '--inbox_id',
+        INBOX_ID,
+        '--thread_id',
+        THREAD_ID,
+        '--add_label_ids',
+        'label-1',
+        'label-2',
+        '--remove_label_ids',
+        'label-3',
+      ],
+      { from: 'user' },
+    );
+
+    const args = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.addLabelIds).toEqual(['label-1', 'label-2']);
+    expect(args.removeLabelIds).toEqual(['label-3']);
+    expect(args.labelId).toBeUndefined();
+    expect(args.read).toBeUndefined();
+  });
+
   it('errors with invalid_options when --read and --unread are combined', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});

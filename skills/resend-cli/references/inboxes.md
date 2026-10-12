@@ -143,8 +143,10 @@ Retrieve a thread's summary. To read its messages, use
 
 ## inboxes threads update
 
-Mark a thread read/unread, move it, or apply a label. At least one option is
-required.
+Mark a thread read/unread, move it, or add and remove labels. At least one
+option is required. A label ID cannot be both added and removed in the same
+request. Moving a thread out of `trash` restores it and clears its deletion
+deadline.
 
 **Flags:** `--inbox_id <id> --thread_id <id>` — required in non-interactive mode
 
@@ -153,7 +155,9 @@ required.
 | `--read` | boolean | Mark every message in the thread as read |
 | `--unread` | boolean | Mark every message in the thread as unread |
 | `--folder <folder>` | string | Move to one of `inbox`, `archive`, `spam`, `trash` (`sent` is not a valid target) |
-| `--label_id <label_id>` | string | Apply this label (UUID) to the thread |
+| `--add_label_ids <label_ids...>` | string[] | Label UUIDs to apply to the thread, 1 to 10 |
+| `--remove_label_ids <label_ids...>` | string[] | Label UUIDs to remove from the thread, 1 to 10 |
+| `--label_id <label_id>` | string | Deprecated. Use `--add_label_ids`. Applies this label (UUID) to the thread |
 
 **Output:** `{"object":"inbox_thread","id":"<uuid>","subject":"<subject>"|null,"folder":"<folder>","labels":[],"read":true}`
 
@@ -255,8 +259,8 @@ Forward an email to other recipients from the inbox address.
 ## inboxes labels list
 
 List all labels in an inbox (not paginated; default subcommand of
-`resend inboxes labels`). Use label IDs with `threads update --label_id` and
-`threads list --labels`.
+`resend inboxes labels`). Use label IDs with `threads update --add_label_ids`
+and `threads list --labels`.
 
 **Flags:** `--inbox_id <id>` — required in non-interactive mode
 
