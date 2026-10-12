@@ -1,5 +1,4 @@
 import { Command } from '@commander-js/extra-typings';
-import pc from 'picocolors';
 import { buildHelpText } from '../../lib/help-text';
 import { inboxAgentCommand } from './agent/index';
 import { createInboxCommand } from './create';
@@ -13,15 +12,12 @@ import { updateInboxCommand } from './update';
 
 export const inboxesCommand = new Command('inboxes')
   .description(
-    `${pc.cyan('● beta')} · Manage inboxes — email addresses at your domains that send and receive mail (request access to enable)`,
+    'Manage inboxes — email addresses at your domains that send and receive mail',
   )
   .addHelpText(
     'after',
     buildHelpText({
-      context: `Beta: this command requires inboxes to be enabled on your account.
-Not enabled yet? Reach out to Resend to join the beta. Calls return an API error until then.
-
-An inbox is an email address at one of your verified domains that sends and receives email.
+      context: `An inbox is an email address at one of your verified domains that sends and receives email.
 Received messages are grouped into threads inside the inbox.
 
 Inboxes require a full-access API key — sending-only keys are rejected.`,
