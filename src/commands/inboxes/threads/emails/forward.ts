@@ -50,7 +50,7 @@ export const forwardInboxThreadEmailCommand = new Command('forward')
     buildHelpText({
       context:
         'Forwards the email from the inbox address. --to is required; --text/--html add an optional note.\n--to, --cc, and --bcc combined cannot exceed 50 recipients.',
-      output: `  {"id":"<uuid>","email_id":"<uuid>","direction":"outbound","from":"<inbox-address>","to":["<recipient>"],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>|null","message_id":"<message-id>|null","html":"<html>|null","text":"<text>|null","attachments":[],"read":true,"received_at":"<date>"}`,
+      output: `  {"id":"<email-id>"}`,
       errorCodes: ['auth_error', 'missing_id', 'missing_to', 'create_error'],
       examples: [
         'resend inboxes threads emails forward --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --to teammate@example.com',
@@ -108,8 +108,7 @@ export const forwardInboxThreadEmailCommand = new Command('forward')
               : undefined,
           ),
         onInteractive: (data) => {
-          console.log(`Email forwarded: ${data.email_id}`);
-          console.log(`To: ${data.to.join(', ')}`);
+          console.log(`Email forwarded: ${data.id}`);
         },
       },
       globalOpts,

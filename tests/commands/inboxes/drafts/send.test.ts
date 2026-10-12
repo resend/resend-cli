@@ -19,16 +19,10 @@ import {
 
 const INBOX_ID = '78261eea-8f8b-4381-83c6-79fa7120f1cf';
 const DRAFT_ID = '66666666-7777-8888-9999-aaaaaaaaaaaa';
-const THREAD_ID = '3deaccfa-f572-443c-be6f-92b74f9d5c48';
 const EMAIL_ID = '5e0e0b3c-9497-47d3-a527-4bd5e0e2f0f5';
 
 const mockSend = vi.fn(async () => ({
-  data: {
-    object: 'inbox_draft' as const,
-    id: DRAFT_ID,
-    thread_id: THREAD_ID,
-    email_id: EMAIL_ID,
-  },
+  data: { id: EMAIL_ID },
   error: null,
 }));
 
@@ -59,7 +53,7 @@ describe('inboxes drafts send command', () => {
     exitSpy = undefined;
   });
 
-  it('sends a draft and outputs JSON with email_id', async () => {
+  it('sends a draft and outputs the sent email id as JSON', async () => {
     spies = setupOutputSpies();
 
     await sendInboxDraftCommand.parseAsync(
@@ -74,9 +68,7 @@ describe('inboxes drafts send command', () => {
       undefined,
     );
     const output = spies.logSpy.mock.calls[0][0] as string;
-    const parsed = JSON.parse(output);
-    expect(parsed.email_id).toBe(EMAIL_ID);
-    expect(parsed.thread_id).toBe(THREAD_ID);
+    expect(JSON.parse(output)).toEqual({ id: EMAIL_ID });
   });
 
   it('passes idempotencyKey as second arg to drafts.send', async () => {

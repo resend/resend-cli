@@ -54,8 +54,9 @@ At least one of --text or --html is required.
 Bcc is never copied.
 --cc and --bcc add recipients. With --reply-all, --cc merges with the copied cc,
 without duplicates.
-The total number of recipients cannot exceed 50, counted after --reply-all adds everyone.`,
-      output: `  {"id":"<uuid>","email_id":"<uuid>","direction":"outbound","from":"<inbox-address>","to":["<recipient>"],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>|null","message_id":"<message-id>|null","html":"<html>|null","text":"<text>|null","attachments":[],"read":true,"received_at":"<date>"}`,
+The total number of recipients cannot exceed 50, counted after --reply-all adds everyone.
+The output holds the ID of the sent email. Use it with "resend emails get".`,
+      output: `  {"id":"<email-id>"}`,
       errorCodes: [
         'auth_error',
         'missing_id',
@@ -127,11 +128,7 @@ The total number of recipients cannot exceed 50, counted after --reply-all adds 
               : undefined,
           ),
         onInteractive: (data) => {
-          console.log(`Reply sent: ${data.email_id}`);
-          console.log(`To: ${data.to.join(', ')}`);
-          if (data.cc.length > 0) {
-            console.log(`Cc: ${data.cc.join(', ')}`);
-          }
+          console.log(`Reply sent: ${data.id}`);
         },
       },
       globalOpts,

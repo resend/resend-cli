@@ -23,23 +23,7 @@ const EMAIL_ID = '5e0e0b3c-9497-47d3-a527-4bd5e0e2f0f5';
 const REPLY_ID = '9f3b5a1e-2c4d-4e6f-8a0b-1c2d3e4f5a6b';
 
 const mockReply = vi.fn(async () => ({
-  data: {
-    id: REPLY_ID,
-    email_id: REPLY_ID,
-    direction: 'outbound' as const,
-    from: 'support@acme.dev',
-    to: ['customer@example.com'],
-    cc: [],
-    bcc: [],
-    reply_to: [],
-    subject: 'Re: Billing question',
-    message_id: null,
-    html: null,
-    text: 'You were only charged once.',
-    attachments: [],
-    read: true,
-    received_at: '2026-09-15T00:00:00.000Z',
-  },
+  data: { id: REPLY_ID },
   error: null,
 }));
 
@@ -213,7 +197,7 @@ describe('inboxes threads emails reply command', () => {
     expect(args).not.toHaveProperty('replyAll');
   });
 
-  it('outputs JSON with email_id when non-interactive', async () => {
+  it('outputs the sent email id as JSON when non-interactive', async () => {
     spies = setupOutputSpies();
 
     await replyInboxThreadEmailCommand.parseAsync(
@@ -231,9 +215,7 @@ describe('inboxes threads emails reply command', () => {
     );
 
     const output = spies.logSpy.mock.calls[0][0] as string;
-    const parsed = JSON.parse(output);
-    expect(parsed.email_id).toBe(REPLY_ID);
-    expect(parsed.direction).toBe('outbound');
+    expect(JSON.parse(output)).toEqual({ id: REPLY_ID });
   });
 
   it('passes idempotencyKey as second arg to threads.emails.reply', async () => {

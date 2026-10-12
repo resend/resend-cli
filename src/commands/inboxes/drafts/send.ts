@@ -17,9 +17,12 @@ export const sendInboxDraftCommand = new Command('send')
   .addHelpText(
     'after',
     buildHelpText({
-      context:
-        'Sends the draft from the inbox address. The draft must have recipients and a body.',
-      output: `  {"object":"inbox_draft","id":"<uuid>","thread_id":"<uuid>","email_id":"<uuid>"}`,
+      context: `Sends the draft from the inbox address. A reply draft is sent in its thread.
+A draft without a thread starts a new thread.
+The draft must have at least one "to" recipient. A draft that was already sent
+returns an error.
+The output holds the ID of the sent email. Use it with "resend emails get".`,
+      output: `  {"id":"<email-id>"}`,
       errorCodes: ['auth_error', 'send_error'],
       examples: [
         'resend inboxes drafts send --inbox_id <inbox_id> --draft_id <draft_id>',

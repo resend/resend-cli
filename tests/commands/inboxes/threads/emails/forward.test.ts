@@ -23,20 +23,7 @@ const EMAIL_ID = '5e0e0b3c-9497-47d3-a527-4bd5e0e2f0f5';
 const FORWARD_ID = '9f3b5a1e-2c4d-4e6f-8a0b-1c2d3e4f5a6b';
 
 const mockForward = vi.fn(async () => ({
-  data: {
-    id: FORWARD_ID,
-    email_id: FORWARD_ID,
-    direction: 'outbound' as const,
-    from: 'support@acme.dev',
-    to: ['teammate@example.com'],
-    cc: [],
-    bcc: [],
-    html: null,
-    text: 'FYI',
-    attachments: [],
-    read: true,
-    received_at: '2026-09-15T00:00:00.000Z',
-  },
+  data: { id: FORWARD_ID },
   error: null,
 }));
 

@@ -230,7 +230,7 @@ non-interactive mode; the email ID comes from `inboxes threads emails list`
 | `--reply-all` | boolean | No | Reply to everyone on the original email: the author (or its Reply-To address) and the original `to` and `cc` recipients, without the inbox address. Bcc is never copied |
 | `--idempotency-key <key>` | string | No | Deduplicate request |
 
-**Output:** `{"id":"<uuid>","email_id":"<uuid>","direction":"outbound","from":"<inbox-address>","to":["<recipient>"],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>"|null,"message_id":"<message-id>"|null,"html":"<html>"|null,"text":"<text>"|null,"attachments":[],"read":true,"received_at":"<date>"}`
+**Output:** `{"id":"<email-id>"}`, the ID of the sent email. Use it with `emails get`.
 
 ---
 
@@ -252,7 +252,7 @@ Forward an email to other recipients from the inbox address.
 
 `--to`, `--cc`, and `--bcc` combined cannot exceed 50 recipients.
 
-**Output:** `{"id":"<uuid>","email_id":"<uuid>","direction":"outbound","from":"<inbox-address>","to":["<recipient>"],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>"|null,"message_id":"<message-id>"|null,"html":"<html>"|null,"text":"<text>"|null,"attachments":[],"read":true,"received_at":"<date>"}`
+**Output:** `{"id":"<email-id>"}`, the ID of the sent email. Use it with `emails get`.
 
 ---
 
@@ -398,8 +398,9 @@ Delete a draft.
 
 ## inboxes drafts send
 
-Send a draft from the inbox address. The draft must have recipients and a
-body.
+Send a draft from the inbox address. A reply draft is sent in its thread. A
+draft without a thread starts a new thread. The draft must have at least one
+`to` recipient. A draft that was already sent returns an error.
 
 **Flags:** `--inbox_id <id> --draft_id <id>` — required in non-interactive mode
 
@@ -407,7 +408,7 @@ body.
 |------|------|----------|-------------|
 | `--idempotency-key <key>` | string | No | Deduplicate request |
 
-**Output:** `{"object":"inbox_draft","id":"<uuid>","thread_id":"<uuid>","email_id":"<uuid>"}`
+**Output:** `{"id":"<email-id>"}`, the ID of the sent email. Use it with `emails get`.
 
 ---
 
