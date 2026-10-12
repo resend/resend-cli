@@ -1,0 +1,450 @@
+# inboxes
+
+Detailed flag specifications for `resend inboxes` commands.
+
+> **Beta:** Inboxes is a pre-GA feature gated per account. Commands appear in
+> `--help` but return an API error unless inboxes is enabled for your account.
+> Reach out to Resend to join the beta.
+
+An inbox is an email address at one of your verified domains that sends and
+receives email. Receiving must be enabled on the domain, unless the inbox is
+created with `--forwarding`. Received messages are grouped into threads inside
+the inbox. Inboxes require a **full-access** API key — sending-only keys
+are rejected.
+
+---
+
+## inboxes create
+
+Create a new inbox at one of your verified domains.
+
+| Flag | Type | Required | Description |
+|------|------|----------|-------------|
+| `--email_address <address>` | string | Yes (non-interactive) | Address for the inbox, e.g. `support@yourdomain.com` |
+| `--name <name>` | string | No | Inbox name shown in the dashboard (max 64 chars) |
+| `--from_name <name>` | string | No | Name used when sending from this inbox, e.g. `Ada from Support`. A plain name, not `Name <email>` |
+| `--forwarding` | boolean | No | Receive mail without an MX record — Resend returns a `receiving_address` to forward mail to |
+
+Creates the inbox, then fetches it, so the output includes `receiving_address`.
+
+**Output:** `{"object":"inbox","id":"<uuid>","name":"<name>","email_address":"<address>","domain_id":"<uuid>","receiving_address":"<address>"|null,"from_name":"<name>"|null,"unread":0,"drafts":0,"last_received":"<date>"|null,"created_at":"<date>"}`
+
+---
+
+## inboxes list
+
+List all inboxes (default subcommand — `resend inboxes` alone runs it).
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--limit <n>` | number | 10 | Max results, 1-100 |
+| `--after <cursor>` | string | — | Forward pagination cursor (an inbox ID) |
+| `--before <cursor>` | string | — | Backward pagination cursor (an inbox ID) |
+
+**Alias:** `ls`
+
+**Output:** `{"object":"list","has_more":false,"data":[{"id":"<uuid>","name":"<name>"|null,"email_address":"<address>","from_name":"<name>"|null,"unread":0,"last_received":"<date>"|null}]}`
+
+---
+
+## inboxes get
+
+Retrieve a single inbox by ID or email address.
+
+**Argument:** `<id>` — inbox UUID or inbox email address, e.g. `support@yourdomain.com` (required in non-interactive mode)
+
+**Output:** `{"object":"inbox","id":"<uuid>","name":"<name>","email_address":"<address>","domain_id":"<uuid>","receiving_address":"<address>"|null,"from_name":"<name>"|null,"unread":0,"drafts":0,"last_received":"<date>"|null,"created_at":"<date>"}`
+
+---
+
+## inboxes update
+
+Update an inbox's name or from name. At least one option is required.
+The email address cannot be changed after creation.
+
+**Argument:** `<id>` — inbox UUID
+
+| Flag | Type | Description |
+|------|------|-------------|
+| `--name <name>` | string | New inbox name (max 64 chars) |
+| `--from_name <name>` | string | New name used when sending from this inbox. A plain name, not `Name <email>`. Pass `""` to clear it |
+
+**Output:** `{"object":"inbox","id":"<uuid>"}`
+
+---
+
+## inboxes threads list
+
+List threads in an inbox (default subcommand of `resend inboxes threads`).
+Threads are ordered by newest activity first.
+
+**Flags:** `--inbox_id <id>` — required in non-interactive mode
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--folders <folders...>` | string[] | `inbox`, or `inbox`, `archive`, `sent` with `--labels` | One or more of `inbox`, `archive`, `spam`, `sent`, `trash` |
+| `--labels <label_ids...>` | string[] | — | One or more label **UUIDs** (not names); returns threads with any of them |
+| `--read` | boolean | — | Only threads where every email is read; can't combine with `--unread` |
+| `--unread` | boolean | — | Only threads with at least one unread email; can't combine with `--read` |
+| `--limit <n>` | number | 10 | Max results, 1-100 |
+| `--after <cursor>` | string | — | Forward pagination cursor (a thread ID) |
+| `--before <cursor>` | string | — | Backward pagination cursor (a thread ID) |
+
+A thread matches a folder when any of its emails is in it. `spam` and `trash`
+are only included when you name them.
+
+**Alias:** `ls`
+
+**Output:** `{"object":"list","has_more":false,"data":[{"id":"<uuid>","subject":"<subject>"|null,"from":"<sender>"|null,"to":[],"cc":[],"bcc":[],"labels":[],"message_count":1,"has_attachment":false,"has_draft":false,"read":false,"received_at":"<date>","folder":"inbox|archive|spam|sent|trash"}]}`
+
+---
+
+## inboxes threads search
+
+Search threads by text, people, attachments, and dates. Results are ordered by
+newest activity first and paginate like `threads list`. Search can be up to
+about a minute behind new emails; use `threads list` to browse exactly.
+
+**Flags:** `--inbox_id <id>` — required in non-interactive mode
+
+| Flag | Type | Description |
+|------|------|-------------|
+| `--query <text>` | string | Text to find in subject, body, sender, recipients, and attachment names. Every word must match; quote a phrase to match it exactly, prefix a word with `-` to exclude it. Max 256 characters |
+| `--from <addresses...>` | string[] | One or more sender addresses or names, partial match (max 20) |
+| `--to <addresses...>` | string[] | Recipients, matched like `--from` |
+| `--cc <addresses...>` | string[] | Cc recipients, matched like `--from` |
+| `--bcc <addresses...>` | string[] | Bcc recipients, matched like `--from` |
+| `--has_attachment` | boolean | Only emails with an attachment; can't combine with `--without_attachment` |
+| `--without_attachment` | boolean | Only emails without an attachment; can't combine with `--has_attachment` |
+| `--start_date <date>` | string | Emails sent on or after this date (`2026-09-01` or ISO 8601) |
+| `--end_date <date>` | string | Emails sent on or before this date; a date covers the whole day |
+
+Also takes `--folders`, `--labels`, `--read`, `--unread`, `--limit`, `--after`,
+and `--before`, same as `threads list`.
+
+**Output:** same as `threads list`, plus `"matched_email_id":"<uuid>"|null` and
+`"highlights"` on each thread. `highlights` only has keys where `--query`
+matched (`subject`, `body`, `from`, `to`, `cc`, `bcc`, `attachments`), each an
+array of snippets with matches wrapped in `**`, and is `{}` without `--query`.
+
+---
+
+## inboxes threads get
+
+Retrieve a thread's summary. To read its messages, use
+`inboxes threads emails list`.
+
+**Flags:** `--inbox_id <id> --thread_id <id>` — required in non-interactive mode
+
+**Output:** `{"object":"inbox_thread","id":"<uuid>","subject":"<subject>"|null,"folder":"inbox|archive|spam|sent|trash","labels":[],"read":true}`
+
+---
+
+## inboxes threads update
+
+Mark a thread read/unread, move it, or apply a label. At least one option is
+required.
+
+**Flags:** `--inbox_id <id> --thread_id <id>` — required in non-interactive mode
+
+| Flag | Type | Description |
+|------|------|-------------|
+| `--read` | boolean | Mark every message in the thread as read |
+| `--unread` | boolean | Mark every message in the thread as unread |
+| `--folder <folder>` | string | Move to one of `inbox`, `archive`, `spam`, `trash` (`sent` is not a valid target) |
+| `--label_id <label_id>` | string | Apply this label (UUID) to the thread |
+
+**Output:** `{"object":"inbox_thread","id":"<uuid>","subject":"<subject>"|null,"folder":"<folder>","labels":[],"read":true}`
+
+---
+
+## inboxes threads delete
+
+Delete a thread and all of its messages.
+
+**Flags:** `--inbox_id <id> --thread_id <id>` — required in non-interactive mode
+
+| Flag | Type | Required | Description |
+|------|------|----------|-------------|
+| `--yes` | boolean | Yes (non-interactive) | Skip confirmation |
+
+**Alias:** `rm`
+
+**Output:** `{"object":"inbox_thread","id":"<uuid>","deleted":true}`
+
+---
+
+## inboxes threads emails list
+
+List the emails in a thread, oldest first, with their `html` and `text` bodies
+(default subcommand of `resend inboxes threads emails`). Use the email `id`
+values with `emails get`, `reply`, and `forward`.
+
+**Flags:** `--inbox_id <id> --thread_id <id>` — required in non-interactive mode
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--limit <n>` | number | 10 | Max results, 1-100 |
+| `--after <cursor>` | string | — | Forward pagination cursor (an email ID) |
+| `--before <cursor>` | string | — | Backward pagination cursor (an email ID) |
+
+**Alias:** `ls`
+
+**Output:** `{"object":"list","has_more":false,"data":[{"id":"<uuid>","direction":"inbound|outbound","from":"<sender>","to":[],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>"|null,"message_id":"<message-id>"|null,"html":"<html>"|null,"text":"<text>"|null,"attachments":[],"read":true,"received_at":"<date>"}]}`
+
+---
+
+## inboxes threads emails get
+
+Retrieve a single email from a thread.
+
+**Flags:** `--inbox_id <id> --thread_id <id> --email_id <id>` — required in non-interactive mode
+
+**Output:** `{"id":"<uuid>","direction":"inbound|outbound","from":"<sender>","to":[],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>"|null,"message_id":"<message-id>"|null,"html":"<html>"|null,"text":"<text>"|null,"attachments":[{"id":"<id>","filename":"<name>"|null,"size":123|null}],"read":true,"received_at":"<date>"}`
+
+---
+
+## inboxes threads emails reply
+
+Reply to a specific email in a thread. The reply is sent from the inbox
+address. It goes to the author of the original email, or its Reply-To address
+if it has one. If the inbox sent the original email, it goes to that email's
+`to` recipients. The total number of recipients cannot exceed 50, counted after
+`--reply-all` adds everyone.
+
+**Flags:** `--inbox_id <id> --thread_id <id> --email_id <id>` — required in
+non-interactive mode; the email ID comes from `inboxes threads emails list`
+
+| Flag | Type | Required | Description |
+|------|------|----------|-------------|
+| `--cc <address>` | string | No | Cc address; repeat for multiple. Not copied from the original email, except with `--reply-all`, which merges them without duplicates |
+| `--bcc <address>` | string | No | Bcc address; repeat for multiple. Not copied from the original email |
+| `--text <text>` | string | One of text/html | Plain text reply body |
+| `--html <html>` | string | One of text/html | HTML reply body |
+| `--subject <subject>` | string | No | Override the reply subject |
+| `--reply-all` | boolean | No | Reply to everyone on the original email: the author (or its Reply-To address) and the original `to` and `cc` recipients, without the inbox address. Bcc is never copied |
+| `--idempotency-key <key>` | string | No | Deduplicate request |
+
+**Output:** `{"id":"<uuid>","email_id":"<uuid>","direction":"outbound","from":"<inbox-address>","to":["<recipient>"],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>"|null,"message_id":"<message-id>"|null,"html":"<html>"|null,"text":"<text>"|null,"attachments":[],"read":true,"received_at":"<date>"}`
+
+---
+
+## inboxes threads emails forward
+
+Forward an email to other recipients from the inbox address.
+
+**Flags:** `--inbox_id <id> --thread_id <id> --email_id <id>` — required in non-interactive mode
+
+| Flag | Type | Required | Description |
+|------|------|----------|-------------|
+| `--to <address>` | string | Yes | Recipient; repeat the flag for multiple |
+| `--cc <address>` | string | No | Cc address; repeat for multiple |
+| `--bcc <address>` | string | No | Bcc address; repeat for multiple |
+| `--text <text>` | string | No | Plain text note to include |
+| `--html <html>` | string | No | HTML note to include |
+| `--subject <subject>` | string | No | Override the forwarded subject |
+| `--idempotency-key <key>` | string | No | Deduplicate request |
+
+`--to`, `--cc`, and `--bcc` combined cannot exceed 50 recipients.
+
+**Output:** `{"id":"<uuid>","email_id":"<uuid>","direction":"outbound","from":"<inbox-address>","to":["<recipient>"],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>"|null,"message_id":"<message-id>"|null,"html":"<html>"|null,"text":"<text>"|null,"attachments":[],"read":true,"received_at":"<date>"}`
+
+---
+
+## inboxes labels list
+
+List all labels in an inbox (not paginated; default subcommand of
+`resend inboxes labels`). Use label IDs with `threads update --label_id` and
+`threads list --labels`.
+
+**Flags:** `--inbox_id <id>` — required in non-interactive mode
+
+**Alias:** `ls`
+
+**Output:** `{"object":"list","data":[{"id":"<uuid>","name":"<name>","color":"#RRGGBB","created_at":"<date>"}]}`
+
+---
+
+## inboxes labels create
+
+Create a label. An inbox can have up to 100 labels.
+
+**Flags:** `--inbox_id <id>` — required in non-interactive mode
+
+| Flag | Type | Required | Description |
+|------|------|----------|-------------|
+| `--name <name>` | string | Yes (non-interactive) | Label name, max 64 characters |
+| `--color <color>` | string | No | Hex code like `'#E93D82'`, quoted so the shell keeps the `#` (random when omitted) |
+
+**Output:** `{"object":"inbox_label","id":"<uuid>"}`
+
+---
+
+## inboxes labels update
+
+Update a label's name or color. At least one option is required.
+
+**Flags:** `--inbox_id <id> --label_id <id>` — required in non-interactive mode
+
+| Flag | Type | Description |
+|------|------|-------------|
+| `--name <name>` | string | New label name |
+| `--color <color>` | string | New label color as a hex code (same format as create) |
+
+**Output:** `{"object":"inbox_label","id":"<uuid>"}`
+
+---
+
+## inboxes labels delete
+
+Delete a label. It is removed from every thread that has it.
+
+**Flags:** `--inbox_id <id> --label_id <id>` — required in non-interactive mode
+
+| Flag | Type | Required | Description |
+|------|------|----------|-------------|
+| `--yes` | boolean | Yes (non-interactive) | Skip confirmation |
+
+**Alias:** `rm`
+
+**Output:** `{"object":"inbox_label","id":"<uuid>","deleted":true}`
+
+---
+
+## inboxes drafts list
+
+List drafts in an inbox (default subcommand of `resend inboxes drafts`).
+
+**Flags:** `--inbox_id <id>` — required in non-interactive mode
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--limit <n>` | number | 10 | Max results, 1-100 |
+| `--after <cursor>` | string | — | Forward pagination cursor (a draft ID) |
+| `--before <cursor>` | string | — | Backward pagination cursor (a draft ID) |
+
+**Alias:** `ls`
+
+**Output:** `{"object":"list","has_more":false,"data":[{"id":"<uuid>","type":"standalone|reply","to":["<address>"]|null,"cc":[],"bcc":[],"subject":"<subject>"|null,"snippet":"<text>"|null,"thread_id":"<uuid>"|null,"reply_to_email_id":"<uuid>"|null,"updated_at":"<date>"}]}`
+
+---
+
+## inboxes drafts create
+
+Create a standalone draft, or a reply draft when `--thread_id` and
+`--reply_to_email_id` are passed **together**. A reply draft does not copy
+recipients from the email it replies to, so set `--to` before you send it. At
+least one content field is required. Combined recipients cannot exceed 50.
+
+**Flags:** `--inbox_id <id>` — required in non-interactive mode
+
+| Flag | Type | Description |
+|------|------|-------------|
+| `--to <address>` | string | Recipient; repeat for multiple |
+| `--cc <address>` | string | Cc; repeat for multiple |
+| `--bcc <address>` | string | Bcc; repeat for multiple |
+| `--subject <subject>` | string | Draft subject |
+| `--text <text>` | string | Plain text body |
+| `--html <html>` | string | HTML body |
+| `--thread_id <thread_id>` | string | Thread to reply to (pairs with `--reply_to_email_id`) |
+| `--reply_to_email_id <email_id>` | string | Email the draft replies to (pairs with `--thread_id`) |
+
+**Output:** `{"object":"inbox_draft","id":"<uuid>"}`
+
+---
+
+## inboxes drafts get
+
+Retrieve a draft, including its full body.
+
+**Flags:** `--inbox_id <id> --draft_id <id>` — required in non-interactive mode
+
+**Output:** `{"object":"inbox_draft","id":"<uuid>","type":"standalone|reply","to":["<address>"]|null,"cc":[],"bcc":[],"subject":"<subject>"|null,"html":"<html>"|null,"text":"<text>"|null,"thread_id":"<uuid>"|null,"reply_to_email_id":"<uuid>"|null,"email_id":null,"created_at":"<date>","updated_at":"<date>"}`
+
+---
+
+## inboxes drafts update
+
+Update a draft's recipients, subject, or body. At least one option is
+required; provided fields replace existing values. Same flags as
+`drafts create` minus `--thread_id`/`--reply_to_email_id`.
+
+**Flags:** `--inbox_id <id> --draft_id <id>` — required in non-interactive mode
+
+**Output:** same shape as `drafts get`.
+
+---
+
+## inboxes drafts delete
+
+Delete a draft.
+
+**Flags:** `--inbox_id <id> --draft_id <id>` — required in non-interactive mode
+
+| Flag | Type | Required | Description |
+|------|------|----------|-------------|
+| `--yes` | boolean | Yes (non-interactive) | Skip confirmation |
+
+**Alias:** `rm`
+
+**Output:** `{"object":"inbox_draft","id":"<uuid>","deleted":true}`
+
+---
+
+## inboxes drafts send
+
+Send a draft from the inbox address. The draft must have recipients and a
+body.
+
+**Flags:** `--inbox_id <id> --draft_id <id>` — required in non-interactive mode
+
+| Flag | Type | Required | Description |
+|------|------|----------|-------------|
+| `--idempotency-key <key>` | string | No | Deduplicate request |
+
+**Output:** `{"object":"inbox_draft","id":"<uuid>","thread_id":"<uuid>","email_id":"<uuid>"}`
+
+---
+
+## inboxes agent get
+
+Retrieve an inbox's agent settings (default subcommand of `resend inboxes agent`).
+An inbox without a configured agent returns empty settings.
+
+**Flags:** `--inbox_id <id>` — required in non-interactive mode
+
+**Output:** `{"object":"inbox_agent","instructions":"<text>"|null,"tone":"<tone>"|null,"enabled_actions":["draft_reply"]}`
+
+---
+
+## inboxes agent update
+
+Update an inbox's agent settings. At least one option is required. Omitted
+fields keep their current value.
+
+**Flags:** `--inbox_id <id>` — required in non-interactive mode
+
+| Flag | Type | Description |
+|------|------|-------------|
+| `--instructions <text>` | string | Instructions the agent follows (max 4000 chars). Pass `""` to clear them |
+| `--tone <tone>` | string | Tone the agent writes in, e.g. `friendly and concise` (max 64 chars). Pass `""` to clear it |
+| `--enabled_actions <actions...>` | string[] | Replaces the whole set (comma or space-separated). One or more of `draft_reply`, `forward_thread`, `add_labels`, `assign_thread`, `mark_as_spam`, `archive_thread`, `delete_thread`. Pass `""` to disable all actions |
+
+**Output:** `{"object":"inbox_agent","id":"<uuid>"}`
+
+---
+
+## inboxes delete
+
+Delete an inbox. Its threads and messages are removed and the address stops
+receiving email.
+
+**Argument:** `<id>` — inbox UUID
+
+| Flag | Type | Required | Description |
+|------|------|----------|-------------|
+| `--yes` | boolean | Yes (non-interactive) | Skip confirmation |
+
+**Alias:** `rm`
+
+**Output:** `{"object":"inbox","id":"<uuid>","deleted":true}`

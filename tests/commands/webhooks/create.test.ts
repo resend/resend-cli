@@ -82,7 +82,7 @@ describe('webhooks create command', () => {
     expect(args.events).toEqual(['email.sent', 'email.bounced']);
   });
 
-  it('expands "all" shorthand to all 23 events', async () => {
+  it('expands "all" shorthand to all 37 events', async () => {
     spies = setupOutputSpies();
 
     await createWebhookCommand.parseAsync(
@@ -91,10 +91,13 @@ describe('webhooks create command', () => {
     );
 
     const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.events).toHaveLength(23);
+    expect(args.events).toHaveLength(37);
     expect(args.events).toContain('email.sent');
     expect(args.events).toContain('contact.created');
     expect(args.events).toContain('domain.deleted');
+    expect(args.events).toContain('inbox.email.received');
+    expect(args.events).toContain('inbox.draft.deleted');
+    expect(new Set(args.events as string[]).size).toBe(37);
   });
 
   it('outputs JSON with id and signing_secret when non-interactive', async () => {

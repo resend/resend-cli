@@ -1,0 +1,139 @@
+import { Command } from '@commander-js/extra-typings';
+import { runCreate } from '../../../../lib/actions';
+import type { GlobalOpts } from '../../../../lib/client';
+import { buildHelpText } from '../../../../lib/help-text';
+import { outputError } from '../../../../lib/output';
+import { pickId, requireText } from '../../../../lib/prompts';
+import { inboxPickerConfig } from '../../utils';
+import { inboxThreadPickerConfig } from '../utils';
+
+const collectRecipients = (value: string, previous: string[]) => [
+  ...previous,
+  value,
+];
+
+export const replyInboxThreadEmailCommand = new Command('reply')
+  .description('Reply to an email in a thread')
+  .option('--inbox_id <id>', 'Inbox UUID')
+  .option('--thread_id <id>', 'Thread UUID')
+  .option(
+    '--email_id <id>',
+    'Email UUID to reply to (from "threads emails list")',
+  )
+  .option(
+    '--cc <address>',
+    'Cc address (repeat the flag for multiple addresses)',
+    collectRecipients,
+    [] as string[],
+  )
+  .option(
+    '--bcc <address>',
+    'Bcc address (repeat the flag for multiple addresses)',
+    collectRecipients,
+    [] as string[],
+  )
+  .option('--text <text>', 'Plain text body of the reply')
+  .option('--html <html>', 'HTML body of the reply')
+  .option('--subject <subject>', 'Override the reply subject')
+  .option(
+    '--reply-all',
+    'Reply to everyone on the original email, not only its author',
+  )
+  .option(
+    '--idempotency-key <key>',
+    'Deduplicate this send request using this key',
+  )
+  .addHelpText(
+    'after',
+    buildHelpText({
+      context: `Sends the reply from the inbox address. The reply goes to the author of the
+original email, or its Reply-To address if it has one. If the inbox sent the original
+email, the reply goes to that email's "to" recipients.
+At least one of --text or --html is required.
+--reply-all also adds the original "to" and "cc" recipients, without the inbox address.
+Bcc is never copied.
+--cc and --bcc add recipients. With --reply-all, --cc merges with the copied cc,
+without duplicates.
+The total number of recipients cannot exceed 50, counted after --reply-all adds everyone.`,
+      output: `  {"id":"<uuid>","email_id":"<uuid>","direction":"outbound","from":"<inbox-address>","to":["<recipient>"],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>|null","message_id":"<message-id>|null","html":"<html>|null","text":"<text>|null","attachments":[],"read":true,"received_at":"<date>"}`,
+      errorCodes: [
+        'auth_error',
+        'missing_id',
+        'missing_content',
+        'create_error',
+      ],
+      examples: [
+        'resend inboxes threads emails reply --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --text "On it — reply to follow."',
+        'resend inboxes threads emails reply --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --html "<p>Done!</p>" --json',
+        'resend inboxes threads emails reply --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --text "Looping in finance." --cc finance@example.com',
+        'resend inboxes threads emails reply --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --text "Thanks, all." --reply-all',
+      ],
+    }),
+  )
+  .action(async (opts, cmd) => {
+    const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+
+    const { text, html } = opts;
+    if (!text && !html) {
+      outputError(
+        {
+          message: 'Provide --text or --html for the reply body.',
+          code: 'missing_content',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
+    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
+    const threadId = await pickId(
+      opts.thread_id,
+      inboxThreadPickerConfig(inboxId),
+      globalOpts,
+    );
+    const emailId = await requireText(
+      opts.email_id,
+      {
+        message: 'Email ID to reply to',
+        placeholder: 'from "threads emails list"',
+      },
+      { message: 'Missing --email_id flag.', code: 'missing_id' },
+      globalOpts,
+    );
+
+    // The SDK requires at least one of text/html at the type level, which the
+    // outputError never-return above guarantees but tsc cannot see across the
+    // conditional spread — hence the explicit branch.
+    const body = text
+      ? { text, ...(html && { html }) }
+      : { html: html as string };
+
+    await runCreate(
+      {
+        loading: 'Sending reply...',
+        sdkCall: (resend) =>
+          resend.inboxes.threads.emails.reply(
+            {
+              inboxId,
+              threadId,
+              emailId,
+              ...body,
+              ...(opts.cc.length > 0 && { cc: opts.cc }),
+              ...(opts.bcc.length > 0 && { bcc: opts.bcc }),
+              ...(opts.subject && { subject: opts.subject }),
+              ...(opts.replyAll && { replyAll: true }),
+            },
+            opts.idempotencyKey
+              ? { idempotencyKey: opts.idempotencyKey }
+              : undefined,
+          ),
+        onInteractive: (data) => {
+          console.log(`Reply sent: ${data.email_id}`);
+          console.log(`To: ${data.to.join(', ')}`);
+          if (data.cc.length > 0) {
+            console.log(`Cc: ${data.cc.join(', ')}`);
+          }
+        },
+      },
+      globalOpts,
+    );
+  });

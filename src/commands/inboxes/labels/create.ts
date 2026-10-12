@@ -1,0 +1,59 @@
+import { Command, Option } from '@commander-js/extra-typings';
+import { runCreate } from '../../../lib/actions';
+import type { GlobalOpts } from '../../../lib/client';
+import { buildHelpText } from '../../../lib/help-text';
+import { pickId, requireText } from '../../../lib/prompts';
+import { inboxPickerConfig } from '../utils';
+import { parseLabelColor } from './utils';
+
+export const createInboxLabelCommand = new Command('create')
+  .description('Create a label in an inbox')
+  .option('--inbox_id <id>', 'Inbox UUID')
+  .option('--name <name>', 'Label name (required, max 64 characters)')
+  .addOption(
+    new Option(
+      '--color <color>',
+      'Label color as a hex code like #E93D82 (random when omitted)',
+    ).argParser(parseLabelColor),
+  )
+  .addHelpText(
+    'after',
+    buildHelpText({
+      context: `An inbox can have up to 100 labels.
+
+Non-interactive: --name is required.`,
+      output: `  {"object":"inbox_label","id":"<uuid>"}`,
+      errorCodes: ['auth_error', 'missing_name', 'create_error'],
+      examples: [
+        'resend inboxes labels create --inbox_id <inbox_id> --name "Billing"',
+        'resend inboxes labels create --inbox_id <inbox_id> --name "Urgent" --color \'#E93D82\' --json',
+      ],
+    }),
+  )
+  .action(async (opts, cmd) => {
+    const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
+
+    const name = await requireText(
+      opts.name,
+      { message: 'Label name', placeholder: 'e.g. Billing' },
+      { message: 'Missing --name flag.', code: 'missing_name' },
+      globalOpts,
+    );
+
+    await runCreate(
+      {
+        loading: 'Creating label...',
+        sdkCall: (resend) =>
+          resend.inboxes.labels.create({
+            inboxId,
+            name,
+            ...(opts.color && { color: opts.color }),
+          }),
+        onInteractive: (data) => {
+          console.log(`Label created: ${data.id}`);
+        },
+      },
+      globalOpts,
+    );
+  });
