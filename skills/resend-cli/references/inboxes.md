@@ -105,6 +105,10 @@ are only included when you name them.
 Search threads by text, people, attachments, and dates. Results are ordered by
 newest activity first and paginate like `threads list`. Search can be up to
 about a minute behind new emails; use `threads list` to browse exactly.
+Different flags combine, so a thread must match all of them. `--folders`,
+`--labels`, `--read`, and `--unread` apply to the thread; the other filters
+must all match the same email in the thread. When more than 10,000 threads
+match, search covers the 10,000 with the newest matching email.
 
 **Flags:** `--inbox_id <id>` — required in non-interactive mode
 
@@ -127,6 +131,8 @@ and `--before`, same as `threads list`.
 `"highlights"` on each thread. `highlights` only has keys where `--query`
 matched (`subject`, `body`, `from`, `to`, `cc`, `bcc`, `attachments`), each an
 array of snippets with matches wrapped in `**`, and is `{}` without `--query`.
+`threads emails get`, `reply`, and `forward` accept `matched_email_id` as
+`--email_id`, but it is not equal to the `id` those commands return.
 
 ---
 
@@ -283,7 +289,8 @@ and `threads list --labels`.
 
 ## inboxes labels create
 
-Create a label. An inbox can have up to 100 labels.
+Create a label. An inbox can have up to 100 labels. Label names are unique per
+inbox, compared without case. The color is stored in uppercase.
 
 **Flags:** `--inbox_id <id>` — required in non-interactive mode
 

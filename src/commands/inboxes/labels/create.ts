@@ -19,7 +19,8 @@ export const createInboxLabelCommand = new Command('create')
   .addHelpText(
     'after',
     buildHelpText({
-      context: `An inbox can have up to 100 labels.
+      context: `An inbox can have up to 100 labels. Label names are unique per inbox,
+compared without case. The color is stored in uppercase.
 
 Non-interactive: --name is required.`,
       output: `  {"object":"inbox_label","id":"<uuid>"}`,

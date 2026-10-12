@@ -82,6 +82,14 @@ export const searchInboxThreadsCommand = new Command('search')
       context: `Results are ordered by newest activity first and paginate like
 "resend inboxes threads list". Each result names the email that matched
 (matched_email_id) and the matching snippets (highlights).
+"threads emails get", "reply" and "forward" accept matched_email_id as
+--email_id, but it is not equal to the id those commands return.
+
+Different flags combine, so a thread must match all of them. --folders,
+--labels, --read and --unread apply to the thread. The other filters must all
+match the same email in the thread.
+When more than 10,000 threads match, search covers the 10,000 with the newest
+matching email.
 
 Search can be up to about a minute behind new emails. To browse an inbox
 exactly and up to date, use "resend inboxes threads list".`,
