@@ -2,10 +2,6 @@
 
 Detailed flag specifications for `resend inboxes` commands.
 
-> **Beta:** Inboxes is a pre-GA feature gated per account. Commands appear in
-> `--help` but return an API error unless inboxes is enabled for your account.
-> Reach out to Resend to join the beta.
-
 An inbox is an email address at one of your verified domains that sends and
 receives email. Receiving must be enabled on the domain, unless the inbox is
 created with `--forwarding`. Received messages are grouped into threads inside

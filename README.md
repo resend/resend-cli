@@ -428,7 +428,7 @@ For example, you can:
 | Contact  | `contact.created`, `contact.updated`, `contact.deleted`, `contact.topics.updated`                                                                                                                        |
 | Domain   | `domain.created`, `domain.updated`, `domain.deleted`                                                                                                                                                     |
 | Topic    | `topic.created`, `topic.updated`, `topic.deleted`                                                                                                                                                        |
-| Inbox    | `inbox.created`, `inbox.updated`, `inbox.deleted`, `inbox.thread.created`, `inbox.email.received`, `inbox.email.sent`, `inbox.thread.folder.updated`, `inbox.thread.assigned`, `inbox.thread.unassigned`, `inbox.thread.labels.updated`, `inbox.draft.created`, `inbox.draft.updated`, `inbox.draft.sent`, `inbox.draft.deleted` (beta) |
+| Inbox    | `inbox.created`, `inbox.updated`, `inbox.deleted`, `inbox.thread.created`, `inbox.email.received`, `inbox.email.sent`, `inbox.thread.folder.updated`, `inbox.thread.assigned`, `inbox.thread.unassigned`, `inbox.thread.labels.updated`, `inbox.draft.created`, `inbox.draft.updated`, `inbox.draft.sent`, `inbox.draft.deleted` |
 
 Use `all` with `--events` to subscribe to every event.
 
@@ -612,7 +612,7 @@ resend webhooks events replay wh_abc123 msg_1srOrx2ZWZBpBUvZwXKQmoEYga2
 
 With the Resend CLI, you can manage inboxes. An inbox is an email address at one of your verified domains that sends and receives email. Received emails are grouped into threads inside the inbox.
 
-Inboxes are in beta. The commands return an API error until inboxes are enabled on your account. Inbox commands need a full-access API key.
+Inbox commands need a full-access API key.
 
 #### Subcommands
 
