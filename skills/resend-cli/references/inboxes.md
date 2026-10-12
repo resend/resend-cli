@@ -23,11 +23,12 @@ Create a new inbox at one of your verified domains.
 | `--email_address <address>` | string | Yes (non-interactive) | Address for the inbox, e.g. `support@yourdomain.com` |
 | `--name <name>` | string | No | Inbox name shown in the dashboard (max 64 chars) |
 | `--from_name <name>` | string | No | Name used when sending from this inbox, e.g. `Ada from Support`. A plain name, not `Name <email>` |
-| `--forwarding` | boolean | No | Receive mail without an MX record — Resend returns a `receiving_address` to forward mail to |
+| `--forwarding` | boolean | No | Receive mail without an MX record — Resend generates a `receiving_address` to forward mail to |
 
-Creates the inbox, then fetches it, so the output includes `receiving_address`.
+The output holds only the inbox ID. Run `inboxes get <id>` to read the other
+fields, such as `receiving_address`.
 
-**Output:** `{"object":"inbox","id":"<uuid>","name":"<name>","email_address":"<address>","domain_id":"<uuid>","receiving_address":"<address>"|null,"from_name":"<name>"|null,"unread":0,"drafts":0,"last_received":"<date>"|null,"created_at":"<date>"}`
+**Output:** `{"object":"inbox","id":"<uuid>"}`
 
 ---
 
