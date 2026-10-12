@@ -10,7 +10,10 @@ import { inboxPickerConfig } from './utils';
 export const updateInboxCommand = new Command('update')
   .description("Update an inbox's name or from name")
   .argument('[id]', 'Inbox UUID')
-  .option('--name <name>', 'New inbox name')
+  .option(
+    '--name <name>',
+    'New internal name for the inbox. Recipients do not see it',
+  )
   .option(
     '--from_name <name>',
     'New name used when sending from this inbox, e.g. "Ada from Support" (a plain name, not "Name <email>")',

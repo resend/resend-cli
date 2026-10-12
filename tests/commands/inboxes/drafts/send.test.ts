@@ -71,6 +71,32 @@ describe('inboxes drafts send command', () => {
     expect(JSON.parse(output)).toEqual({ id: EMAIL_ID });
   });
 
+  it('prints the sent email id in interactive mode', async () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
+
+    try {
+      await sendInboxDraftCommand.parseAsync(
+        ['--inbox_id', INBOX_ID, '--draft_id', DRAFT_ID],
+        { from: 'user' },
+      );
+      expect(logSpy).toHaveBeenCalledWith(`Draft sent: ${EMAIL_ID}`);
+    } finally {
+      logSpy.mockRestore();
+      stderrSpy.mockRestore();
+    }
+  });
+
   it('passes idempotencyKey as second arg to drafts.send', async () => {
     spies = setupOutputSpies();
 

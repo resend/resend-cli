@@ -1,8 +1,11 @@
 import { Command } from '@commander-js/extra-typings';
-import { runWrite } from '../../../lib/actions';
 import type { GlobalOpts } from '../../../lib/client';
+import { requireClient } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
+import { outputResult } from '../../../lib/output';
 import { pickId } from '../../../lib/prompts';
+import { withSpinner } from '../../../lib/spinner';
+import { isInteractive } from '../../../lib/tty';
 import { inboxPickerConfig } from '../utils';
 import { inboxDraftPickerConfig } from './utils';
 
@@ -38,19 +41,22 @@ The output holds the ID of the sent email. Use it with "resend emails get".`,
       inboxDraftPickerConfig(inboxId),
       globalOpts,
     );
-    await runWrite(
-      {
-        loading: 'Sending draft...',
-        sdkCall: (resend) =>
-          resend.inboxes.drafts.send(
-            { inboxId, draftId },
-            opts.idempotencyKey
-              ? { idempotencyKey: opts.idempotencyKey }
-              : undefined,
-          ),
-        errorCode: 'send_error',
-        successMsg: `Draft sent: ${draftId}`,
-      },
+    const resend = await requireClient(globalOpts);
+    const data = await withSpinner(
+      'Sending draft...',
+      () =>
+        resend.inboxes.drafts.send(
+          { inboxId, draftId },
+          opts.idempotencyKey
+            ? { idempotencyKey: opts.idempotencyKey }
+            : undefined,
+        ),
+      'send_error',
       globalOpts,
     );
+    if (!globalOpts.json && isInteractive()) {
+      console.log(`Draft sent: ${data.id}`);
+    } else {
+      outputResult(data, { json: globalOpts.json });
+    }
   });

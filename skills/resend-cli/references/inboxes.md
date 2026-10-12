@@ -21,7 +21,7 @@ Create a new inbox at one of your verified domains.
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
 | `--email_address <address>` | string | Yes (non-interactive) | Address for the inbox, e.g. `support@yourdomain.com` |
-| `--name <name>` | string | No | Inbox name shown in the dashboard (max 64 chars) |
+| `--name <name>` | string | No | Internal name for the inbox, recipients do not see it (max 64 chars) |
 | `--from_name <name>` | string | No | Name used when sending from this inbox, e.g. `Ada from Support`. A plain name, not `Name <email>` |
 | `--forwarding` | boolean | No | Receive mail without an MX record — Resend generates a `receiving_address` to forward mail to |
 
@@ -67,7 +67,7 @@ The email address cannot be changed after creation.
 
 | Flag | Type | Description |
 |------|------|-------------|
-| `--name <name>` | string | New inbox name (max 64 chars) |
+| `--name <name>` | string | New internal name for the inbox, recipients do not see it (max 64 chars) |
 | `--from_name <name>` | string | New name used when sending from this inbox. A plain name, not `Name <email>`. Pass `""` to clear it |
 
 **Output:** `{"object":"inbox","id":"<uuid>"}`

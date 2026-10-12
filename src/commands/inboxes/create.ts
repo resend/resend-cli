@@ -10,7 +10,10 @@ export const createInboxCommand = new Command('create')
     '--email_address <address>',
     'Email address for the inbox, e.g. support@yourdomain.com (required)',
   )
-  .option('--name <name>', 'Inbox name shown in the dashboard')
+  .option(
+    '--name <name>',
+    'Internal name for the inbox. Recipients do not see it',
+  )
   .option(
     '--from_name <name>',
     'Name used when sending from this inbox, e.g. "Ada from Support" (a plain name, not "Name <email>")',
