@@ -348,9 +348,12 @@ List drafts in an inbox (default subcommand of `resend inboxes drafts`).
 ## inboxes drafts create
 
 Create a standalone draft, or a reply draft when `--thread_id` and
-`--reply_to_email_id` are passed **together**. A reply draft does not copy
-recipients from the email it replies to, so set `--to` before you send it. At
-least one content field is required. Combined recipients cannot exceed 50.
+`--reply_to_email_id` are passed **together**. A reply draft without `--to` is
+addressed to the sender of the email it replies to, or to its Reply-To when
+set. For an email the inbox sent, it defaults to that email's `to` recipients.
+At least one content field is required. Combined recipients cannot exceed 50.
+Only one unsent reply draft can target an email. A reply draft for an email
+that already has one returns the ID of the existing draft.
 
 **Flags:** `--inbox_id <id>` — required in non-interactive mode
 
@@ -382,8 +385,10 @@ Retrieve a draft, including its full body.
 ## inboxes drafts update
 
 Update a draft's recipients, subject, or body. At least one option is
-required; provided fields replace existing values. Same flags as
-`drafts create` minus `--thread_id`/`--reply_to_email_id`.
+required; provided fields replace existing values. Setting `--text` or
+`--html` replaces the whole body, so the body part you omit becomes `null`. A
+draft that was already sent returns an error. Same flags as `drafts create`
+minus `--thread_id`/`--reply_to_email_id`.
 
 **Flags:** `--inbox_id <id> --draft_id <id>` — required in non-interactive mode
 
@@ -393,7 +398,7 @@ required; provided fields replace existing values. Same flags as
 
 ## inboxes drafts delete
 
-Delete a draft.
+Discard an unsent draft. A draft that was already sent returns an error.
 
 **Flags:** `--inbox_id <id> --draft_id <id>` — required in non-interactive mode
 

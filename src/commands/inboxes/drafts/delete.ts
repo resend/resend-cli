@@ -18,8 +18,9 @@ export const deleteInboxDraftCommand = new Command('delete')
   .addHelpText(
     'after',
     buildHelpText({
-      context:
-        'Non-interactive: --yes is required to confirm deletion when stdin/stdout is not a TTY.',
+      context: `Discards an unsent draft. A draft that was already sent returns an error.
+
+Non-interactive: --yes is required to confirm deletion when stdin/stdout is not a TTY.`,
       output: `  {"object":"inbox_draft","id":"<uuid>","deleted":true}`,
       errorCodes: ['auth_error', 'confirmation_required', 'delete_error'],
       examples: [

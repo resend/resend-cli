@@ -41,8 +41,12 @@ export const updateInboxDraftCommand = new Command('update')
   .addHelpText(
     'after',
     buildHelpText({
-      context:
-        'At least one option is required. Provided fields replace the existing values.',
+      context: `At least one option is required. Provided fields replace the existing values.
+Omitted fields are left unchanged.
+Setting --text or --html replaces the whole body, so the body part you omit
+becomes null. The merged draft must still contain at least one non-empty field,
+and its combined recipients cannot exceed 50.
+A draft that was already sent returns an error.`,
       output: `  {"object":"inbox_draft","id":"<uuid>","type":"standalone|reply","to":["<address>"]|null,"cc":[],"bcc":[],"subject":"<subject>|null","html":"<html>|null","text":"<text>|null","thread_id":"<uuid>|null","reply_to_email_id":"<uuid>|null","email_id":"<uuid>|null","created_at":"<date>","updated_at":"<date>"}`,
       errorCodes: ['auth_error', 'no_changes', 'update_error'],
       examples: [
