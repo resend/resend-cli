@@ -1,5 +1,6 @@
 import { Command } from '@commander-js/extra-typings';
 import { runCreate } from '../../../../lib/actions';
+import { resolveAttachments } from '../../../../lib/attachments';
 import type { GlobalOpts } from '../../../../lib/client';
 import { buildHelpText } from '../../../../lib/help-text';
 import { outputError } from '../../../../lib/output';
@@ -42,19 +43,44 @@ export const forwardInboxThreadEmailCommand = new Command('forward')
   .option('--html <html>', 'HTML note to include with the forward')
   .option('--subject <subject>', 'Override the forwarded subject')
   .option(
+    '--attachment <specs...>',
+    'File path or URL to attach, with optional ;cid= ;type= ;filename= params (quote the value)',
+  )
+  .option(
+    '--attachments-file <path>',
+    'Path to a JSON array of attachment objects (use "-" for stdin)',
+  )
+  .option(
     '--idempotency-key <key>',
     'Deduplicate this send request using this key',
   )
   .addHelpText(
     'after',
     buildHelpText({
-      context:
-        'Forwards the email from the inbox address. --to is required; --text/--html add an optional note.\n--to, --cc, and --bcc combined cannot exceed 50 recipients.',
+      context: `Forwards the email from the inbox address. --to is required. --text or --html
+adds an optional note above the quoted original.
+--to, --cc, and --bcc combined cannot exceed 50 recipients.
+The attachments of the original email are sent with the forward, together with
+any files you add. Together they can have up to 10 files and at most 25 MB of
+content. A URL file counts toward the 10 files only.
+Attachments: --attachment takes a local path or https:// URL plus optional
+;cid=, ;type= and ;filename= params, as on "resend emails send". Quote values
+that contain ";". --attachments-file takes a JSON array of attachment objects.
+The output holds the ID of the sent email. Use it with "resend emails get".`,
       output: `  {"id":"<email-id>"}`,
-      errorCodes: ['auth_error', 'missing_id', 'missing_to', 'create_error'],
+      errorCodes: [
+        'auth_error',
+        'missing_id',
+        'missing_to',
+        'invalid_attachment',
+        'file_read_error',
+        'stdin_read_error',
+        'create_error',
+      ],
       examples: [
         'resend inboxes threads emails forward --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --to teammate@example.com',
         'resend inboxes threads emails forward --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --to a@x.com --to b@x.com --cc c@x.com --text "FYI" --json',
+        'resend inboxes threads emails forward --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --to teammate@example.com --attachment ./notes.txt',
       ],
     }),
   )
@@ -87,6 +113,12 @@ export const forwardInboxThreadEmailCommand = new Command('forward')
       globalOpts,
     );
 
+    const attachments = resolveAttachments(
+      opts.attachment,
+      opts.attachmentsFile,
+      globalOpts,
+    );
+
     await runCreate(
       {
         loading: 'Forwarding email...',
@@ -102,6 +134,7 @@ export const forwardInboxThreadEmailCommand = new Command('forward')
               ...(opts.text && { text: opts.text }),
               ...(opts.html && { html: opts.html }),
               ...(opts.subject && { subject: opts.subject }),
+              ...(attachments && { attachments }),
             },
             opts.idempotencyKey
               ? { idempotencyKey: opts.idempotencyKey }

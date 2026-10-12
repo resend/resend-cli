@@ -215,7 +215,8 @@ Reply to a specific email in a thread. The reply is sent from the inbox
 address. It goes to the author of the original email, or its Reply-To address
 if it has one. If the inbox sent the original email, it goes to that email's
 `to` recipients. The total number of recipients cannot exceed 50, counted after
-`--reply-all` adds everyone.
+`--reply-all` adds everyone. A reply takes up to 10 attachments, with at most
+25 MB of content in total. A URL file counts toward the 10 files only.
 
 **Flags:** `--inbox_id <id> --thread_id <id> --email_id <id>` — required in
 non-interactive mode; the email ID comes from `inboxes threads emails list`
@@ -227,6 +228,8 @@ non-interactive mode; the email ID comes from `inboxes threads emails list`
 | `--text <text>` | string | One of text/html | Plain text reply body |
 | `--html <html>` | string | One of text/html | HTML reply body |
 | `--subject <subject>` | string | No | Override the reply subject |
+| `--attachment <specs...>` | string[] | No | File path or URL to attach, with optional `;cid=`, `;type=`, `;filename=` params, as on `emails send`. Quote values that contain `;` |
+| `--attachments-file <path>` | string | No | JSON array of attachment objects (`-` for stdin) |
 | `--reply-all` | boolean | No | Reply to everyone on the original email: the author (or its Reply-To address) and the original `to` and `cc` recipients, without the inbox address. Bcc is never copied |
 | `--idempotency-key <key>` | string | No | Deduplicate request |
 
@@ -248,9 +251,14 @@ Forward an email to other recipients from the inbox address.
 | `--text <text>` | string | No | Plain text note to include |
 | `--html <html>` | string | No | HTML note to include |
 | `--subject <subject>` | string | No | Override the forwarded subject |
+| `--attachment <specs...>` | string[] | No | File path or URL to attach, with optional `;cid=`, `;type=`, `;filename=` params, as on `emails send`. Quote values that contain `;` |
+| `--attachments-file <path>` | string | No | JSON array of attachment objects (`-` for stdin) |
 | `--idempotency-key <key>` | string | No | Deduplicate request |
 
-`--to`, `--cc`, and `--bcc` combined cannot exceed 50 recipients.
+`--to`, `--cc`, and `--bcc` combined cannot exceed 50 recipients. The
+attachments of the original email are sent with the forward, together with any
+files you add. Together they can have up to 10 files and at most 25 MB of
+content. A URL file counts toward the 10 files only.
 
 **Output:** `{"id":"<email-id>"}`, the ID of the sent email. Use it with `emails get`.
 

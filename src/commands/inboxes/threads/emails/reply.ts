@@ -1,5 +1,6 @@
 import { Command } from '@commander-js/extra-typings';
 import { runCreate } from '../../../../lib/actions';
+import { resolveAttachments } from '../../../../lib/attachments';
 import type { GlobalOpts } from '../../../../lib/client';
 import { buildHelpText } from '../../../../lib/help-text';
 import { outputError } from '../../../../lib/output';
@@ -36,6 +37,14 @@ export const replyInboxThreadEmailCommand = new Command('reply')
   .option('--html <html>', 'HTML body of the reply')
   .option('--subject <subject>', 'Override the reply subject')
   .option(
+    '--attachment <specs...>',
+    'File path or URL to attach, with optional ;cid= ;type= ;filename= params (quote the value)',
+  )
+  .option(
+    '--attachments-file <path>',
+    'Path to a JSON array of attachment objects (use "-" for stdin)',
+  )
+  .option(
     '--reply-all',
     'Reply to everyone on the original email, not only its author',
   )
@@ -55,12 +64,20 @@ Bcc is never copied.
 --cc and --bcc add recipients. With --reply-all, --cc merges with the copied cc,
 without duplicates.
 The total number of recipients cannot exceed 50, counted after --reply-all adds everyone.
+Attachments: --attachment takes a local path or https:// URL plus optional
+;cid=, ;type= and ;filename= params, as on "resend emails send". Quote values
+that contain ";". --attachments-file takes a JSON array of attachment objects.
+Up to 10 files. The content of all files can total at most 25 MB. A URL file
+counts toward the 10 files only, because it is fetched when the email is sent.
 The output holds the ID of the sent email. Use it with "resend emails get".`,
       output: `  {"id":"<email-id>"}`,
       errorCodes: [
         'auth_error',
         'missing_id',
         'missing_content',
+        'invalid_attachment',
+        'file_read_error',
+        'stdin_read_error',
         'create_error',
       ],
       examples: [
@@ -68,6 +85,7 @@ The output holds the ID of the sent email. Use it with "resend emails get".`,
         'resend inboxes threads emails reply --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --html "<p>Done!</p>" --json',
         'resend inboxes threads emails reply --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --text "Looping in finance." --cc finance@example.com',
         'resend inboxes threads emails reply --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --text "Thanks, all." --reply-all',
+        'resend inboxes threads emails reply --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --text "Invoice attached." --attachment ./invoice.pdf',
       ],
     }),
   )
@@ -108,6 +126,12 @@ The output holds the ID of the sent email. Use it with "resend emails get".`,
       ? { text, ...(html && { html }) }
       : { html: html as string };
 
+    const attachments = resolveAttachments(
+      opts.attachment,
+      opts.attachmentsFile,
+      globalOpts,
+    );
+
     await runCreate(
       {
         loading: 'Sending reply...',
@@ -122,6 +146,7 @@ The output holds the ID of the sent email. Use it with "resend emails get".`,
               ...(opts.bcc.length > 0 && { bcc: opts.bcc }),
               ...(opts.subject && { subject: opts.subject }),
               ...(opts.replyAll && { replyAll: true }),
+              ...(attachments && { attachments }),
             },
             opts.idempotencyKey
               ? { idempotencyKey: opts.idempotencyKey }
