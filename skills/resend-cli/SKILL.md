@@ -138,7 +138,7 @@ Auth resolves: `RESEND_API_KEY` env > config file (`resend login --key`). Use `-
 | `usage` | Show account-level usage and quota limits (emails, contacts, segments, broadcasts, AI credits, automation runs, domains, rate limit) |
 | `careers` | list, apply — browse open positions at Resend and apply |
 | `suppressions` _(beta)_ | list, add, get, delete, batch — requires account enrollment |
-| `inboxes` _(beta)_ | create, list, get, update, delete, threads (list, search, get, update, delete, emails list/get/reply/forward), labels, drafts, agent — requires account enrollment |
+| `inboxes` _(beta)_ | create, list, get, update, delete, threads (list, search, get, update, delete), threads emails (list, get, reply, forward), labels (list, create, update, delete), drafts (list, create, get, update, delete, send), agent (get, update) — requires account enrollment |
 | `api-keys` | create, list, update, delete |
 | `automations` | create, get, list, update, delete, duplicate, stop, open, runs |
 | `events` | create, get, list, update, delete, send, open |
