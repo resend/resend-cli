@@ -41,7 +41,8 @@ export const listInboxThreadsCommand = new Command('list')
     'after',
     buildHelpText({
       context: `Threads are ordered by newest activity first. Pass the last thread ID of the
-previous page as --after to fetch the next page.
+previous page as --after to fetch the next page. A cursor thread that is not in
+the selected folders returns an error.
 
 --labels takes label UUIDs (from "resend inboxes labels list"), not label names.
 To find threads by text, people, attachments, or dates, use

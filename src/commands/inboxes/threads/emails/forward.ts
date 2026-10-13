@@ -63,6 +63,8 @@ adds an optional note above the quoted original.
 The attachments of the original email are sent with the forward, together with
 any files you add. Together they can have up to 10 files and at most 25 MB of
 content. A URL file counts toward the 10 files only.
+An original attachment that was sent from a URL cannot be forwarded, and the
+request returns an error.
 Attachments: --attachment takes a local path or https:// URL plus optional
 ;cid=, ;type= and ;filename= params, as on "resend emails send". Quote values
 that contain ";". --attachments-file takes a JSON array of attachment objects.

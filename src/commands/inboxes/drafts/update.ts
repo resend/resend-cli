@@ -63,7 +63,8 @@ Attachments: --attachment takes a local file path plus ;type= (the MIME type)
 and an optional ;filename=, as on "resend emails send". Quote values that contain ";".
 --attachments-file takes a JSON array of objects with content (base64), filename
 and content_type. Draft attachments need content, filename and content_type.
-A URL or a ;cid= returns an error. A draft can carry up to 10 files and 25 MB in total.`,
+A URL or a ;cid= returns an error. The files on a draft can total at most 25 MB.
+An empty file or a blocked file type, such as .exe, returns an error.`,
       output: `  {"object":"inbox_draft","id":"<uuid>","type":"standalone|reply","to":["<address>"]|null,"cc":[],"bcc":[],"subject":"<subject>|null","html":"<html>|null","text":"<text>|null","thread_id":"<uuid>|null","reply_to_email_id":"<uuid>|null","email_id":"<uuid>|null","attachments":[{"id":"<uuid>","filename":"<name>","content_type":"<type>","size":123}],"created_at":"<date>","updated_at":"<date>"}`,
       errorCodes: [
         'auth_error',

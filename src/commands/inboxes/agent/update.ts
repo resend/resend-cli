@@ -32,7 +32,7 @@ export const updateInboxAgentCommand = new Command('update')
       context: `At least one of --instructions, --tone, or --enabled_actions is required.
 Omitted fields keep their current value.
 Pass --instructions "" or --tone "" to clear the value.
---enabled_actions replaces the whole set. Pass --enabled_actions "" to disable all actions.`,
+--enabled_actions replaces the whole set. Duplicates are removed. Pass --enabled_actions "" to disable all actions.`,
       output: `  {"object":"inbox_agent","id":"<uuid>"}`,
       errorCodes: [
         'auth_error',

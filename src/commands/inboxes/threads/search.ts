@@ -87,7 +87,9 @@ export const searchInboxThreadsCommand = new Command('search')
 
 Different flags combine, so a thread must match all of them. --folders,
 --labels, --read and --unread apply to the thread. The other filters must all
-match the same email in the thread.
+match the same email in the thread. When any of these email filters is set,
+the matching email must itself be in one of --folders. For "sent", that means
+an email the inbox sent.
 When more than 10,000 threads match, search covers the 10,000 with the newest
 matching email.
 

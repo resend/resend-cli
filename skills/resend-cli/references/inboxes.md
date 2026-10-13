@@ -107,7 +107,8 @@ newest activity first and paginate like `threads list`. Search can be up to
 about a minute behind new emails; use `threads list` to browse exactly.
 Different flags combine, so a thread must match all of them. `--folders`,
 `--labels`, `--read`, and `--unread` apply to the thread; the other filters
-must all match the same email in the thread. When more than 10,000 threads
+must all match the same email in the thread, and that email must itself be in
+one of `--folders` (for `sent`, an email the inbox sent). When more than 10,000 threads
 match, search covers the 10,000 with the newest matching email.
 
 **Flags:** `--inbox_id <id>` — required in non-interactive mode
@@ -151,8 +152,10 @@ Retrieve a thread's summary. To read its messages, use
 
 Mark a thread read/unread, move it, or add and remove labels. At least one
 option is required. A label ID cannot be both added and removed in the same
-request. Removing a label from a thread keeps the label itself. Moving a thread out of `trash` restores it and clears its deletion
-deadline.
+request. Removing a label from a thread keeps the label itself. Moving a
+thread out of `trash` restores it and clears its deletion deadline. The changes
+apply in this order: read, folder, added labels, removed labels. They are not
+atomic, so an unknown label leaves the earlier changes applied.
 
 **Flags:** `--inbox_id <id> --thread_id <id>` — required in non-interactive mode
 
@@ -238,7 +241,7 @@ non-interactive mode; the email ID comes from `inboxes threads emails list`
 | `--subject <subject>` | string | No | Override the reply subject |
 | `--attachment <specs...>` | string[] | No | File path or URL to attach, with optional `;cid=`, `;type=`, `;filename=` params, as on `emails send`. Quote values that contain `;` |
 | `--attachments-file <path>` | string | No | JSON array of attachment objects (`-` for stdin) |
-| `--reply-all` | boolean | No | Reply to everyone on the original email: the author (or its Reply-To address) and the original `to` and `cc` recipients, without the inbox address. Bcc is never copied |
+| `--reply-all` | boolean | No | Reply to everyone on the original email. For a received email: its Reply-To (or its sender), copying the other `To` header addresses and its `cc`. For an email the inbox sent: its Reply-To when it is not the inbox address, otherwise its `to`, copying its `cc`. The inbox address is excluded, duplicates are removed, and Bcc is never copied |
 | `--idempotency-key <key>` | string | No | Deduplicate request |
 
 **Output:** `{"id":"<email-id>"}`, the ID of the sent email. Use it with `emails get`.
@@ -266,7 +269,8 @@ Forward an email to other recipients from the inbox address.
 `--to`, `--cc`, and `--bcc` combined cannot exceed 50 recipients. The
 attachments of the original email are sent with the forward, together with any
 files you add. Together they can have up to 10 files and at most 25 MB of
-content. A URL file counts toward the 10 files only.
+content. A URL file counts toward the 10 files only. An original attachment
+that was sent from a URL cannot be forwarded, and the request returns an error.
 
 **Output:** `{"id":"<email-id>"}`, the ID of the sent email. Use it with `emails get`.
 
@@ -359,7 +363,10 @@ addressed to the sender of the email it replies to, or to its Reply-To when
 set. For an email the inbox sent, it defaults to that email's `to` recipients.
 At least one content field, attachments included, is required. Combined recipients cannot exceed 50.
 Only one unsent reply draft can target an email. A reply draft for an email
-that already has one returns the ID of the existing draft.
+that already has one returns the ID of the existing draft. That request ignores
+every other flag, except the attachments, which replace the attachments of the
+existing draft. A reply draft created without `--subject` has an empty subject
+and gets no `Re:` prefix, so set one before you send it.
 
 **Flags:** `--inbox_id <id>` — required in non-interactive mode
 
@@ -377,7 +384,8 @@ that already has one returns the ID of the existing draft.
 | `--attachments-file <path>` | string | JSON array of objects with `content` (base64), `filename`, and `content_type` (`-` for stdin) |
 
 Draft attachments need `content`, `filename`, and `content_type`. A URL or a
-`;cid=` returns an error. A draft can carry up to 10 files and 25 MB in total.
+`;cid=` returns an error. The files on a draft can total at most 25 MB. An
+empty file or a blocked file type, such as `.exe`, returns an error.
 
 **Output:** `{"object":"inbox_draft","id":"<uuid>"}`
 
@@ -429,7 +437,8 @@ Discard an unsent draft. A draft that was already sent returns an error.
 
 Send a draft from the inbox address. A reply draft is sent in its thread. A
 draft without a thread starts a new thread. The draft must have at least one
-`to` recipient. A draft that was already sent returns an error.
+`to` recipient, a non-empty subject, and `html` or `text`. A draft that was
+already sent returns an error.
 
 **Flags:** `--inbox_id <id> --draft_id <id>` — required in non-interactive mode
 
@@ -463,7 +472,7 @@ fields keep their current value.
 |------|------|-------------|
 | `--instructions <text>` | string | Instructions the agent follows (max 4000 chars). Pass `""` to clear them |
 | `--tone <tone>` | string | Tone the agent writes in, e.g. `friendly and concise` (max 64 chars). Pass `""` to clear it |
-| `--enabled_actions <actions...>` | string[] | Replaces the whole set (comma or space-separated). One or more of `draft_reply`, `forward_thread`, `add_labels`, `assign_thread`, `mark_as_spam`, `archive_thread`, `delete_thread`. Pass `""` to disable all actions |
+| `--enabled_actions <actions...>` | string[] | Replaces the whole set (comma or space-separated). Duplicates are removed. One or more of `draft_reply`, `forward_thread`, `add_labels`, `assign_thread`, `mark_as_spam`, `archive_thread`, `delete_thread`. Pass `""` to disable all actions |
 
 **Output:** `{"object":"inbox_agent","id":"<uuid>"}`
 

@@ -766,7 +766,7 @@ resend inboxes threads emails get --inbox_id <inbox_id> --thread_id <thread_id> 
 
 #### **`resend inboxes threads emails reply`**
 
-Sends a reply from the inbox address. The reply goes to the `Reply-To` addresses of the email, or to its sender. `--reply-all` also copies the other recipients. **At least one** of `--text` or `--html` is required. The output holds the ID of the sent email.
+Sends a reply from the inbox address. The reply goes to the `Reply-To` addresses of the email, or to its sender. `--reply-all` also copies the other recipients, without the inbox address and without duplicates. **At least one** of `--text` or `--html` is required. The output holds the ID of the sent email.
 
 | Flag                        | Description                                                  |
 | --------------------------- | ------------------------------------------------------------ |
@@ -786,7 +786,7 @@ resend inboxes threads emails reply --inbox_id <inbox_id> --thread_id <thread_id
 
 #### **`resend inboxes threads emails forward`**
 
-Forwards an email from the inbox address. **`--to` is required.** The attachments of the original email are sent with the forward. Takes `--cc`, `--bcc`, `--text`, `--html`, `--subject`, `--attachment`, `--attachments-file`, and `--idempotency-key`. The output holds the ID of the sent email.
+Forwards an email from the inbox address. **`--to` is required.** The attachments of the original email are sent with the forward. An original attachment that was sent from a URL cannot be forwarded. Takes `--cc`, `--bcc`, `--text`, `--html`, `--subject`, `--attachment`, `--attachments-file`, and `--idempotency-key`. The output holds the ID of the sent email.
 
 ```bash
 resend inboxes threads emails forward --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --to teammate@example.com --text "FYI"
@@ -836,7 +836,7 @@ resend inboxes drafts list --inbox_id <inbox_id>
 
 Creates a draft that starts a new thread. Pass `--thread_id` and `--reply_to_email_id` together for a reply draft. Takes `--to`, `--cc`, `--bcc`, `--subject`, `--text`, `--html`, `--attachment`, and `--attachments-file`. **At least one** of them is required.
 
-Draft attachments need `content`, `filename`, and `content_type`, so `--attachment` takes a local file with `;type=<MIME type>`. A draft can carry up to 10 files and 25 MB in total.
+Draft attachments need `content`, `filename`, and `content_type`, so `--attachment` takes a local file with `;type=<MIME type>`. The files on a draft can total at most 25 MB.
 
 ```bash
 resend inboxes drafts create --inbox_id <inbox_id> --to user@example.com --subject "Hello" --text "Draft body"
@@ -871,7 +871,7 @@ resend inboxes drafts delete --inbox_id <inbox_id> --draft_id <draft_id> --yes
 
 #### **`resend inboxes drafts send`**
 
-Sends a draft from the inbox address. The draft needs at least one `to` recipient. The output holds the ID of the sent email.
+Sends a draft from the inbox address. The draft needs at least one `to` recipient, a non-empty subject, and `html` or `text`. A reply draft created without `--subject` has an empty subject, so set one before you send it. The output holds the ID of the sent email.
 
 ```bash
 resend inboxes drafts send --inbox_id <inbox_id> --draft_id <draft_id>

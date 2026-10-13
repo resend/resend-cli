@@ -37,6 +37,8 @@ is required.
 A label ID cannot be both added and removed in the same request.
 A label ID that does not exist in the inbox returns an error.
 Removing a label from a thread keeps the label itself.
+The changes apply in this order: read, folder, added labels, removed labels.
+They are not atomic, so an unknown label leaves the earlier changes applied.
 Threads cannot be moved to "sent". Moving a thread out of "trash" restores it
 and clears its deletion deadline.`,
       output: `  {"object":"inbox_thread","id":"<uuid>","subject":"<subject>|null","folder":"inbox|archive|spam|sent|trash","labels":[],"read":true}`,

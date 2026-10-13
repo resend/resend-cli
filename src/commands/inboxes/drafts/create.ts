@@ -63,13 +63,18 @@ set. For an email the inbox sent, it defaults to that email's "to" recipients.
 At least one content field (--to, --cc, --bcc, --subject, --text, --html,
 --attachment, --attachments-file) is required. Combined recipients cannot exceed 50.
 Only one unsent reply draft can target an email. A reply draft for an email
-that already has one returns the ID of the existing draft.
+that already has one returns the ID of the existing draft. That request ignores
+every other flag, except the attachments, which replace the attachments of the
+existing draft.
+A reply draft created without --subject has an empty subject and gets no "Re:"
+prefix, so set one before you send it.
 
 Attachments: --attachment takes a local file path plus ;type= (the MIME type)
 and an optional ;filename=, as on "resend emails send". Quote values that contain ";".
 --attachments-file takes a JSON array of objects with content (base64), filename
 and content_type. Draft attachments need content, filename and content_type.
-A URL or a ;cid= returns an error. A draft can carry up to 10 files and 25 MB in total.
+A URL or a ;cid= returns an error. The files on a draft can total at most 25 MB.
+An empty file or a blocked file type, such as .exe, returns an error.
 
 Send the draft later with "resend inboxes drafts send".`,
       output: `  {"object":"inbox_draft","id":"<uuid>"}`,

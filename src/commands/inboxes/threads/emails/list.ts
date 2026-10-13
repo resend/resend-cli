@@ -29,7 +29,8 @@ export const listInboxThreadEmailsCommand = new Command('list')
     'after',
     buildHelpText({
       context: `Emails are ordered oldest first and include their html and text bodies.
-Pass the last email ID of the previous page as --after to fetch the next page.`,
+Pass the last email ID of the previous page as --after to fetch the next page.
+A cursor that is not an email of the thread returns an error.`,
       output: `  {"object":"list","has_more":false,"data":[{"id":"<uuid>","direction":"inbound|outbound","from":"<sender>","to":[],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>|null","message_id":"<message-id>|null","html":"<html>|null","text":"<text>|null","attachments":[],"read":true,"received_at":"<date>"}]}`,
       errorCodes: [
         'auth_error',

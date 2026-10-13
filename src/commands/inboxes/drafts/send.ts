@@ -22,8 +22,8 @@ export const sendInboxDraftCommand = new Command('send')
     buildHelpText({
       context: `Sends the draft from the inbox address. A reply draft is sent in its thread.
 A draft without a thread starts a new thread.
-The draft must have at least one "to" recipient. A draft that was already sent
-returns an error.
+The draft must have at least one "to" recipient, a non-empty subject, and html
+or text. A draft that was already sent returns an error.
 The output holds the ID of the sent email. Use it with "resend emails get".`,
       output: `  {"id":"<email-id>"}`,
       errorCodes: ['auth_error', 'send_error'],

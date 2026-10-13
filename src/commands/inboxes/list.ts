@@ -15,11 +15,11 @@ export const listInboxesCommand = new Command('list')
   .option('--limit <n>', 'Maximum number of inboxes to return (1-100)', '10')
   .option(
     '--after <cursor>',
-    'Cursor for forward pagination — list items after this ID',
+    'Cursor for forward pagination — list inboxes after this inbox ID',
   )
   .option(
     '--before <cursor>',
-    'Cursor for backward pagination — list items before this ID',
+    'Cursor for backward pagination — list inboxes before this inbox ID',
   )
   .addHelpText(
     'after',
