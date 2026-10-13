@@ -834,7 +834,7 @@ resend inboxes drafts list --inbox_id <inbox_id>
 
 #### **`resend inboxes drafts create`**
 
-Creates a draft that starts a new thread. Pass `--thread_id` and `--reply_to_email_id` together for a reply draft. Takes `--to`, `--cc`, `--bcc`, `--subject`, `--text`, `--html`, `--attachment`, and `--attachments-file`. **At least one** of them is required.
+Creates a draft that starts a new thread. Pass `--thread_id` and `--reply_to_email_id` together for a reply draft. Takes `--to`, `--cc`, `--bcc`, `--subject`, `--text`, `--html`, `--attachment`, and `--attachments-file`. **At least one** of them is required. `--idempotency-key` deduplicates the request.
 
 Draft attachments need `content`, `filename`, and `content_type`, so `--attachment` takes a local file with `;type=<MIME type>`. The files on a draft can total at most 25 MB.
 
@@ -871,7 +871,7 @@ resend inboxes drafts delete --inbox_id <inbox_id> --draft_id <draft_id> --yes
 
 #### **`resend inboxes drafts send`**
 
-Sends a draft from the inbox address. The draft needs at least one `to` recipient, a non-empty subject, and `html` or `text`. A reply draft created without `--subject` has an empty subject, so set one before you send it. The output holds the ID of the sent email.
+Sends a draft from the inbox address. The draft needs at least one `to` recipient, a non-empty subject, and `html` or `text`. A reply draft created without `--subject` has an empty subject, so set one before you send it. `--idempotency-key` deduplicates the send. The output holds the ID of the sent email.
 
 ```bash
 resend inboxes drafts send --inbox_id <inbox_id> --draft_id <draft_id>

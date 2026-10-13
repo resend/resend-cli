@@ -103,6 +103,25 @@ describe('inboxes drafts create command', () => {
     expect(args.replyToEmailId).toBe(EMAIL_ID);
   });
 
+  it('passes idempotencyKey as second arg to drafts.create', async () => {
+    setupOutputSpies();
+
+    await createInboxDraftCommand.parseAsync(
+      [
+        '--inbox_id',
+        INBOX_ID,
+        '--subject',
+        'Hello',
+        '--idempotency-key',
+        'my-key-123',
+      ],
+      { from: 'user' },
+    );
+
+    const opts = mockCreate.mock.calls.at(-1)?.[1] as Record<string, unknown>;
+    expect(opts?.idempotencyKey).toBe('my-key-123');
+  });
+
   it('errors with invalid_options when --thread_id lacks --reply_to_email_id', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});

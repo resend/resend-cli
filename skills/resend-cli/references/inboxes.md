@@ -380,6 +380,7 @@ and gets no `Re:` prefix, so set one before you send it.
 | `--html <html>` | string | HTML body |
 | `--thread_id <thread_id>` | string | Thread to reply to (pairs with `--reply_to_email_id`) |
 | `--reply_to_email_id <email_id>` | string | Email the draft replies to (pairs with `--thread_id`) |
+| `--idempotency-key <key>` | string | Deduplicate request |
 | `--attachment <specs...>` | string[] | Local file to attach with `;type=<MIME type>` and an optional `;filename=`. Quote values that contain `;` |
 | `--attachments-file <path>` | string | JSON array of objects with `content` (base64), `filename`, and `content_type` (`-` for stdin) |
 
@@ -407,7 +408,8 @@ Update a draft's recipients, subject, or body. At least one option is
 required; provided fields replace existing values. Setting `--text` or
 `--html` replaces the whole body, so the body part you omit becomes `null`. A
 draft that was already sent returns an error. Same flags as `drafts create`
-minus `--thread_id`/`--reply_to_email_id`, plus `--clear-attachments`.
+minus `--thread_id`, `--reply_to_email_id`, and `--idempotency-key`, plus
+`--clear-attachments`.
 `--attachment` and `--attachments-file` replace every attachment on the draft.
 `--clear-attachments` removes them all. Omit all three to keep them.
 

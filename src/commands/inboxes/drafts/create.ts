@@ -46,6 +46,10 @@ export const createInboxDraftCommand = new Command('create')
     'Path to a JSON array of attachment objects (use "-" for stdin)',
   )
   .option(
+    '--idempotency-key <key>',
+    'Deduplicate this create request using this key',
+  )
+  .option(
     '--thread_id <thread_id>',
     'Thread to reply to (requires --reply_to_email_id)',
   )
@@ -157,7 +161,13 @@ Send the draft later with "resend inboxes drafts send".`,
     await runCreate(
       {
         loading: 'Creating draft...',
-        sdkCall: (resend) => resend.inboxes.drafts.create(payload),
+        sdkCall: (resend) =>
+          resend.inboxes.drafts.create(
+            payload,
+            opts.idempotencyKey
+              ? { idempotencyKey: opts.idempotencyKey }
+              : undefined,
+          ),
         onInteractive: (data) => {
           console.log(`Draft created: ${data.id}`);
         },
