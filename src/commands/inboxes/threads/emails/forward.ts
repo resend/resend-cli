@@ -2,6 +2,7 @@ import { Command } from '@commander-js/extra-typings';
 import { runCreate } from '../../../../lib/actions';
 import { resolveAttachments } from '../../../../lib/attachments';
 import type { GlobalOpts } from '../../../../lib/client';
+import { parseHeaderPairs } from '../../../../lib/headers';
 import { buildHelpText } from '../../../../lib/help-text';
 import { outputError } from '../../../../lib/output';
 import { pickId, requireText } from '../../../../lib/prompts';
@@ -51,6 +52,10 @@ export const forwardInboxThreadEmailCommand = new Command('forward')
     'Path to a JSON array of attachment objects (use "-" for stdin)',
   )
   .option(
+    '--headers <key=value...>',
+    'Custom headers as key=value pairs (e.g. X-Entity-Ref-ID=123)',
+  )
+  .option(
     '--idempotency-key <key>',
     'Deduplicate this send request using this key',
   )
@@ -68,12 +73,15 @@ request returns an error.
 Attachments: --attachment takes a local path or https:// URL plus optional
 ;cid=, ;type= and ;filename= params, as on "resend emails send". Quote values
 that contain ";". --attachments-file takes a JSON array of attachment objects.
+--headers adds custom headers. In-Reply-To, References and Reply-To are reserved:
+Resend sets them, and passing any of them, in any letter case, returns an error.
 The output holds the ID of the sent email. Use it with "resend emails get".`,
       output: `  {"id":"<email-id>"}`,
       errorCodes: [
         'auth_error',
         'missing_id',
         'missing_to',
+        'invalid_header',
         'invalid_attachment',
         'file_read_error',
         'stdin_read_error',
@@ -115,6 +123,7 @@ The output holds the ID of the sent email. Use it with "resend emails get".`,
       globalOpts,
     );
 
+    const headers = parseHeaderPairs(opts.headers, globalOpts);
     const attachments = resolveAttachments(
       opts.attachment,
       opts.attachmentsFile,
@@ -137,6 +146,7 @@ The output holds the ID of the sent email. Use it with "resend emails get".`,
               ...(opts.html && { html: opts.html }),
               ...(opts.subject && { subject: opts.subject }),
               ...(attachments && { attachments }),
+              ...(headers && { headers }),
             },
             opts.idempotencyKey
               ? { idempotencyKey: opts.idempotencyKey }

@@ -777,6 +777,7 @@ Sends a reply from the inbox address. The reply goes to the `Reply-To` addresses
 | `--reply-all`               | Reply to everyone on the original email                      |
 | `--attachment <specs...>`   | File path or URL to attach, as on `resend emails send`       |
 | `--attachments-file <path>` | JSON array of attachment objects                             |
+| `--headers <key=value...>`  | Custom headers. `In-Reply-To`, `References` and `Reply-To` are reserved |
 | `--idempotency-key <key>`   | Deduplicate the send                                         |
 
 ```bash
@@ -786,7 +787,7 @@ resend inboxes threads emails reply --inbox_id <inbox_id> --thread_id <thread_id
 
 #### **`resend inboxes threads emails forward`**
 
-Forwards an email from the inbox address. **`--to` is required.** The attachments of the original email are sent with the forward. An original attachment that was sent from a URL cannot be forwarded. Takes `--cc`, `--bcc`, `--text`, `--html`, `--subject`, `--attachment`, `--attachments-file`, and `--idempotency-key`. The output holds the ID of the sent email.
+Forwards an email from the inbox address. **`--to` is required.** The attachments of the original email are sent with the forward. An original attachment that was sent from a URL cannot be forwarded. Takes `--cc`, `--bcc`, `--text`, `--html`, `--subject`, `--attachment`, `--attachments-file`, `--headers`, and `--idempotency-key`. The output holds the ID of the sent email.
 
 ```bash
 resend inboxes threads emails forward --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --to teammate@example.com --text "FYI"
@@ -871,7 +872,7 @@ resend inboxes drafts delete --inbox_id <inbox_id> --draft_id <draft_id> --yes
 
 #### **`resend inboxes drafts send`**
 
-Sends a draft from the inbox address. The draft needs at least one `to` recipient, a non-empty subject, and `html` or `text`. A reply draft created without `--subject` has an empty subject, so set one before you send it. `--idempotency-key` deduplicates the send. The output holds the ID of the sent email.
+Sends a draft from the inbox address. The draft needs at least one `to` recipient, a non-empty subject, and `html` or `text`. A reply draft created without `--subject` has an empty subject, so set one before you send it. `--headers` adds custom headers, except the reserved `In-Reply-To`, `References` and `Reply-To`. `--idempotency-key` deduplicates the send. The output holds the ID of the sent email.
 
 ```bash
 resend inboxes drafts send --inbox_id <inbox_id> --draft_id <draft_id>

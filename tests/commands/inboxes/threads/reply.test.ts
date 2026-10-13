@@ -372,4 +372,56 @@ describe('inboxes threads emails reply command', () => {
     expect(output).toContain('file_read_error');
     expect(mockReply).not.toHaveBeenCalled();
   });
+
+  it('passes --headers to the SDK', async () => {
+    setupOutputSpies();
+
+    await replyInboxThreadEmailCommand.parseAsync(
+      [
+        '--inbox_id',
+        INBOX_ID,
+        '--thread_id',
+        THREAD_ID,
+        '--email_id',
+        EMAIL_ID,
+        '--text',
+        'ok',
+        '--headers',
+        'X-Ticket-Id=4821',
+      ],
+      { from: 'user' },
+    );
+
+    const args = mockReply.mock.calls.at(-1)?.[0] as Record<string, unknown>;
+    expect(args.headers).toEqual({ 'X-Ticket-Id': '4821' });
+  });
+
+  it('errors with invalid_header for a header without =', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+    mockReply.mockClear();
+
+    await expectExit1(() =>
+      replyInboxThreadEmailCommand.parseAsync(
+        [
+          '--inbox_id',
+          INBOX_ID,
+          '--thread_id',
+          THREAD_ID,
+          '--email_id',
+          EMAIL_ID,
+          '--text',
+          'ok',
+          '--headers',
+          'X-Ticket-Id',
+        ],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_header');
+    expect(mockReply).not.toHaveBeenCalled();
+  });
 });

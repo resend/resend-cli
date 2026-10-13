@@ -242,6 +242,7 @@ non-interactive mode; the email ID comes from `inboxes threads emails list`
 | `--attachment <specs...>` | string[] | No | File path or URL to attach, with optional `;cid=`, `;type=`, `;filename=` params, as on `emails send`. Quote values that contain `;` |
 | `--attachments-file <path>` | string | No | JSON array of attachment objects (`-` for stdin) |
 | `--reply-all` | boolean | No | Reply to everyone on the original email. For a received email: its Reply-To (or its sender), copying the other `To` header addresses and its `cc`. For an email the inbox sent: its Reply-To when it is not the inbox address, otherwise its `to`, copying its `cc`. The inbox address is excluded, duplicates are removed, and Bcc is never copied |
+| `--headers <key=value...>` | string[] | No | Custom headers as `key=value` pairs. `In-Reply-To`, `References`, and `Reply-To` are reserved: Resend sets them, and passing any of them, in any letter case, returns an error |
 | `--idempotency-key <key>` | string | No | Deduplicate request |
 
 **Output:** `{"id":"<email-id>"}`, the ID of the sent email. Use it with `emails get`.
@@ -264,6 +265,7 @@ Forward an email to other recipients from the inbox address.
 | `--subject <subject>` | string | No | Override the forwarded subject |
 | `--attachment <specs...>` | string[] | No | File path or URL to attach, with optional `;cid=`, `;type=`, `;filename=` params, as on `emails send`. Quote values that contain `;` |
 | `--attachments-file <path>` | string | No | JSON array of attachment objects (`-` for stdin) |
+| `--headers <key=value...>` | string[] | No | Custom headers as `key=value` pairs. `In-Reply-To`, `References`, and `Reply-To` are reserved: Resend sets them, and passing any of them, in any letter case, returns an error |
 | `--idempotency-key <key>` | string | No | Deduplicate request |
 
 `--to`, `--cc`, and `--bcc` combined cannot exceed 50 recipients. The
@@ -446,6 +448,7 @@ already sent returns an error.
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
+| `--headers <key=value...>` | string[] | No | Custom headers as `key=value` pairs. `In-Reply-To`, `References`, and `Reply-To` are reserved: Resend sets them, and passing any of them, in any letter case, returns an error |
 | `--idempotency-key <key>` | string | No | Deduplicate request |
 
 **Output:** `{"id":"<email-id>"}`, the ID of the sent email. Use it with `emails get`.

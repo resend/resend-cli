@@ -2,6 +2,7 @@ import { Command } from '@commander-js/extra-typings';
 import { runCreate } from '../../../../lib/actions';
 import { resolveAttachments } from '../../../../lib/attachments';
 import type { GlobalOpts } from '../../../../lib/client';
+import { parseHeaderPairs } from '../../../../lib/headers';
 import { buildHelpText } from '../../../../lib/help-text';
 import { outputError } from '../../../../lib/output';
 import { pickId, requireText } from '../../../../lib/prompts';
@@ -49,6 +50,10 @@ export const replyInboxThreadEmailCommand = new Command('reply')
     'Reply to everyone on the original email, not only its author',
   )
   .option(
+    '--headers <key=value...>',
+    'Custom headers as key=value pairs (e.g. X-Entity-Ref-ID=123)',
+  )
+  .option(
     '--idempotency-key <key>',
     'Deduplicate this send request using this key',
   )
@@ -73,12 +78,15 @@ Attachments: --attachment takes a local path or https:// URL plus optional
 that contain ";". --attachments-file takes a JSON array of attachment objects.
 Up to 10 files. The content of all files can total at most 25 MB. A URL file
 counts toward the 10 files only, because it is fetched when the email is sent.
+--headers adds custom headers. In-Reply-To, References and Reply-To are reserved:
+Resend sets them, and passing any of them, in any letter case, returns an error.
 The output holds the ID of the sent email. Use it with "resend emails get".`,
       output: `  {"id":"<email-id>"}`,
       errorCodes: [
         'auth_error',
         'missing_id',
         'missing_content',
+        'invalid_header',
         'invalid_attachment',
         'file_read_error',
         'stdin_read_error',
@@ -130,6 +138,7 @@ The output holds the ID of the sent email. Use it with "resend emails get".`,
       ? { text, ...(html && { html }) }
       : { html: html as string };
 
+    const headers = parseHeaderPairs(opts.headers, globalOpts);
     const attachments = resolveAttachments(
       opts.attachment,
       opts.attachmentsFile,
@@ -151,6 +160,7 @@ The output holds the ID of the sent email. Use it with "resend emails get".`,
               ...(opts.subject && { subject: opts.subject }),
               ...(opts.replyAll && { replyAll: true }),
               ...(attachments && { attachments }),
+              ...(headers && { headers }),
             },
             opts.idempotencyKey
               ? { idempotencyKey: opts.idempotencyKey }

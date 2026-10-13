@@ -137,4 +137,28 @@ describe('inboxes drafts send command', () => {
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('send_error');
   });
+
+  it('passes --headers in the send payload', async () => {
+    spies = setupOutputSpies();
+
+    await sendInboxDraftCommand.parseAsync(
+      [
+        '--inbox_id',
+        INBOX_ID,
+        '--draft_id',
+        DRAFT_ID,
+        '--headers',
+        'X-Ticket-Id=4821',
+        'X-Note=a=b',
+      ],
+      { from: 'user' },
+    );
+
+    const args = mockSend.mock.calls.at(-1)?.[0] as Record<string, unknown>;
+    expect(args).toEqual({
+      inboxId: INBOX_ID,
+      draftId: DRAFT_ID,
+      headers: { 'X-Ticket-Id': '4821', 'X-Note': 'a=b' },
+    });
+  });
 });
