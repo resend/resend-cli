@@ -734,7 +734,6 @@ Marks a thread read or unread, moves it to a folder, or adds and removes labels.
 | `--folder <folder>`                  | `inbox`, `archive`, `spam`, or `trash`                   |
 | `--add_label_ids <label_ids...>`     | Label UUIDs to apply, 1 to 10                            |
 | `--remove_label_ids <label_ids...>`  | Label UUIDs to remove, 1 to 10                           |
-| `--label_id <label_id>`              | Deprecated. Use `--add_label_ids`                        |
 
 ```bash
 resend inboxes threads update --inbox_id <inbox_id> --thread_id <thread_id> --read --folder archive

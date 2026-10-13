@@ -85,25 +85,16 @@ describe('inboxes threads update command', () => {
     expect(args.folder).toBe('archive');
   });
 
-  it('maps --unread to read: false and passes --label_id', async () => {
+  it('maps --unread to read: false', async () => {
     setupOutputSpies();
 
     await updateInboxThreadCommand.parseAsync(
-      [
-        '--inbox_id',
-        INBOX_ID,
-        '--thread_id',
-        THREAD_ID,
-        '--unread',
-        '--label_id',
-        'label-1',
-      ],
+      ['--inbox_id', INBOX_ID, '--thread_id', THREAD_ID, '--unread'],
       { from: 'user' },
     );
 
     const args = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.read).toBe(false);
-    expect(args.labelId).toBe('label-1');
   });
 
   it('passes --add_label_ids and --remove_label_ids', async () => {
@@ -127,7 +118,6 @@ describe('inboxes threads update command', () => {
     const args = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
     expect(args.addLabelIds).toEqual(['label-1', 'label-2']);
     expect(args.removeLabelIds).toEqual(['label-3']);
-    expect(args.labelId).toBeUndefined();
     expect(args.read).toBeUndefined();
   });
 

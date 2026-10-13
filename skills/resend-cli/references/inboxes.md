@@ -151,7 +151,7 @@ Retrieve a thread's summary. To read its messages, use
 
 Mark a thread read/unread, move it, or add and remove labels. At least one
 option is required. A label ID cannot be both added and removed in the same
-request. Moving a thread out of `trash` restores it and clears its deletion
+request. Removing a label from a thread keeps the label itself. Moving a thread out of `trash` restores it and clears its deletion
 deadline.
 
 **Flags:** `--inbox_id <id> --thread_id <id>` — required in non-interactive mode
@@ -163,7 +163,6 @@ deadline.
 | `--folder <folder>` | string | Move to one of `inbox`, `archive`, `spam`, `trash` (`sent` is not a valid target) |
 | `--add_label_ids <label_ids...>` | string[] | Label UUIDs to apply to the thread, 1 to 10 |
 | `--remove_label_ids <label_ids...>` | string[] | Label UUIDs to remove from the thread, 1 to 10 |
-| `--label_id <label_id>` | string | Deprecated. Use `--add_label_ids`. Applies this label (UUID) to the thread |
 
 **Output:** `{"object":"inbox_thread","id":"<uuid>","subject":"<subject>"|null,"folder":"<folder>","labels":[],"read":true}`
 

@@ -29,17 +29,14 @@ export const updateInboxThreadCommand = new Command('update')
     '--remove_label_ids <label_ids...>',
     'Label UUIDs to remove from the thread, 1 to 10',
   )
-  .option(
-    '--label_id <label_id>',
-    'Deprecated. Use --add_label_ids. Applies this label (UUID) to the thread',
-  )
   .addHelpText(
     'after',
     buildHelpText({
-      context: `At least one of --read/--unread, --folder, --add_label_ids, --remove_label_ids,
-or --label_id is required.
+      context: `At least one of --read/--unread, --folder, --add_label_ids, or --remove_label_ids
+is required.
 A label ID cannot be both added and removed in the same request.
 A label ID that does not exist in the inbox returns an error.
+Removing a label from a thread keeps the label itself.
 Threads cannot be moved to "sent". Moving a thread out of "trash" restores it
 and clears its deletion deadline.`,
       output: `  {"object":"inbox_thread","id":"<uuid>","subject":"<subject>|null","folder":"inbox|archive|spam|sent|trash","labels":[],"read":true}`,
@@ -75,13 +72,12 @@ and clears its deletion deadline.`,
       read === undefined &&
       !opts.folder &&
       !opts.add_label_ids &&
-      !opts.remove_label_ids &&
-      !opts.label_id
+      !opts.remove_label_ids
     ) {
       outputError(
         {
           message:
-            'Provide at least one option to update: --read/--unread, --folder, --add_label_ids, --remove_label_ids, or --label_id.',
+            'Provide at least one option to update: --read/--unread, --folder, --add_label_ids, or --remove_label_ids.',
           code: 'no_changes',
         },
         { json: globalOpts.json },
@@ -105,7 +101,6 @@ and clears its deletion deadline.`,
       ...(opts.folder && { folder: opts.folder }),
       ...(opts.add_label_ids && { addLabelIds: opts.add_label_ids }),
       ...(opts.remove_label_ids && { removeLabelIds: opts.remove_label_ids }),
-      ...(opts.label_id && { labelId: opts.label_id }),
     } as UpdateInboxThreadOptions;
 
     await runWrite(
