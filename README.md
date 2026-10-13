@@ -777,7 +777,7 @@ Sends a reply from the inbox address. The reply goes to the `Reply-To` addresses
 | `--reply-all`               | Reply to everyone on the original email                      |
 | `--attachment <specs...>`   | File path or URL to attach, as on `resend emails send`       |
 | `--attachments-file <path>` | JSON array of attachment objects                             |
-| `--headers <key=value...>`  | Custom headers. `In-Reply-To`, `References` and `Reply-To` are reserved |
+| `--headers <key=value...>`  | Custom headers. `In-Reply-To`, `References` and `Reply-To` are reserved. Names and values cannot contain line breaks |
 | `--idempotency-key <key>`   | Deduplicate the send                                         |
 
 ```bash

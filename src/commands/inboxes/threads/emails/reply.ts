@@ -78,8 +78,12 @@ Attachments: --attachment takes a local path or https:// URL plus optional
 that contain ";". --attachments-file takes a JSON array of attachment objects.
 Up to 10 files. The content of all files can total at most 25 MB. A URL file
 counts toward the 10 files only, because it is fetched when the email is sent.
+An empty file, a blocked file type, or a URL that is not http or https, or that
+points to localhost, returns an error.
 --headers adds custom headers. In-Reply-To, References and Reply-To are reserved:
 Resend sets them, and passing any of them, in any letter case, returns an error.
+A header name cannot be empty, and names and values cannot contain line breaks
+or null characters.
 The output holds the ID of the sent email. Use it with "resend emails get".`,
       output: `  {"id":"<email-id>"}`,
       errorCodes: [
