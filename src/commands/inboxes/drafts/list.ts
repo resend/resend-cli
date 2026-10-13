@@ -29,7 +29,7 @@ export const listInboxDraftsCommand = new Command('list')
     buildHelpText({
       context:
         'Pass the last draft ID of the previous page as --after to fetch the next page.',
-      output: `  {"object":"list","has_more":false,"data":[{"id":"<uuid>","type":"standalone|reply","to":["<address>"]|null,"cc":[],"bcc":[],"subject":"<subject>|null","snippet":"<text>|null","thread_id":"<uuid>|null","reply_to_email_id":"<uuid>|null","updated_at":"<date>"}]}`,
+      output: `  {"object":"list","has_more":false,"data":[{"id":"<uuid>","type":"standalone|reply","to":["<address>"]|null,"cc":[],"bcc":[],"subject":"<subject>|null","snippet":"<text>|null","thread_id":"<uuid>|null","reply_to_email_id":"<uuid>|null","attachments":[{"id":"<uuid>","filename":"<name>","content_type":"<type>","size":123}],"updated_at":"<date>"}]}`,
       errorCodes: [
         'auth_error',
         'invalid_limit',

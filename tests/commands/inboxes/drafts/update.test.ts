@@ -1,3 +1,6 @@
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
   afterEach,
   beforeEach,
@@ -128,5 +131,75 @@ describe('inboxes drafts update command', () => {
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('update_error');
+  });
+  it('sends an empty attachments array with --clear-attachments', async () => {
+    setupOutputSpies();
+
+    await updateInboxDraftCommand.parseAsync(
+      ['--inbox_id', INBOX_ID, '--draft_id', DRAFT_ID, '--clear-attachments'],
+      { from: 'user' },
+    );
+
+    const args = mockUpdate.mock.calls.at(-1)?.[0] as Record<string, unknown>;
+    expect(args.attachments).toEqual([]);
+  });
+
+  it('replaces attachments from --attachments-file', async () => {
+    setupOutputSpies();
+    const dir = mkdtempSync(join(tmpdir(), 'resend-draft-attachments-'));
+    const jsonFile = join(dir, 'attachments.json');
+    writeFileSync(
+      jsonFile,
+      JSON.stringify([
+        { filename: 'a.txt', content: 'aGk=', content_type: 'text/plain' },
+      ]),
+    );
+
+    try {
+      await updateInboxDraftCommand.parseAsync(
+        [
+          '--inbox_id',
+          INBOX_ID,
+          '--draft_id',
+          DRAFT_ID,
+          '--attachments-file',
+          jsonFile,
+        ],
+        { from: 'user' },
+      );
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+
+    const args = mockUpdate.mock.calls.at(-1)?.[0] as Record<string, unknown>;
+    expect(args.attachments).toEqual([
+      { filename: 'a.txt', content: 'aGk=', contentType: 'text/plain' },
+    ]);
+  });
+
+  it('errors with invalid_options when --clear-attachments is combined with --attachment', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+    mockUpdate.mockClear();
+
+    await expectExit1(() =>
+      updateInboxDraftCommand.parseAsync(
+        [
+          '--inbox_id',
+          INBOX_ID,
+          '--draft_id',
+          DRAFT_ID,
+          '--clear-attachments',
+          '--attachment',
+          './notes.txt;type=text/plain',
+        ],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_options');
+    expect(mockUpdate).not.toHaveBeenCalled();
   });
 });

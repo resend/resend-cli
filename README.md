@@ -834,11 +834,14 @@ resend inboxes drafts list --inbox_id <inbox_id>
 
 #### **`resend inboxes drafts create`**
 
-Creates a draft that starts a new thread. Pass `--thread_id` and `--reply_to_email_id` together for a reply draft. Takes `--to`, `--cc`, `--bcc`, `--subject`, `--text`, and `--html`. **At least one** of them is required.
+Creates a draft that starts a new thread. Pass `--thread_id` and `--reply_to_email_id` together for a reply draft. Takes `--to`, `--cc`, `--bcc`, `--subject`, `--text`, `--html`, `--attachment`, and `--attachments-file`. **At least one** of them is required.
+
+Draft attachments need `content`, `filename`, and `content_type`, so `--attachment` takes a local file with `;type=<MIME type>`. A draft can carry up to 10 files and 25 MB in total.
 
 ```bash
 resend inboxes drafts create --inbox_id <inbox_id> --to user@example.com --subject "Hello" --text "Draft body"
 resend inboxes drafts create --inbox_id <inbox_id> --thread_id <thread_id> --reply_to_email_id <email_id> --text "Reply draft"
+resend inboxes drafts create --inbox_id <inbox_id> --to user@example.com --text "Report attached" --attachment "./report.pdf;type=application/pdf"
 ```
 
 #### **`resend inboxes drafts get`**
@@ -851,10 +854,11 @@ resend inboxes drafts get --inbox_id <inbox_id> --draft_id <draft_id>
 
 #### **`resend inboxes drafts update`**
 
-Updates the recipients, subject, or body of an unsent draft. Setting `--text` or `--html` replaces the whole body.
+Updates the recipients, subject, body, or attachments of an unsent draft. Setting `--text` or `--html` replaces the whole body. `--attachment` and `--attachments-file` replace every attachment on the draft, and `--clear-attachments` removes them all.
 
 ```bash
 resend inboxes drafts update --inbox_id <inbox_id> --draft_id <draft_id> --subject "Updated subject"
+resend inboxes drafts update --inbox_id <inbox_id> --draft_id <draft_id> --clear-attachments
 ```
 
 #### **`resend inboxes drafts delete`**

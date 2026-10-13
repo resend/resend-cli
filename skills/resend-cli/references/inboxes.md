@@ -347,7 +347,7 @@ List drafts in an inbox (default subcommand of `resend inboxes drafts`).
 
 **Alias:** `ls`
 
-**Output:** `{"object":"list","has_more":false,"data":[{"id":"<uuid>","type":"standalone|reply","to":["<address>"]|null,"cc":[],"bcc":[],"subject":"<subject>"|null,"snippet":"<text>"|null,"thread_id":"<uuid>"|null,"reply_to_email_id":"<uuid>"|null,"updated_at":"<date>"}]}`
+**Output:** `{"object":"list","has_more":false,"data":[{"id":"<uuid>","type":"standalone|reply","to":["<address>"]|null,"cc":[],"bcc":[],"subject":"<subject>"|null,"snippet":"<text>"|null,"thread_id":"<uuid>"|null,"reply_to_email_id":"<uuid>"|null,"attachments":[{"id":"<uuid>","filename":"<name>","content_type":"<type>","size":123}],"updated_at":"<date>"}]}`
 
 ---
 
@@ -357,7 +357,7 @@ Create a standalone draft, or a reply draft when `--thread_id` and
 `--reply_to_email_id` are passed **together**. A reply draft without `--to` is
 addressed to the sender of the email it replies to, or to its Reply-To when
 set. For an email the inbox sent, it defaults to that email's `to` recipients.
-At least one content field is required. Combined recipients cannot exceed 50.
+At least one content field, attachments included, is required. Combined recipients cannot exceed 50.
 Only one unsent reply draft can target an email. A reply draft for an email
 that already has one returns the ID of the existing draft.
 
@@ -373,6 +373,11 @@ that already has one returns the ID of the existing draft.
 | `--html <html>` | string | HTML body |
 | `--thread_id <thread_id>` | string | Thread to reply to (pairs with `--reply_to_email_id`) |
 | `--reply_to_email_id <email_id>` | string | Email the draft replies to (pairs with `--thread_id`) |
+| `--attachment <specs...>` | string[] | Local file to attach with `;type=<MIME type>` and an optional `;filename=`. Quote values that contain `;` |
+| `--attachments-file <path>` | string | JSON array of objects with `content` (base64), `filename`, and `content_type` (`-` for stdin) |
+
+Draft attachments need `content`, `filename`, and `content_type`. A URL or a
+`;cid=` returns an error. A draft can carry up to 10 files and 25 MB in total.
 
 **Output:** `{"object":"inbox_draft","id":"<uuid>"}`
 
@@ -384,7 +389,7 @@ Retrieve a draft, including its full body.
 
 **Flags:** `--inbox_id <id> --draft_id <id>` — required in non-interactive mode
 
-**Output:** `{"object":"inbox_draft","id":"<uuid>","type":"standalone|reply","to":["<address>"]|null,"cc":[],"bcc":[],"subject":"<subject>"|null,"html":"<html>"|null,"text":"<text>"|null,"thread_id":"<uuid>"|null,"reply_to_email_id":"<uuid>"|null,"email_id":null,"created_at":"<date>","updated_at":"<date>"}`
+**Output:** `{"object":"inbox_draft","id":"<uuid>","type":"standalone|reply","to":["<address>"]|null,"cc":[],"bcc":[],"subject":"<subject>"|null,"html":"<html>"|null,"text":"<text>"|null,"thread_id":"<uuid>"|null,"reply_to_email_id":"<uuid>"|null,"email_id":null,"attachments":[{"id":"<uuid>","filename":"<name>","content_type":"<type>","size":123}],"created_at":"<date>","updated_at":"<date>"}`
 
 ---
 
@@ -394,7 +399,9 @@ Update a draft's recipients, subject, or body. At least one option is
 required; provided fields replace existing values. Setting `--text` or
 `--html` replaces the whole body, so the body part you omit becomes `null`. A
 draft that was already sent returns an error. Same flags as `drafts create`
-minus `--thread_id`/`--reply_to_email_id`.
+minus `--thread_id`/`--reply_to_email_id`, plus `--clear-attachments`.
+`--attachment` and `--attachments-file` replace every attachment on the draft.
+`--clear-attachments` removes them all. Omit all three to keep them.
 
 **Flags:** `--inbox_id <id> --draft_id <id>` — required in non-interactive mode
 

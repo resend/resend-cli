@@ -1,3 +1,6 @@
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
   afterEach,
   beforeEach,
@@ -152,5 +155,57 @@ describe('inboxes drafts create command', () => {
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('create_error');
+  });
+  it('reads --attachment files into attachments and counts them as content', async () => {
+    setupOutputSpies();
+    const dir = mkdtempSync(join(tmpdir(), 'resend-draft-attachments-'));
+    const file = join(dir, 'notes.txt');
+    writeFileSync(file, 'hello');
+
+    try {
+      await createInboxDraftCommand.parseAsync(
+        ['--inbox_id', INBOX_ID, '--attachment', `${file};type=text/plain`],
+        { from: 'user' },
+      );
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+
+    const args = mockCreate.mock.calls.at(-1)?.[0] as Record<string, unknown>;
+    const attachments = args.attachments as Array<Record<string, unknown>>;
+    expect(attachments).toHaveLength(1);
+    expect(attachments[0].filename).toBe('notes.txt');
+    expect(attachments[0].contentType).toBe('text/plain');
+    expect(Buffer.isBuffer(attachments[0].content)).toBe(true);
+  });
+
+  it.each([
+    ['a URL', 'https://example.com/report.pdf;type=application/pdf'],
+    ['no ;type=', './notes.txt'],
+  ])('errors with invalid_attachment for %s', async (_case, spec) => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+    const dir = mkdtempSync(join(tmpdir(), 'resend-draft-attachments-'));
+    writeFileSync(join(dir, 'notes.txt'), 'hello');
+    const cwd = process.cwd();
+    process.chdir(dir);
+    mockCreate.mockClear();
+
+    try {
+      await expectExit1(() =>
+        createInboxDraftCommand.parseAsync(
+          ['--inbox_id', INBOX_ID, '--attachment', spec],
+          { from: 'user' },
+        ),
+      );
+    } finally {
+      process.chdir(cwd);
+      rmSync(dir, { recursive: true, force: true });
+    }
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_attachment');
+    expect(mockCreate).not.toHaveBeenCalled();
   });
 });

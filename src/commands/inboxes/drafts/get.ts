@@ -13,7 +13,7 @@ export const getInboxDraftCommand = new Command('get')
   .addHelpText(
     'after',
     buildHelpText({
-      output: `  {"object":"inbox_draft","id":"<uuid>","type":"standalone|reply","to":["<address>"]|null,"cc":[],"bcc":[],"subject":"<subject>|null","html":"<html>|null","text":"<text>|null","thread_id":"<uuid>|null","reply_to_email_id":"<uuid>|null","email_id":"<uuid>|null","created_at":"<date>","updated_at":"<date>"}`,
+      output: `  {"object":"inbox_draft","id":"<uuid>","type":"standalone|reply","to":["<address>"]|null,"cc":[],"bcc":[],"subject":"<subject>|null","html":"<html>|null","text":"<text>|null","thread_id":"<uuid>|null","reply_to_email_id":"<uuid>|null","email_id":"<uuid>|null","attachments":[{"id":"<uuid>","filename":"<name>","content_type":"<type>","size":123}],"created_at":"<date>","updated_at":"<date>"}`,
       errorCodes: ['auth_error', 'fetch_error'],
       examples: [
         'resend inboxes drafts get --inbox_id <inbox_id> --draft_id <draft_id>',
@@ -39,6 +39,11 @@ export const getInboxDraftCommand = new Command('get')
           console.log(`Type: ${data.type}`);
           if (data.to?.length) {
             console.log(`To: ${data.to.join(', ')}`);
+          }
+          if (data.attachments.length > 0) {
+            console.log(
+              `Attachments: ${data.attachments.map((a) => a.filename).join(', ')}`,
+            );
           }
           console.log(`Updated: ${data.updated_at}`);
           console.log('');
