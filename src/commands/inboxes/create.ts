@@ -62,7 +62,7 @@ Non-interactive: --email_address is required.`,
         sdkCall: (resend) =>
           resend.inboxes.create({
             emailAddress,
-            ...(opts.name && { name: opts.name }),
+            ...(opts.name !== undefined && { name: opts.name }),
             ...(opts.from_name !== undefined && { fromName: opts.from_name }),
             ...(opts.forwarding && { forwarding: true }),
           }),

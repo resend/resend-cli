@@ -155,6 +155,31 @@ describe('inboxes drafts create command', () => {
     expect(mockCreate).not.toHaveBeenCalled();
   });
 
+  it('errors with missing_content when --attachments-file holds no attachments', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+    const dir = mkdtempSync(join(tmpdir(), 'resend-draft-attachments-'));
+    const file = join(dir, 'attachments.json');
+    writeFileSync(file, '[]');
+    mockCreate.mockClear();
+
+    try {
+      await expectExit1(() =>
+        createInboxDraftCommand.parseAsync(
+          ['--inbox_id', INBOX_ID, '--attachments-file', file],
+          { from: 'user' },
+        ),
+      );
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('missing_content');
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
   it('errors with create_error when SDK returns an error', async () => {
     setNonInteractive();
     mockCreate.mockResolvedValueOnce(

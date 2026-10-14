@@ -73,7 +73,7 @@ address is always excluded, and duplicates are removed. Bcc is never copied.
 --cc and --bcc add recipients. With --reply-all, --cc merges with the copied cc,
 without duplicates.
 The total number of recipients cannot exceed 50, counted after --reply-all adds everyone.
-Attachments: --attachment takes a local path or https:// URL plus optional
+Attachments: --attachment takes a local path or an http:// or https:// URL plus optional
 ;cid=, ;type= and ;filename= params, as on "resend emails send". Quote values
 that contain ";". --attachments-file takes a JSON array of attachment objects.
 Up to 10 files. The content of all files can total at most 25 MB. A URL file
@@ -166,7 +166,7 @@ The output holds the ID of the sent email. Use it with "resend emails get".`,
               ...(attachments && { attachments }),
               ...(headers && { headers }),
             },
-            opts.idempotencyKey
+            opts.idempotencyKey !== undefined
               ? { idempotencyKey: opts.idempotencyKey }
               : undefined,
           ),

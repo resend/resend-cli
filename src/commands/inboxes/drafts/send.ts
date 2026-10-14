@@ -57,7 +57,7 @@ The output holds the ID of the sent email. Use it with "resend emails get".`,
       () =>
         resend.inboxes.drafts.send(
           { inboxId, draftId, ...(headers && { headers }) },
-          opts.idempotencyKey
+          opts.idempotencyKey !== undefined
             ? { idempotencyKey: opts.idempotencyKey }
             : undefined,
         ),

@@ -33,7 +33,7 @@ export const updateInboxLabelCommand = new Command('update')
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
-    if (!opts.name && !opts.color) {
+    if (opts.name === undefined && opts.color === undefined) {
       outputError(
         {
           message: 'Provide at least one option to update: --name or --color.',
@@ -57,8 +57,8 @@ export const updateInboxLabelCommand = new Command('update')
           resend.inboxes.labels.update({
             inboxId,
             labelId,
-            ...(opts.name && { name: opts.name }),
-            ...(opts.color && { color: opts.color }),
+            ...(opts.name !== undefined && { name: opts.name }),
+            ...(opts.color !== undefined && { color: opts.color }),
           }),
         errorCode: 'update_error',
         successMsg: `Label updated: ${labelId}`,

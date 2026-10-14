@@ -38,7 +38,7 @@ To use a different address, create a new inbox.`,
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const id = await pickId(idArg, inboxPickerConfig, globalOpts);
 
-    if (!opts.name && opts.from_name === undefined) {
+    if (opts.name === undefined && opts.from_name === undefined) {
       outputError(
         {
           message:
@@ -53,7 +53,7 @@ To use a different address, create a new inbox.`,
     // no_changes guard above guarantees but tsc cannot prove across the
     // conditional spreads.
     const payload = {
-      ...(opts.name && { name: opts.name }),
+      ...(opts.name !== undefined && { name: opts.name }),
       ...(opts.from_name !== undefined && { fromName: opts.from_name }),
     } as UpdateInboxOptions;
 

@@ -72,7 +72,7 @@ An empty file, a blocked file type, or a URL that is not http or https, or that
 points to localhost, returns an error.
 An original attachment that was sent from a URL cannot be forwarded, and the
 request returns an error.
-Attachments: --attachment takes a local path or https:// URL plus optional
+Attachments: --attachment takes a local path or an http:// or https:// URL plus optional
 ;cid=, ;type= and ;filename= params, as on "resend emails send". Quote values
 that contain ";". --attachments-file takes a JSON array of attachment objects.
 --headers adds custom headers. In-Reply-To, References and Reply-To are reserved:
@@ -152,7 +152,7 @@ The output holds the ID of the sent email. Use it with "resend emails get".`,
               ...(attachments && { attachments }),
               ...(headers && { headers }),
             },
-            opts.idempotencyKey
+            opts.idempotencyKey !== undefined
               ? { idempotencyKey: opts.idempotencyKey }
               : undefined,
           ),

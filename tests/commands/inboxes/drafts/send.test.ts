@@ -120,6 +120,18 @@ describe('inboxes drafts send command', () => {
     expect(opts?.idempotencyKey).toBe('my-key-123');
   });
 
+  it('passes an empty idempotencyKey through for the API to validate', async () => {
+    spies = setupOutputSpies();
+
+    await sendInboxDraftCommand.parseAsync(
+      ['--inbox_id', INBOX_ID, '--draft_id', DRAFT_ID, '--idempotency-key', ''],
+      { from: 'user' },
+    );
+
+    const opts = mockSend.mock.calls[0][1] as Record<string, unknown>;
+    expect(opts?.idempotencyKey).toBe('');
+  });
+
   it('errors with send_error when SDK returns an error', async () => {
     setNonInteractive();
     mockSend.mockResolvedValueOnce(

@@ -112,6 +112,12 @@ Send the draft later with "resend inboxes drafts send".`,
       );
     }
 
+    const attachments = resolveDraftAttachments(
+      opts.attachment,
+      opts.attachmentsFile,
+      globalOpts,
+    );
+
     const hasContent =
       opts.to.length > 0 ||
       opts.cc.length > 0 ||
@@ -119,8 +125,7 @@ Send the draft later with "resend inboxes drafts send".`,
       opts.subject !== undefined ||
       opts.text !== undefined ||
       opts.html !== undefined ||
-      opts.attachment !== undefined ||
-      opts.attachmentsFile !== undefined;
+      (attachments?.length ?? 0) > 0;
     if (!hasContent) {
       outputError(
         {
@@ -131,12 +136,6 @@ Send the draft later with "resend inboxes drafts send".`,
         { json: globalOpts.json },
       );
     }
-
-    const attachments = resolveDraftAttachments(
-      opts.attachment,
-      opts.attachmentsFile,
-      globalOpts,
-    );
 
     const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
 
@@ -164,7 +163,7 @@ Send the draft later with "resend inboxes drafts send".`,
         sdkCall: (resend) =>
           resend.inboxes.drafts.create(
             payload,
-            opts.idempotencyKey
+            opts.idempotencyKey !== undefined
               ? { idempotencyKey: opts.idempotencyKey }
               : undefined,
           ),
