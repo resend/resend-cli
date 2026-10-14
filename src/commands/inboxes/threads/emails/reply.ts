@@ -68,8 +68,8 @@ At least one of --text or --html is required.
 goes to its Reply-To addresses, or to its sender, and copies the other addresses
 of its "To" header and its "cc". For an email the inbox sent, the reply goes to
 its Reply-To addresses when they are not the inbox address, otherwise to its "to"
-recipients, and copies its "cc". The inbox address is always excluded, and
-duplicates are removed. Bcc is never copied.
+recipients, and copies its other "to" recipients and its "cc". The inbox
+address is always excluded, and duplicates are removed. Bcc is never copied.
 --cc and --bcc add recipients. With --reply-all, --cc merges with the copied cc,
 without duplicates.
 The total number of recipients cannot exceed 50, counted after --reply-all adds everyone.

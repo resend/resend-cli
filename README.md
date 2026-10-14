@@ -766,7 +766,7 @@ resend inboxes threads emails get --inbox_id <inbox_id> --thread_id <thread_id> 
 
 #### **`resend inboxes threads emails reply`**
 
-Sends a reply from the inbox address. The reply goes to the `Reply-To` addresses of the email, or to its sender. `--reply-all` also copies the other recipients, without the inbox address and without duplicates. **At least one** of `--text` or `--html` is required. The output holds the ID of the sent email.
+Sends a reply from the inbox address. The reply goes to the `Reply-To` addresses of the email, or to its sender. If the inbox sent the email, the reply goes to its `to` recipients. `--reply-all` also copies the other recipients, without the inbox address and without duplicates. **At least one** of `--text` or `--html` is required. The output holds the ID of the sent email.
 
 | Flag                        | Description                                                  |
 | --------------------------- | ------------------------------------------------------------ |
