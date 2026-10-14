@@ -170,6 +170,7 @@ Read the matching reference file for detailed flags and output shapes.
 | 8 | **Expecting `logs list` to include request/response bodies** | List returns summary fields only — use `logs get <id>` for full `request_body` and `response_body` |
 | 9 | **CSV import fails with `create_error` ("missing required email column")** | `contacts imports create` matches columns case-sensitively by lowercase names (`email`, `first_name`, `last_name`) — use `--column-map` for headers like `Email`/`First Name` |
 | 10 | **URL attachment "succeeds" but the email never arrives** | The API fetches `--attachment "https://..."` URLs after returning the email ID — an unreachable URL fails the email asynchronously. Verify with `emails get <id>` (`last_event: "failed"`), and always pass `;filename=` and `;type=` since neither is derived from the URL (defaults: `attachment-0`, `application/octet-stream`) |
+| 11 | **An inbox ID after `--to` becomes a recipient** | A variadic flag such as `--to`, `--cc` or `--labels` takes every value up to the next flag. Put the positional IDs of the `inboxes` commands first: `inboxes drafts create <inbox-id> --to a@example.com` |
 
 ## Common Patterns
 
