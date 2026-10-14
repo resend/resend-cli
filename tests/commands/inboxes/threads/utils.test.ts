@@ -79,4 +79,10 @@ describe('inboxThreadPickerConfig', () => {
   it('shows (no subject) for an empty subject', () => {
     expect(display({ ...result({}), subject: '' }).label).toBe('(no subject)');
   });
+
+  it('shows (no subject) when the subject is only control sequences', () => {
+    expect(display({ ...result({}), subject: '\u001b[2J\u0007' }).label).toBe(
+      '(no subject)',
+    );
+  });
 });

@@ -637,7 +637,7 @@ Running a group with no subcommand runs its `list`, or `get` for `agent`.
 
 The nested commands take their IDs as positional arguments, parent first: the inbox ID, then the thread, draft, or label ID, then the email ID. For example, `resend inboxes threads emails get <inbox-id> <thread-id> <email-id>`. Each ID also has a flag, such as `--inbox-id` or `--thread-id`. Pass an ID as an argument or as a flag, not both.
 
-In a terminal, omit an ID to pick from a list. The exception is the email ID of `threads emails get`, `reply`, and `forward`. In a terminal, these commands ask you to type it. Get it from `threads emails list`.
+In an interactive terminal without `--json` or `-q`, omit an ID to pick from a list. The exception is the email ID of `threads emails get`, `reply`, and `forward`. There, these commands ask you to type it. Get it from `threads emails list`.
 
 Version 2.24.0 used snake_case flags, such as `--inbox_id` and `--start_date`. They still work, but help does not show them. Use the kebab-case flags.
 

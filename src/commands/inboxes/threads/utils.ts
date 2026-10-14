@@ -58,7 +58,7 @@ export function inboxThreadPickerConfig(
     fetchItems: (resend, { limit, after }) =>
       resend.inboxes.threads.list({ inboxId, limit, ...(after && { after }) }),
     display: (t) => ({
-      label: safeTerminalText(t.subject || '(no subject)'),
+      label: safeTerminalText(t.subject ?? '') || '(no subject)',
       hint: t.id,
     }),
   };
