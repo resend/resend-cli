@@ -54,7 +54,13 @@ export const getInboxThreadEmailCommand = new Command('get')
             );
           }
           console.log('');
-          console.log(data.text ?? data.html ?? '(no body)');
+          if (data.text) {
+            console.log(data.text);
+          } else if (data.html) {
+            console.log('(HTML body only. Use --json to view it.)');
+          } else {
+            console.log('(no body)');
+          }
         },
       },
       globalOpts,

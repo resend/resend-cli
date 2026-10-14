@@ -101,7 +101,10 @@ Send the draft later with "resend inboxes drafts send".`,
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
-    if (Boolean(opts.thread_id) !== Boolean(opts.reply_to_email_id)) {
+    if (
+      (opts.thread_id === undefined) !==
+      (opts.reply_to_email_id === undefined)
+    ) {
       outputError(
         {
           message:
@@ -151,7 +154,7 @@ Send the draft later with "resend inboxes drafts send".`,
       ...(opts.text !== undefined && { text: opts.text }),
       ...(opts.html !== undefined && { html: opts.html }),
       ...(attachments && { attachments }),
-      ...(opts.thread_id && {
+      ...(opts.thread_id !== undefined && {
         threadId: opts.thread_id,
         replyToEmailId: opts.reply_to_email_id,
       }),

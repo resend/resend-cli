@@ -121,4 +121,46 @@ describe('inboxes threads emails get command', () => {
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('fetch_error');
   });
+
+  it('shows a notice instead of raw markup for an HTML-only email', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: { ...(await mockGet()).data, text: null, html: '<p>Hi</p>' },
+      error: null,
+    } as never);
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    delete process.env.CI;
+    delete process.env.GITHUB_ACTIONS;
+    delete process.env.TERM;
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
+
+    try {
+      await getInboxThreadEmailCommand.parseAsync(
+        [
+          '--inbox_id',
+          INBOX_ID,
+          '--thread_id',
+          THREAD_ID,
+          '--email_id',
+          EMAIL_ID,
+        ],
+        { from: 'user' },
+      );
+      const lines = logSpy.mock.calls.map((c) => c[0]);
+      expect(lines).toContain('(HTML body only. Use --json to view it.)');
+      expect(lines).not.toContain('<p>Hi</p>');
+    } finally {
+      logSpy.mockRestore();
+      stderrSpy.mockRestore();
+    }
+  });
 });

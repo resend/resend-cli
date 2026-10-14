@@ -252,4 +252,43 @@ describe('inboxes drafts create command', () => {
     expect(output).toContain('invalid_attachment');
     expect(mockCreate).not.toHaveBeenCalled();
   });
+
+  it('errors with invalid_options when --thread_id is empty and --reply_to_email_id is absent', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    await expectExit1(() =>
+      createInboxDraftCommand.parseAsync(
+        ['--inbox_id', INBOX_ID, '--text', 'x', '--thread_id', ''],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_options');
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  it('sends explicit empty thread flags for the API to validate', async () => {
+    setupOutputSpies();
+
+    await createInboxDraftCommand.parseAsync(
+      [
+        '--inbox_id',
+        INBOX_ID,
+        '--text',
+        'x',
+        '--thread_id',
+        '',
+        '--reply_to_email_id',
+        '',
+      ],
+      { from: 'user' },
+    );
+
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.threadId).toBe('');
+    expect(args.replyToEmailId).toBe('');
+  });
 });

@@ -69,4 +69,38 @@ describe('summarizeEvent', () => {
     expect(summary.resourceId).toBe(INBOX_ID);
     expect(summary.detail).toBe('support@acme.dev');
   });
+
+  it('shows the thread ID for inbox.thread.created', () => {
+    const summary = summarizeEvent({
+      type: 'inbox.thread.created',
+      data: {
+        inbox_id: INBOX_ID,
+        thread_id: THREAD_ID,
+        email_id: EMAIL_ID,
+        thread: { id: THREAD_ID, subject: 'Billing question' },
+        email: {
+          id: EMAIL_ID,
+          from: 'customer@example.com',
+          to: ['support@acme.dev'],
+        },
+      },
+    });
+
+    expect(summary.resourceId).toBe(THREAD_ID);
+  });
+
+  it('shows the draft ID for inbox.draft.sent', () => {
+    const summary = summarizeEvent({
+      type: 'inbox.draft.sent',
+      data: {
+        inbox_id: INBOX_ID,
+        thread_id: THREAD_ID,
+        email_id: EMAIL_ID,
+        draft_id: DRAFT_ID,
+        draft: { id: DRAFT_ID, subject: 'Refund follow-up' },
+      },
+    });
+
+    expect(summary.resourceId).toBe(DRAFT_ID);
+  });
 });

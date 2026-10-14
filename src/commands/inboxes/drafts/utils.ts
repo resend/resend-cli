@@ -11,7 +11,7 @@ export function inboxDraftPickerConfig(
     fetchItems: (resend, { limit, after }) =>
       resend.inboxes.drafts.list({ inboxId, limit, ...(after && { after }) }),
     display: (d) => ({
-      label: d.subject ?? d.to?.join(', ') ?? '(no subject)',
+      label: d.subject || d.to?.join(', ') || '(no subject)',
       hint: d.id,
     }),
   };

@@ -131,4 +131,18 @@ describe('inboxes update command', () => {
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('update_error');
   });
+
+  it('errors with no_changes before it asks for an inbox ID', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    await expectExit1(() =>
+      updateInboxCommand.parseAsync([], { from: 'user' }),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('no_changes');
+    expect(output).not.toContain('missing_id');
+  });
 });

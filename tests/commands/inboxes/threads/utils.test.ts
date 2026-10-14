@@ -2,6 +2,7 @@ import type { InboxThreadSearchResult } from 'resend';
 import { describe, expect, it } from 'vitest';
 import {
   firstMatchSnippet,
+  inboxThreadPickerConfig,
   renderThreadSearchTable,
 } from '../../../../src/commands/inboxes/threads/utils';
 
@@ -59,5 +60,23 @@ describe('renderThreadSearchTable', () => {
     ]);
     expect(table).toContain('Match');
     expect(table).toContain('attachments: invoice-2026-09.pdf');
+  });
+});
+
+describe('inboxThreadPickerConfig', () => {
+  const display = inboxThreadPickerConfig(
+    '78261eea-8f8b-4381-83c6-79fa7120f1cf',
+  ).display;
+
+  it('strips terminal control sequences from the subject', () => {
+    const { label } = display({
+      ...result({}),
+      subject: '\u001b[2J\u001b[31mFake prompt\u0007',
+    });
+    expect(label).toBe('Fake prompt');
+  });
+
+  it('shows (no subject) for an empty subject', () => {
+    expect(display({ ...result({}), subject: '' }).label).toBe('(no subject)');
   });
 });

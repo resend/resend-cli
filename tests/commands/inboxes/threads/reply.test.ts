@@ -424,4 +424,31 @@ describe('inboxes threads emails reply command', () => {
     expect(output).toContain('invalid_header');
     expect(mockReply).not.toHaveBeenCalled();
   });
+
+  it('sends an explicit empty --text and --subject', async () => {
+    spies = setupOutputSpies();
+
+    await replyInboxThreadEmailCommand.parseAsync(
+      [
+        '--inbox_id',
+        INBOX_ID,
+        '--thread_id',
+        THREAD_ID,
+        '--email_id',
+        EMAIL_ID,
+        '--text',
+        '',
+        '--html',
+        '<p>Hi</p>',
+        '--subject',
+        '',
+      ],
+      { from: 'user' },
+    );
+
+    const args = mockReply.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.text).toBe('');
+    expect(args.html).toBe('<p>Hi</p>');
+    expect(args.subject).toBe('');
+  });
 });

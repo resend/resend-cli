@@ -26,6 +26,19 @@ function timestamp(): string {
   return new Date().toLocaleTimeString('en-GB', { hour12: false });
 }
 
+function inboxResourceId(type: string, data: Record<string, unknown>): unknown {
+  if (type.startsWith('inbox.thread.')) {
+    return data.thread_id;
+  }
+  if (type.startsWith('inbox.email.')) {
+    return data.email_id;
+  }
+  if (type.startsWith('inbox.draft.')) {
+    return data.draft_id;
+  }
+  return data.inbox_id;
+}
+
 export function summarizeEvent(body: Record<string, unknown>): {
   type: string;
   resourceId: string;
@@ -35,11 +48,13 @@ export function summarizeEvent(body: Record<string, unknown>): {
   const data = (body.data as Record<string, unknown>) ?? {};
 
   const resourceId = safeTerminalText(
-    ((data.id ??
-      data.email_id ??
-      data.draft_id ??
-      data.thread_id ??
-      data.inbox_id) as string) ?? '',
+    ((type.startsWith('inbox.')
+      ? inboxResourceId(type, data)
+      : (data.id ??
+        data.email_id ??
+        data.draft_id ??
+        data.thread_id ??
+        data.inbox_id)) as string | undefined) ?? '',
   );
 
   let detail = '';

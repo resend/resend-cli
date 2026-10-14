@@ -633,7 +633,7 @@ Inbox commands need a full-access API key.
 - `inboxes rm` → `delete`
 - `ls` and `rm` also work on `threads`, `threads emails` (`ls` only), `labels`, and `drafts`
 
-Running a group with no subcommand runs its `list`, or `get` for `agent`. In a terminal, omit an ID to pick from a list.
+Running a group with no subcommand runs its `list`, or `get` for `agent`. In a terminal, omit an ID to pick from a list. The exception is `--email_id` on `threads emails get`, `reply`, and `forward`. In a terminal, these commands ask you to type it. Get it from `threads emails list`.
 
 ---
 

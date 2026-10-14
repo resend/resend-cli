@@ -9,6 +9,7 @@ import type {
 import type { GlobalOpts } from '../../../lib/client';
 import { outputError } from '../../../lib/output';
 import type { PickerConfig } from '../../../lib/prompts';
+import { safeTerminalText } from '../../../lib/safe-terminal-text';
 import { renderTable } from '../../../lib/table';
 
 type ThreadFilterOpts = {
@@ -56,7 +57,10 @@ export function inboxThreadPickerConfig(
     resourcePlural: 'threads',
     fetchItems: (resend, { limit, after }) =>
       resend.inboxes.threads.list({ inboxId, limit, ...(after && { after }) }),
-    display: (t) => ({ label: t.subject ?? '(no subject)', hint: t.id }),
+    display: (t) => ({
+      label: safeTerminalText(t.subject || '(no subject)'),
+      hint: t.id,
+    }),
   };
 }
 

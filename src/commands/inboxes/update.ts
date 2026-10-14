@@ -36,8 +36,6 @@ To use a different address, create a new inbox.`,
   )
   .action(async (idArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const id = await pickId(idArg, inboxPickerConfig, globalOpts);
-
     if (opts.name === undefined && opts.from_name === undefined) {
       outputError(
         {
@@ -48,6 +46,8 @@ To use a different address, create a new inbox.`,
         { json: globalOpts.json },
       );
     }
+
+    const id = await pickId(idArg, inboxPickerConfig, globalOpts);
 
     // The SDK requires at least one change at the type level, which the
     // no_changes guard above guarantees but tsc cannot prove across the

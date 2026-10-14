@@ -109,7 +109,7 @@ The output holds the ID of the sent email. Use it with "resend emails get".`,
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
     const { text, html } = opts;
-    if (!text && !html) {
+    if (text === undefined && html === undefined) {
       outputError(
         {
           message: 'Provide --text or --html for the reply body.',
@@ -138,9 +138,10 @@ The output holds the ID of the sent email. Use it with "resend emails get".`,
     // The SDK requires at least one of text/html at the type level, which the
     // outputError never-return above guarantees but tsc cannot see across the
     // conditional spread — hence the explicit branch.
-    const body = text
-      ? { text, ...(html && { html }) }
-      : { html: html as string };
+    const body =
+      text !== undefined
+        ? { text, ...(html !== undefined && { html }) }
+        : { html: html as string };
 
     const headers = parseHeaderPairs(opts.headers, globalOpts);
     const attachments = resolveAttachments(
@@ -161,7 +162,7 @@ The output holds the ID of the sent email. Use it with "resend emails get".`,
               ...body,
               ...(opts.cc.length > 0 && { cc: opts.cc }),
               ...(opts.bcc.length > 0 && { bcc: opts.bcc }),
-              ...(opts.subject && { subject: opts.subject }),
+              ...(opts.subject !== undefined && { subject: opts.subject }),
               ...(opts.replyAll && { replyAll: true }),
               ...(attachments && { attachments }),
               ...(headers && { headers }),

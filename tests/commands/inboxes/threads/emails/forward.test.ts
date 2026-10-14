@@ -335,4 +335,33 @@ describe('inboxes threads emails forward command', () => {
     expect(output).toContain('invalid_header');
     expect(mockForward).not.toHaveBeenCalled();
   });
+
+  it('sends an explicit empty --subject, --text, and --html', async () => {
+    setupOutputSpies();
+
+    await forwardInboxThreadEmailCommand.parseAsync(
+      [
+        '--inbox_id',
+        INBOX_ID,
+        '--thread_id',
+        THREAD_ID,
+        '--email_id',
+        EMAIL_ID,
+        '--to',
+        'teammate@example.com',
+        '--subject',
+        '',
+        '--text',
+        '',
+        '--html',
+        '',
+      ],
+      { from: 'user' },
+    );
+
+    const args = mockForward.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.subject).toBe('');
+    expect(args.text).toBe('');
+    expect(args.html).toBe('');
+  });
 });
