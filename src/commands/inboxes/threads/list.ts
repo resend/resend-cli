@@ -47,7 +47,7 @@ the selected folders returns an error.
 --labels takes label UUIDs (from "resend inboxes labels list"), not label names.
 To find threads by text, people, attachments, or dates, use
 "resend inboxes threads search".`,
-      output: `  {"object":"list","has_more":false,"data":[{"id":"<uuid>","subject":"<subject>|null","from":"<sender>|null","to":[],"cc":[],"bcc":[],"labels":[],"message_count":1,"has_attachment":false,"has_draft":false,"read":false,"received_at":"<date>","folder":"inbox|archive|spam|sent|trash"}]}`,
+      output: `  {"object":"list","has_more":false,"data":[{"id":"<uuid>","subject":"<subject>|null","from":"<sender>|null","to":[],"cc":[],"bcc":[],"labels":[],"email_count":1,"has_attachment":false,"has_draft":false,"read":false,"received_at":"<date>","folder":"inbox|archive|spam|sent|trash"}]}`,
       errorCodes: [
         'auth_error',
         'invalid_options',

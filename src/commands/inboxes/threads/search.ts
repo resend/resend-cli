@@ -95,7 +95,7 @@ matching email.
 
 Search can be up to about a minute behind new emails. To browse an inbox
 exactly and up to date, use "resend inboxes threads list".`,
-      output: `  {"object":"list","has_more":false,"data":[{"id":"<uuid>","subject":"<subject>|null","from":"<sender>|null","to":[],"cc":[],"bcc":[],"labels":[],"message_count":1,"has_attachment":false,"has_draft":false,"read":false,"received_at":"<date>","folder":"inbox|archive|spam|sent|trash","matched_email_id":"<uuid>|null","highlights":{"subject":["<snippet>"]}}]}`,
+      output: `  {"object":"list","has_more":false,"data":[{"id":"<uuid>","subject":"<subject>|null","from":"<sender>|null","to":[],"cc":[],"bcc":[],"labels":[],"email_count":1,"has_attachment":false,"has_draft":false,"read":false,"received_at":"<date>","folder":"inbox|archive|spam|sent|trash","matched_email_id":"<uuid>|null","highlights":{"subject":["<snippet>"]}}]}`,
       errorCodes: [
         'auth_error',
         'invalid_options',

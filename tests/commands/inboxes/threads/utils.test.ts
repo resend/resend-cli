@@ -15,7 +15,7 @@ const result = (
   cc: [],
   bcc: [],
   labels: [],
-  message_count: 3,
+  email_count: 3,
   has_attachment: true,
   has_draft: false,
   read: false,

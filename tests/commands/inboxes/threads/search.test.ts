@@ -35,7 +35,7 @@ const mockSearch = vi.fn(async () => ({
         cc: [],
         bcc: [],
         labels: [],
-        message_count: 1,
+        email_count: 1,
         has_attachment: false,
         has_draft: false,
         read: false,

@@ -65,12 +65,12 @@ export function renderThreadsTable(threads: InboxThread[]): string {
     t.from ?? '',
     t.subject ?? '(no subject)',
     t.read ? 'yes' : 'no',
-    String(t.message_count),
+    String(t.email_count),
     t.received_at,
     t.id,
   ]);
   return renderTable(
-    ['From', 'Subject', 'Read', 'Msgs', 'Received', 'ID'],
+    ['From', 'Subject', 'Read', 'Emails', 'Received', 'ID'],
     rows,
     '(no threads)',
   );
