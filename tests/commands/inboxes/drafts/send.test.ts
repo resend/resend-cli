@@ -80,6 +80,9 @@ describe('inboxes drafts send command', () => {
       value: true,
       writable: true,
     });
+    delete process.env.CI;
+    delete process.env.GITHUB_ACTIONS;
+    delete process.env.TERM;
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const stderrSpy = vi
       .spyOn(process.stderr, 'write')
