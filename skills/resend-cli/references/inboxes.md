@@ -484,6 +484,8 @@ An inbox without a configured agent returns empty settings.
 
 **Output:** `{"object":"inbox_agent","instructions":"<text>"|null,"tone":"<tone>"|null,"enabled_actions":["draft_reply"]}`
 
+`tone` is a preset key (`concise_professional`, `concise_casual`, `expanded_professional`, `expanded_casual`), custom text, or `null`. Older dashboard values such as `Concise · Casual` are custom text.
+
 ---
 
 ## inboxes agent update
@@ -496,7 +498,7 @@ fields keep their current value.
 | Flag | Type | Description |
 |------|------|-------------|
 | `--instructions <text>` | string | Instructions the agent follows (max 4000 chars). Pass `""` to clear them |
-| `--tone <tone>` | string | Tone the agent writes in, e.g. `friendly and concise` (max 64 chars). Pass `""` to clear it |
+| `--tone <tone>` | string | Tone the agent writes in. One of the presets `concise_professional`, `concise_casual`, `expanded_professional`, `expanded_casual`, or custom text such as `friendly and concise` (max 64 chars). Pass `""` to clear it |
 | `--enabled-actions <actions...>` | string[] | Replaces the whole set (comma or space-separated). Duplicates are removed. One or more of `draft_reply`, `forward_thread`, `add_labels`, `assign_thread`, `mark_as_spam`, `archive_thread`, `delete_thread`. Pass `""` to disable all actions |
 
 **Output:** `{"object":"inbox_agent","id":"<uuid>"}`

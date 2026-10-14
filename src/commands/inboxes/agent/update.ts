@@ -23,7 +23,7 @@ export const updateInboxAgentCommand = new Command('update')
   )
   .option(
     '--tone <tone>',
-    'Tone the agent writes in, e.g. "friendly and concise" (max 64 characters)',
+    'Tone preset or custom text the agent writes in (max 64 characters)',
   )
   .option(
     '--enabled-actions <actions...>',
@@ -35,6 +35,8 @@ export const updateInboxAgentCommand = new Command('update')
     buildHelpText({
       context: `At least one of --instructions, --tone, or --enabled-actions is required.
 Omitted fields keep their current value.
+--tone takes a preset (concise_professional, concise_casual, expanded_professional, expanded_casual)
+or custom text in your own words, such as "friendly and concise".
 Pass --instructions "" or --tone "" to clear the value.
 --enabled-actions replaces the whole set. Duplicates are removed. Pass --enabled-actions "" to disable all actions.`,
       output: `  {"object":"inbox_agent","id":"<uuid>"}`,
@@ -47,6 +49,7 @@ Pass --instructions "" or --tone "" to clear the value.
       examples: [
         'resend inboxes agent update <inbox-id> --instructions "Answer refund questions yourself."',
         'resend inboxes agent update <inbox-id> --enabled-actions draft_reply add_labels --json',
+        'resend inboxes agent update <inbox-id> --tone concise_professional',
         'resend inboxes agent update <inbox-id> --tone ""',
       ],
     }),
