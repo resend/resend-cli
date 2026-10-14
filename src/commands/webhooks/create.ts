@@ -47,7 +47,7 @@ Available event types (37 total):
                inbox.email.received, inbox.email.sent, inbox.thread.folder.updated,
                inbox.thread.assigned, inbox.thread.unassigned,
                inbox.thread.labels.updated, inbox.draft.created, inbox.draft.updated,
-               inbox.draft.sent, inbox.draft.deleted (beta)
+               inbox.draft.sent, inbox.draft.deleted
 
 Use the signing_secret in the response to verify webhook payloads using Svix
 signature headers (svix-id, svix-timestamp, svix-signature). "resend webhooks get" returns it again.
