@@ -63,13 +63,13 @@ describe('inboxes threads get command', () => {
     spies = setupOutputSpies();
 
     await getInboxThreadCommand.parseAsync(
-      ['--inbox_id', INBOX_ID, '--thread_id', THREAD_ID],
+      ['--inbox-id', INBOX_ID, '--thread-id', THREAD_ID],
       {
         from: 'user',
       },
     );
 
-    expect(mockGet).toHaveBeenCalledWith({
+    expect(mockGet.mock.calls[0][0]).toStrictEqual({
       inboxId: INBOX_ID,
       threadId: THREAD_ID,
     });
@@ -80,13 +80,57 @@ describe('inboxes threads get command', () => {
     expect(parsed.messages).toBeUndefined();
   });
 
+  it('takes the IDs as positional arguments', async () => {
+    spies = setupOutputSpies();
+
+    await getInboxThreadCommand.parseAsync([INBOX_ID, THREAD_ID], {
+      from: 'user',
+    });
+
+    expect(mockGet.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      threadId: THREAD_ID,
+    });
+  });
+
+  it('accepts the snake_case ID flags', async () => {
+    spies = setupOutputSpies();
+
+    await getInboxThreadCommand.parseAsync(
+      ['--inbox_id', INBOX_ID, '--thread_id', THREAD_ID],
+      { from: 'user' },
+    );
+
+    expect(mockGet.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      threadId: THREAD_ID,
+    });
+  });
+
+  it('errors with invalid_options when the thread ID is given twice', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    await expectExit1(() =>
+      getInboxThreadCommand.parseAsync(
+        [INBOX_ID, THREAD_ID, '--thread-id', THREAD_ID],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_options');
+    expect(mockGet).not.toHaveBeenCalled();
+  });
+
   it('errors with missing_id when thread ID absent in non-interactive mode', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      getInboxThreadCommand.parseAsync(['--inbox_id', INBOX_ID], {
+      getInboxThreadCommand.parseAsync(['--inbox-id', INBOX_ID], {
         from: 'user',
       }),
     );
@@ -106,7 +150,7 @@ describe('inboxes threads get command', () => {
 
     await expectExit1(() =>
       getInboxThreadCommand.parseAsync(
-        ['--inbox_id', INBOX_ID, '--thread_id', THREAD_ID],
+        ['--inbox-id', INBOX_ID, '--thread-id', THREAD_ID],
         {
           from: 'user',
         },

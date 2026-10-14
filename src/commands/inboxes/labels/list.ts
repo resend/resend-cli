@@ -3,29 +3,36 @@ import { runList } from '../../../lib/actions';
 import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { pickId } from '../../../lib/prompts';
-import { inboxPickerConfig } from '../utils';
+import { snakeCaseAlias } from '../../../lib/snake-case-alias';
+import { inboxPickerConfig, resolveIdInputs } from '../utils';
 import { renderLabelsTable } from './utils';
 
 export const listInboxLabelsCommand = new Command('list')
   .alias('ls')
   .description('List labels in an inbox')
-  .option('--inbox_id <id>', 'Inbox UUID')
+  .argument('[inboxId]', 'Inbox UUID')
+  .option('--inbox-id <id>', 'Inbox UUID')
+  .addOption(snakeCaseAlias('--inbox-id <id>'))
   .addHelpText(
     'after',
     buildHelpText({
       context:
-        'Returns all labels in the inbox (not paginated). Use the label IDs with "threads update --add_label_ids" and "threads list --labels".',
+        'Returns all labels in the inbox (not paginated). Use the label IDs with "threads update --add-label-ids" and "threads list --labels".',
       output: `  {"object":"list","data":[{"id":"<uuid>","name":"<name>","color":"#RRGGBB","created_at":"<date>"}]}`,
       errorCodes: ['auth_error', 'list_error'],
       examples: [
-        'resend inboxes labels list --inbox_id 78261eea-8f8b-4381-83c6-79fa7120f1cf',
-        'resend inboxes labels list --inbox_id 78261eea-8f8b-4381-83c6-79fa7120f1cf --json',
+        'resend inboxes labels list 78261eea-8f8b-4381-83c6-79fa7120f1cf',
+        'resend inboxes labels list 78261eea-8f8b-4381-83c6-79fa7120f1cf --json',
       ],
     }),
   )
-  .action(async (opts, cmd) => {
+  .action(async (inboxIdArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
+    const ids = resolveIdInputs(
+      { inbox: [inboxIdArg, opts.inboxId] },
+      globalOpts,
+    );
+    const inboxId = await pickId(ids.inbox, inboxPickerConfig, globalOpts);
     await runList(
       {
         loading: 'Fetching labels...',

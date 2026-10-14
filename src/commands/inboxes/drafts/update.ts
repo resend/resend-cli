@@ -6,39 +6,30 @@ import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { outputError } from '../../../lib/output';
 import { pickId } from '../../../lib/prompts';
-import { inboxPickerConfig } from '../utils';
+import { snakeCaseAlias } from '../../../lib/snake-case-alias';
+import { inboxPickerConfig, resolveIdInputs } from '../utils';
 import { inboxDraftPickerConfig } from './utils';
-
-const collectRecipients = (value: string, previous: string[]) => [
-  ...previous,
-  value,
-];
 
 export const updateInboxDraftCommand = new Command('update')
   .description("Update a draft's recipients, subject, body, or attachments")
-  .option('--inbox_id <id>', 'Inbox UUID')
-  .option('--draft_id <id>', 'Draft UUID')
-  .option(
-    '--to <address>',
-    'Replace recipients (repeatable)',
-    collectRecipients,
-    [] as string[],
-  )
-  .option(
-    '--cc <address>',
-    'Replace cc addresses (repeatable)',
-    collectRecipients,
-    [] as string[],
-  )
-  .option(
-    '--bcc <address>',
-    'Replace bcc addresses (repeatable)',
-    collectRecipients,
-    [] as string[],
-  )
+  .argument('[inboxId]', 'Inbox UUID')
+  .argument('[draftId]', 'Draft UUID')
+  .option('--inbox-id <id>', 'Inbox UUID')
+  .addOption(snakeCaseAlias('--inbox-id <id>'))
+  .option('--draft-id <id>', 'Draft UUID')
+  .addOption(snakeCaseAlias('--draft-id <id>'))
+  .option('--to <addresses...>', 'Replace the recipients')
+  .option('--clear-to', 'Remove every recipient from the draft')
+  .option('--cc <addresses...>', 'Replace the cc addresses')
+  .option('--clear-cc', 'Remove every cc address from the draft')
+  .option('--bcc <addresses...>', 'Replace the bcc addresses')
+  .option('--clear-bcc', 'Remove every bcc address from the draft')
   .option('--subject <subject>', 'New subject')
+  .option('--clear-subject', 'Remove the subject from the draft')
   .option('--text <text>', 'New plain text body')
+  .option('--clear-text', 'Remove the plain text body from the draft')
   .option('--html <html>', 'New HTML body')
+  .option('--clear-html', 'Remove the HTML body from the draft')
   .option(
     '--attachment <specs...>',
     'Local file to attach, replacing every attachment on the draft, with ;type= (MIME type) and optional ;filename= params (quote the value)',
@@ -56,6 +47,10 @@ Omitted fields are left unchanged.
 Setting --text or --html replaces the whole body, so the body part you omit
 becomes null. The merged draft must still contain at least one non-empty field,
 and its combined recipients cannot exceed 50.
+--clear-to, --clear-cc, --clear-bcc, --clear-subject, --clear-text and
+--clear-html set the field to null. A clear option and a value for the same
+field return an error. --clear-text and --clear-html also replace the whole
+body, so the body part you omit becomes null.
 A draft that was already sent returns an error.
 --attachment and --attachments-file replace every attachment on the draft.
 --clear-attachments removes them all. Omit all three to keep them.
@@ -76,23 +71,37 @@ An empty file or a blocked file type, such as .exe, returns an error.`,
         'update_error',
       ],
       examples: [
-        'resend inboxes drafts update --inbox_id <inbox_id> --draft_id <draft_id> --subject "Updated subject"',
-        'resend inboxes drafts update --inbox_id <inbox_id> --draft_id <draft_id> --text "New body" --json',
-        'resend inboxes drafts update --inbox_id <inbox_id> --draft_id <draft_id> --attachment "./notes.txt;type=text/plain"',
-        'resend inboxes drafts update --inbox_id <inbox_id> --draft_id <draft_id> --clear-attachments',
+        'resend inboxes drafts update <inbox-id> <draft-id> --subject "Updated subject"',
+        'resend inboxes drafts update <inbox-id> <draft-id> --text "New body" --json',
+        'resend inboxes drafts update <inbox-id> <draft-id> --attachment "./notes.txt;type=text/plain"',
+        'resend inboxes drafts update <inbox-id> <draft-id> --clear-attachments',
+        'resend inboxes drafts update <inbox-id> <draft-id> --to ada@example.com grace@example.com --clear-cc',
       ],
     }),
   )
-  .action(async (opts, cmd) => {
+  .action(async (inboxIdArg, draftIdArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const ids = resolveIdInputs(
+      {
+        inbox: [inboxIdArg, opts.inboxId],
+        draft: [draftIdArg, opts.draftId],
+      },
+      globalOpts,
+    );
+
+    const fields = {
+      to: [opts.to, opts.clearTo],
+      cc: [opts.cc, opts.clearCc],
+      bcc: [opts.bcc, opts.clearBcc],
+      subject: [opts.subject, opts.clearSubject],
+      text: [opts.text, opts.clearText],
+      html: [opts.html, opts.clearHtml],
+    } as const;
 
     const hasChanges =
-      opts.to.length > 0 ||
-      opts.cc.length > 0 ||
-      opts.bcc.length > 0 ||
-      opts.subject !== undefined ||
-      opts.text !== undefined ||
-      opts.html !== undefined ||
+      Object.values(fields).some(
+        ([value, clear]) => value !== undefined || clear === true,
+      ) ||
       opts.attachment !== undefined ||
       opts.attachmentsFile !== undefined ||
       opts.clearAttachments === true;
@@ -100,11 +109,23 @@ An empty file or a blocked file type, such as .exe, returns an error.`,
       outputError(
         {
           message:
-            'Provide at least one option to update: --to, --cc, --bcc, --subject, --text, --html, --attachment, --attachments-file, or --clear-attachments.',
+            'Provide at least one option to update: --to, --cc, --bcc, --subject, --text, --html, --attachment, --attachments-file, or a --clear-* option.',
           code: 'no_changes',
         },
         { json: globalOpts.json },
       );
+    }
+
+    for (const [name, [value, clear]] of Object.entries(fields)) {
+      if (clear && value !== undefined) {
+        outputError(
+          {
+            message: `Use either --clear-${name} or --${name}, not both.`,
+            code: 'invalid_options',
+          },
+          { json: globalOpts.json },
+        );
+      }
     }
 
     if (
@@ -129,9 +150,9 @@ An empty file or a blocked file type, such as .exe, returns an error.`,
           globalOpts,
         );
 
-    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
+    const inboxId = await pickId(ids.inbox, inboxPickerConfig, globalOpts);
     const draftId = await pickId(
-      opts.draft_id,
+      ids.draft,
       inboxDraftPickerConfig(inboxId),
       globalOpts,
     );
@@ -141,12 +162,18 @@ An empty file or a blocked file type, such as .exe, returns an error.`,
     const payload = {
       inboxId,
       draftId,
-      ...(opts.to.length > 0 && { to: opts.to }),
-      ...(opts.cc.length > 0 && { cc: opts.cc }),
-      ...(opts.bcc.length > 0 && { bcc: opts.bcc }),
+      ...(opts.to !== undefined && { to: opts.to }),
+      ...(opts.clearTo && { to: null }),
+      ...(opts.cc !== undefined && { cc: opts.cc }),
+      ...(opts.clearCc && { cc: null }),
+      ...(opts.bcc !== undefined && { bcc: opts.bcc }),
+      ...(opts.clearBcc && { bcc: null }),
       ...(opts.subject !== undefined && { subject: opts.subject }),
+      ...(opts.clearSubject && { subject: null }),
       ...(opts.text !== undefined && { text: opts.text }),
+      ...(opts.clearText && { text: null }),
       ...(opts.html !== undefined && { html: opts.html }),
+      ...(opts.clearHtml && { html: null }),
       ...(attachments && { attachments }),
     } as UpdateInboxDraftOptions;
 

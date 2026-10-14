@@ -5,15 +5,20 @@ import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { outputError } from '../../../lib/output';
 import { pickId } from '../../../lib/prompts';
-import { inboxPickerConfig } from '../utils';
+import { snakeCaseAlias } from '../../../lib/snake-case-alias';
+import { inboxPickerConfig, resolveIdInputs } from '../utils';
 import { inboxThreadPickerConfig } from './utils';
 
 export const updateInboxThreadCommand = new Command('update')
   .description(
     'Mark a thread read or unread, move it, or add and remove labels',
   )
-  .option('--inbox_id <id>', 'Inbox UUID')
-  .option('--thread_id <id>', 'Thread UUID')
+  .argument('[inboxId]', 'Inbox UUID')
+  .argument('[threadId]', 'Thread UUID')
+  .option('--inbox-id <id>', 'Inbox UUID')
+  .addOption(snakeCaseAlias('--inbox-id <id>'))
+  .option('--thread-id <id>', 'Thread UUID')
+  .addOption(snakeCaseAlias('--thread-id <id>'))
   .option('--read', 'Mark every message in the thread as read')
   .option('--unread', 'Mark every message in the thread as unread')
   .addOption(
@@ -22,17 +27,19 @@ export const updateInboxThreadCommand = new Command('update')
     ),
   )
   .option(
-    '--add_label_ids <label_ids...>',
+    '--add-label-ids <label-ids...>',
     'Label UUIDs to apply to the thread, 1 to 10',
   )
+  .addOption(snakeCaseAlias('--add-label-ids <label-ids...>'))
   .option(
-    '--remove_label_ids <label_ids...>',
+    '--remove-label-ids <label-ids...>',
     'Label UUIDs to remove from the thread, 1 to 10',
   )
+  .addOption(snakeCaseAlias('--remove-label-ids <label-ids...>'))
   .addHelpText(
     'after',
     buildHelpText({
-      context: `At least one of --read/--unread, --folder, --add_label_ids, or --remove_label_ids
+      context: `At least one of --read/--unread, --folder, --add-label-ids, or --remove-label-ids
 is required.
 A label ID cannot be both added and removed in the same request.
 A label ID that does not exist in the inbox returns an error.
@@ -49,14 +56,14 @@ and clears its deletion deadline.`,
         'update_error',
       ],
       examples: [
-        'resend inboxes threads update --inbox_id <inbox_id> --thread_id <thread_id> --read',
-        'resend inboxes threads update --inbox_id <inbox_id> --thread_id <thread_id> --folder archive --json',
-        'resend inboxes threads update --inbox_id <inbox_id> --thread_id <thread_id> --add_label_ids <label_id> --json',
-        'resend inboxes threads update --inbox_id <inbox_id> --thread_id <thread_id> --add_label_ids <label_id> --remove_label_ids <other_label_id>',
+        'resend inboxes threads update <inbox-id> <thread-id> --read',
+        'resend inboxes threads update <inbox-id> <thread-id> --folder archive --json',
+        'resend inboxes threads update <inbox-id> <thread-id> --add-label-ids <label-id> --json',
+        'resend inboxes threads update <inbox-id> <thread-id> --add-label-ids <label-id> --remove-label-ids <other-label-id>',
       ],
     }),
   )
-  .action(async (opts, cmd) => {
+  .action(async (inboxIdArg, threadIdArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
     if (opts.read && opts.unread) {
@@ -73,22 +80,29 @@ and clears its deletion deadline.`,
     if (
       read === undefined &&
       !opts.folder &&
-      !opts.add_label_ids &&
-      !opts.remove_label_ids
+      !opts.addLabelIds &&
+      !opts.removeLabelIds
     ) {
       outputError(
         {
           message:
-            'Provide at least one option to update: --read/--unread, --folder, --add_label_ids, or --remove_label_ids.',
+            'Provide at least one option to update: --read/--unread, --folder, --add-label-ids, or --remove-label-ids.',
           code: 'no_changes',
         },
         { json: globalOpts.json },
       );
     }
 
-    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
+    const ids = resolveIdInputs(
+      {
+        inbox: [inboxIdArg, opts.inboxId],
+        thread: [threadIdArg, opts.threadId],
+      },
+      globalOpts,
+    );
+    const inboxId = await pickId(ids.inbox, inboxPickerConfig, globalOpts);
     const threadId = await pickId(
-      opts.thread_id,
+      ids.thread,
       inboxThreadPickerConfig(inboxId),
       globalOpts,
     );
@@ -101,8 +115,8 @@ and clears its deletion deadline.`,
       threadId,
       ...(read !== undefined && { read }),
       ...(opts.folder && { folder: opts.folder }),
-      ...(opts.add_label_ids && { addLabelIds: opts.add_label_ids }),
-      ...(opts.remove_label_ids && { removeLabelIds: opts.remove_label_ids }),
+      ...(opts.addLabelIds && { addLabelIds: opts.addLabelIds }),
+      ...(opts.removeLabelIds && { removeLabelIds: opts.removeLabelIds }),
     } as UpdateInboxThreadOptions;
 
     await runWrite(

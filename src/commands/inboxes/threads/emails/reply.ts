@@ -6,34 +6,26 @@ import { parseHeaderPairs } from '../../../../lib/headers';
 import { buildHelpText } from '../../../../lib/help-text';
 import { outputError } from '../../../../lib/output';
 import { pickId, requireText } from '../../../../lib/prompts';
-import { inboxPickerConfig } from '../../utils';
+import { snakeCaseAlias } from '../../../../lib/snake-case-alias';
+import { inboxPickerConfig, resolveIdInputs } from '../../utils';
 import { inboxThreadPickerConfig } from '../utils';
-
-const collectRecipients = (value: string, previous: string[]) => [
-  ...previous,
-  value,
-];
 
 export const replyInboxThreadEmailCommand = new Command('reply')
   .description('Reply to an email in a thread')
-  .option('--inbox_id <id>', 'Inbox UUID')
-  .option('--thread_id <id>', 'Thread UUID')
+  .argument('[inboxId]', 'Inbox UUID')
+  .argument('[threadId]', 'Thread UUID')
+  .argument('[emailId]', 'Email UUID to reply to (from "threads emails list")')
+  .option('--inbox-id <id>', 'Inbox UUID')
+  .addOption(snakeCaseAlias('--inbox-id <id>'))
+  .option('--thread-id <id>', 'Thread UUID')
+  .addOption(snakeCaseAlias('--thread-id <id>'))
   .option(
-    '--email_id <id>',
+    '--email-id <id>',
     'Email UUID to reply to (from "threads emails list")',
   )
-  .option(
-    '--cc <address>',
-    'Cc address (repeat the flag for multiple addresses)',
-    collectRecipients,
-    [] as string[],
-  )
-  .option(
-    '--bcc <address>',
-    'Bcc address (repeat the flag for multiple addresses)',
-    collectRecipients,
-    [] as string[],
-  )
+  .addOption(snakeCaseAlias('--email-id <id>'))
+  .option('--cc <addresses...>', 'Cc addresses')
+  .option('--bcc <addresses...>', 'Bcc addresses')
   .option('--text <text>', 'Plain text body of the reply')
   .option('--html <html>', 'HTML body of the reply')
   .option('--subject <subject>', 'Override the reply subject')
@@ -97,15 +89,15 @@ The output holds the ID of the sent email. Use it with "resend emails get".`,
         'create_error',
       ],
       examples: [
-        'resend inboxes threads emails reply --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --text "On it — reply to follow."',
-        'resend inboxes threads emails reply --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --html "<p>Done!</p>" --json',
-        'resend inboxes threads emails reply --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --text "Looping in finance." --cc finance@example.com',
-        'resend inboxes threads emails reply --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --text "Thanks, all." --reply-all',
-        'resend inboxes threads emails reply --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --text "Invoice attached." --attachment ./invoice.pdf',
+        'resend inboxes threads emails reply <inbox-id> <thread-id> <email-id> --text "On it — reply to follow."',
+        'resend inboxes threads emails reply <inbox-id> <thread-id> <email-id> --html "<p>Done!</p>" --json',
+        'resend inboxes threads emails reply <inbox-id> <thread-id> <email-id> --text "Looping in finance." --cc finance@example.com',
+        'resend inboxes threads emails reply <inbox-id> <thread-id> <email-id> --text "Thanks, all." --reply-all',
+        'resend inboxes threads emails reply <inbox-id> <thread-id> <email-id> --text "Invoice attached." --attachment ./invoice.pdf',
       ],
     }),
   )
-  .action(async (opts, cmd) => {
+  .action(async (inboxIdArg, threadIdArg, emailIdArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
     const { text, html } = opts;
@@ -119,19 +111,31 @@ The output holds the ID of the sent email. Use it with "resend emails get".`,
       );
     }
 
-    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
+    const ids = resolveIdInputs(
+      {
+        inbox: [inboxIdArg, opts.inboxId],
+        thread: [threadIdArg, opts.threadId],
+        email: [emailIdArg, opts.emailId],
+      },
+      globalOpts,
+    );
+    const inboxId = await pickId(ids.inbox, inboxPickerConfig, globalOpts);
     const threadId = await pickId(
-      opts.thread_id,
+      ids.thread,
       inboxThreadPickerConfig(inboxId),
       globalOpts,
     );
     const emailId = await requireText(
-      opts.email_id,
+      ids.email,
       {
         message: 'Email ID to reply to',
         placeholder: 'from "threads emails list"',
       },
-      { message: 'Missing --email_id flag.', code: 'missing_id' },
+      {
+        message:
+          'Missing the email ID. Pass it as <emailId> or with --email-id.',
+        code: 'missing_id',
+      },
       globalOpts,
     );
 
@@ -160,8 +164,8 @@ The output holds the ID of the sent email. Use it with "resend emails get".`,
               threadId,
               emailId,
               ...body,
-              ...(opts.cc.length > 0 && { cc: opts.cc }),
-              ...(opts.bcc.length > 0 && { bcc: opts.bcc }),
+              ...(opts.cc && { cc: opts.cc }),
+              ...(opts.bcc && { bcc: opts.bcc }),
               ...(opts.subject !== undefined && { subject: opts.subject }),
               ...(opts.replyAll && { replyAll: true }),
               ...(attachments && { attachments }),

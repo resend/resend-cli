@@ -60,10 +60,25 @@ describe('inboxes update command', () => {
 
     expect(mockUpdate).toHaveBeenCalledTimes(1);
     expect(mockUpdate.mock.calls[0][0]).toBe(INBOX_ID);
-    expect(mockUpdate.mock.calls[0][1]).toEqual({ name: 'Support' });
+    expect(mockUpdate.mock.calls[0][1]).toStrictEqual({ name: 'Support' });
   });
 
-  it('updates the from name with --from_name', async () => {
+  it('updates the from name with --from-name', async () => {
+    spies = setupOutputSpies();
+
+    await updateInboxCommand.parseAsync(
+      [INBOX_ID, '--from-name', 'Ada from Support'],
+      { from: 'user' },
+    );
+
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
+    expect(mockUpdate.mock.calls[0][0]).toBe(INBOX_ID);
+    expect(mockUpdate.mock.calls[0][1]).toStrictEqual({
+      fromName: 'Ada from Support',
+    });
+  });
+
+  it('accepts the snake_case --from_name flag', async () => {
     spies = setupOutputSpies();
 
     await updateInboxCommand.parseAsync(
@@ -72,20 +87,22 @@ describe('inboxes update command', () => {
     );
 
     expect(mockUpdate).toHaveBeenCalledTimes(1);
-    expect(mockUpdate.mock.calls[0][1]).toEqual({
+    expect(mockUpdate.mock.calls[0][0]).toBe(INBOX_ID);
+    expect(mockUpdate.mock.calls[0][1]).toStrictEqual({
       fromName: 'Ada from Support',
     });
   });
 
-  it('clears the from name with an empty --from_name', async () => {
+  it('clears the from name with an empty --from-name', async () => {
     spies = setupOutputSpies();
 
-    await updateInboxCommand.parseAsync([INBOX_ID, '--from_name', ''], {
+    await updateInboxCommand.parseAsync([INBOX_ID, '--from-name', ''], {
       from: 'user',
     });
 
     expect(mockUpdate).toHaveBeenCalledTimes(1);
-    expect(mockUpdate.mock.calls[0][1]).toEqual({ fromName: '' });
+    expect(mockUpdate.mock.calls[0][0]).toBe(INBOX_ID);
+    expect(mockUpdate.mock.calls[0][1]).toStrictEqual({ fromName: '' });
   });
 
   it('outputs JSON result when non-interactive', async () => {

@@ -3,14 +3,19 @@ import { runDelete } from '../../../lib/actions';
 import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { pickId, pickItem } from '../../../lib/prompts';
-import { inboxPickerConfig } from '../utils';
+import { snakeCaseAlias } from '../../../lib/snake-case-alias';
+import { inboxPickerConfig, resolveIdInputs } from '../utils';
 import { inboxLabelPickerConfig } from './utils';
 
 export const deleteInboxLabelCommand = new Command('delete')
   .alias('rm')
   .description('Delete a label')
-  .option('--inbox_id <id>', 'Inbox UUID')
-  .option('--label_id <id>', 'Label UUID')
+  .argument('[inboxId]', 'Inbox UUID')
+  .argument('[labelId]', 'Label UUID')
+  .option('--inbox-id <id>', 'Inbox UUID')
+  .addOption(snakeCaseAlias('--inbox-id <id>'))
+  .option('--label-id <id>', 'Label UUID')
+  .addOption(snakeCaseAlias('--label-id <id>'))
   .option(
     '--yes',
     'Skip the confirmation prompt (required in non-interactive mode)',
@@ -25,16 +30,23 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
       output: `  {"object":"inbox_label","id":"<uuid>","deleted":true}`,
       errorCodes: ['auth_error', 'confirmation_required', 'delete_error'],
       examples: [
-        'resend inboxes labels delete --inbox_id <inbox_id> --label_id <label_id> --yes',
-        'resend inboxes labels delete --inbox_id <inbox_id> --label_id <label_id> --yes --json',
+        'resend inboxes labels delete <inbox-id> <label-id> --yes',
+        'resend inboxes labels delete <inbox-id> <label-id> --yes --json',
       ],
     }),
   )
-  .action(async (opts, cmd) => {
+  .action(async (inboxIdArg, labelIdArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
+    const ids = resolveIdInputs(
+      {
+        inbox: [inboxIdArg, opts.inboxId],
+        label: [labelIdArg, opts.labelId],
+      },
+      globalOpts,
+    );
+    const inboxId = await pickId(ids.inbox, inboxPickerConfig, globalOpts);
     const picked = await pickItem(
-      opts.label_id,
+      ids.label,
       inboxLabelPickerConfig(inboxId),
       globalOpts,
     );

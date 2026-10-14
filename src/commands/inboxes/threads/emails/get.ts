@@ -3,37 +3,56 @@ import { runGet } from '../../../../lib/actions';
 import type { GlobalOpts } from '../../../../lib/client';
 import { buildHelpText } from '../../../../lib/help-text';
 import { pickId, requireText } from '../../../../lib/prompts';
-import { inboxPickerConfig } from '../../utils';
+import { snakeCaseAlias } from '../../../../lib/snake-case-alias';
+import { inboxPickerConfig, resolveIdInputs } from '../../utils';
 import { inboxThreadPickerConfig } from '../utils';
 
 export const getInboxThreadEmailCommand = new Command('get')
   .description('Retrieve a single email from a thread')
-  .option('--inbox_id <id>', 'Inbox UUID')
-  .option('--thread_id <id>', 'Thread UUID')
-  .option('--email_id <id>', 'Email UUID (from "threads emails list")')
+  .argument('[inboxId]', 'Inbox UUID')
+  .argument('[threadId]', 'Thread UUID')
+  .argument('[emailId]', 'Email UUID (from "threads emails list")')
+  .option('--inbox-id <id>', 'Inbox UUID')
+  .addOption(snakeCaseAlias('--inbox-id <id>'))
+  .option('--thread-id <id>', 'Thread UUID')
+  .addOption(snakeCaseAlias('--thread-id <id>'))
+  .option('--email-id <id>', 'Email UUID (from "threads emails list")')
+  .addOption(snakeCaseAlias('--email-id <id>'))
   .addHelpText(
     'after',
     buildHelpText({
       output: `  {"id":"<uuid>","direction":"inbound|outbound","from":"<sender>","to":[],"cc":[],"bcc":[],"reply_to":[],"subject":"<subject>|null","message_id":"<message-id>|null","html":"<html>|null","text":"<text>|null","attachments":[{"id":"<id>","filename":"<name>|null","size":123|null}],"read":true,"received_at":"<date>"}`,
       errorCodes: ['auth_error', 'missing_id', 'fetch_error'],
       examples: [
-        'resend inboxes threads emails get --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id>',
-        'resend inboxes threads emails get --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --json',
+        'resend inboxes threads emails get <inbox-id> <thread-id> <email-id>',
+        'resend inboxes threads emails get <inbox-id> <thread-id> <email-id> --json',
       ],
     }),
   )
-  .action(async (opts, cmd) => {
+  .action(async (inboxIdArg, threadIdArg, emailIdArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
+    const ids = resolveIdInputs(
+      {
+        inbox: [inboxIdArg, opts.inboxId],
+        thread: [threadIdArg, opts.threadId],
+        email: [emailIdArg, opts.emailId],
+      },
+      globalOpts,
+    );
+    const inboxId = await pickId(ids.inbox, inboxPickerConfig, globalOpts);
     const threadId = await pickId(
-      opts.thread_id,
+      ids.thread,
       inboxThreadPickerConfig(inboxId),
       globalOpts,
     );
     const emailId = await requireText(
-      opts.email_id,
+      ids.email,
       { message: 'Email ID', placeholder: 'from "threads emails list"' },
-      { message: 'Missing --email_id flag.', code: 'missing_id' },
+      {
+        message:
+          'Missing the email ID. Pass it as <emailId> or with --email-id.',
+        code: 'missing_id',
+      },
       globalOpts,
     );
     await runGet(

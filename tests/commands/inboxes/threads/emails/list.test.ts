@@ -78,11 +78,40 @@ describe('inboxes threads emails list command', () => {
     spies = setupOutputSpies();
 
     await listInboxThreadEmailsCommand.parseAsync(
+      ['--inbox-id', INBOX_ID, '--thread-id', THREAD_ID],
+      { from: 'user' },
+    );
+
+    expect(mockList.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      threadId: THREAD_ID,
+      limit: 10,
+    });
+  });
+
+  it('takes the IDs as positional arguments', async () => {
+    spies = setupOutputSpies();
+
+    await listInboxThreadEmailsCommand.parseAsync([INBOX_ID, THREAD_ID], {
+      from: 'user',
+    });
+
+    expect(mockList.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      threadId: THREAD_ID,
+      limit: 10,
+    });
+  });
+
+  it('accepts the snake_case ID flags', async () => {
+    spies = setupOutputSpies();
+
+    await listInboxThreadEmailsCommand.parseAsync(
       ['--inbox_id', INBOX_ID, '--thread_id', THREAD_ID],
       { from: 'user' },
     );
 
-    expect(mockList).toHaveBeenCalledWith({
+    expect(mockList.mock.calls[0][0]).toStrictEqual({
       inboxId: INBOX_ID,
       threadId: THREAD_ID,
       limit: 10,
@@ -94,9 +123,9 @@ describe('inboxes threads emails list command', () => {
 
     await listInboxThreadEmailsCommand.parseAsync(
       [
-        '--inbox_id',
+        '--inbox-id',
         INBOX_ID,
-        '--thread_id',
+        '--thread-id',
         THREAD_ID,
         '--limit',
         '25',
@@ -106,29 +135,35 @@ describe('inboxes threads emails list command', () => {
       { from: 'user' },
     );
 
-    const args = mockList.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.limit).toBe(25);
-    expect(args.after).toBe(EMAIL_ID);
+    expect(mockList.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      threadId: THREAD_ID,
+      limit: 25,
+      after: EMAIL_ID,
+    });
   });
 
   it('passes --before to the SDK', async () => {
     spies = setupOutputSpies();
 
     await listInboxThreadEmailsCommand.parseAsync(
-      ['--inbox_id', INBOX_ID, '--thread_id', THREAD_ID, '--before', EMAIL_ID],
+      ['--inbox-id', INBOX_ID, '--thread-id', THREAD_ID, '--before', EMAIL_ID],
       { from: 'user' },
     );
 
-    const args = mockList.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.before).toBe(EMAIL_ID);
-    expect(args).not.toHaveProperty('after');
+    expect(mockList.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      threadId: THREAD_ID,
+      limit: 10,
+      before: EMAIL_ID,
+    });
   });
 
   it('outputs JSON list with bodies when non-interactive', async () => {
     spies = setupOutputSpies();
 
     await listInboxThreadEmailsCommand.parseAsync(
-      ['--inbox_id', INBOX_ID, '--thread_id', THREAD_ID],
+      ['--inbox-id', INBOX_ID, '--thread-id', THREAD_ID],
       { from: 'user' },
     );
 
@@ -147,9 +182,9 @@ describe('inboxes threads emails list command', () => {
     await expectExit1(() =>
       listInboxThreadEmailsCommand.parseAsync(
         [
-          '--inbox_id',
+          '--inbox-id',
           INBOX_ID,
-          '--thread_id',
+          '--thread-id',
           THREAD_ID,
           '--after',
           EMAIL_ID,
@@ -171,7 +206,7 @@ describe('inboxes threads emails list command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      listInboxThreadEmailsCommand.parseAsync(['--thread_id', THREAD_ID], {
+      listInboxThreadEmailsCommand.parseAsync(['--thread-id', THREAD_ID], {
         from: 'user',
       }),
     );
@@ -187,7 +222,7 @@ describe('inboxes threads emails list command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      listInboxThreadEmailsCommand.parseAsync(['--inbox_id', INBOX_ID], {
+      listInboxThreadEmailsCommand.parseAsync(['--inbox-id', INBOX_ID], {
         from: 'user',
       }),
     );
@@ -207,7 +242,7 @@ describe('inboxes threads emails list command', () => {
 
     await expectExit1(() =>
       listInboxThreadEmailsCommand.parseAsync(
-        ['--inbox_id', INBOX_ID, '--thread_id', THREAD_ID],
+        ['--inbox-id', INBOX_ID, '--thread-id', THREAD_ID],
         { from: 'user' },
       ),
     );

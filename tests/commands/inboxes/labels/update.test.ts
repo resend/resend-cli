@@ -55,9 +55,9 @@ describe('inboxes labels update command', () => {
 
     await updateInboxLabelCommand.parseAsync(
       [
-        '--inbox_id',
+        '--inbox-id',
         INBOX_ID,
-        '--label_id',
+        '--label-id',
         LABEL_ID,
         '--name',
         'Renamed',
@@ -68,11 +68,61 @@ describe('inboxes labels update command', () => {
     );
 
     expect(mockUpdate).toHaveBeenCalledTimes(1);
-    const args = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.inboxId).toBe(INBOX_ID);
-    expect(args.labelId).toBe(LABEL_ID);
-    expect(args.name).toBe('Renamed');
-    expect(args.color).toBe('#E93D82');
+    expect(mockUpdate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      labelId: LABEL_ID,
+      name: 'Renamed',
+      color: '#E93D82',
+    });
+  });
+
+  it('accepts the inbox and label IDs as arguments', async () => {
+    setupOutputSpies();
+
+    await updateInboxLabelCommand.parseAsync(
+      [INBOX_ID, LABEL_ID, '--name', 'Renamed'],
+      { from: 'user' },
+    );
+
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
+    expect(mockUpdate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      labelId: LABEL_ID,
+      name: 'Renamed',
+    });
+  });
+
+  it('accepts the snake_case --inbox_id and --label_id flags', async () => {
+    setupOutputSpies();
+
+    await updateInboxLabelCommand.parseAsync(
+      ['--inbox_id', INBOX_ID, '--label_id', LABEL_ID, '--color', '#E93D82'],
+      { from: 'user' },
+    );
+
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
+    expect(mockUpdate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      labelId: LABEL_ID,
+      color: '#E93D82',
+    });
+  });
+
+  it('errors with invalid_options when the label ID is given twice', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    await expectExit1(() =>
+      updateInboxLabelCommand.parseAsync(
+        [INBOX_ID, LABEL_ID, '--label-id', LABEL_ID, '--name', 'Renamed'],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_options');
+    expect(mockUpdate).not.toHaveBeenCalled();
   });
 
   it('errors with no_changes when no option is given', async () => {
@@ -82,7 +132,7 @@ describe('inboxes labels update command', () => {
 
     await expectExit1(() =>
       updateInboxLabelCommand.parseAsync(
-        ['--inbox_id', INBOX_ID, '--label_id', LABEL_ID],
+        ['--inbox-id', INBOX_ID, '--label-id', LABEL_ID],
         {
           from: 'user',
         },
@@ -104,7 +154,7 @@ describe('inboxes labels update command', () => {
 
     await expectExit1(() =>
       updateInboxLabelCommand.parseAsync(
-        ['--inbox_id', INBOX_ID, '--label_id', LABEL_ID, '--name', 'Renamed'],
+        ['--inbox-id', INBOX_ID, '--label-id', LABEL_ID, '--name', 'Renamed'],
         { from: 'user' },
       ),
     );

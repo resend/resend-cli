@@ -24,6 +24,7 @@ const INBOX_ID = '78261eea-8f8b-4381-83c6-79fa7120f1cf';
 const THREAD_ID = '3deaccfa-f572-443c-be6f-92b74f9d5c48';
 const EMAIL_ID = '5e0e0b3c-9497-47d3-a527-4bd5e0e2f0f5';
 const FORWARD_ID = '9f3b5a1e-2c4d-4e6f-8a0b-1c2d3e4f5a6b';
+const IDS = { inboxId: INBOX_ID, threadId: THREAD_ID, emailId: EMAIL_ID };
 
 const mockForward = vi.fn(async () => ({
   data: { id: FORWARD_ID },
@@ -60,11 +61,11 @@ describe('inboxes threads emails forward command', () => {
 
     await forwardInboxThreadEmailCommand.parseAsync(
       [
-        '--inbox_id',
+        '--inbox-id',
         INBOX_ID,
-        '--thread_id',
+        '--thread-id',
         THREAD_ID,
-        '--email_id',
+        '--email-id',
         EMAIL_ID,
         '--to',
         'a@example.com',
@@ -77,12 +78,30 @@ describe('inboxes threads emails forward command', () => {
     );
 
     expect(mockForward).toHaveBeenCalledTimes(1);
-    const args = mockForward.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.to).toEqual(['a@example.com', 'b@example.com']);
-    expect(args.text).toBe('FYI');
+    expect(mockForward.mock.calls[0][0]).toStrictEqual({
+      ...IDS,
+      to: ['a@example.com', 'b@example.com'],
+      text: 'FYI',
+    });
+    expect(mockForward.mock.calls[0][1]).toBeUndefined();
   });
 
-  it('passes repeated --cc and --bcc to the SDK', async () => {
+  it('takes the IDs as positional arguments', async () => {
+    setupOutputSpies();
+
+    await forwardInboxThreadEmailCommand.parseAsync(
+      [INBOX_ID, THREAD_ID, EMAIL_ID, '--to', 'a@example.com'],
+      { from: 'user' },
+    );
+
+    expect(mockForward.mock.calls[0][0]).toStrictEqual({
+      ...IDS,
+      to: ['a@example.com'],
+    });
+    expect(mockForward.mock.calls[0][1]).toBeUndefined();
+  });
+
+  it('accepts the snake_case ID flags', async () => {
     setupOutputSpies();
 
     await forwardInboxThreadEmailCommand.parseAsync(
@@ -92,6 +111,55 @@ describe('inboxes threads emails forward command', () => {
         '--thread_id',
         THREAD_ID,
         '--email_id',
+        EMAIL_ID,
+        '--to',
+        'a@example.com',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockForward.mock.calls[0][0]).toStrictEqual({
+      ...IDS,
+      to: ['a@example.com'],
+    });
+    expect(mockForward.mock.calls[0][1]).toBeUndefined();
+  });
+
+  it('gives the same --to for the spaced and repeated forms', async () => {
+    setupOutputSpies();
+
+    await forwardInboxThreadEmailCommand.parseAsync(
+      [INBOX_ID, THREAD_ID, EMAIL_ID, '--to', 'a@example.com', 'b@example.com'],
+      { from: 'user' },
+    );
+    await forwardInboxThreadEmailCommand.parseAsync(
+      [
+        INBOX_ID,
+        THREAD_ID,
+        EMAIL_ID,
+        '--to',
+        'a@example.com',
+        '--to',
+        'b@example.com',
+      ],
+      { from: 'user' },
+    );
+
+    const expected = { ...IDS, to: ['a@example.com', 'b@example.com'] };
+    expect(mockForward.mock.calls[0][0]).toStrictEqual(expected);
+    expect(mockForward.mock.calls[1][0]).toStrictEqual(expected);
+  });
+
+  it('passes repeated --cc and --bcc to the SDK', async () => {
+    setupOutputSpies();
+
+    await forwardInboxThreadEmailCommand.parseAsync(
+      [
+        '--inbox-id',
+        INBOX_ID,
+        '--thread-id',
+        THREAD_ID,
+        '--email-id',
         EMAIL_ID,
         '--to',
         'a@example.com',
@@ -107,9 +175,13 @@ describe('inboxes threads emails forward command', () => {
       { from: 'user' },
     );
 
-    const args = mockForward.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.cc).toEqual(['c@example.com', 'e@example.com']);
-    expect(args.bcc).toEqual(['d@example.com', 'f@example.com']);
+    expect(mockForward.mock.calls[0][0]).toStrictEqual({
+      ...IDS,
+      to: ['a@example.com'],
+      cc: ['c@example.com', 'e@example.com'],
+      bcc: ['d@example.com', 'f@example.com'],
+    });
+    expect(mockForward.mock.calls[0][1]).toBeUndefined();
   });
 
   it('omits cc and bcc when the flags are absent', async () => {
@@ -117,11 +189,11 @@ describe('inboxes threads emails forward command', () => {
 
     await forwardInboxThreadEmailCommand.parseAsync(
       [
-        '--inbox_id',
+        '--inbox-id',
         INBOX_ID,
-        '--thread_id',
+        '--thread-id',
         THREAD_ID,
-        '--email_id',
+        '--email-id',
         EMAIL_ID,
         '--to',
         'a@example.com',
@@ -129,9 +201,11 @@ describe('inboxes threads emails forward command', () => {
       { from: 'user' },
     );
 
-    const args = mockForward.mock.calls[0][0] as Record<string, unknown>;
-    expect(args).not.toHaveProperty('cc');
-    expect(args).not.toHaveProperty('bcc');
+    expect(mockForward.mock.calls[0][0]).toStrictEqual({
+      ...IDS,
+      to: ['a@example.com'],
+    });
+    expect(mockForward.mock.calls[0][1]).toBeUndefined();
   });
 
   it('passes idempotencyKey as second arg to threads.emails.forward', async () => {
@@ -139,11 +213,11 @@ describe('inboxes threads emails forward command', () => {
 
     await forwardInboxThreadEmailCommand.parseAsync(
       [
-        '--inbox_id',
+        '--inbox-id',
         INBOX_ID,
-        '--thread_id',
+        '--thread-id',
         THREAD_ID,
-        '--email_id',
+        '--email-id',
         EMAIL_ID,
         '--to',
         'a@example.com',
@@ -154,8 +228,13 @@ describe('inboxes threads emails forward command', () => {
     );
 
     expect(mockForward).toHaveBeenCalledTimes(1);
-    const opts = mockForward.mock.calls[0][1] as Record<string, unknown>;
-    expect(opts?.idempotencyKey).toBe('my-key-123');
+    expect(mockForward.mock.calls[0][0]).toStrictEqual({
+      ...IDS,
+      to: ['a@example.com'],
+    });
+    expect(mockForward.mock.calls[0][1]).toStrictEqual({
+      idempotencyKey: 'my-key-123',
+    });
   });
 
   it('errors with missing_to when no recipient is given', async () => {
@@ -166,11 +245,11 @@ describe('inboxes threads emails forward command', () => {
     await expectExit1(() =>
       forwardInboxThreadEmailCommand.parseAsync(
         [
-          '--inbox_id',
+          '--inbox-id',
           INBOX_ID,
-          '--thread_id',
+          '--thread-id',
           THREAD_ID,
-          '--email_id',
+          '--email-id',
           EMAIL_ID,
         ],
         { from: 'user' },
@@ -193,11 +272,11 @@ describe('inboxes threads emails forward command', () => {
     await expectExit1(() =>
       forwardInboxThreadEmailCommand.parseAsync(
         [
-          '--inbox_id',
+          '--inbox-id',
           INBOX_ID,
-          '--thread_id',
+          '--thread-id',
           THREAD_ID,
-          '--email_id',
+          '--email-id',
           EMAIL_ID,
           '--to',
           'a@example.com',
@@ -223,11 +302,11 @@ describe('inboxes threads emails forward command', () => {
     try {
       await forwardInboxThreadEmailCommand.parseAsync(
         [
-          '--inbox_id',
+          '--inbox-id',
           INBOX_ID,
-          '--thread_id',
+          '--thread-id',
           THREAD_ID,
-          '--email_id',
+          '--email-id',
           EMAIL_ID,
           '--to',
           'teammate@example.com',
@@ -243,16 +322,16 @@ describe('inboxes threads emails forward command', () => {
       rmSync(dir, { recursive: true, force: true });
     }
 
-    const args = mockForward.mock.calls.at(-1)?.[0] as Record<string, unknown>;
-    const attachments = args.attachments as Array<Record<string, unknown>>;
-    expect(attachments).toHaveLength(3);
-    expect(attachments[0].filename).toBe('notes.txt');
-    expect(Buffer.isBuffer(attachments[0].content)).toBe(true);
-    expect(attachments[1]).toEqual({
-      path: 'https://example.com/report.pdf',
-      filename: 'report.pdf',
+    expect(mockForward.mock.calls[0][0]).toStrictEqual({
+      ...IDS,
+      to: ['teammate@example.com'],
+      attachments: [
+        { filename: 'notes.txt', content: Buffer.from('hello') },
+        { path: 'https://example.com/report.pdf', filename: 'report.pdf' },
+        { filename: 'extra.txt', content: 'aGk=' },
+      ],
     });
-    expect(attachments[2]).toEqual({ filename: 'extra.txt', content: 'aGk=' });
+    expect(mockForward.mock.calls[0][1]).toBeUndefined();
   });
 
   it('errors with file_read_error when an --attachment file is missing', async () => {
@@ -264,11 +343,11 @@ describe('inboxes threads emails forward command', () => {
     await expectExit1(() =>
       forwardInboxThreadEmailCommand.parseAsync(
         [
-          '--inbox_id',
+          '--inbox-id',
           INBOX_ID,
-          '--thread_id',
+          '--thread-id',
           THREAD_ID,
-          '--email_id',
+          '--email-id',
           EMAIL_ID,
           '--to',
           'teammate@example.com',
@@ -289,11 +368,11 @@ describe('inboxes threads emails forward command', () => {
 
     await forwardInboxThreadEmailCommand.parseAsync(
       [
-        '--inbox_id',
+        '--inbox-id',
         INBOX_ID,
-        '--thread_id',
+        '--thread-id',
         THREAD_ID,
-        '--email_id',
+        '--email-id',
         EMAIL_ID,
         '--to',
         'teammate@example.com',
@@ -303,8 +382,12 @@ describe('inboxes threads emails forward command', () => {
       { from: 'user' },
     );
 
-    const args = mockForward.mock.calls.at(-1)?.[0] as Record<string, unknown>;
-    expect(args.headers).toEqual({ 'X-Ticket-Id': '4821' });
+    expect(mockForward.mock.calls[0][0]).toStrictEqual({
+      ...IDS,
+      to: ['teammate@example.com'],
+      headers: { 'X-Ticket-Id': '4821' },
+    });
+    expect(mockForward.mock.calls[0][1]).toBeUndefined();
   });
 
   it('errors with invalid_header for a header without =', async () => {
@@ -316,11 +399,11 @@ describe('inboxes threads emails forward command', () => {
     await expectExit1(() =>
       forwardInboxThreadEmailCommand.parseAsync(
         [
-          '--inbox_id',
+          '--inbox-id',
           INBOX_ID,
-          '--thread_id',
+          '--thread-id',
           THREAD_ID,
-          '--email_id',
+          '--email-id',
           EMAIL_ID,
           '--to',
           'teammate@example.com',
@@ -341,11 +424,11 @@ describe('inboxes threads emails forward command', () => {
 
     await forwardInboxThreadEmailCommand.parseAsync(
       [
-        '--inbox_id',
+        '--inbox-id',
         INBOX_ID,
-        '--thread_id',
+        '--thread-id',
         THREAD_ID,
-        '--email_id',
+        '--email-id',
         EMAIL_ID,
         '--to',
         'teammate@example.com',
@@ -359,9 +442,13 @@ describe('inboxes threads emails forward command', () => {
       { from: 'user' },
     );
 
-    const args = mockForward.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.subject).toBe('');
-    expect(args.text).toBe('');
-    expect(args.html).toBe('');
+    expect(mockForward.mock.calls[0][0]).toStrictEqual({
+      ...IDS,
+      to: ['teammate@example.com'],
+      subject: '',
+      text: '',
+      html: '',
+    });
+    expect(mockForward.mock.calls[0][1]).toBeUndefined();
   });
 });

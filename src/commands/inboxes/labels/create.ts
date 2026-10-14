@@ -3,12 +3,15 @@ import { runCreate } from '../../../lib/actions';
 import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { pickId, requireText } from '../../../lib/prompts';
-import { inboxPickerConfig } from '../utils';
+import { snakeCaseAlias } from '../../../lib/snake-case-alias';
+import { inboxPickerConfig, resolveIdInputs } from '../utils';
 import { parseLabelColor } from './utils';
 
 export const createInboxLabelCommand = new Command('create')
   .description('Create a label in an inbox')
-  .option('--inbox_id <id>', 'Inbox UUID')
+  .argument('[inboxId]', 'Inbox UUID')
+  .option('--inbox-id <id>', 'Inbox UUID')
+  .addOption(snakeCaseAlias('--inbox-id <id>'))
   .option('--name <name>', 'Label name (required, max 64 characters)')
   .addOption(
     new Option(
@@ -26,14 +29,18 @@ Non-interactive: --name is required.`,
       output: `  {"object":"inbox_label","id":"<uuid>"}`,
       errorCodes: ['auth_error', 'missing_name', 'create_error'],
       examples: [
-        'resend inboxes labels create --inbox_id <inbox_id> --name "Billing"',
-        'resend inboxes labels create --inbox_id <inbox_id> --name "Urgent" --color \'#E93D82\' --json',
+        'resend inboxes labels create <inbox-id> --name "Billing"',
+        'resend inboxes labels create <inbox-id> --name "Urgent" --color \'#E93D82\' --json',
       ],
     }),
   )
-  .action(async (opts, cmd) => {
+  .action(async (inboxIdArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
+    const ids = resolveIdInputs(
+      { inbox: [inboxIdArg, opts.inboxId] },
+      globalOpts,
+    );
+    const inboxId = await pickId(ids.inbox, inboxPickerConfig, globalOpts);
 
     const name = await requireText(
       opts.name,

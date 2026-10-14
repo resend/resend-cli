@@ -60,7 +60,7 @@ describe('inboxes drafts create command', () => {
 
     await createInboxDraftCommand.parseAsync(
       [
-        '--inbox_id',
+        '--inbox-id',
         INBOX_ID,
         '--to',
         'user@example.com',
@@ -73,15 +73,41 @@ describe('inboxes drafts create command', () => {
     );
 
     expect(mockCreate).toHaveBeenCalledTimes(1);
-    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.inboxId).toBe(INBOX_ID);
-    expect(args.to).toEqual(['user@example.com']);
-    expect(args.subject).toBe('Hello');
-    expect(args.text).toBe('Draft body');
-    expect(args.threadId).toBeUndefined();
+    expect(mockCreate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      to: ['user@example.com'],
+      subject: 'Hello',
+      text: 'Draft body',
+    });
+    expect(mockCreate.mock.calls[0][1]).toBeUndefined();
   });
 
-  it('creates a reply draft with paired thread flags', async () => {
+  it('accepts the inbox ID as an argument', async () => {
+    setupOutputSpies();
+
+    await createInboxDraftCommand.parseAsync(
+      [
+        INBOX_ID,
+        '--text',
+        'Reply body',
+        '--thread-id',
+        THREAD_ID,
+        '--reply-to-email-id',
+        EMAIL_ID,
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockCreate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      text: 'Reply body',
+      threadId: THREAD_ID,
+      replyToEmailId: EMAIL_ID,
+    });
+    expect(mockCreate.mock.calls[0][1]).toBeUndefined();
+  });
+
+  it('accepts the snake_case flags', async () => {
     setupOutputSpies();
 
     await createInboxDraftCommand.parseAsync(
@@ -98,9 +124,57 @@ describe('inboxes drafts create command', () => {
       { from: 'user' },
     );
 
-    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.threadId).toBe(THREAD_ID);
-    expect(args.replyToEmailId).toBe(EMAIL_ID);
+    expect(mockCreate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      text: 'Reply body',
+      threadId: THREAD_ID,
+      replyToEmailId: EMAIL_ID,
+    });
+    expect(mockCreate.mock.calls[0][1]).toBeUndefined();
+  });
+
+  it.each([
+    ['one --to', ['--to', 'a@x.com', 'b@x.com']],
+    ['repeated --to', ['--to', 'a@x.com', '--to', 'b@x.com']],
+  ])('sends every recipient with %s', async (_case, toArgs) => {
+    setupOutputSpies();
+
+    await createInboxDraftCommand.parseAsync(
+      [INBOX_ID, ...toArgs, '--subject', 'Hello'],
+      { from: 'user' },
+    );
+
+    expect(mockCreate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      to: ['a@x.com', 'b@x.com'],
+      subject: 'Hello',
+    });
+  });
+
+  it('creates a reply draft with paired thread flags', async () => {
+    setupOutputSpies();
+
+    await createInboxDraftCommand.parseAsync(
+      [
+        '--inbox-id',
+        INBOX_ID,
+        '--text',
+        'Reply body',
+        '--thread-id',
+        THREAD_ID,
+        '--reply-to-email-id',
+        EMAIL_ID,
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockCreate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      text: 'Reply body',
+      threadId: THREAD_ID,
+      replyToEmailId: EMAIL_ID,
+    });
+    expect(mockCreate.mock.calls[0][1]).toBeUndefined();
   });
 
   it('passes idempotencyKey as second arg to drafts.create', async () => {
@@ -108,7 +182,7 @@ describe('inboxes drafts create command', () => {
 
     await createInboxDraftCommand.parseAsync(
       [
-        '--inbox_id',
+        '--inbox-id',
         INBOX_ID,
         '--subject',
         'Hello',
@@ -118,18 +192,23 @@ describe('inboxes drafts create command', () => {
       { from: 'user' },
     );
 
-    const opts = mockCreate.mock.calls.at(-1)?.[1] as Record<string, unknown>;
-    expect(opts?.idempotencyKey).toBe('my-key-123');
+    expect(mockCreate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      subject: 'Hello',
+    });
+    expect(mockCreate.mock.calls[0][1]).toStrictEqual({
+      idempotencyKey: 'my-key-123',
+    });
   });
 
-  it('errors with invalid_options when --thread_id lacks --reply_to_email_id', async () => {
+  it('errors with invalid_options when --thread-id lacks --reply-to-email-id', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
       createInboxDraftCommand.parseAsync(
-        ['--inbox_id', INBOX_ID, '--text', 'x', '--thread_id', THREAD_ID],
+        ['--inbox-id', INBOX_ID, '--text', 'x', '--thread-id', THREAD_ID],
         { from: 'user' },
       ),
     );
@@ -145,7 +224,7 @@ describe('inboxes drafts create command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      createInboxDraftCommand.parseAsync(['--inbox_id', INBOX_ID], {
+      createInboxDraftCommand.parseAsync(['--inbox-id', INBOX_ID], {
         from: 'user',
       }),
     );
@@ -167,7 +246,7 @@ describe('inboxes drafts create command', () => {
     try {
       await expectExit1(() =>
         createInboxDraftCommand.parseAsync(
-          ['--inbox_id', INBOX_ID, '--attachments-file', file],
+          ['--inbox-id', INBOX_ID, '--attachments-file', file],
           { from: 'user' },
         ),
       );
@@ -190,7 +269,7 @@ describe('inboxes drafts create command', () => {
 
     await expectExit1(() =>
       createInboxDraftCommand.parseAsync(
-        ['--inbox_id', INBOX_ID, '--text', 'x'],
+        ['--inbox-id', INBOX_ID, '--text', 'x'],
         {
           from: 'user',
         },
@@ -208,19 +287,24 @@ describe('inboxes drafts create command', () => {
 
     try {
       await createInboxDraftCommand.parseAsync(
-        ['--inbox_id', INBOX_ID, '--attachment', `${file};type=text/plain`],
+        ['--inbox-id', INBOX_ID, '--attachment', `${file};type=text/plain`],
         { from: 'user' },
       );
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
 
-    const args = mockCreate.mock.calls.at(-1)?.[0] as Record<string, unknown>;
-    const attachments = args.attachments as Array<Record<string, unknown>>;
-    expect(attachments).toHaveLength(1);
-    expect(attachments[0].filename).toBe('notes.txt');
-    expect(attachments[0].contentType).toBe('text/plain');
-    expect(Buffer.isBuffer(attachments[0].content)).toBe(true);
+    expect(mockCreate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      attachments: [
+        {
+          content: Buffer.from('hello'),
+          filename: 'notes.txt',
+          contentType: 'text/plain',
+        },
+      ],
+    });
+    expect(mockCreate.mock.calls[0][1]).toBeUndefined();
   });
 
   it.each([
@@ -239,7 +323,7 @@ describe('inboxes drafts create command', () => {
     try {
       await expectExit1(() =>
         createInboxDraftCommand.parseAsync(
-          ['--inbox_id', INBOX_ID, '--attachment', spec],
+          ['--inbox-id', INBOX_ID, '--attachment', spec],
           { from: 'user' },
         ),
       );
@@ -253,14 +337,14 @@ describe('inboxes drafts create command', () => {
     expect(mockCreate).not.toHaveBeenCalled();
   });
 
-  it('errors with invalid_options when --thread_id is empty and --reply_to_email_id is absent', async () => {
+  it('errors with invalid_options when --thread-id is empty and --reply-to-email-id is absent', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
       createInboxDraftCommand.parseAsync(
-        ['--inbox_id', INBOX_ID, '--text', 'x', '--thread_id', ''],
+        ['--inbox-id', INBOX_ID, '--text', 'x', '--thread-id', ''],
         { from: 'user' },
       ),
     );
@@ -275,20 +359,24 @@ describe('inboxes drafts create command', () => {
 
     await createInboxDraftCommand.parseAsync(
       [
-        '--inbox_id',
+        '--inbox-id',
         INBOX_ID,
         '--text',
         'x',
-        '--thread_id',
+        '--thread-id',
         '',
-        '--reply_to_email_id',
+        '--reply-to-email-id',
         '',
       ],
       { from: 'user' },
     );
 
-    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.threadId).toBe('');
-    expect(args.replyToEmailId).toBe('');
+    expect(mockCreate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      text: 'x',
+      threadId: '',
+      replyToEmailId: '',
+    });
+    expect(mockCreate.mock.calls[0][1]).toBeUndefined();
   });
 });

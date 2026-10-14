@@ -59,33 +59,62 @@ describe('inboxes agent update command', () => {
 
     await updateInboxAgentCommand.parseAsync(
       [
-        '--inbox_id',
+        '--inbox-id',
         INBOX_ID,
         '--instructions',
         'Answer refund questions yourself.',
-        '--enabled_actions',
+        '--enabled-actions',
         'draft_reply,add_labels',
         'archive_thread',
       ],
       { from: 'user' },
     );
 
-    expect(mockUpdate).toHaveBeenCalledWith({
+    expect(mockUpdate.mock.calls[0][0]).toStrictEqual({
       inboxId: INBOX_ID,
       instructions: 'Answer refund questions yourself.',
       enabledActions: ['draft_reply', 'add_labels', 'archive_thread'],
     });
   });
 
-  it('sends null for an empty --tone and an empty list for --enabled_actions ""', async () => {
+  it('accepts the inbox ID as an argument', async () => {
+    setupOutputSpies();
+
+    await updateInboxAgentCommand.parseAsync([INBOX_ID, '--tone', 'calm'], {
+      from: 'user',
+    });
+
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
+    expect(mockUpdate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      tone: 'calm',
+    });
+  });
+
+  it('accepts the snake_case --inbox_id and --enabled_actions flags', async () => {
     setupOutputSpies();
 
     await updateInboxAgentCommand.parseAsync(
-      ['--inbox_id', INBOX_ID, '--tone', '', '--enabled_actions', ''],
+      ['--inbox_id', INBOX_ID, '--enabled_actions', 'draft_reply,add_labels'],
       { from: 'user' },
     );
 
-    expect(mockUpdate).toHaveBeenCalledWith({
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
+    expect(mockUpdate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      enabledActions: ['draft_reply', 'add_labels'],
+    });
+  });
+
+  it('sends null for an empty --tone and an empty list for --enabled-actions ""', async () => {
+    setupOutputSpies();
+
+    await updateInboxAgentCommand.parseAsync(
+      ['--inbox-id', INBOX_ID, '--tone', '', '--enabled-actions', ''],
+      { from: 'user' },
+    );
+
+    expect(mockUpdate.mock.calls[0][0]).toStrictEqual({
       inboxId: INBOX_ID,
       tone: null,
       enabledActions: [],
@@ -98,7 +127,7 @@ describe('inboxes agent update command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      updateInboxAgentCommand.parseAsync(['--inbox_id', INBOX_ID], {
+      updateInboxAgentCommand.parseAsync(['--inbox-id', INBOX_ID], {
         from: 'user',
       }),
     );
@@ -115,7 +144,7 @@ describe('inboxes agent update command', () => {
 
     await expectExit1(() =>
       updateInboxAgentCommand.parseAsync(
-        ['--inbox_id', INBOX_ID, '--enabled_actions', 'reply'],
+        ['--inbox-id', INBOX_ID, '--enabled-actions', 'reply'],
         { from: 'user' },
       ),
     );
@@ -138,7 +167,7 @@ describe('inboxes agent update command', () => {
 
     await expectExit1(() =>
       updateInboxAgentCommand.parseAsync(
-        ['--inbox_id', INBOX_ID, '--tone', 'calm'],
+        ['--inbox-id', INBOX_ID, '--tone', 'calm'],
         { from: 'user' },
       ),
     );

@@ -10,7 +10,8 @@ import {
   printPaginationHint,
 } from '../../../lib/pagination';
 import { pickId } from '../../../lib/prompts';
-import { inboxPickerConfig } from '../utils';
+import { snakeCaseAlias } from '../../../lib/snake-case-alias';
+import { inboxPickerConfig, resolveIdInputs } from '../utils';
 import {
   renderThreadSearchTable,
   threadFilterFlags,
@@ -24,7 +25,9 @@ export const searchInboxThreadsCommand = new Command('search')
   .description(
     'Search threads in an inbox by text, people, attachments, and dates',
   )
-  .option('--inbox_id <id>', 'Inbox UUID')
+  .argument('[inboxId]', 'Inbox UUID')
+  .option('--inbox-id <id>', 'Inbox UUID')
+  .addOption(snakeCaseAlias('--inbox-id <id>'))
   .option(
     '--query <text>',
     'Text to find in the subject, body, sender, recipients, and attachment names. Every word must match. Quote a phrase to match it exactly, prefix a word with - to exclude it',
@@ -45,16 +48,20 @@ export const searchInboxThreadsCommand = new Command('search')
     '--bcc <addresses...>',
     'Bcc addresses or names, one or more, partial match',
   )
-  .option('--has_attachment', 'Only emails with an attachment')
-  .option('--without_attachment', 'Only emails without an attachment')
+  .option('--has-attachment', 'Only emails with an attachment')
+  .addOption(snakeCaseAlias('--has-attachment'))
+  .option('--without-attachment', 'Only emails without an attachment')
+  .addOption(snakeCaseAlias('--without-attachment'))
   .option(
-    '--start_date <date>',
+    '--start-date <date>',
     'Emails sent on or after this date (e.g. 2026-09-01, or an ISO 8601 timestamp)',
   )
+  .addOption(snakeCaseAlias('--start-date <date>'))
   .option(
-    '--end_date <date>',
+    '--end-date <date>',
     'Emails sent on or before this date. A date covers the whole day',
   )
+  .addOption(snakeCaseAlias('--end-date <date>'))
   .addOption(
     new Option(
       '--folders <folders...>',
@@ -62,7 +69,7 @@ export const searchInboxThreadsCommand = new Command('search')
     ).choices(INBOX_MESSAGE_FOLDERS),
   )
   .option(
-    '--labels <label_ids...>',
+    '--labels <label-ids...>',
     'Label UUIDs, one or more. Returns threads with any of them',
   )
   .option('--read', 'Only threads where every email is read')
@@ -83,7 +90,7 @@ export const searchInboxThreadsCommand = new Command('search')
 "resend inboxes threads list". Each result names the email that matched
 (matched_email_id) and the matching snippets (highlights).
 "threads emails get", "reply" and "forward" accept matched_email_id as
---email_id, but it is not equal to the id those commands return.
+the email ID, but it is not equal to the id those commands return.
 
 Different flags combine, so a thread must match all of them. --folders,
 --labels, --read and --unread apply to the thread. The other filters must all
@@ -104,19 +111,19 @@ exactly and up to date, use "resend inboxes threads list".`,
         'list_error',
       ],
       examples: [
-        'resend inboxes threads search --inbox_id 78261eea-8f8b-4381-83c6-79fa7120f1cf --query invoice',
-        'resend inboxes threads search --inbox_id 78261eea-8f8b-4381-83c6-79fa7120f1cf --query \'"q3 renewal" -draft\' --json',
-        'resend inboxes threads search --inbox_id 78261eea-8f8b-4381-83c6-79fa7120f1cf --from isabella@example.com --has_attachment --start_date 2026-09-01 --end_date 2026-09-30 --json',
+        'resend inboxes threads search 78261eea-8f8b-4381-83c6-79fa7120f1cf --query invoice',
+        'resend inboxes threads search 78261eea-8f8b-4381-83c6-79fa7120f1cf --query \'"q3 renewal" -draft\' --json',
+        'resend inboxes threads search 78261eea-8f8b-4381-83c6-79fa7120f1cf --from isabella@example.com --has-attachment --start-date 2026-09-01 --end-date 2026-09-30 --json',
       ],
     }),
   )
-  .action(async (opts, cmd) => {
+  .action(async (inboxIdArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    if (opts.has_attachment && opts.without_attachment) {
+    if (opts.hasAttachment && opts.withoutAttachment) {
       outputError(
         {
           message:
-            'Use either --has_attachment or --without_attachment, not both.',
+            'Use either --has-attachment or --without-attachment, not both.',
           code: 'invalid_options',
         },
         { json: globalOpts.json },
@@ -130,7 +137,11 @@ exactly and up to date, use "resend inboxes threads list".`,
       opts.before,
       globalOpts,
     );
-    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
+    const ids = resolveIdInputs(
+      { inbox: [inboxIdArg, opts.inboxId] },
+      globalOpts,
+    );
+    const inboxId = await pickId(ids.inbox, inboxPickerConfig, globalOpts);
     await runList(
       {
         loading: 'Searching threads...',
@@ -143,35 +154,34 @@ exactly and up to date, use "resend inboxes threads list".`,
             to: opts.to,
             cc: opts.cc,
             bcc: opts.bcc,
-            hasAttachment: opts.has_attachment
+            hasAttachment: opts.hasAttachment
               ? true
-              : opts.without_attachment
+              : opts.withoutAttachment
                 ? false
                 : undefined,
-            startDate: opts.start_date,
-            endDate: opts.end_date,
+            startDate: opts.startDate,
+            endDate: opts.endDate,
             ...paginationOpts,
           }),
         onInteractive: (list) => {
           console.log(renderThreadSearchTable(list.data));
-          printPaginationHint(list, 'inboxes threads search', {
+          printPaginationHint(list, `inboxes threads search ${inboxId}`, {
             limit,
             before: opts.before,
             apiKey: globalOpts.apiKey,
             profile: globalOpts.profile,
             extraFlags: [
-              `--inbox_id ${inboxId}`,
               opts.query !== undefined && `--query ${shellQuote(opts.query)}`,
               opts.from && `--from ${opts.from.map(shellQuote).join(' ')}`,
               opts.to && `--to ${opts.to.map(shellQuote).join(' ')}`,
               opts.cc && `--cc ${opts.cc.map(shellQuote).join(' ')}`,
               opts.bcc && `--bcc ${opts.bcc.map(shellQuote).join(' ')}`,
-              opts.has_attachment && '--has_attachment',
-              opts.without_attachment && '--without_attachment',
-              opts.start_date !== undefined &&
-                `--start_date ${shellQuote(opts.start_date)}`,
-              opts.end_date !== undefined &&
-                `--end_date ${shellQuote(opts.end_date)}`,
+              opts.hasAttachment && '--has-attachment',
+              opts.withoutAttachment && '--without-attachment',
+              opts.startDate !== undefined &&
+                `--start-date ${shellQuote(opts.startDate)}`,
+              opts.endDate !== undefined &&
+                `--end-date ${shellQuote(opts.endDate)}`,
               ...threadFilterFlags(opts),
             ]
               .filter(Boolean)

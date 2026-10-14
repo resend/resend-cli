@@ -70,8 +70,7 @@ describe('inboxes list command', () => {
     await listInboxesCommand.parseAsync([], { from: 'user' });
 
     expect(mockList).toHaveBeenCalledTimes(1);
-    const args = mockList.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.limit).toBe(10);
+    expect(mockList.mock.calls[0][0]).toStrictEqual({ limit: 10 });
   });
 
   it('passes --after cursor to the SDK', async () => {
@@ -82,9 +81,10 @@ describe('inboxes list command', () => {
       { from: 'user' },
     );
 
-    const args = mockList.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.limit).toBe(25);
-    expect(args.after).toBe(INBOX_ID);
+    expect(mockList.mock.calls[0][0]).toStrictEqual({
+      limit: 25,
+      after: INBOX_ID,
+    });
   });
 
   it('outputs JSON list when non-interactive', async () => {

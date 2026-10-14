@@ -51,48 +51,69 @@ describe('inboxes create command', () => {
     exitSpy = undefined;
   });
 
-  it('creates inbox with --email_address', async () => {
+  it('creates inbox with --email-address', async () => {
     spies = setupOutputSpies();
 
     await createInboxCommand.parseAsync(
-      ['--email_address', 'support@acme.dev'],
+      ['--email-address', 'support@acme.dev'],
       { from: 'user' },
     );
 
     expect(mockCreate).toHaveBeenCalledTimes(1);
-    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.emailAddress).toBe('support@acme.dev');
-    expect(args.name).toBeUndefined();
-    expect(args.forwarding).toBeUndefined();
+    expect(mockCreate.mock.calls[0][0]).toStrictEqual({
+      emailAddress: 'support@acme.dev',
+    });
   });
 
-  it('passes --name, --from_name, and --forwarding to the SDK', async () => {
+  it('passes --name, --from-name, and --forwarding to the SDK', async () => {
     spies = setupOutputSpies();
 
     await createInboxCommand.parseAsync(
       [
-        '--email_address',
+        '--email-address',
         'support@acme.dev',
         '--name',
         'Support',
-        '--from_name',
+        '--from-name',
         'Ada from Support',
         '--forwarding',
       ],
       { from: 'user' },
     );
 
-    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.name).toBe('Support');
-    expect(args.fromName).toBe('Ada from Support');
-    expect(args.forwarding).toBe(true);
+    expect(mockCreate.mock.calls[0][0]).toStrictEqual({
+      emailAddress: 'support@acme.dev',
+      name: 'Support',
+      fromName: 'Ada from Support',
+      forwarding: true,
+    });
+  });
+
+  it('accepts the snake_case --email_address and --from_name flags', async () => {
+    spies = setupOutputSpies();
+
+    await createInboxCommand.parseAsync(
+      [
+        '--email_address',
+        'support@acme.dev',
+        '--from_name',
+        'Ada from Support',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+    expect(mockCreate.mock.calls[0][0]).toStrictEqual({
+      emailAddress: 'support@acme.dev',
+      fromName: 'Ada from Support',
+    });
   });
 
   it('outputs the create response as JSON when non-interactive', async () => {
     spies = setupOutputSpies();
 
     await createInboxCommand.parseAsync(
-      ['--email_address', 'support@acme.dev'],
+      ['--email-address', 'support@acme.dev'],
       { from: 'user' },
     );
 
@@ -124,7 +145,7 @@ describe('inboxes create command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      createInboxCommand.parseAsync(['--email_address', 'support@acme.dev'], {
+      createInboxCommand.parseAsync(['--email-address', 'support@acme.dev'], {
         from: 'user',
       }),
     );

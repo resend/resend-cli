@@ -6,34 +6,17 @@ import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { outputError } from '../../../lib/output';
 import { pickId } from '../../../lib/prompts';
-import { inboxPickerConfig } from '../utils';
-
-const collectRecipients = (value: string, previous: string[]) => [
-  ...previous,
-  value,
-];
+import { snakeCaseAlias } from '../../../lib/snake-case-alias';
+import { inboxPickerConfig, resolveIdInputs } from '../utils';
 
 export const createInboxDraftCommand = new Command('create')
   .description('Create a draft in an inbox')
-  .option('--inbox_id <id>', 'Inbox UUID')
-  .option(
-    '--to <address>',
-    'Recipient address (repeat the flag for multiple recipients)',
-    collectRecipients,
-    [] as string[],
-  )
-  .option(
-    '--cc <address>',
-    'Cc address (repeatable)',
-    collectRecipients,
-    [] as string[],
-  )
-  .option(
-    '--bcc <address>',
-    'Bcc address (repeatable)',
-    collectRecipients,
-    [] as string[],
-  )
+  .argument('[inboxId]', 'Inbox UUID')
+  .option('--inbox-id <id>', 'Inbox UUID')
+  .addOption(snakeCaseAlias('--inbox-id <id>'))
+  .option('--to <addresses...>', 'Recipient addresses')
+  .option('--cc <addresses...>', 'Cc addresses')
+  .option('--bcc <addresses...>', 'Bcc addresses')
   .option('--subject <subject>', 'Draft subject')
   .option('--text <text>', 'Plain text body')
   .option('--html <html>', 'HTML body')
@@ -50,18 +33,20 @@ export const createInboxDraftCommand = new Command('create')
     'Deduplicate this create request using this key',
   )
   .option(
-    '--thread_id <thread_id>',
-    'Thread to reply to (requires --reply_to_email_id)',
+    '--thread-id <id>',
+    'Thread to reply to (requires --reply-to-email-id)',
   )
+  .addOption(snakeCaseAlias('--thread-id <id>'))
   .option(
-    '--reply_to_email_id <email_id>',
-    'Email the draft replies to (requires --thread_id)',
+    '--reply-to-email-id <id>',
+    'Email the draft replies to (requires --thread-id)',
   )
+  .addOption(snakeCaseAlias('--reply-to-email-id <id>'))
   .addHelpText(
     'after',
     buildHelpText({
-      context: `Creates a standalone draft, or a reply draft when --thread_id and
---reply_to_email_id are passed together. A reply draft without --to is
+      context: `Creates a standalone draft, or a reply draft when --thread-id and
+--reply-to-email-id are passed together. A reply draft without --to is
 addressed to the sender of the email it replies to, or to its Reply-To when
 set. For an email the inbox sent, it defaults to that email's "to" recipients.
 At least one content field (--to, --cc, --bcc, --subject, --text, --html,
@@ -92,23 +77,24 @@ Send the draft later with "resend inboxes drafts send".`,
         'create_error',
       ],
       examples: [
-        'resend inboxes drafts create --inbox_id <inbox_id> --to user@example.com --subject "Hello" --text "Draft body"',
-        'resend inboxes drafts create --inbox_id <inbox_id> --thread_id <thread_id> --reply_to_email_id <email_id> --text "Reply draft" --json',
-        'resend inboxes drafts create --inbox_id <inbox_id> --to user@example.com --text "Report attached" --attachment "./report.pdf;type=application/pdf"',
+        'resend inboxes drafts create <inbox-id> --to user@example.com --subject "Hello" --text "Draft body"',
+        'resend inboxes drafts create <inbox-id> --thread-id <thread-id> --reply-to-email-id <email-id> --text "Reply draft" --json',
+        'resend inboxes drafts create <inbox-id> --to user@example.com --text "Report attached" --attachment "./report.pdf;type=application/pdf"',
       ],
     }),
   )
-  .action(async (opts, cmd) => {
+  .action(async (inboxIdArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const ids = resolveIdInputs(
+      { inbox: [inboxIdArg, opts.inboxId] },
+      globalOpts,
+    );
 
-    if (
-      (opts.thread_id === undefined) !==
-      (opts.reply_to_email_id === undefined)
-    ) {
+    if ((opts.threadId === undefined) !== (opts.replyToEmailId === undefined)) {
       outputError(
         {
           message:
-            '--thread_id and --reply_to_email_id must be provided together.',
+            '--thread-id and --reply-to-email-id must be provided together.',
           code: 'invalid_options',
         },
         { json: globalOpts.json },
@@ -122,9 +108,9 @@ Send the draft later with "resend inboxes drafts send".`,
     );
 
     const hasContent =
-      opts.to.length > 0 ||
-      opts.cc.length > 0 ||
-      opts.bcc.length > 0 ||
+      opts.to !== undefined ||
+      opts.cc !== undefined ||
+      opts.bcc !== undefined ||
       opts.subject !== undefined ||
       opts.text !== undefined ||
       opts.html !== undefined ||
@@ -140,23 +126,23 @@ Send the draft later with "resend inboxes drafts send".`,
       );
     }
 
-    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
+    const inboxId = await pickId(ids.inbox, inboxPickerConfig, globalOpts);
 
     // The SDK requires at least one content field and pairs threadId with
     // replyToEmailId at the type level; both are guaranteed by the guards
     // above but tsc cannot prove it across the conditional spreads.
     const payload = {
       inboxId,
-      ...(opts.to.length > 0 && { to: opts.to }),
-      ...(opts.cc.length > 0 && { cc: opts.cc }),
-      ...(opts.bcc.length > 0 && { bcc: opts.bcc }),
+      ...(opts.to && { to: opts.to }),
+      ...(opts.cc && { cc: opts.cc }),
+      ...(opts.bcc && { bcc: opts.bcc }),
       ...(opts.subject !== undefined && { subject: opts.subject }),
       ...(opts.text !== undefined && { text: opts.text }),
       ...(opts.html !== undefined && { html: opts.html }),
       ...(attachments && { attachments }),
-      ...(opts.thread_id !== undefined && {
-        threadId: opts.thread_id,
-        replyToEmailId: opts.reply_to_email_id,
+      ...(opts.threadId !== undefined && {
+        threadId: opts.threadId,
+        replyToEmailId: opts.replyToEmailId,
       }),
     } as CreateInboxDraftOptions;
 

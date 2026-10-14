@@ -3,13 +3,18 @@ import { runGet } from '../../../lib/actions';
 import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { pickId } from '../../../lib/prompts';
-import { inboxPickerConfig } from '../utils';
+import { snakeCaseAlias } from '../../../lib/snake-case-alias';
+import { inboxPickerConfig, resolveIdInputs } from '../utils';
 import { inboxThreadPickerConfig } from './utils';
 
 export const getInboxThreadCommand = new Command('get')
   .description('Retrieve a thread')
-  .option('--inbox_id <id>', 'Inbox UUID')
-  .option('--thread_id <id>', 'Thread UUID')
+  .argument('[inboxId]', 'Inbox UUID')
+  .argument('[threadId]', 'Thread UUID')
+  .option('--inbox-id <id>', 'Inbox UUID')
+  .addOption(snakeCaseAlias('--inbox-id <id>'))
+  .option('--thread-id <id>', 'Thread UUID')
+  .addOption(snakeCaseAlias('--thread-id <id>'))
   .addHelpText(
     'after',
     buildHelpText({
@@ -18,16 +23,23 @@ export const getInboxThreadCommand = new Command('get')
       output: `  {"object":"inbox_thread","id":"<uuid>","subject":"<subject>|null","folder":"inbox|archive|spam|sent|trash","labels":[],"read":true}`,
       errorCodes: ['auth_error', 'fetch_error'],
       examples: [
-        'resend inboxes threads get --inbox_id 78261eea-8f8b-4381-83c6-79fa7120f1cf --thread_id 3deaccfa-f572-443c-be6f-92b74f9d5c48',
-        'resend inboxes threads get --inbox_id 78261eea-8f8b-4381-83c6-79fa7120f1cf --thread_id 3deaccfa-f572-443c-be6f-92b74f9d5c48 --json',
+        'resend inboxes threads get 78261eea-8f8b-4381-83c6-79fa7120f1cf 3deaccfa-f572-443c-be6f-92b74f9d5c48',
+        'resend inboxes threads get 78261eea-8f8b-4381-83c6-79fa7120f1cf 3deaccfa-f572-443c-be6f-92b74f9d5c48 --json',
       ],
     }),
   )
-  .action(async (opts, cmd) => {
+  .action(async (inboxIdArg, threadIdArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
+    const ids = resolveIdInputs(
+      {
+        inbox: [inboxIdArg, opts.inboxId],
+        thread: [threadIdArg, opts.threadId],
+      },
+      globalOpts,
+    );
+    const inboxId = await pickId(ids.inbox, inboxPickerConfig, globalOpts);
     const threadId = await pickId(
-      opts.thread_id,
+      ids.thread,
       inboxThreadPickerConfig(inboxId),
       globalOpts,
     );

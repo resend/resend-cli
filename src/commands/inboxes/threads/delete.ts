@@ -4,16 +4,21 @@ import { requireClient } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { outputResult } from '../../../lib/output';
 import { confirmDelete, pickId, pickItem } from '../../../lib/prompts';
+import { snakeCaseAlias } from '../../../lib/snake-case-alias';
 import { withSpinner } from '../../../lib/spinner';
 import { isInteractive } from '../../../lib/tty';
-import { inboxPickerConfig } from '../utils';
+import { inboxPickerConfig, resolveIdInputs } from '../utils';
 import { inboxThreadPickerConfig } from './utils';
 
 export const deleteInboxThreadCommand = new Command('delete')
   .alias('rm')
   .description('Move a thread to trash and schedule it for deletion in 30 days')
-  .option('--inbox_id <id>', 'Inbox UUID')
-  .option('--thread_id <id>', 'Thread UUID')
+  .argument('[inboxId]', 'Inbox UUID')
+  .argument('[threadId]', 'Thread UUID')
+  .option('--inbox-id <id>', 'Inbox UUID')
+  .addOption(snakeCaseAlias('--inbox-id <id>'))
+  .option('--thread-id <id>', 'Thread UUID')
+  .addOption(snakeCaseAlias('--thread-id <id>'))
   .option(
     '--yes',
     'Skip the confirmation prompt (required in non-interactive mode)',
@@ -30,16 +35,23 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
       output: `  {"object":"inbox_thread","id":"<uuid>","deleted":true}`,
       errorCodes: ['auth_error', 'confirmation_required', 'delete_error'],
       examples: [
-        'resend inboxes threads delete --inbox_id <inbox_id> --thread_id <thread_id> --yes',
-        'resend inboxes threads delete --inbox_id <inbox_id> --thread_id <thread_id> --yes --json',
+        'resend inboxes threads delete <inbox-id> <thread-id> --yes',
+        'resend inboxes threads delete <inbox-id> <thread-id> --yes --json',
       ],
     }),
   )
-  .action(async (opts, cmd) => {
+  .action(async (inboxIdArg, threadIdArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
+    const ids = resolveIdInputs(
+      {
+        inbox: [inboxIdArg, opts.inboxId],
+        thread: [threadIdArg, opts.threadId],
+      },
+      globalOpts,
+    );
+    const inboxId = await pickId(ids.inbox, inboxPickerConfig, globalOpts);
     const picked = await pickItem(
-      opts.thread_id,
+      ids.thread,
       inboxThreadPickerConfig(inboxId),
       globalOpts,
     );

@@ -10,7 +10,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
-import { replyInboxThreadEmailCommand } from '../../../../src/commands/inboxes/threads/emails/reply';
+import { replyInboxThreadEmailCommand } from '../../../../../src/commands/inboxes/threads/emails/reply';
 import {
   captureTestEnv,
   expectExit1,
@@ -18,12 +18,13 @@ import {
   mockSdkError,
   setNonInteractive,
   setupOutputSpies,
-} from '../../../helpers';
+} from '../../../../helpers';
 
 const INBOX_ID = '78261eea-8f8b-4381-83c6-79fa7120f1cf';
 const THREAD_ID = '3deaccfa-f572-443c-be6f-92b74f9d5c48';
 const EMAIL_ID = '5e0e0b3c-9497-47d3-a527-4bd5e0e2f0f5';
 const REPLY_ID = '9f3b5a1e-2c4d-4e6f-8a0b-1c2d3e4f5a6b';
+const IDS = { inboxId: INBOX_ID, threadId: THREAD_ID, emailId: EMAIL_ID };
 
 const mockReply = vi.fn(async () => ({
   data: { id: REPLY_ID },
@@ -62,11 +63,11 @@ describe('inboxes threads emails reply command', () => {
 
     await replyInboxThreadEmailCommand.parseAsync(
       [
-        '--inbox_id',
+        '--inbox-id',
         INBOX_ID,
-        '--thread_id',
+        '--thread-id',
         THREAD_ID,
-        '--email_id',
+        '--email-id',
         EMAIL_ID,
         '--text',
         'You were only charged once.',
@@ -75,15 +76,26 @@ describe('inboxes threads emails reply command', () => {
     );
 
     expect(mockReply).toHaveBeenCalledTimes(1);
-    const args = mockReply.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.inboxId).toBe(INBOX_ID);
-    expect(args.threadId).toBe(THREAD_ID);
-    expect(args.emailId).toBe(EMAIL_ID);
-    expect(args.text).toBe('You were only charged once.');
-    expect(args.html).toBeUndefined();
+    expect(mockReply.mock.calls[0][0]).toStrictEqual({
+      ...IDS,
+      text: 'You were only charged once.',
+    });
+    expect(mockReply.mock.calls[0][1]).toBeUndefined();
   });
 
-  it('passes --html and --subject to the SDK', async () => {
+  it('takes the IDs as positional arguments', async () => {
+    spies = setupOutputSpies();
+
+    await replyInboxThreadEmailCommand.parseAsync(
+      [INBOX_ID, THREAD_ID, EMAIL_ID, '--text', 'ok'],
+      { from: 'user' },
+    );
+
+    expect(mockReply.mock.calls[0][0]).toStrictEqual({ ...IDS, text: 'ok' });
+    expect(mockReply.mock.calls[0][1]).toBeUndefined();
+  });
+
+  it('accepts the snake_case ID flags', async () => {
     spies = setupOutputSpies();
 
     await replyInboxThreadEmailCommand.parseAsync(
@@ -93,6 +105,67 @@ describe('inboxes threads emails reply command', () => {
         '--thread_id',
         THREAD_ID,
         '--email_id',
+        EMAIL_ID,
+        '--text',
+        'ok',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockReply.mock.calls[0][0]).toStrictEqual({ ...IDS, text: 'ok' });
+    expect(mockReply.mock.calls[0][1]).toBeUndefined();
+  });
+
+  it('gives the same --cc for the spaced and repeated forms', async () => {
+    spies = setupOutputSpies();
+
+    await replyInboxThreadEmailCommand.parseAsync(
+      [
+        INBOX_ID,
+        THREAD_ID,
+        EMAIL_ID,
+        '--cc',
+        'a@example.com',
+        'b@example.com',
+        '--text',
+        'ok',
+      ],
+      { from: 'user' },
+    );
+    await replyInboxThreadEmailCommand.parseAsync(
+      [
+        INBOX_ID,
+        THREAD_ID,
+        EMAIL_ID,
+        '--cc',
+        'a@example.com',
+        '--cc',
+        'b@example.com',
+        '--text',
+        'ok',
+      ],
+      { from: 'user' },
+    );
+
+    const expected = {
+      ...IDS,
+      text: 'ok',
+      cc: ['a@example.com', 'b@example.com'],
+    };
+    expect(mockReply.mock.calls[0][0]).toStrictEqual(expected);
+    expect(mockReply.mock.calls[1][0]).toStrictEqual(expected);
+  });
+
+  it('passes --html and --subject to the SDK', async () => {
+    spies = setupOutputSpies();
+
+    await replyInboxThreadEmailCommand.parseAsync(
+      [
+        '--inbox-id',
+        INBOX_ID,
+        '--thread-id',
+        THREAD_ID,
+        '--email-id',
         EMAIL_ID,
         '--html',
         '<p>Done</p>',
@@ -102,9 +175,12 @@ describe('inboxes threads emails reply command', () => {
       { from: 'user' },
     );
 
-    const args = mockReply.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.html).toBe('<p>Done</p>');
-    expect(args.subject).toBe('Re: hi');
+    expect(mockReply.mock.calls[0][0]).toStrictEqual({
+      ...IDS,
+      html: '<p>Done</p>',
+      subject: 'Re: hi',
+    });
+    expect(mockReply.mock.calls[0][1]).toBeUndefined();
   });
 
   it('passes repeated --cc and --bcc to the SDK', async () => {
@@ -112,11 +188,11 @@ describe('inboxes threads emails reply command', () => {
 
     await replyInboxThreadEmailCommand.parseAsync(
       [
-        '--inbox_id',
+        '--inbox-id',
         INBOX_ID,
-        '--thread_id',
+        '--thread-id',
         THREAD_ID,
-        '--email_id',
+        '--email-id',
         EMAIL_ID,
         '--text',
         'Looping in finance.',
@@ -130,9 +206,13 @@ describe('inboxes threads emails reply command', () => {
       { from: 'user' },
     );
 
-    const args = mockReply.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.cc).toEqual(['finance@example.com', 'ops@example.com']);
-    expect(args.bcc).toEqual(['audit@example.com']);
+    expect(mockReply.mock.calls[0][0]).toStrictEqual({
+      ...IDS,
+      text: 'Looping in finance.',
+      cc: ['finance@example.com', 'ops@example.com'],
+      bcc: ['audit@example.com'],
+    });
+    expect(mockReply.mock.calls[0][1]).toBeUndefined();
   });
 
   it('omits cc and bcc when the flags are absent', async () => {
@@ -140,11 +220,11 @@ describe('inboxes threads emails reply command', () => {
 
     await replyInboxThreadEmailCommand.parseAsync(
       [
-        '--inbox_id',
+        '--inbox-id',
         INBOX_ID,
-        '--thread_id',
+        '--thread-id',
         THREAD_ID,
-        '--email_id',
+        '--email-id',
         EMAIL_ID,
         '--text',
         'Thanks!',
@@ -152,9 +232,11 @@ describe('inboxes threads emails reply command', () => {
       { from: 'user' },
     );
 
-    const args = mockReply.mock.calls[0][0] as Record<string, unknown>;
-    expect(args).not.toHaveProperty('cc');
-    expect(args).not.toHaveProperty('bcc');
+    expect(mockReply.mock.calls[0][0]).toStrictEqual({
+      ...IDS,
+      text: 'Thanks!',
+    });
+    expect(mockReply.mock.calls[0][1]).toBeUndefined();
   });
 
   it('passes --reply-all to the SDK as replyAll', async () => {
@@ -162,11 +244,11 @@ describe('inboxes threads emails reply command', () => {
 
     await replyInboxThreadEmailCommand.parseAsync(
       [
-        '--inbox_id',
+        '--inbox-id',
         INBOX_ID,
-        '--thread_id',
+        '--thread-id',
         THREAD_ID,
-        '--email_id',
+        '--email-id',
         EMAIL_ID,
         '--text',
         'Thanks, all.',
@@ -175,8 +257,12 @@ describe('inboxes threads emails reply command', () => {
       { from: 'user' },
     );
 
-    const args = mockReply.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.replyAll).toBe(true);
+    expect(mockReply.mock.calls[0][0]).toStrictEqual({
+      ...IDS,
+      text: 'Thanks, all.',
+      replyAll: true,
+    });
+    expect(mockReply.mock.calls[0][1]).toBeUndefined();
   });
 
   it('omits replyAll when --reply-all is absent', async () => {
@@ -184,11 +270,11 @@ describe('inboxes threads emails reply command', () => {
 
     await replyInboxThreadEmailCommand.parseAsync(
       [
-        '--inbox_id',
+        '--inbox-id',
         INBOX_ID,
-        '--thread_id',
+        '--thread-id',
         THREAD_ID,
-        '--email_id',
+        '--email-id',
         EMAIL_ID,
         '--text',
         'Thanks!',
@@ -196,8 +282,11 @@ describe('inboxes threads emails reply command', () => {
       { from: 'user' },
     );
 
-    const args = mockReply.mock.calls[0][0] as Record<string, unknown>;
-    expect(args).not.toHaveProperty('replyAll');
+    expect(mockReply.mock.calls[0][0]).toStrictEqual({
+      ...IDS,
+      text: 'Thanks!',
+    });
+    expect(mockReply.mock.calls[0][1]).toBeUndefined();
   });
 
   it('outputs the sent email id as JSON when non-interactive', async () => {
@@ -205,11 +294,11 @@ describe('inboxes threads emails reply command', () => {
 
     await replyInboxThreadEmailCommand.parseAsync(
       [
-        '--inbox_id',
+        '--inbox-id',
         INBOX_ID,
-        '--thread_id',
+        '--thread-id',
         THREAD_ID,
-        '--email_id',
+        '--email-id',
         EMAIL_ID,
         '--text',
         'ok',
@@ -226,11 +315,11 @@ describe('inboxes threads emails reply command', () => {
 
     await replyInboxThreadEmailCommand.parseAsync(
       [
-        '--inbox_id',
+        '--inbox-id',
         INBOX_ID,
-        '--thread_id',
+        '--thread-id',
         THREAD_ID,
-        '--email_id',
+        '--email-id',
         EMAIL_ID,
         '--text',
         'ok',
@@ -241,8 +330,10 @@ describe('inboxes threads emails reply command', () => {
     );
 
     expect(mockReply).toHaveBeenCalledTimes(1);
-    const opts = mockReply.mock.calls[0][1] as Record<string, unknown>;
-    expect(opts?.idempotencyKey).toBe('my-key-123');
+    expect(mockReply.mock.calls[0][0]).toStrictEqual({ ...IDS, text: 'ok' });
+    expect(mockReply.mock.calls[0][1]).toStrictEqual({
+      idempotencyKey: 'my-key-123',
+    });
   });
 
   it('errors with missing_content when neither --text nor --html given', async () => {
@@ -253,11 +344,11 @@ describe('inboxes threads emails reply command', () => {
     await expectExit1(() =>
       replyInboxThreadEmailCommand.parseAsync(
         [
-          '--inbox_id',
+          '--inbox-id',
           INBOX_ID,
-          '--thread_id',
+          '--thread-id',
           THREAD_ID,
-          '--email_id',
+          '--email-id',
           EMAIL_ID,
         ],
         {
@@ -282,11 +373,11 @@ describe('inboxes threads emails reply command', () => {
     await expectExit1(() =>
       replyInboxThreadEmailCommand.parseAsync(
         [
-          '--inbox_id',
+          '--inbox-id',
           INBOX_ID,
-          '--thread_id',
+          '--thread-id',
           THREAD_ID,
-          '--email_id',
+          '--email-id',
           EMAIL_ID,
           '--text',
           'ok',
@@ -312,11 +403,11 @@ describe('inboxes threads emails reply command', () => {
     try {
       await replyInboxThreadEmailCommand.parseAsync(
         [
-          '--inbox_id',
+          '--inbox-id',
           INBOX_ID,
-          '--thread_id',
+          '--thread-id',
           THREAD_ID,
-          '--email_id',
+          '--email-id',
           EMAIL_ID,
           '--text',
           'See attached.',
@@ -332,16 +423,16 @@ describe('inboxes threads emails reply command', () => {
       rmSync(dir, { recursive: true, force: true });
     }
 
-    const args = mockReply.mock.calls.at(-1)?.[0] as Record<string, unknown>;
-    const attachments = args.attachments as Array<Record<string, unknown>>;
-    expect(attachments).toHaveLength(3);
-    expect(attachments[0].filename).toBe('notes.txt');
-    expect(Buffer.isBuffer(attachments[0].content)).toBe(true);
-    expect(attachments[1]).toEqual({
-      path: 'https://example.com/report.pdf',
-      filename: 'report.pdf',
+    expect(mockReply.mock.calls[0][0]).toStrictEqual({
+      ...IDS,
+      text: 'See attached.',
+      attachments: [
+        { filename: 'notes.txt', content: Buffer.from('hello') },
+        { path: 'https://example.com/report.pdf', filename: 'report.pdf' },
+        { filename: 'extra.txt', content: 'aGk=' },
+      ],
     });
-    expect(attachments[2]).toEqual({ filename: 'extra.txt', content: 'aGk=' });
+    expect(mockReply.mock.calls[0][1]).toBeUndefined();
   });
 
   it('errors with file_read_error when an --attachment file is missing', async () => {
@@ -353,11 +444,11 @@ describe('inboxes threads emails reply command', () => {
     await expectExit1(() =>
       replyInboxThreadEmailCommand.parseAsync(
         [
-          '--inbox_id',
+          '--inbox-id',
           INBOX_ID,
-          '--thread_id',
+          '--thread-id',
           THREAD_ID,
-          '--email_id',
+          '--email-id',
           EMAIL_ID,
           '--text',
           'See attached.',
@@ -378,11 +469,11 @@ describe('inboxes threads emails reply command', () => {
 
     await replyInboxThreadEmailCommand.parseAsync(
       [
-        '--inbox_id',
+        '--inbox-id',
         INBOX_ID,
-        '--thread_id',
+        '--thread-id',
         THREAD_ID,
-        '--email_id',
+        '--email-id',
         EMAIL_ID,
         '--text',
         'ok',
@@ -392,8 +483,12 @@ describe('inboxes threads emails reply command', () => {
       { from: 'user' },
     );
 
-    const args = mockReply.mock.calls.at(-1)?.[0] as Record<string, unknown>;
-    expect(args.headers).toEqual({ 'X-Ticket-Id': '4821' });
+    expect(mockReply.mock.calls[0][0]).toStrictEqual({
+      ...IDS,
+      text: 'ok',
+      headers: { 'X-Ticket-Id': '4821' },
+    });
+    expect(mockReply.mock.calls[0][1]).toBeUndefined();
   });
 
   it('errors with invalid_header for a header without =', async () => {
@@ -405,11 +500,11 @@ describe('inboxes threads emails reply command', () => {
     await expectExit1(() =>
       replyInboxThreadEmailCommand.parseAsync(
         [
-          '--inbox_id',
+          '--inbox-id',
           INBOX_ID,
-          '--thread_id',
+          '--thread-id',
           THREAD_ID,
-          '--email_id',
+          '--email-id',
           EMAIL_ID,
           '--text',
           'ok',
@@ -430,11 +525,11 @@ describe('inboxes threads emails reply command', () => {
 
     await replyInboxThreadEmailCommand.parseAsync(
       [
-        '--inbox_id',
+        '--inbox-id',
         INBOX_ID,
-        '--thread_id',
+        '--thread-id',
         THREAD_ID,
-        '--email_id',
+        '--email-id',
         EMAIL_ID,
         '--text',
         '',
@@ -446,9 +541,12 @@ describe('inboxes threads emails reply command', () => {
       { from: 'user' },
     );
 
-    const args = mockReply.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.text).toBe('');
-    expect(args.html).toBe('<p>Hi</p>');
-    expect(args.subject).toBe('');
+    expect(mockReply.mock.calls[0][0]).toStrictEqual({
+      ...IDS,
+      text: '',
+      html: '<p>Hi</p>',
+      subject: '',
+    });
+    expect(mockReply.mock.calls[0][1]).toBeUndefined();
   });
 });

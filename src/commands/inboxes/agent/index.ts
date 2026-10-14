@@ -11,8 +11,8 @@ export const inboxAgentCommand = new Command('agent')
       context: `The agent settings set the instructions and the tone the inbox agent follows,
 and which actions it is allowed to take.`,
       examples: [
-        'resend inboxes agent get --inbox_id <inbox_id>',
-        'resend inboxes agent update --inbox_id <inbox_id> --tone "friendly and concise"',
+        'resend inboxes agent get <inbox-id>',
+        'resend inboxes agent update <inbox-id> --tone "friendly and concise"',
       ],
     }),
   )

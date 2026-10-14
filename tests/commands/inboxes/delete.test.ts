@@ -57,7 +57,7 @@ describe('inboxes delete command', () => {
     await deleteInboxCommand.parseAsync([INBOX_ID, '--yes'], { from: 'user' });
 
     expect(mockRemove).toHaveBeenCalledTimes(1);
-    expect(mockRemove.mock.calls[0][0]).toBe(INBOX_ID);
+    expect(mockRemove.mock.calls[0]).toStrictEqual([INBOX_ID]);
   });
 
   it('outputs synthesized JSON result when non-interactive', async () => {

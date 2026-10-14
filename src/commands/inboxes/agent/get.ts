@@ -3,11 +3,14 @@ import { runGet } from '../../../lib/actions';
 import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { pickId } from '../../../lib/prompts';
-import { inboxPickerConfig } from '../utils';
+import { snakeCaseAlias } from '../../../lib/snake-case-alias';
+import { inboxPickerConfig, resolveIdInputs } from '../utils';
 
 export const getInboxAgentCommand = new Command('get')
   .description("Retrieve an inbox's agent settings")
-  .option('--inbox_id <id>', 'Inbox UUID')
+  .argument('[inboxId]', 'Inbox UUID')
+  .option('--inbox-id <id>', 'Inbox UUID')
+  .addOption(snakeCaseAlias('--inbox-id <id>'))
   .addHelpText(
     'after',
     buildHelpText({
@@ -15,14 +18,18 @@ export const getInboxAgentCommand = new Command('get')
       output: `  {"object":"inbox_agent","instructions":"<text>|null","tone":"<tone>|null","enabled_actions":["draft_reply"]}`,
       errorCodes: ['auth_error', 'fetch_error'],
       examples: [
-        'resend inboxes agent get --inbox_id <inbox_id>',
-        'resend inboxes agent get --inbox_id <inbox_id> --json',
+        'resend inboxes agent get <inbox-id>',
+        'resend inboxes agent get <inbox-id> --json',
       ],
     }),
   )
-  .action(async (opts, cmd) => {
+  .action(async (inboxIdArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
+    const ids = resolveIdInputs(
+      { inbox: [inboxIdArg, opts.inboxId] },
+      globalOpts,
+    );
+    const inboxId = await pickId(ids.inbox, inboxPickerConfig, globalOpts);
     await runGet(
       {
         loading: 'Fetching agent settings...',

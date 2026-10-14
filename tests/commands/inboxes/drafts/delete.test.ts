@@ -55,13 +55,13 @@ describe('inboxes drafts delete command', () => {
     spies = setupOutputSpies();
 
     await deleteInboxDraftCommand.parseAsync(
-      ['--inbox_id', INBOX_ID, '--draft_id', DRAFT_ID, '--yes'],
+      ['--inbox-id', INBOX_ID, '--draft-id', DRAFT_ID, '--yes'],
       {
         from: 'user',
       },
     );
 
-    expect(mockRemove).toHaveBeenCalledWith({
+    expect(mockRemove.mock.calls[0][0]).toStrictEqual({
       inboxId: INBOX_ID,
       draftId: DRAFT_ID,
     });
@@ -71,6 +71,33 @@ describe('inboxes drafts delete command', () => {
     expect(parsed.deleted).toBe(true);
   });
 
+  it('accepts the IDs as arguments', async () => {
+    setupOutputSpies();
+
+    await deleteInboxDraftCommand.parseAsync([INBOX_ID, DRAFT_ID, '--yes'], {
+      from: 'user',
+    });
+
+    expect(mockRemove.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      draftId: DRAFT_ID,
+    });
+  });
+
+  it('accepts the snake_case flags', async () => {
+    setupOutputSpies();
+
+    await deleteInboxDraftCommand.parseAsync(
+      ['--inbox_id', INBOX_ID, '--draft_id', DRAFT_ID, '--yes'],
+      { from: 'user' },
+    );
+
+    expect(mockRemove.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      draftId: DRAFT_ID,
+    });
+  });
+
   it('errors with confirmation_required when --yes absent in non-interactive mode', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -78,7 +105,7 @@ describe('inboxes drafts delete command', () => {
 
     await expectExit1(() =>
       deleteInboxDraftCommand.parseAsync(
-        ['--inbox_id', INBOX_ID, '--draft_id', DRAFT_ID],
+        ['--inbox-id', INBOX_ID, '--draft-id', DRAFT_ID],
         {
           from: 'user',
         },

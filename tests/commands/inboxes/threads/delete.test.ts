@@ -55,13 +55,13 @@ describe('inboxes threads delete command', () => {
     spies = setupOutputSpies();
 
     await deleteInboxThreadCommand.parseAsync(
-      ['--inbox_id', INBOX_ID, '--thread_id', THREAD_ID, '--yes'],
+      ['--inbox-id', INBOX_ID, '--thread-id', THREAD_ID, '--yes'],
       {
         from: 'user',
       },
     );
 
-    expect(mockRemove).toHaveBeenCalledWith({
+    expect(mockRemove.mock.calls[0][0]).toStrictEqual({
       inboxId: INBOX_ID,
       threadId: THREAD_ID,
     });
@@ -69,6 +69,33 @@ describe('inboxes threads delete command', () => {
     const parsed = JSON.parse(output);
     expect(parsed.object).toBe('inbox_thread');
     expect(parsed.deleted).toBe(true);
+  });
+
+  it('takes the IDs as positional arguments', async () => {
+    spies = setupOutputSpies();
+
+    await deleteInboxThreadCommand.parseAsync([INBOX_ID, THREAD_ID, '--yes'], {
+      from: 'user',
+    });
+
+    expect(mockRemove.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      threadId: THREAD_ID,
+    });
+  });
+
+  it('accepts the snake_case ID flags', async () => {
+    spies = setupOutputSpies();
+
+    await deleteInboxThreadCommand.parseAsync(
+      ['--inbox_id', INBOX_ID, '--thread_id', THREAD_ID, '--yes'],
+      { from: 'user' },
+    );
+
+    expect(mockRemove.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      threadId: THREAD_ID,
+    });
   });
 
   it('outputs deleted false when the thread was already in trash', async () => {
@@ -79,7 +106,7 @@ describe('inboxes threads delete command', () => {
     } as never);
 
     await deleteInboxThreadCommand.parseAsync(
-      ['--inbox_id', INBOX_ID, '--thread_id', THREAD_ID, '--yes'],
+      ['--inbox-id', INBOX_ID, '--thread-id', THREAD_ID, '--yes'],
       { from: 'user' },
     );
 
@@ -98,7 +125,7 @@ describe('inboxes threads delete command', () => {
 
     await expectExit1(() =>
       deleteInboxThreadCommand.parseAsync(
-        ['--inbox_id', INBOX_ID, '--thread_id', THREAD_ID],
+        ['--inbox-id', INBOX_ID, '--thread-id', THREAD_ID],
         {
           from: 'user',
         },

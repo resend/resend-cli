@@ -79,17 +79,48 @@ describe('inboxes threads list command', () => {
   it('lists threads for an inbox', async () => {
     spies = setupOutputSpies();
 
-    await listInboxThreadsCommand.parseAsync(['--inbox_id', INBOX_ID], {
+    await listInboxThreadsCommand.parseAsync(['--inbox-id', INBOX_ID], {
       from: 'user',
     });
 
     expect(mockList).toHaveBeenCalledTimes(1);
-    const args = mockList.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.inboxId).toBe(INBOX_ID);
-    expect(args.folders).toBeUndefined();
-    expect(args.labels).toBeUndefined();
-    expect(args.read).toBeUndefined();
-    expect(args.limit).toBe(10);
+    expect(mockList.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      folders: undefined,
+      labels: undefined,
+      read: undefined,
+      limit: 10,
+    });
+  });
+
+  it('takes the inbox ID as a positional argument', async () => {
+    spies = setupOutputSpies();
+
+    await listInboxThreadsCommand.parseAsync([INBOX_ID], { from: 'user' });
+
+    expect(mockList.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      folders: undefined,
+      labels: undefined,
+      read: undefined,
+      limit: 10,
+    });
+  });
+
+  it('accepts the snake_case --inbox_id flag', async () => {
+    spies = setupOutputSpies();
+
+    await listInboxThreadsCommand.parseAsync(['--inbox_id', INBOX_ID], {
+      from: 'user',
+    });
+
+    expect(mockList.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      folders: undefined,
+      labels: undefined,
+      read: undefined,
+      limit: 10,
+    });
   });
 
   it('passes folders, labels, read, and pagination options', async () => {
@@ -97,7 +128,7 @@ describe('inboxes threads list command', () => {
 
     await listInboxThreadsCommand.parseAsync(
       [
-        '--inbox_id',
+        '--inbox-id',
         INBOX_ID,
         '--folders',
         'inbox',
@@ -114,12 +145,14 @@ describe('inboxes threads list command', () => {
       { from: 'user' },
     );
 
-    const args = mockList.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.folders).toEqual(['inbox', 'archive']);
-    expect(args.labels).toEqual(['label-1', 'label-2']);
-    expect(args.read).toBe(false);
-    expect(args.limit).toBe(25);
-    expect(args.after).toBe(THREAD_ID);
+    expect(mockList.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      folders: ['inbox', 'archive'],
+      labels: ['label-1', 'label-2'],
+      read: false,
+      limit: 25,
+      after: THREAD_ID,
+    });
   });
 
   it('errors with invalid_options when --read and --unread are both passed', async () => {
@@ -129,7 +162,7 @@ describe('inboxes threads list command', () => {
 
     await expectExit1(() =>
       listInboxThreadsCommand.parseAsync(
-        ['--inbox_id', INBOX_ID, '--read', '--unread'],
+        ['--inbox-id', INBOX_ID, '--read', '--unread'],
         { from: 'user' },
       ),
     );
@@ -142,7 +175,7 @@ describe('inboxes threads list command', () => {
   it('outputs JSON list when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    await listInboxThreadsCommand.parseAsync(['--inbox_id', INBOX_ID], {
+    await listInboxThreadsCommand.parseAsync(['--inbox-id', INBOX_ID], {
       from: 'user',
     });
 
@@ -175,7 +208,7 @@ describe('inboxes threads list command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      listInboxThreadsCommand.parseAsync(['--inbox_id', INBOX_ID], {
+      listInboxThreadsCommand.parseAsync(['--inbox-id', INBOX_ID], {
         from: 'user',
       }),
     );

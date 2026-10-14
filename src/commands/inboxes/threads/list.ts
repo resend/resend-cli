@@ -9,13 +9,16 @@ import {
   printPaginationHint,
 } from '../../../lib/pagination';
 import { pickId } from '../../../lib/prompts';
-import { inboxPickerConfig } from '../utils';
+import { snakeCaseAlias } from '../../../lib/snake-case-alias';
+import { inboxPickerConfig, resolveIdInputs } from '../utils';
 import { renderThreadsTable, threadFilterFlags, threadFilters } from './utils';
 
 export const listInboxThreadsCommand = new Command('list')
   .alias('ls')
   .description('List threads in an inbox')
-  .option('--inbox_id <id>', 'Inbox UUID')
+  .argument('[inboxId]', 'Inbox UUID')
+  .option('--inbox-id <id>', 'Inbox UUID')
+  .addOption(snakeCaseAlias('--inbox-id <id>'))
   .addOption(
     new Option(
       '--folders <folders...>',
@@ -23,7 +26,7 @@ export const listInboxThreadsCommand = new Command('list')
     ).choices(INBOX_MESSAGE_FOLDERS),
   )
   .option(
-    '--labels <label_ids...>',
+    '--labels <label-ids...>',
     'Label UUIDs, one or more. Returns threads with any of them',
   )
   .option('--read', 'Only threads where every email is read')
@@ -56,14 +59,14 @@ To find threads by text, people, attachments, or dates, use
         'list_error',
       ],
       examples: [
-        'resend inboxes threads list --inbox_id 78261eea-8f8b-4381-83c6-79fa7120f1cf',
-        'resend inboxes threads list --inbox_id 78261eea-8f8b-4381-83c6-79fa7120f1cf --folders inbox archive --json',
-        'resend inboxes threads list --inbox_id 78261eea-8f8b-4381-83c6-79fa7120f1cf --labels <label_id> --unread --json',
-        'resend inboxes threads list --inbox_id 78261eea-8f8b-4381-83c6-79fa7120f1cf --limit 25 --after <thread_id> --json',
+        'resend inboxes threads list 78261eea-8f8b-4381-83c6-79fa7120f1cf',
+        'resend inboxes threads list 78261eea-8f8b-4381-83c6-79fa7120f1cf --folders inbox archive --json',
+        'resend inboxes threads list 78261eea-8f8b-4381-83c6-79fa7120f1cf --labels <label-id> --unread --json',
+        'resend inboxes threads list 78261eea-8f8b-4381-83c6-79fa7120f1cf --limit 25 --after <thread-id> --json',
       ],
     }),
   )
-  .action(async (opts, cmd) => {
+  .action(async (inboxIdArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const filters = threadFilters(opts, globalOpts);
     const limit = parseLimitOpt(opts.limit, globalOpts);
@@ -73,7 +76,11 @@ To find threads by text, people, attachments, or dates, use
       opts.before,
       globalOpts,
     );
-    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
+    const ids = resolveIdInputs(
+      { inbox: [inboxIdArg, opts.inboxId] },
+      globalOpts,
+    );
+    const inboxId = await pickId(ids.inbox, inboxPickerConfig, globalOpts);
     await runList(
       {
         loading: 'Fetching threads...',
@@ -85,15 +92,12 @@ To find threads by text, people, attachments, or dates, use
           }),
         onInteractive: (list) => {
           console.log(renderThreadsTable(list.data));
-          printPaginationHint(list, 'inboxes threads list', {
+          printPaginationHint(list, `inboxes threads list ${inboxId}`, {
             limit,
             before: opts.before,
             apiKey: globalOpts.apiKey,
             profile: globalOpts.profile,
-            extraFlags: [
-              `--inbox_id ${inboxId}`,
-              ...threadFilterFlags(opts),
-            ].join(' '),
+            extraFlags: threadFilterFlags(opts).join(' '),
           });
         },
       },

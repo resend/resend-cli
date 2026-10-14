@@ -68,7 +68,7 @@ describe('inboxes get command', () => {
 
     await getInboxCommand.parseAsync(['support@acme.dev'], { from: 'user' });
 
-    expect(mockGet).toHaveBeenCalledWith('support@acme.dev');
+    expect(mockGet.mock.calls[0]).toStrictEqual(['support@acme.dev']);
   });
 
   it('fetches inbox by ID and outputs JSON when non-interactive', async () => {
@@ -76,7 +76,7 @@ describe('inboxes get command', () => {
 
     await getInboxCommand.parseAsync([INBOX_ID], { from: 'user' });
 
-    expect(mockGet).toHaveBeenCalledWith(INBOX_ID);
+    expect(mockGet.mock.calls[0]).toStrictEqual([INBOX_ID]);
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
     expect(parsed.id).toBe(INBOX_ID);

@@ -66,9 +66,9 @@ describe('inboxes threads update command', () => {
 
     await updateInboxThreadCommand.parseAsync(
       [
-        '--inbox_id',
+        '--inbox-id',
         INBOX_ID,
-        '--thread_id',
+        '--thread-id',
         THREAD_ID,
         '--read',
         '--folder',
@@ -78,26 +78,70 @@ describe('inboxes threads update command', () => {
     );
 
     expect(mockUpdate).toHaveBeenCalledTimes(1);
-    const args = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.inboxId).toBe(INBOX_ID);
-    expect(args.threadId).toBe(THREAD_ID);
-    expect(args.read).toBe(true);
-    expect(args.folder).toBe('archive');
+    expect(mockUpdate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      threadId: THREAD_ID,
+      read: true,
+      folder: 'archive',
+    });
   });
 
   it('maps --unread to read: false', async () => {
     setupOutputSpies();
 
     await updateInboxThreadCommand.parseAsync(
-      ['--inbox_id', INBOX_ID, '--thread_id', THREAD_ID, '--unread'],
+      ['--inbox-id', INBOX_ID, '--thread-id', THREAD_ID, '--unread'],
       { from: 'user' },
     );
 
-    const args = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.read).toBe(false);
+    expect(mockUpdate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      threadId: THREAD_ID,
+      read: false,
+    });
   });
 
-  it('passes --add_label_ids and --remove_label_ids', async () => {
+  it('passes --add-label-ids and --remove-label-ids', async () => {
+    setupOutputSpies();
+
+    await updateInboxThreadCommand.parseAsync(
+      [
+        '--inbox-id',
+        INBOX_ID,
+        '--thread-id',
+        THREAD_ID,
+        '--add-label-ids',
+        'label-1',
+        'label-2',
+        '--remove-label-ids',
+        'label-3',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockUpdate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      threadId: THREAD_ID,
+      addLabelIds: ['label-1', 'label-2'],
+      removeLabelIds: ['label-3'],
+    });
+  });
+
+  it('takes the IDs as positional arguments', async () => {
+    setupOutputSpies();
+
+    await updateInboxThreadCommand.parseAsync([INBOX_ID, THREAD_ID, '--read'], {
+      from: 'user',
+    });
+
+    expect(mockUpdate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      threadId: THREAD_ID,
+      read: true,
+    });
+  });
+
+  it('accepts the snake_case flags', async () => {
     setupOutputSpies();
 
     await updateInboxThreadCommand.parseAsync(
@@ -115,10 +159,12 @@ describe('inboxes threads update command', () => {
       { from: 'user' },
     );
 
-    const args = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.addLabelIds).toEqual(['label-1', 'label-2']);
-    expect(args.removeLabelIds).toEqual(['label-3']);
-    expect(args.read).toBeUndefined();
+    expect(mockUpdate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      threadId: THREAD_ID,
+      addLabelIds: ['label-1', 'label-2'],
+      removeLabelIds: ['label-3'],
+    });
   });
 
   it('errors with invalid_options when --read and --unread are combined', async () => {
@@ -129,9 +175,9 @@ describe('inboxes threads update command', () => {
     await expectExit1(() =>
       updateInboxThreadCommand.parseAsync(
         [
-          '--inbox_id',
+          '--inbox-id',
           INBOX_ID,
-          '--thread_id',
+          '--thread-id',
           THREAD_ID,
           '--read',
           '--unread',
@@ -152,7 +198,7 @@ describe('inboxes threads update command', () => {
 
     await expectExit1(() =>
       updateInboxThreadCommand.parseAsync(
-        ['--inbox_id', INBOX_ID, '--thread_id', THREAD_ID],
+        ['--inbox-id', INBOX_ID, '--thread-id', THREAD_ID],
         {
           from: 'user',
         },
@@ -174,7 +220,7 @@ describe('inboxes threads update command', () => {
 
     await expectExit1(() =>
       updateInboxThreadCommand.parseAsync(
-        ['--inbox_id', INBOX_ID, '--thread_id', THREAD_ID, '--read'],
+        ['--inbox-id', INBOX_ID, '--thread-id', THREAD_ID, '--read'],
         {
           from: 'user',
         },

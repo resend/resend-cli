@@ -55,13 +55,13 @@ describe('inboxes labels delete command', () => {
     spies = setupOutputSpies();
 
     await deleteInboxLabelCommand.parseAsync(
-      ['--inbox_id', INBOX_ID, '--label_id', LABEL_ID, '--yes'],
+      ['--inbox-id', INBOX_ID, '--label-id', LABEL_ID, '--yes'],
       {
         from: 'user',
       },
     );
 
-    expect(mockRemove).toHaveBeenCalledWith({
+    expect(mockRemove.mock.calls[0][0]).toStrictEqual({
       inboxId: INBOX_ID,
       labelId: LABEL_ID,
     });
@@ -71,6 +71,35 @@ describe('inboxes labels delete command', () => {
     expect(parsed.deleted).toBe(true);
   });
 
+  it('accepts the inbox and label IDs as arguments', async () => {
+    spies = setupOutputSpies();
+
+    await deleteInboxLabelCommand.parseAsync([INBOX_ID, LABEL_ID, '--yes'], {
+      from: 'user',
+    });
+
+    expect(mockRemove).toHaveBeenCalledTimes(1);
+    expect(mockRemove.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      labelId: LABEL_ID,
+    });
+  });
+
+  it('accepts the snake_case --inbox_id and --label_id flags', async () => {
+    spies = setupOutputSpies();
+
+    await deleteInboxLabelCommand.parseAsync(
+      ['--inbox_id', INBOX_ID, '--label_id', LABEL_ID, '--yes'],
+      { from: 'user' },
+    );
+
+    expect(mockRemove).toHaveBeenCalledTimes(1);
+    expect(mockRemove.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      labelId: LABEL_ID,
+    });
+  });
+
   it('errors with confirmation_required when --yes absent in non-interactive mode', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -78,7 +107,7 @@ describe('inboxes labels delete command', () => {
 
     await expectExit1(() =>
       deleteInboxLabelCommand.parseAsync(
-        ['--inbox_id', INBOX_ID, '--label_id', LABEL_ID],
+        ['--inbox-id', INBOX_ID, '--label-id', LABEL_ID],
         {
           from: 'user',
         },

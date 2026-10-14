@@ -71,13 +71,13 @@ describe('inboxes drafts get command', () => {
     spies = setupOutputSpies();
 
     await getInboxDraftCommand.parseAsync(
-      ['--inbox_id', INBOX_ID, '--draft_id', DRAFT_ID],
+      ['--inbox-id', INBOX_ID, '--draft-id', DRAFT_ID],
       {
         from: 'user',
       },
     );
 
-    expect(mockGet).toHaveBeenCalledWith({
+    expect(mockGet.mock.calls[0][0]).toStrictEqual({
       inboxId: INBOX_ID,
       draftId: DRAFT_ID,
     });
@@ -85,6 +85,50 @@ describe('inboxes drafts get command', () => {
     const parsed = JSON.parse(output);
     expect(parsed.id).toBe(DRAFT_ID);
     expect(parsed.text).toBe('Draft body');
+  });
+
+  it('accepts the IDs as arguments', async () => {
+    setupOutputSpies();
+
+    await getInboxDraftCommand.parseAsync([INBOX_ID, DRAFT_ID], {
+      from: 'user',
+    });
+
+    expect(mockGet.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      draftId: DRAFT_ID,
+    });
+  });
+
+  it('accepts the snake_case flags', async () => {
+    setupOutputSpies();
+
+    await getInboxDraftCommand.parseAsync(
+      ['--inbox_id', INBOX_ID, '--draft_id', DRAFT_ID],
+      { from: 'user' },
+    );
+
+    expect(mockGet.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      draftId: DRAFT_ID,
+    });
+  });
+
+  it('errors with invalid_options when the inbox ID is given twice', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    await expectExit1(() =>
+      getInboxDraftCommand.parseAsync(
+        [INBOX_ID, DRAFT_ID, '--inbox-id', INBOX_ID],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_options');
+    expect(mockGet).not.toHaveBeenCalled();
   });
 
   it('errors with fetch_error when SDK returns an error', async () => {
@@ -97,7 +141,7 @@ describe('inboxes drafts get command', () => {
 
     await expectExit1(() =>
       getInboxDraftCommand.parseAsync(
-        ['--inbox_id', INBOX_ID, '--draft_id', DRAFT_ID],
+        ['--inbox-id', INBOX_ID, '--draft-id', DRAFT_ID],
         { from: 'user' },
       ),
     );

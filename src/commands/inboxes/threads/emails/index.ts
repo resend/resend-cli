@@ -13,10 +13,10 @@ export const inboxThreadEmailsCommand = new Command('emails')
       context:
         'Email IDs come from "resend inboxes threads emails list", which lists the messages in a thread.',
       examples: [
-        'resend inboxes threads emails list --inbox_id <inbox_id> --thread_id <thread_id>',
-        'resend inboxes threads emails get --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id>',
-        'resend inboxes threads emails reply --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --text "Thanks!"',
-        'resend inboxes threads emails forward --inbox_id <inbox_id> --thread_id <thread_id> --email_id <email_id> --to teammate@example.com',
+        'resend inboxes threads emails list <inbox-id> <thread-id>',
+        'resend inboxes threads emails get <inbox-id> <thread-id> <email-id>',
+        'resend inboxes threads emails reply <inbox-id> <thread-id> <email-id> --text "Thanks!"',
+        'resend inboxes threads emails forward <inbox-id> <thread-id> <email-id> --to teammate@example.com',
       ],
     }),
   )

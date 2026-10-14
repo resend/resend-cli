@@ -57,17 +57,37 @@ describe('inboxes agent get command', () => {
   it('fetches the agent settings and outputs JSON when non-interactive', async () => {
     const spies = setupOutputSpies();
 
-    await getInboxAgentCommand.parseAsync(['--inbox_id', INBOX_ID], {
+    await getInboxAgentCommand.parseAsync(['--inbox-id', INBOX_ID], {
       from: 'user',
     });
 
-    expect(mockGet).toHaveBeenCalledWith({ inboxId: INBOX_ID });
+    expect(mockGet.mock.calls[0][0]).toStrictEqual({ inboxId: INBOX_ID });
     const parsed = JSON.parse(spies.logSpy.mock.calls[0][0] as string);
     expect(parsed.object).toBe('inbox_agent');
     expect(parsed.enabled_actions).toEqual(['draft_reply']);
   });
 
-  it('errors with missing_id when no --inbox_id in non-interactive mode', async () => {
+  it('accepts the inbox ID as an argument', async () => {
+    setupOutputSpies();
+
+    await getInboxAgentCommand.parseAsync([INBOX_ID], { from: 'user' });
+
+    expect(mockGet).toHaveBeenCalledTimes(1);
+    expect(mockGet.mock.calls[0][0]).toStrictEqual({ inboxId: INBOX_ID });
+  });
+
+  it('accepts the snake_case --inbox_id flag', async () => {
+    setupOutputSpies();
+
+    await getInboxAgentCommand.parseAsync(['--inbox_id', INBOX_ID], {
+      from: 'user',
+    });
+
+    expect(mockGet).toHaveBeenCalledTimes(1);
+    expect(mockGet.mock.calls[0][0]).toStrictEqual({ inboxId: INBOX_ID });
+  });
+
+  it('errors with missing_id when no --inbox-id in non-interactive mode', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
@@ -90,7 +110,7 @@ describe('inboxes agent get command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      getInboxAgentCommand.parseAsync(['--inbox_id', INBOX_ID], {
+      getInboxAgentCommand.parseAsync(['--inbox-id', INBOX_ID], {
         from: 'user',
       }),
     );

@@ -73,9 +73,9 @@ describe('inboxes drafts update command', () => {
 
     await updateInboxDraftCommand.parseAsync(
       [
-        '--inbox_id',
+        '--inbox-id',
         INBOX_ID,
-        '--draft_id',
+        '--draft-id',
         DRAFT_ID,
         '--subject',
         'Updated',
@@ -86,11 +86,119 @@ describe('inboxes drafts update command', () => {
     );
 
     expect(mockUpdate).toHaveBeenCalledTimes(1);
-    const args = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.inboxId).toBe(INBOX_ID);
-    expect(args.draftId).toBe(DRAFT_ID);
-    expect(args.subject).toBe('Updated');
-    expect(args.text).toBe('New body');
+    expect(mockUpdate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      draftId: DRAFT_ID,
+      subject: 'Updated',
+      text: 'New body',
+    });
+  });
+
+  it('accepts the IDs as arguments', async () => {
+    setupOutputSpies();
+
+    await updateInboxDraftCommand.parseAsync(
+      [INBOX_ID, DRAFT_ID, '--subject', 'Updated'],
+      { from: 'user' },
+    );
+
+    expect(mockUpdate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      draftId: DRAFT_ID,
+      subject: 'Updated',
+    });
+  });
+
+  it('accepts the snake_case flags', async () => {
+    setupOutputSpies();
+
+    await updateInboxDraftCommand.parseAsync(
+      ['--inbox_id', INBOX_ID, '--draft_id', DRAFT_ID, '--subject', 'Updated'],
+      { from: 'user' },
+    );
+
+    expect(mockUpdate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      draftId: DRAFT_ID,
+      subject: 'Updated',
+    });
+  });
+
+  it.each([
+    ['one --to', ['--to', 'a@x.com', 'b@x.com']],
+    ['repeated --to', ['--to', 'a@x.com', '--to', 'b@x.com']],
+  ])('replaces every recipient with %s', async (_case, toArgs) => {
+    setupOutputSpies();
+
+    await updateInboxDraftCommand.parseAsync([INBOX_ID, DRAFT_ID, ...toArgs], {
+      from: 'user',
+    });
+
+    expect(mockUpdate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      draftId: DRAFT_ID,
+      to: ['a@x.com', 'b@x.com'],
+    });
+  });
+
+  it('sends null for each clear flag', async () => {
+    setupOutputSpies();
+
+    await updateInboxDraftCommand.parseAsync(
+      [
+        INBOX_ID,
+        DRAFT_ID,
+        '--clear-to',
+        '--clear-cc',
+        '--clear-subject',
+        '--clear-html',
+        '--text',
+        'New body',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockUpdate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      draftId: DRAFT_ID,
+      to: null,
+      cc: null,
+      subject: null,
+      text: 'New body',
+      html: null,
+    });
+  });
+
+  it('counts a clear flag alone as a change', async () => {
+    setupOutputSpies();
+
+    await updateInboxDraftCommand.parseAsync(
+      [INBOX_ID, DRAFT_ID, '--clear-bcc'],
+      { from: 'user' },
+    );
+
+    expect(mockUpdate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      draftId: DRAFT_ID,
+      bcc: null,
+    });
+  });
+
+  it('errors with invalid_options when --clear-cc is combined with --cc', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    await expectExit1(() =>
+      updateInboxDraftCommand.parseAsync(
+        [INBOX_ID, DRAFT_ID, '--clear-cc', '--cc', 'a@x.com'],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_options');
+    expect(mockUpdate).not.toHaveBeenCalled();
   });
 
   it('errors with no_changes when no option is given', async () => {
@@ -100,7 +208,7 @@ describe('inboxes drafts update command', () => {
 
     await expectExit1(() =>
       updateInboxDraftCommand.parseAsync(
-        ['--inbox_id', INBOX_ID, '--draft_id', DRAFT_ID],
+        ['--inbox-id', INBOX_ID, '--draft-id', DRAFT_ID],
         {
           from: 'user',
         },
@@ -122,7 +230,7 @@ describe('inboxes drafts update command', () => {
 
     await expectExit1(() =>
       updateInboxDraftCommand.parseAsync(
-        ['--inbox_id', INBOX_ID, '--draft_id', DRAFT_ID, '--text', 'x'],
+        ['--inbox-id', INBOX_ID, '--draft-id', DRAFT_ID, '--text', 'x'],
         {
           from: 'user',
         },
@@ -136,12 +244,15 @@ describe('inboxes drafts update command', () => {
     setupOutputSpies();
 
     await updateInboxDraftCommand.parseAsync(
-      ['--inbox_id', INBOX_ID, '--draft_id', DRAFT_ID, '--clear-attachments'],
+      ['--inbox-id', INBOX_ID, '--draft-id', DRAFT_ID, '--clear-attachments'],
       { from: 'user' },
     );
 
-    const args = mockUpdate.mock.calls.at(-1)?.[0] as Record<string, unknown>;
-    expect(args.attachments).toEqual([]);
+    expect(mockUpdate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      draftId: DRAFT_ID,
+      attachments: [],
+    });
   });
 
   it('replaces attachments from --attachments-file', async () => {
@@ -158,9 +269,9 @@ describe('inboxes drafts update command', () => {
     try {
       await updateInboxDraftCommand.parseAsync(
         [
-          '--inbox_id',
+          '--inbox-id',
           INBOX_ID,
-          '--draft_id',
+          '--draft-id',
           DRAFT_ID,
           '--attachments-file',
           jsonFile,
@@ -171,10 +282,13 @@ describe('inboxes drafts update command', () => {
       rmSync(dir, { recursive: true, force: true });
     }
 
-    const args = mockUpdate.mock.calls.at(-1)?.[0] as Record<string, unknown>;
-    expect(args.attachments).toEqual([
-      { filename: 'a.txt', content: 'aGk=', contentType: 'text/plain' },
-    ]);
+    expect(mockUpdate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      draftId: DRAFT_ID,
+      attachments: [
+        { content: 'aGk=', filename: 'a.txt', contentType: 'text/plain' },
+      ],
+    });
   });
 
   it('errors with invalid_options when --clear-attachments is combined with --attachment', async () => {
@@ -186,9 +300,9 @@ describe('inboxes drafts update command', () => {
     await expectExit1(() =>
       updateInboxDraftCommand.parseAsync(
         [
-          '--inbox_id',
+          '--inbox-id',
           INBOX_ID,
-          '--draft_id',
+          '--draft-id',
           DRAFT_ID,
           '--clear-attachments',
           '--attachment',

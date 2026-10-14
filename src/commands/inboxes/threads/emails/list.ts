@@ -8,14 +8,19 @@ import {
   printPaginationHint,
 } from '../../../../lib/pagination';
 import { pickId } from '../../../../lib/prompts';
-import { inboxPickerConfig } from '../../utils';
+import { snakeCaseAlias } from '../../../../lib/snake-case-alias';
+import { inboxPickerConfig, resolveIdInputs } from '../../utils';
 import { inboxThreadPickerConfig, renderThreadEmailsTable } from '../utils';
 
 export const listInboxThreadEmailsCommand = new Command('list')
   .alias('ls')
   .description('List the emails in a thread')
-  .option('--inbox_id <id>', 'Inbox UUID')
-  .option('--thread_id <id>', 'Thread UUID')
+  .argument('[inboxId]', 'Inbox UUID')
+  .argument('[threadId]', 'Thread UUID')
+  .option('--inbox-id <id>', 'Inbox UUID')
+  .addOption(snakeCaseAlias('--inbox-id <id>'))
+  .option('--thread-id <id>', 'Thread UUID')
+  .addOption(snakeCaseAlias('--thread-id <id>'))
   .option('--limit <n>', 'Maximum number of emails to return (1-100)', '10')
   .option(
     '--after <cursor>',
@@ -39,13 +44,13 @@ A cursor that is not an email of the thread returns an error.`,
         'list_error',
       ],
       examples: [
-        'resend inboxes threads emails list --inbox_id <inbox_id> --thread_id <thread_id>',
-        'resend inboxes threads emails list --inbox_id <inbox_id> --thread_id <thread_id> --json',
-        'resend inboxes threads emails list --inbox_id <inbox_id> --thread_id <thread_id> --limit 25 --after <email_id> --json',
+        'resend inboxes threads emails list <inbox-id> <thread-id>',
+        'resend inboxes threads emails list <inbox-id> <thread-id> --json',
+        'resend inboxes threads emails list <inbox-id> <thread-id> --limit 25 --after <email-id> --json',
       ],
     }),
   )
-  .action(async (opts, cmd) => {
+  .action(async (inboxIdArg, threadIdArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const limit = parseLimitOpt(opts.limit, globalOpts);
     const paginationOpts = buildPaginationOpts(
@@ -54,9 +59,16 @@ A cursor that is not an email of the thread returns an error.`,
       opts.before,
       globalOpts,
     );
-    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
+    const ids = resolveIdInputs(
+      {
+        inbox: [inboxIdArg, opts.inboxId],
+        thread: [threadIdArg, opts.threadId],
+      },
+      globalOpts,
+    );
+    const inboxId = await pickId(ids.inbox, inboxPickerConfig, globalOpts);
     const threadId = await pickId(
-      opts.thread_id,
+      ids.thread,
       inboxThreadPickerConfig(inboxId),
       globalOpts,
     );
@@ -71,13 +83,16 @@ A cursor that is not an email of the thread returns an error.`,
           }),
         onInteractive: (list) => {
           console.log(renderThreadEmailsTable(list.data));
-          printPaginationHint(list, 'inboxes threads emails list', {
-            limit,
-            before: opts.before,
-            apiKey: globalOpts.apiKey,
-            profile: globalOpts.profile,
-            extraFlags: `--inbox_id ${inboxId} --thread_id ${threadId}`,
-          });
+          printPaginationHint(
+            list,
+            `inboxes threads emails list ${inboxId} ${threadId}`,
+            {
+              limit,
+              before: opts.before,
+              apiKey: globalOpts.apiKey,
+              profile: globalOpts.profile,
+            },
+          );
         },
       },
       globalOpts,

@@ -73,13 +73,13 @@ describe('inboxes drafts list command', () => {
     spies = setupOutputSpies();
 
     await listInboxDraftsCommand.parseAsync(
-      ['--inbox_id', INBOX_ID, '--limit', '25', '--after', DRAFT_ID],
+      ['--inbox-id', INBOX_ID, '--limit', '25', '--after', DRAFT_ID],
       {
         from: 'user',
       },
     );
 
-    expect(mockList).toHaveBeenCalledWith({
+    expect(mockList.mock.calls[0][0]).toStrictEqual({
       inboxId: INBOX_ID,
       limit: 25,
       after: DRAFT_ID,
@@ -87,6 +87,30 @@ describe('inboxes drafts list command', () => {
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
     expect(parsed.data[0].subject).toBe('Hello');
+  });
+
+  it('accepts the inbox ID as an argument', async () => {
+    setupOutputSpies();
+
+    await listInboxDraftsCommand.parseAsync([INBOX_ID], { from: 'user' });
+
+    expect(mockList.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      limit: 10,
+    });
+  });
+
+  it('accepts the snake_case flag', async () => {
+    setupOutputSpies();
+
+    await listInboxDraftsCommand.parseAsync(['--inbox_id', INBOX_ID], {
+      from: 'user',
+    });
+
+    expect(mockList.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      limit: 10,
+    });
   });
 
   it('errors with list_error when SDK returns an error', async () => {
@@ -98,7 +122,7 @@ describe('inboxes drafts list command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      listInboxDraftsCommand.parseAsync(['--inbox_id', INBOX_ID], {
+      listInboxDraftsCommand.parseAsync(['--inbox-id', INBOX_ID], {
         from: 'user',
       }),
     );

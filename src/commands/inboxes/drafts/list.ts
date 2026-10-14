@@ -8,13 +8,16 @@ import {
   printPaginationHint,
 } from '../../../lib/pagination';
 import { pickId } from '../../../lib/prompts';
-import { inboxPickerConfig } from '../utils';
+import { snakeCaseAlias } from '../../../lib/snake-case-alias';
+import { inboxPickerConfig, resolveIdInputs } from '../utils';
 import { renderDraftsTable } from './utils';
 
 export const listInboxDraftsCommand = new Command('list')
   .alias('ls')
   .description('List drafts in an inbox')
-  .option('--inbox_id <id>', 'Inbox UUID')
+  .argument('[inboxId]', 'Inbox UUID')
+  .option('--inbox-id <id>', 'Inbox UUID')
+  .addOption(snakeCaseAlias('--inbox-id <id>'))
   .option('--limit <n>', 'Maximum number of drafts to return (1-100)', '10')
   .option(
     '--after <cursor>',
@@ -37,13 +40,13 @@ export const listInboxDraftsCommand = new Command('list')
         'list_error',
       ],
       examples: [
-        'resend inboxes drafts list --inbox_id 78261eea-8f8b-4381-83c6-79fa7120f1cf',
-        'resend inboxes drafts list --inbox_id 78261eea-8f8b-4381-83c6-79fa7120f1cf --json',
-        'resend inboxes drafts list --inbox_id 78261eea-8f8b-4381-83c6-79fa7120f1cf --limit 25 --after <draft_id> --json',
+        'resend inboxes drafts list 78261eea-8f8b-4381-83c6-79fa7120f1cf',
+        'resend inboxes drafts list 78261eea-8f8b-4381-83c6-79fa7120f1cf --json',
+        'resend inboxes drafts list 78261eea-8f8b-4381-83c6-79fa7120f1cf --limit 25 --after <draft-id> --json',
       ],
     }),
   )
-  .action(async (opts, cmd) => {
+  .action(async (inboxIdArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const limit = parseLimitOpt(opts.limit, globalOpts);
     const paginationOpts = buildPaginationOpts(
@@ -52,7 +55,11 @@ export const listInboxDraftsCommand = new Command('list')
       opts.before,
       globalOpts,
     );
-    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
+    const ids = resolveIdInputs(
+      { inbox: [inboxIdArg, opts.inboxId] },
+      globalOpts,
+    );
+    const inboxId = await pickId(ids.inbox, inboxPickerConfig, globalOpts);
     await runList(
       {
         loading: 'Fetching drafts...',
@@ -63,12 +70,11 @@ export const listInboxDraftsCommand = new Command('list')
           }),
         onInteractive: (list) => {
           console.log(renderDraftsTable(list.data));
-          printPaginationHint(list, 'inboxes drafts list', {
+          printPaginationHint(list, `inboxes drafts list ${inboxId}`, {
             limit,
             before: opts.before,
             apiKey: globalOpts.apiKey,
             profile: globalOpts.profile,
-            extraFlags: `--inbox_id ${inboxId}`,
           });
         },
       },

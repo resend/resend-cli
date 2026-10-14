@@ -57,18 +57,48 @@ describe('inboxes drafts send command', () => {
     spies = setupOutputSpies();
 
     await sendInboxDraftCommand.parseAsync(
-      ['--inbox_id', INBOX_ID, '--draft_id', DRAFT_ID],
+      ['--inbox-id', INBOX_ID, '--draft-id', DRAFT_ID],
       {
         from: 'user',
       },
     );
 
-    expect(mockSend).toHaveBeenCalledWith(
-      { inboxId: INBOX_ID, draftId: DRAFT_ID },
-      undefined,
-    );
+    expect(mockSend.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      draftId: DRAFT_ID,
+    });
+    expect(mockSend.mock.calls[0][1]).toBeUndefined();
     const output = spies.logSpy.mock.calls[0][0] as string;
     expect(JSON.parse(output)).toEqual({ id: EMAIL_ID });
+  });
+
+  it('accepts the IDs as arguments', async () => {
+    setupOutputSpies();
+
+    await sendInboxDraftCommand.parseAsync([INBOX_ID, DRAFT_ID], {
+      from: 'user',
+    });
+
+    expect(mockSend.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      draftId: DRAFT_ID,
+    });
+    expect(mockSend.mock.calls[0][1]).toBeUndefined();
+  });
+
+  it('accepts the snake_case flags', async () => {
+    setupOutputSpies();
+
+    await sendInboxDraftCommand.parseAsync(
+      ['--inbox_id', INBOX_ID, '--draft_id', DRAFT_ID],
+      { from: 'user' },
+    );
+
+    expect(mockSend.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      draftId: DRAFT_ID,
+    });
+    expect(mockSend.mock.calls[0][1]).toBeUndefined();
   });
 
   it('prints the sent email id in interactive mode', async () => {
@@ -90,7 +120,7 @@ describe('inboxes drafts send command', () => {
 
     try {
       await sendInboxDraftCommand.parseAsync(
-        ['--inbox_id', INBOX_ID, '--draft_id', DRAFT_ID],
+        ['--inbox-id', INBOX_ID, '--draft-id', DRAFT_ID],
         { from: 'user' },
       );
       expect(logSpy).toHaveBeenCalledWith(`Draft sent: ${EMAIL_ID}`);
@@ -105,9 +135,9 @@ describe('inboxes drafts send command', () => {
 
     await sendInboxDraftCommand.parseAsync(
       [
-        '--inbox_id',
+        '--inbox-id',
         INBOX_ID,
-        '--draft_id',
+        '--draft-id',
         DRAFT_ID,
         '--idempotency-key',
         'my-key-123',
@@ -116,20 +146,28 @@ describe('inboxes drafts send command', () => {
     );
 
     expect(mockSend).toHaveBeenCalledTimes(1);
-    const opts = mockSend.mock.calls[0][1] as Record<string, unknown>;
-    expect(opts?.idempotencyKey).toBe('my-key-123');
+    expect(mockSend.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      draftId: DRAFT_ID,
+    });
+    expect(mockSend.mock.calls[0][1]).toStrictEqual({
+      idempotencyKey: 'my-key-123',
+    });
   });
 
   it('passes an empty idempotencyKey through for the API to validate', async () => {
     spies = setupOutputSpies();
 
     await sendInboxDraftCommand.parseAsync(
-      ['--inbox_id', INBOX_ID, '--draft_id', DRAFT_ID, '--idempotency-key', ''],
+      ['--inbox-id', INBOX_ID, '--draft-id', DRAFT_ID, '--idempotency-key', ''],
       { from: 'user' },
     );
 
-    const opts = mockSend.mock.calls[0][1] as Record<string, unknown>;
-    expect(opts?.idempotencyKey).toBe('');
+    expect(mockSend.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      draftId: DRAFT_ID,
+    });
+    expect(mockSend.mock.calls[0][1]).toStrictEqual({ idempotencyKey: '' });
   });
 
   it('errors with send_error when SDK returns an error', async () => {
@@ -142,7 +180,7 @@ describe('inboxes drafts send command', () => {
 
     await expectExit1(() =>
       sendInboxDraftCommand.parseAsync(
-        ['--inbox_id', INBOX_ID, '--draft_id', DRAFT_ID],
+        ['--inbox-id', INBOX_ID, '--draft-id', DRAFT_ID],
         {
           from: 'user',
         },
@@ -151,6 +189,10 @@ describe('inboxes drafts send command', () => {
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('send_error');
+    expect(mockSend.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      draftId: DRAFT_ID,
+    });
   });
 
   it('passes --headers in the send payload', async () => {
@@ -158,9 +200,9 @@ describe('inboxes drafts send command', () => {
 
     await sendInboxDraftCommand.parseAsync(
       [
-        '--inbox_id',
+        '--inbox-id',
         INBOX_ID,
-        '--draft_id',
+        '--draft-id',
         DRAFT_ID,
         '--headers',
         'X-Ticket-Id=4821',
@@ -169,11 +211,11 @@ describe('inboxes drafts send command', () => {
       { from: 'user' },
     );
 
-    const args = mockSend.mock.calls.at(-1)?.[0] as Record<string, unknown>;
-    expect(args).toEqual({
+    expect(mockSend.mock.calls[0][0]).toStrictEqual({
       inboxId: INBOX_ID,
       draftId: DRAFT_ID,
       headers: { 'X-Ticket-Id': '4821', 'X-Note': 'a=b' },
     });
+    expect(mockSend.mock.calls[0][1]).toBeUndefined();
   });
 });

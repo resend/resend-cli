@@ -57,15 +57,45 @@ describe('inboxes labels create command', () => {
     setupOutputSpies();
 
     await createInboxLabelCommand.parseAsync(
-      ['--inbox_id', INBOX_ID, '--name', 'Billing', '--color', '#12A594'],
+      ['--inbox-id', INBOX_ID, '--name', 'Billing', '--color', '#12A594'],
       { from: 'user' },
     );
 
     expect(mockCreate).toHaveBeenCalledTimes(1);
-    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.inboxId).toBe(INBOX_ID);
-    expect(args.name).toBe('Billing');
-    expect(args.color).toBe('#12A594');
+    expect(mockCreate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      name: 'Billing',
+      color: '#12A594',
+    });
+  });
+
+  it('accepts the inbox ID as an argument', async () => {
+    setupOutputSpies();
+
+    await createInboxLabelCommand.parseAsync([INBOX_ID, '--name', 'Billing'], {
+      from: 'user',
+    });
+
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+    expect(mockCreate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      name: 'Billing',
+    });
+  });
+
+  it('accepts the snake_case --inbox_id flag', async () => {
+    setupOutputSpies();
+
+    await createInboxLabelCommand.parseAsync(
+      ['--inbox_id', INBOX_ID, '--name', 'Billing'],
+      { from: 'user' },
+    );
+
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+    expect(mockCreate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      name: 'Billing',
+    });
   });
 
   it('rejects a color that is not a hex code', async () => {
@@ -76,7 +106,7 @@ describe('inboxes labels create command', () => {
 
     await expectExit1(() =>
       createInboxLabelCommand.parseAsync(
-        ['--inbox_id', INBOX_ID, '--name', 'Billing', '--color', 'teal'],
+        ['--inbox-id', INBOX_ID, '--name', 'Billing', '--color', 'teal'],
         { from: 'user' },
       ),
     );
@@ -90,14 +120,16 @@ describe('inboxes labels create command', () => {
     setupOutputSpies();
 
     await createInboxLabelCommand.parseAsync(
-      ['--inbox_id', INBOX_ID, '--name', 'Billing'],
+      ['--inbox-id', INBOX_ID, '--name', 'Billing'],
       {
         from: 'user',
       },
     );
 
-    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.color).toBeUndefined();
+    expect(mockCreate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      name: 'Billing',
+    });
   });
 
   it('errors with missing_name when --name absent in non-interactive mode', async () => {
@@ -106,7 +138,7 @@ describe('inboxes labels create command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      createInboxLabelCommand.parseAsync(['--inbox_id', INBOX_ID], {
+      createInboxLabelCommand.parseAsync(['--inbox-id', INBOX_ID], {
         from: 'user',
       }),
     );
@@ -126,7 +158,7 @@ describe('inboxes labels create command', () => {
 
     await expectExit1(() =>
       createInboxLabelCommand.parseAsync(
-        ['--inbox_id', INBOX_ID, '--name', 'Billing'],
+        ['--inbox-id', INBOX_ID, '--name', 'Billing'],
         {
           from: 'user',
         },

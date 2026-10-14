@@ -1,19 +1,21 @@
 import { Command } from '@commander-js/extra-typings';
+import { runCreate } from '../../../lib/actions';
 import type { GlobalOpts } from '../../../lib/client';
-import { requireClient } from '../../../lib/client';
 import { parseHeaderPairs } from '../../../lib/headers';
 import { buildHelpText } from '../../../lib/help-text';
-import { outputResult } from '../../../lib/output';
 import { pickId } from '../../../lib/prompts';
-import { withSpinner } from '../../../lib/spinner';
-import { isInteractive } from '../../../lib/tty';
-import { inboxPickerConfig } from '../utils';
+import { snakeCaseAlias } from '../../../lib/snake-case-alias';
+import { inboxPickerConfig, resolveIdInputs } from '../utils';
 import { inboxDraftPickerConfig } from './utils';
 
 export const sendInboxDraftCommand = new Command('send')
   .description('Send a draft')
-  .option('--inbox_id <id>', 'Inbox UUID')
-  .option('--draft_id <id>', 'Draft UUID')
+  .argument('[inboxId]', 'Inbox UUID')
+  .argument('[draftId]', 'Draft UUID')
+  .option('--inbox-id <id>', 'Inbox UUID')
+  .addOption(snakeCaseAlias('--inbox-id <id>'))
+  .option('--draft-id <id>', 'Draft UUID')
+  .addOption(snakeCaseAlias('--draft-id <id>'))
   .option(
     '--headers <key=value...>',
     'Custom headers as key=value pairs (e.g. X-Entity-Ref-ID=123)',
@@ -37,36 +39,42 @@ The output holds the ID of the sent email. Use it with "resend emails get".`,
       output: `  {"id":"<email-id>"}`,
       errorCodes: ['auth_error', 'invalid_header', 'send_error'],
       examples: [
-        'resend inboxes drafts send --inbox_id <inbox_id> --draft_id <draft_id>',
-        'resend inboxes drafts send --inbox_id <inbox_id> --draft_id <draft_id> --json',
+        'resend inboxes drafts send <inbox-id> <draft-id>',
+        'resend inboxes drafts send <inbox-id> <draft-id> --json',
       ],
     }),
   )
-  .action(async (opts, cmd) => {
+  .action(async (inboxIdArg, draftIdArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
+    const ids = resolveIdInputs(
+      {
+        inbox: [inboxIdArg, opts.inboxId],
+        draft: [draftIdArg, opts.draftId],
+      },
+      globalOpts,
+    );
+    const inboxId = await pickId(ids.inbox, inboxPickerConfig, globalOpts);
     const draftId = await pickId(
-      opts.draft_id,
+      ids.draft,
       inboxDraftPickerConfig(inboxId),
       globalOpts,
     );
     const headers = parseHeaderPairs(opts.headers, globalOpts);
-    const resend = await requireClient(globalOpts);
-    const data = await withSpinner(
-      'Sending draft...',
-      () =>
-        resend.inboxes.drafts.send(
-          { inboxId, draftId, ...(headers && { headers }) },
-          opts.idempotencyKey !== undefined
-            ? { idempotencyKey: opts.idempotencyKey }
-            : undefined,
-        ),
-      'send_error',
+    await runCreate(
+      {
+        loading: 'Sending draft...',
+        sdkCall: (resend) =>
+          resend.inboxes.drafts.send(
+            { inboxId, draftId, ...(headers && { headers }) },
+            opts.idempotencyKey !== undefined
+              ? { idempotencyKey: opts.idempotencyKey }
+              : undefined,
+          ),
+        errorCode: 'send_error',
+        onInteractive: (data) => {
+          console.log(`Draft sent: ${data.id}`);
+        },
+      },
       globalOpts,
     );
-    if (!globalOpts.json && isInteractive()) {
-      console.log(`Draft sent: ${data.id}`);
-    } else {
-      outputResult(data, { json: globalOpts.json });
-    }
   });

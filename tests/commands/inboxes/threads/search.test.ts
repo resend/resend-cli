@@ -85,7 +85,7 @@ describe('inboxes threads search command', () => {
 
     await searchInboxThreadsCommand.parseAsync(
       [
-        '--inbox_id',
+        '--inbox-id',
         INBOX_ID,
         '--query',
         '"q3 renewal" -draft',
@@ -98,10 +98,10 @@ describe('inboxes threads search command', () => {
         'finance@example.com',
         '--bcc',
         'audit@example.com',
-        '--has_attachment',
-        '--start_date',
+        '--has-attachment',
+        '--start-date',
         '2026-09-01',
-        '--end_date',
+        '--end-date',
         '2026-09-30',
         '--folders',
         'archive',
@@ -116,7 +116,7 @@ describe('inboxes threads search command', () => {
       { from: 'user' },
     );
 
-    expect(mockSearch).toHaveBeenCalledWith({
+    expect(mockSearch.mock.calls[0][0]).toStrictEqual({
       inboxId: INBOX_ID,
       query: '"q3 renewal" -draft',
       from: ['isabella@example.com', 'carolina'],
@@ -134,7 +134,87 @@ describe('inboxes threads search command', () => {
     });
   });
 
-  it('sends hasAttachment false for --without_attachment and leaves unset filters out', async () => {
+  it('sends hasAttachment false for --without-attachment and leaves unset filters out', async () => {
+    spies = setupOutputSpies();
+
+    await searchInboxThreadsCommand.parseAsync(
+      ['--inbox-id', INBOX_ID, '--without-attachment'],
+      { from: 'user' },
+    );
+
+    expect(mockSearch.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      folders: undefined,
+      labels: undefined,
+      read: undefined,
+      query: undefined,
+      from: undefined,
+      to: undefined,
+      cc: undefined,
+      bcc: undefined,
+      hasAttachment: false,
+      startDate: undefined,
+      endDate: undefined,
+      limit: 10,
+    });
+  });
+
+  it('takes the inbox ID as a positional argument', async () => {
+    spies = setupOutputSpies();
+
+    await searchInboxThreadsCommand.parseAsync([INBOX_ID], { from: 'user' });
+
+    expect(mockSearch.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      folders: undefined,
+      labels: undefined,
+      read: undefined,
+      query: undefined,
+      from: undefined,
+      to: undefined,
+      cc: undefined,
+      bcc: undefined,
+      hasAttachment: undefined,
+      startDate: undefined,
+      endDate: undefined,
+      limit: 10,
+    });
+  });
+
+  it('accepts the snake_case flags', async () => {
+    spies = setupOutputSpies();
+
+    await searchInboxThreadsCommand.parseAsync(
+      [
+        '--inbox_id',
+        INBOX_ID,
+        '--has_attachment',
+        '--start_date',
+        '2026-09-01',
+        '--end_date',
+        '2026-09-30',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockSearch.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      folders: undefined,
+      labels: undefined,
+      read: undefined,
+      query: undefined,
+      from: undefined,
+      to: undefined,
+      cc: undefined,
+      bcc: undefined,
+      hasAttachment: true,
+      startDate: '2026-09-01',
+      endDate: '2026-09-30',
+      limit: 10,
+    });
+  });
+
+  it('accepts the snake_case --without_attachment flag', async () => {
     spies = setupOutputSpies();
 
     await searchInboxThreadsCommand.parseAsync(
@@ -142,20 +222,28 @@ describe('inboxes threads search command', () => {
       { from: 'user' },
     );
 
-    const args = mockSearch.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.hasAttachment).toBe(false);
-    expect(args.query).toBeUndefined();
-    expect(args.from).toBeUndefined();
-    expect(args.folders).toBeUndefined();
-    expect(args.labels).toBeUndefined();
-    expect(args.read).toBeUndefined();
+    expect(mockSearch.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      folders: undefined,
+      labels: undefined,
+      read: undefined,
+      query: undefined,
+      from: undefined,
+      to: undefined,
+      cc: undefined,
+      bcc: undefined,
+      hasAttachment: false,
+      startDate: undefined,
+      endDate: undefined,
+      limit: 10,
+    });
   });
 
   it('outputs the match and highlights as JSON when non-interactive', async () => {
     spies = setupOutputSpies();
 
     await searchInboxThreadsCommand.parseAsync(
-      ['--inbox_id', INBOX_ID, '--query', 'billing'],
+      ['--inbox-id', INBOX_ID, '--query', 'billing'],
       { from: 'user' },
     );
 
@@ -188,7 +276,7 @@ describe('inboxes threads search command', () => {
 
     await searchInboxThreadsCommand.parseAsync(
       [
-        '--inbox_id',
+        '--inbox-id',
         INBOX_ID,
         '--query',
         `"q3 renewal" it's $(whoami)`,
@@ -203,6 +291,9 @@ describe('inboxes threads search command', () => {
     logSpy.mockRestore();
     stderrSpy.mockRestore();
     expect(hint).toContain(
+      `$ resend inboxes threads search ${INBOX_ID} --after ${THREAD_ID} --limit 10`,
+    );
+    expect(hint).toContain(
       `--query '"q3 renewal" it'\\''s $(whoami)' --from 'Isabella Smith' carolina@example.com`,
     );
   });
@@ -214,7 +305,7 @@ describe('inboxes threads search command', () => {
 
     await expectExit1(() =>
       searchInboxThreadsCommand.parseAsync(
-        ['--inbox_id', INBOX_ID, '--has_attachment', '--without_attachment'],
+        ['--inbox-id', INBOX_ID, '--has-attachment', '--without-attachment'],
         { from: 'user' },
       ),
     );
@@ -236,7 +327,7 @@ describe('inboxes threads search command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      searchInboxThreadsCommand.parseAsync(['--inbox_id', INBOX_ID], {
+      searchInboxThreadsCommand.parseAsync(['--inbox-id', INBOX_ID], {
         from: 'user',
       }),
     );

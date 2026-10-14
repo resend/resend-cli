@@ -3,29 +3,41 @@ import { runGet } from '../../../lib/actions';
 import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { pickId } from '../../../lib/prompts';
-import { inboxPickerConfig } from '../utils';
+import { snakeCaseAlias } from '../../../lib/snake-case-alias';
+import { inboxPickerConfig, resolveIdInputs } from '../utils';
 import { inboxDraftPickerConfig } from './utils';
 
 export const getInboxDraftCommand = new Command('get')
   .description('Retrieve a draft by ID')
-  .option('--inbox_id <id>', 'Inbox UUID')
-  .option('--draft_id <id>', 'Draft UUID')
+  .argument('[inboxId]', 'Inbox UUID')
+  .argument('[draftId]', 'Draft UUID')
+  .option('--inbox-id <id>', 'Inbox UUID')
+  .addOption(snakeCaseAlias('--inbox-id <id>'))
+  .option('--draft-id <id>', 'Draft UUID')
+  .addOption(snakeCaseAlias('--draft-id <id>'))
   .addHelpText(
     'after',
     buildHelpText({
       output: `  {"object":"inbox_draft","id":"<uuid>","type":"standalone|reply","to":["<address>"]|null,"cc":[],"bcc":[],"subject":"<subject>|null","html":"<html>|null","text":"<text>|null","thread_id":"<uuid>|null","reply_to_email_id":"<uuid>|null","email_id":"<uuid>|null","attachments":[{"id":"<uuid>","filename":"<name>","content_type":"<type>","size":123}],"created_at":"<date>","updated_at":"<date>"}`,
       errorCodes: ['auth_error', 'fetch_error'],
       examples: [
-        'resend inboxes drafts get --inbox_id <inbox_id> --draft_id <draft_id>',
-        'resend inboxes drafts get --inbox_id <inbox_id> --draft_id <draft_id> --json',
+        'resend inboxes drafts get <inbox-id> <draft-id>',
+        'resend inboxes drafts get <inbox-id> <draft-id> --json',
       ],
     }),
   )
-  .action(async (opts, cmd) => {
+  .action(async (inboxIdArg, draftIdArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
+    const ids = resolveIdInputs(
+      {
+        inbox: [inboxIdArg, opts.inboxId],
+        draft: [draftIdArg, opts.draftId],
+      },
+      globalOpts,
+    );
+    const inboxId = await pickId(ids.inbox, inboxPickerConfig, globalOpts);
     const draftId = await pickId(
-      opts.draft_id,
+      ids.draft,
       inboxDraftPickerConfig(inboxId),
       globalOpts,
     );

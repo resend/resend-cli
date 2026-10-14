@@ -4,13 +4,18 @@ import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { outputError } from '../../../lib/output';
 import { pickId } from '../../../lib/prompts';
-import { inboxPickerConfig } from '../utils';
+import { snakeCaseAlias } from '../../../lib/snake-case-alias';
+import { inboxPickerConfig, resolveIdInputs } from '../utils';
 import { inboxLabelPickerConfig, parseLabelColor } from './utils';
 
 export const updateInboxLabelCommand = new Command('update')
   .description("Update a label's name or color")
-  .option('--inbox_id <id>', 'Inbox UUID')
-  .option('--label_id <id>', 'Label UUID')
+  .argument('[inboxId]', 'Inbox UUID')
+  .argument('[labelId]', 'Label UUID')
+  .option('--inbox-id <id>', 'Inbox UUID')
+  .addOption(snakeCaseAlias('--inbox-id <id>'))
+  .option('--label-id <id>', 'Label UUID')
+  .addOption(snakeCaseAlias('--label-id <id>'))
   .option('--name <name>', 'New label name (max 64 characters)')
   .addOption(
     new Option(
@@ -25,12 +30,12 @@ export const updateInboxLabelCommand = new Command('update')
       output: `  {"object":"inbox_label","id":"<uuid>"}`,
       errorCodes: ['auth_error', 'no_changes', 'update_error'],
       examples: [
-        'resend inboxes labels update --inbox_id <inbox_id> --label_id <label_id> --name "Billing"',
-        "resend inboxes labels update --inbox_id <inbox_id> --label_id <label_id> --color '#12A594' --json",
+        'resend inboxes labels update <inbox-id> <label-id> --name "Billing"',
+        "resend inboxes labels update <inbox-id> <label-id> --color '#12A594' --json",
       ],
     }),
   )
-  .action(async (opts, cmd) => {
+  .action(async (inboxIdArg, labelIdArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
     if (opts.name === undefined && opts.color === undefined) {
@@ -43,9 +48,16 @@ export const updateInboxLabelCommand = new Command('update')
       );
     }
 
-    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
+    const ids = resolveIdInputs(
+      {
+        inbox: [inboxIdArg, opts.inboxId],
+        label: [labelIdArg, opts.labelId],
+      },
+      globalOpts,
+    );
+    const inboxId = await pickId(ids.inbox, inboxPickerConfig, globalOpts);
     const labelId = await pickId(
-      opts.label_id,
+      ids.label,
       inboxLabelPickerConfig(inboxId),
       globalOpts,
     );

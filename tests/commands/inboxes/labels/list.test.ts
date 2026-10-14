@@ -65,14 +65,34 @@ describe('inboxes labels list command', () => {
   it('lists labels and outputs JSON', async () => {
     spies = setupOutputSpies();
 
+    await listInboxLabelsCommand.parseAsync(['--inbox-id', INBOX_ID], {
+      from: 'user',
+    });
+
+    expect(mockList.mock.calls[0][0]).toStrictEqual({ inboxId: INBOX_ID });
+    const output = spies.logSpy.mock.calls[0][0] as string;
+    const parsed = JSON.parse(output);
+    expect(parsed.data[0].name).toBe('Billing');
+  });
+
+  it('accepts the inbox ID as an argument', async () => {
+    spies = setupOutputSpies();
+
+    await listInboxLabelsCommand.parseAsync([INBOX_ID], { from: 'user' });
+
+    expect(mockList).toHaveBeenCalledTimes(1);
+    expect(mockList.mock.calls[0][0]).toStrictEqual({ inboxId: INBOX_ID });
+  });
+
+  it('accepts the snake_case --inbox_id flag', async () => {
+    spies = setupOutputSpies();
+
     await listInboxLabelsCommand.parseAsync(['--inbox_id', INBOX_ID], {
       from: 'user',
     });
 
-    expect(mockList).toHaveBeenCalledWith({ inboxId: INBOX_ID });
-    const output = spies.logSpy.mock.calls[0][0] as string;
-    const parsed = JSON.parse(output);
-    expect(parsed.data[0].name).toBe('Billing');
+    expect(mockList).toHaveBeenCalledTimes(1);
+    expect(mockList.mock.calls[0][0]).toStrictEqual({ inboxId: INBOX_ID });
   });
 
   it('errors with list_error when SDK returns an error', async () => {
@@ -84,7 +104,7 @@ describe('inboxes labels list command', () => {
     exitSpy = mockExitThrow();
 
     await expectExit1(() =>
-      listInboxLabelsCommand.parseAsync(['--inbox_id', INBOX_ID], {
+      listInboxLabelsCommand.parseAsync(['--inbox-id', INBOX_ID], {
         from: 'user',
       }),
     );

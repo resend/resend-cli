@@ -9,11 +9,14 @@ import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { outputError } from '../../../lib/output';
 import { pickId } from '../../../lib/prompts';
-import { inboxPickerConfig } from '../utils';
+import { snakeCaseAlias } from '../../../lib/snake-case-alias';
+import { inboxPickerConfig, resolveIdInputs } from '../utils';
 
 export const updateInboxAgentCommand = new Command('update')
   .description("Update an inbox's agent instructions, tone, or enabled actions")
-  .option('--inbox_id <id>', 'Inbox UUID')
+  .argument('[inboxId]', 'Inbox UUID')
+  .option('--inbox-id <id>', 'Inbox UUID')
+  .addOption(snakeCaseAlias('--inbox-id <id>'))
   .option(
     '--instructions <text>',
     'Instructions the agent follows (max 4000 characters)',
@@ -23,16 +26,17 @@ export const updateInboxAgentCommand = new Command('update')
     'Tone the agent writes in, e.g. "friendly and concise" (max 64 characters)',
   )
   .option(
-    '--enabled_actions <actions...>',
+    '--enabled-actions <actions...>',
     `Replace the enabled actions (comma or space-separated): ${INBOX_AGENT_ACTIONS.join(', ')}`,
   )
+  .addOption(snakeCaseAlias('--enabled-actions <actions...>'))
   .addHelpText(
     'after',
     buildHelpText({
-      context: `At least one of --instructions, --tone, or --enabled_actions is required.
+      context: `At least one of --instructions, --tone, or --enabled-actions is required.
 Omitted fields keep their current value.
 Pass --instructions "" or --tone "" to clear the value.
---enabled_actions replaces the whole set. Duplicates are removed. Pass --enabled_actions "" to disable all actions.`,
+--enabled-actions replaces the whole set. Duplicates are removed. Pass --enabled-actions "" to disable all actions.`,
       output: `  {"object":"inbox_agent","id":"<uuid>"}`,
       errorCodes: [
         'auth_error',
@@ -41,31 +45,31 @@ Pass --instructions "" or --tone "" to clear the value.
         'update_error',
       ],
       examples: [
-        'resend inboxes agent update --inbox_id <inbox_id> --instructions "Answer refund questions yourself."',
-        'resend inboxes agent update --inbox_id <inbox_id> --enabled_actions draft_reply add_labels --json',
-        'resend inboxes agent update --inbox_id <inbox_id> --tone ""',
+        'resend inboxes agent update <inbox-id> --instructions "Answer refund questions yourself."',
+        'resend inboxes agent update <inbox-id> --enabled-actions draft_reply add_labels --json',
+        'resend inboxes agent update <inbox-id> --tone ""',
       ],
     }),
   )
-  .action(async (opts, cmd) => {
+  .action(async (inboxIdArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
 
     if (
       opts.instructions === undefined &&
       opts.tone === undefined &&
-      opts.enabled_actions === undefined
+      opts.enabledActions === undefined
     ) {
       outputError(
         {
           message:
-            'Provide at least one option to update: --instructions, --tone, or --enabled_actions.',
+            'Provide at least one option to update: --instructions, --tone, or --enabled-actions.',
           code: 'no_changes',
         },
         { json: globalOpts.json },
       );
     }
 
-    const enabledActions = opts.enabled_actions
+    const enabledActions = opts.enabledActions
       ?.flatMap((a) => a.split(','))
       .map((a) => a.trim())
       .filter(Boolean);
@@ -75,14 +79,18 @@ Pass --instructions "" or --tone "" to clear the value.
     if (invalid?.length) {
       outputError(
         {
-          message: `Invalid --enabled_actions value: ${invalid.join(', ')}. Use: ${INBOX_AGENT_ACTIONS.join(', ')}.`,
+          message: `Invalid --enabled-actions value: ${invalid.join(', ')}. Use: ${INBOX_AGENT_ACTIONS.join(', ')}.`,
           code: 'invalid_enabled_actions',
         },
         { json: globalOpts.json },
       );
     }
 
-    const inboxId = await pickId(opts.inbox_id, inboxPickerConfig, globalOpts);
+    const ids = resolveIdInputs(
+      { inbox: [inboxIdArg, opts.inboxId] },
+      globalOpts,
+    );
+    const inboxId = await pickId(ids.inbox, inboxPickerConfig, globalOpts);
 
     // The no_changes guard ensures one field is set; tsc cannot prove it.
     const payload = {
