@@ -26,7 +26,20 @@ function timestamp(): string {
   return new Date().toLocaleTimeString('en-GB', { hour12: false });
 }
 
-function summarizeEvent(body: Record<string, unknown>): {
+function inboxResourceId(type: string, data: Record<string, unknown>): unknown {
+  if (type.startsWith('inbox.thread.')) {
+    return data.thread_id;
+  }
+  if (type.startsWith('inbox.email.')) {
+    return data.email_id;
+  }
+  if (type.startsWith('inbox.draft.')) {
+    return data.draft_id;
+  }
+  return data.inbox_id;
+}
+
+export function summarizeEvent(body: Record<string, unknown>): {
   type: string;
   resourceId: string;
   detail: string;
@@ -34,7 +47,15 @@ function summarizeEvent(body: Record<string, unknown>): {
   const type = safeTerminalText((body.type as string) ?? 'unknown');
   const data = (body.data as Record<string, unknown>) ?? {};
 
-  const resourceId = safeTerminalText((data.id as string) ?? '');
+  const resourceId = safeTerminalText(
+    ((type.startsWith('inbox.')
+      ? inboxResourceId(type, data)
+      : (data.id ??
+        data.email_id ??
+        data.draft_id ??
+        data.thread_id ??
+        data.inbox_id)) as string | undefined) ?? '',
+  );
 
   let detail = '';
   if (type.startsWith('email.')) {
@@ -49,6 +70,24 @@ function summarizeEvent(body: Record<string, unknown>): {
     detail = safeTerminalText((data.name as string) ?? '');
   } else if (type.startsWith('contact.') || type.startsWith('suppression.')) {
     detail = safeTerminalText((data.email as string) ?? '');
+  } else if (type.startsWith('inbox.')) {
+    const email = data.email as Record<string, unknown> | undefined;
+    const draft = data.draft as Record<string, unknown> | undefined;
+    const thread = data.thread as Record<string, unknown> | undefined;
+    const inbox = data.inbox as Record<string, unknown> | undefined;
+    if (email) {
+      const from = safeTerminalText((email.from as string) ?? '');
+      const to = safeTerminalText(
+        Array.isArray(email.to) ? (email.to[0] as string) : '',
+      );
+      detail = `${from} -> ${to}`;
+    } else if (draft || thread) {
+      detail = safeTerminalText(
+        ((draft?.subject ?? thread?.subject) as string) ?? '',
+      );
+    } else if (inbox) {
+      detail = safeTerminalText((inbox.email_address as string) ?? '');
+    }
   }
 
   return { type, resourceId, detail };

@@ -1,4 +1,9 @@
-import type { Attachment } from 'resend';
+import { readFileSync } from 'node:fs';
+import { basename } from 'node:path';
+import type { Attachment, InboxDraftAttachmentOptions } from 'resend';
+import type { GlobalOpts } from './client';
+import { readFile } from './files';
+import { outputError } from './output';
 
 export interface AttachmentSpec {
   source: string;
@@ -112,4 +117,96 @@ export function parseAttachmentsJson(raw: string): Attachment[] {
     }
     return attachment as Attachment;
   });
+}
+
+export function resolveAttachments(
+  specs: string[] | undefined,
+  attachmentsFile: string | undefined,
+  globalOpts: GlobalOpts,
+): Attachment[] | undefined {
+  const fromSpecs = specs?.map((value): Attachment => {
+    let spec: AttachmentSpec;
+    try {
+      spec = parseAttachmentSpec(value);
+    } catch (err) {
+      return outputError(
+        { message: (err as Error).message, code: 'invalid_attachment' },
+        { json: globalOpts.json },
+      );
+    }
+    const metadata = {
+      ...(spec.contentType && { contentType: spec.contentType }),
+      ...(spec.contentId && { contentId: spec.contentId }),
+    };
+    if (spec.isUrl) {
+      return {
+        path: spec.source,
+        ...(spec.filename && { filename: spec.filename }),
+        ...metadata,
+      };
+    }
+    try {
+      return {
+        filename: spec.filename ?? basename(spec.source),
+        content: readFileSync(spec.source),
+        ...metadata,
+      };
+    } catch {
+      return outputError(
+        {
+          message: `Failed to read file: ${spec.source}`,
+          code: 'file_read_error',
+        },
+        { json: globalOpts.json },
+      );
+    }
+  });
+
+  if (attachmentsFile === undefined) {
+    return fromSpecs;
+  }
+  const raw = readFile(attachmentsFile, globalOpts);
+  try {
+    return [...(fromSpecs ?? []), ...parseAttachmentsJson(raw)];
+  } catch (err) {
+    return outputError(
+      { message: (err as Error).message, code: 'invalid_attachment' },
+      { json: globalOpts.json },
+    );
+  }
+}
+
+export function resolveDraftAttachments(
+  specs: string[] | undefined,
+  attachmentsFile: string | undefined,
+  globalOpts: GlobalOpts,
+): InboxDraftAttachmentOptions[] | undefined {
+  return resolveAttachments(specs, attachmentsFile, globalOpts)?.map(
+    (attachment) => {
+      const { content, filename, contentType, path, contentId } = attachment;
+      const fail = (problem: string): never =>
+        outputError(
+          {
+            message: `Draft attachment "${filename ?? path ?? 'attachment'}" ${problem}.`,
+            code: 'invalid_attachment',
+          },
+          { json: globalOpts.json },
+        );
+      if (path || content === undefined) {
+        return fail('needs file content. A URL or path is not accepted');
+      }
+      if (contentId) {
+        return fail('does not take a content ID (;cid= or content_id)');
+      }
+      if (!contentType) {
+        return fail(
+          'needs a MIME type. Add ;type=<type>, or content_type in the JSON file',
+        );
+      }
+      if (!filename) {
+        return fail('needs a filename');
+      }
+      return { content, filename, contentType };
+    },
+  );
 }

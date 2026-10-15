@@ -80,6 +80,7 @@ export async function runCreate<T>(
     loading: string;
     sdkCall: SdkCall<T>;
     onInteractive: (data: T) => void;
+    errorCode?: string;
     permission?: ApiKeyPermission;
   },
   globalOpts: GlobalOpts,
@@ -91,7 +92,7 @@ export async function runCreate<T>(
   const data = await withSpinner(
     config.loading,
     () => config.sdkCall(resend),
-    'create_error',
+    config.errorCode ?? 'create_error',
     globalOpts,
   );
   if (!globalOpts.json && isInteractive()) {

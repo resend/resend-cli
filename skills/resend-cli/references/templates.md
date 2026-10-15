@@ -74,4 +74,4 @@ Same optional flags as `create` (including `--react-email`, `--text-file`, and `
 
 Open a template (or the templates list) in the Resend dashboard.
 
-**Argument:** `[id]` — Template ID (omit to open the list)
+**Argument:** `[id|alias]` — Template ID or alias (omit to open the list)

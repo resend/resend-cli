@@ -464,4 +464,110 @@ describe('batch command', () => {
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('batch_error');
   });
+
+  it('--dry-run prints request without calling the API', async () => {
+    spies = setupOutputSpies();
+
+    const file = await writeTmpJson(VALID_EMAILS);
+    await batchCommand.parseAsync(['--file', file, '--dry-run'], {
+      from: 'user',
+    });
+
+    expect(mockBatchSend).not.toHaveBeenCalled();
+    const output = spies.logSpy.mock.calls[0][0] as string;
+    const parsed = JSON.parse(output);
+    expect(parsed.dryRun).toBe(true);
+    expect(Array.isArray(parsed.request)).toBe(true);
+    expect(parsed.request).toHaveLength(2);
+  });
+
+  it('--dry-run works without an API key', async () => {
+    setNonInteractive();
+    delete process.env.RESEND_API_KEY;
+    process.env.XDG_CONFIG_HOME = `/tmp/resend-test-${Date.now()}`;
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
+
+    const file = await writeTmpJson(VALID_EMAILS);
+    await batchCommand.parseAsync(['--file', file, '--dry-run'], {
+      from: 'user',
+    });
+
+    expect(mockBatchSend).not.toHaveBeenCalled();
+    const output = logSpy.mock.calls[0][0] as string;
+    const parsed = JSON.parse(output);
+    expect(parsed.dryRun).toBe(true);
+
+    logSpy.mockRestore();
+  });
+
+  it('errors with invalid_format on an empty array without calling the API', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    const file = await writeTmpJson([]);
+    await expectExit1(() =>
+      batchCommand.parseAsync(['--file', file], { from: 'user' }),
+    );
+
+    expect(mockBatchSend).not.toHaveBeenCalled();
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_format');
+    expect(output).toContain('Batch cannot be empty');
+  });
+
+  it('--dry-run normalises snake_case aliases in the printed request', async () => {
+    spies = setupOutputSpies();
+
+    const emails = [
+      {
+        ...VALID_EMAILS[0],
+        scheduled_at: '2026-01-01T00:00:00Z',
+        reply_to: 'reply@example.com',
+      },
+    ];
+    const file = await writeTmpJson(emails);
+    await batchCommand.parseAsync(['--file', file, '--dry-run'], {
+      from: 'user',
+    });
+
+    expect(mockBatchSend).not.toHaveBeenCalled();
+    const output = spies.logSpy.mock.calls[0][0] as string;
+    const parsed = JSON.parse(output);
+    const first = parsed.request[0];
+    expect(first.scheduledAt).toBe('2026-01-01T00:00:00Z');
+    expect(first.replyTo).toBe('reply@example.com');
+    expect(first).not.toHaveProperty('scheduled_at');
+    expect(first).not.toHaveProperty('reply_to');
+  });
+
+  it('--dry-run renders --react-email template into the request without sending', async () => {
+    spies = setupOutputSpies();
+
+    const emailsWithoutHtml = [
+      {
+        from: 'you@domain.com',
+        to: ['user1@example.com'],
+        subject: 'Hello 1',
+      },
+    ];
+    const file = await writeTmpJson(emailsWithoutHtml);
+    await batchCommand.parseAsync(
+      ['--file', file, '--react-email', './welcome.tsx', '--dry-run'],
+      { from: 'user' },
+    );
+
+    expect(mockBuildReactEmailHtml).toHaveBeenCalledWith(
+      './welcome.tsx',
+      expect.anything(),
+    );
+    expect(mockBatchSend).not.toHaveBeenCalled();
+    const output = spies.logSpy.mock.calls[0][0] as string;
+    const parsed = JSON.parse(output);
+    expect(parsed.dryRun).toBe(true);
+    expect(parsed.request[0].html).toBe('<html><body>Rendered</body></html>');
+  });
 });

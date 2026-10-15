@@ -1,0 +1,71 @@
+import { Command } from '@commander-js/extra-typings';
+import type { UpdateInboxOptions } from 'resend';
+import { runWrite } from '../../lib/actions';
+import type { GlobalOpts } from '../../lib/client';
+import { buildHelpText } from '../../lib/help-text';
+import { outputError } from '../../lib/output';
+import { pickId } from '../../lib/prompts';
+import { snakeCaseAlias } from '../../lib/snake-case-alias';
+import { inboxPickerConfig } from './utils';
+
+export const updateInboxCommand = new Command('update')
+  .description("Update an inbox's name or from name")
+  .argument('[id]', 'Inbox UUID')
+  .option(
+    '--name <name>',
+    'New internal name for the inbox. Recipients do not see it',
+  )
+  .option(
+    '--from-name <name>',
+    'New name used when sending from this inbox, e.g. "Ada from Support" (a plain name, not "Name <email>")',
+  )
+  .addOption(snakeCaseAlias('--from-name <name>'))
+  .addHelpText(
+    'after',
+    buildHelpText({
+      context: `At least one of --name or --from-name is required.
+Pass --from-name "" to clear the from name.
+
+Note: the email address cannot be changed after creation.
+To use a different address, create a new inbox.`,
+      output: `  {"object":"inbox","id":"<uuid>"}`,
+      errorCodes: ['auth_error', 'no_changes', 'update_error'],
+      examples: [
+        'resend inboxes update 78261eea-8f8b-4381-83c6-79fa7120f1cf --name "Support"',
+        'resend inboxes update 78261eea-8f8b-4381-83c6-79fa7120f1cf --from-name "Ada from Support" --json',
+      ],
+    }),
+  )
+  .action(async (idArg, opts, cmd) => {
+    const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    if (opts.name === undefined && opts.fromName === undefined) {
+      outputError(
+        {
+          message:
+            'Provide at least one option to update: --name or --from-name.',
+          code: 'no_changes',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
+    const id = await pickId(idArg, inboxPickerConfig, globalOpts);
+
+    // The SDK requires at least one change at the type level, which the
+    // no_changes guard above guarantees but tsc cannot prove across the
+    // conditional spreads.
+    const payload = {
+      ...(opts.name !== undefined && { name: opts.name }),
+      ...(opts.fromName !== undefined && { fromName: opts.fromName }),
+    } as UpdateInboxOptions;
+
+    await runWrite(
+      {
+        loading: 'Updating inbox...',
+        sdkCall: (resend) => resend.inboxes.update(id, payload),
+        errorCode: 'update_error',
+        successMsg: `Inbox updated: ${id}`,
+      },
+      globalOpts,
+    );
+  });

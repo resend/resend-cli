@@ -1,16 +1,11 @@
-import { readFileSync } from 'node:fs';
-import { basename } from 'node:path';
 import { Command } from '@commander-js/extra-typings';
-import type { Attachment, CreateEmailOptions } from 'resend';
-import {
-  type AttachmentSpec,
-  parseAttachmentSpec,
-  parseAttachmentsJson,
-} from '../../lib/attachments';
+import type { CreateEmailOptions } from 'resend';
+import { resolveAttachments } from '../../lib/attachments';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
 import { fetchVerifiedDomains, promptForFromAddress } from '../../lib/domains';
 import { readFile } from '../../lib/files';
+import { parseHeaderPairs } from '../../lib/headers';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError, outputResult } from '../../lib/output';
 import { promptForMissing, requireText } from '../../lib/prompts';
@@ -321,77 +316,13 @@ export const sendCommand = new Command('send')
 
     const toAddresses = opts.to ?? [filled.to];
 
-    let attachments: Attachment[] | undefined = opts.attachment?.map(
-      (value) => {
-        let spec: AttachmentSpec;
-        try {
-          spec = parseAttachmentSpec(value);
-        } catch (err) {
-          return outputError(
-            { message: (err as Error).message, code: 'invalid_attachment' },
-            { json: globalOpts.json },
-          );
-        }
-        const metadata = {
-          ...(spec.contentType && { contentType: spec.contentType }),
-          ...(spec.contentId && { contentId: spec.contentId }),
-        };
-        if (spec.isUrl) {
-          return {
-            path: spec.source,
-            ...(spec.filename && { filename: spec.filename }),
-            ...metadata,
-          };
-        }
-        try {
-          const content = readFileSync(spec.source);
-          return {
-            filename: spec.filename ?? basename(spec.source),
-            content,
-            ...metadata,
-          };
-        } catch {
-          return outputError(
-            {
-              message: `Failed to read file: ${spec.source}`,
-              code: 'file_read_error',
-            },
-            { json: globalOpts.json },
-          );
-        }
-      },
+    const attachments = resolveAttachments(
+      opts.attachment,
+      opts.attachmentsFile,
+      globalOpts,
     );
 
-    if (opts.attachmentsFile !== undefined) {
-      const raw = readFile(opts.attachmentsFile, globalOpts);
-      try {
-        attachments = [...(attachments ?? []), ...parseAttachmentsJson(raw)];
-      } catch (err) {
-        outputError(
-          { message: (err as Error).message, code: 'invalid_attachment' },
-          { json: globalOpts.json },
-        );
-      }
-    }
-
-    // Parse key=value headers
-    const headers = opts.headers
-      ? Object.fromEntries(
-          opts.headers.map((h) => {
-            const eq = h.indexOf('=');
-            if (eq < 1) {
-              outputError(
-                {
-                  message: `Invalid header format: "${h}". Expected key=value.`,
-                  code: 'invalid_header',
-                },
-                { json: globalOpts.json },
-              );
-            }
-            return [h.slice(0, eq), h.slice(eq + 1)];
-          }),
-        )
-      : undefined;
+    const headers = parseHeaderPairs(opts.headers, globalOpts);
 
     // Parse name=value tags
     const tags = opts.tags?.map((t) => {

@@ -24,6 +24,10 @@ export const batchCommand = new Command('batch')
     '--idempotency-key <key>',
     'Deduplicate this batch request using this key',
   )
+  .option(
+    '--dry-run',
+    'Validate input and print the request JSON without calling the API',
+  )
   .addOption(
     new Option(
       '--batch-validation <mode>',
@@ -49,6 +53,7 @@ export const batchCommand = new Command('batch')
       ],
       examples: [
         'resend emails batch --file ./emails.json',
+        'resend emails batch --file ./emails.json --dry-run',
         'resend emails batch --file ./emails.json --batch-validation permissive',
         'echo \'[{"from":"onboarding@resend.dev","to":["delivered@resend.dev"],"subject":"Hi","text":"Hello"}]\' | resend emails batch --file -',
       ],
@@ -56,10 +61,6 @@ export const batchCommand = new Command('batch')
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-
-    const resend = await requireClient(globalOpts, {
-      permission: 'sending_access',
-    });
 
     const filePath = await requireText(
       opts.file,
@@ -95,6 +96,16 @@ export const batchCommand = new Command('batch')
     }
 
     const emails = parsed as unknown[];
+
+    if (emails.length === 0) {
+      outputError(
+        {
+          message: 'Batch cannot be empty. Provide at least one email object.',
+          code: 'invalid_format',
+        },
+        { json: globalOpts.json },
+      );
+    }
 
     if (emails.length > 100) {
       console.warn(
@@ -147,6 +158,18 @@ export const batchCommand = new Command('batch')
         }
       }
     }
+
+    if (opts.dryRun) {
+      outputResult(
+        { dryRun: true, request: emails },
+        { json: globalOpts.json },
+      );
+      return;
+    }
+
+    const resend = await requireClient(globalOpts, {
+      permission: 'sending_access',
+    });
 
     const batchData = await withSpinner(
       'Sending batch...',
