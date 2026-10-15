@@ -25,7 +25,13 @@ const makeEmail = (number: number) => ({
 
 type Email = ReturnType<typeof makeEmail>;
 type Request = { limit: number; after: string | null };
-type Failure = 'http' | 'network' | 'malformed' | 'empty' | 'rate_limit';
+type Failure =
+  | 'http'
+  | 'network'
+  | 'malformed'
+  | 'empty'
+  | 'rate_limit'
+  | 'not_found';
 
 describe('receiving listener pagination with the real SDK', () => {
   const restoreEnv = captureTestEnv();
@@ -82,6 +88,12 @@ describe('receiving listener pagination with the real SDK', () => {
           return Response.json(
             { name: 'rate_limit_exceeded', message: 'Fixture rate limit' },
             { status: 429, headers: { 'retry-after': '0' } },
+          );
+        }
+        if (currentFailure === 'not_found') {
+          return Response.json(
+            { name: 'not_found', message: 'Fixture cursor not found' },
+            { status: 404 },
           );
         }
         return Response.json(
@@ -258,6 +270,20 @@ describe('receiving listener pagination with the real SDK', () => {
     await tick();
 
     expect(emittedIds()).toEqual(['email-1', 'email-2', 'email-3']);
+  });
+
+  it('returns to the head when the resume cursor no longer exists', async () => {
+    await start();
+    arrive(501);
+    await tick();
+    failure = 'not_found';
+    failureCursor = 'email-2';
+    await tick();
+    inbox.unshift(makeEmail(502));
+    const headRequests = await tick();
+
+    expect(headRequests[0]).toEqual({ limit: 100, after: null });
+    expect(emittedIds().at(-1)).toBe('email-502');
   });
 
   it('keeps rate-limit retry behavior during a multi-page poll', async () => {

@@ -202,7 +202,7 @@ Ctrl+C exits cleanly.`,
             error: error?.message ?? 'Empty response',
             hasMore: false,
             completed: false,
-            nextCursor: cursor,
+            nextCursor: error?.name === 'not_found' ? undefined : cursor,
           };
         }
 
