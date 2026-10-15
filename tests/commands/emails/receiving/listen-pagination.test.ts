@@ -250,6 +250,16 @@ describe('receiving listener pagination with the real SDK', () => {
     expect(ids).not.toContain('email-0');
   });
 
+  it('does not replay startup history when the boundary email disappears', async () => {
+    await start();
+    arrive(3);
+    await tick();
+    inbox = inbox.filter((email) => email.id !== 'email-3');
+    await tick();
+
+    expect(emittedIds()).toEqual(['email-1', 'email-2', 'email-3']);
+  });
+
   it('keeps rate-limit retry behavior during a multi-page poll', async () => {
     await start();
     arrive(101);

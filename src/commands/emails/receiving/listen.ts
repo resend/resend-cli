@@ -49,12 +49,12 @@ const extractNewEmails = (
   seenIds: BoundedSet<string>,
   completedHeadId: string | undefined,
 ): PageResult => {
-  const idx = emails.findIndex((e) => e.id === completedHeadId);
-  const beforeBoundary = idx === -1 ? emails : emails.slice(0, idx);
-  return {
-    newEmails: beforeBoundary.filter((e) => !seenIds.has(e.id)),
-    foundSeen: idx !== -1,
-  };
+  const idx = emails.findIndex(
+    (e) => e.id === completedHeadId || seenIds.has(e.id),
+  );
+  return idx === -1
+    ? { newEmails: emails, foundSeen: false }
+    : { newEmails: emails.slice(0, idx), foundSeen: true };
 };
 
 type FetchResult = {
@@ -222,7 +222,6 @@ Ctrl+C exits cleanly.`,
 
         const nextCursor = data.data[data.data.length - 1]?.id;
         if (!nextCursor) {
-          // Retry this page on the next tick without restarting the range.
           return {
             emails: allEmails,
             hasMore: true,
@@ -232,7 +231,6 @@ Ctrl+C exits cleanly.`,
         }
         return fetchPages(nextCursor, allEmails, pagesLeft - 1);
       } catch (err) {
-        // Preserve successful pages even when a later page throws.
         return {
           emails: accumulated,
           error: errorMessage(err, 'Unknown error'),
