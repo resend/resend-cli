@@ -181,7 +181,7 @@ returns an error and changes nothing.
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
-| `--labels <label-ids...>` | string[] | Yes | 1 to 10 label UUIDs from `labels list` |
+| `--labels <label-ids...>` | string[] | Yes | 1 to 10 label UUIDs from `labels list`, comma or space-separated |
 
 **Output:** `{"object":"list","data":[{"id":"<uuid>","name":"<name>","color":"#RRGGBB"}]}`, every label on the thread after the change.
 
@@ -196,7 +196,7 @@ kept. An unknown label returns an error and changes nothing.
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
-| `--labels <label-ids...>` | string[] | Yes | 0 to 100 label UUIDs. Pass `""` to remove every label |
+| `--labels <label-ids...>` | string[] | Yes | 0 to 100 label UUIDs, comma or space-separated. Pass `""` to remove every label |
 
 **Output:** same as `threads labels add`.
 

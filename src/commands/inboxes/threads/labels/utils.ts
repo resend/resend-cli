@@ -8,11 +8,16 @@ export function requireLabelIds(
   globalOpts: GlobalOpts,
   opts: { allowEmpty: boolean },
 ): string[] {
-  const ids = labels?.filter(Boolean);
+  const ids = labels
+    ?.flatMap((l) => l.split(','))
+    .map((l) => l.trim())
+    .filter(Boolean);
   if (ids === undefined || (!opts.allowEmpty && ids.length === 0)) {
     outputError(
       {
-        message: 'Missing --labels flag. Pass one or more label IDs.',
+        message: opts.allowEmpty
+          ? 'Missing --labels flag. Pass one or more label IDs, or --labels "" to remove every label.'
+          : 'Missing --labels flag. Pass one or more label IDs.',
         code: 'missing_labels',
       },
       { json: globalOpts.json },

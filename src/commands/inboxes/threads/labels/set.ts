@@ -18,7 +18,7 @@ export const setInboxThreadLabelsCommand = new Command('set')
   .addOption(snakeCaseAlias('--thread-id <id>'))
   .option(
     '--labels <label-ids...>',
-    'Label UUIDs the thread keeps, 0 to 100 (required). Pass "" to remove every label',
+    'Label UUIDs the thread keeps, 0 to 100, comma or space-separated (required). Pass "" to remove every label',
   )
   .addHelpText(
     'after',

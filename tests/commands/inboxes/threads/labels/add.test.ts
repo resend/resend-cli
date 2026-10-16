@@ -79,6 +79,23 @@ describe('inboxes threads labels add command', () => {
     );
   });
 
+  it('splits comma-separated label IDs', async () => {
+    setupOutputSpies();
+
+    await addInboxThreadLabelsCommand.parseAsync(
+      [INBOX_ID, THREAD_ID, '--labels', `${LABEL_ID}, ${OTHER_LABEL_ID}`],
+      { from: 'user' },
+    );
+
+    expect(mockAdd.mock.calls[0]).toStrictEqual([
+      {
+        inboxId: INBOX_ID,
+        threadId: THREAD_ID,
+        labels: [LABEL_ID, OTHER_LABEL_ID],
+      },
+    ]);
+  });
+
   it('prints the labels of the thread in interactive mode', async () => {
     for (const stream of [process.stdin, process.stdout]) {
       Object.defineProperty(stream, 'isTTY', { value: true, writable: true });

@@ -79,6 +79,23 @@ describe('inboxes threads labels set command', () => {
     );
   });
 
+  it('splits comma-separated label IDs', async () => {
+    setupOutputSpies();
+
+    await setInboxThreadLabelsCommand.parseAsync(
+      [INBOX_ID, THREAD_ID, '--labels', `${LABEL_ID},${OTHER_LABEL_ID}`],
+      { from: 'user' },
+    );
+
+    expect(mockSet.mock.calls[0]).toStrictEqual([
+      {
+        inboxId: INBOX_ID,
+        threadId: THREAD_ID,
+        labels: [LABEL_ID, OTHER_LABEL_ID],
+      },
+    ]);
+  });
+
   it('passes an inbox email address as emailAddress', async () => {
     setupOutputSpies();
 
@@ -125,6 +142,7 @@ describe('inboxes threads labels set command', () => {
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('missing_labels');
+    expect(output).toContain('--labels \\"\\"');
     expect(mockSet).not.toHaveBeenCalled();
   });
 
