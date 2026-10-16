@@ -83,6 +83,7 @@ export const listAutomationRunsCommand = new Command('list')
             before: opts.before,
             apiKey: globalOpts.apiKey,
             profile: globalOpts.profile,
+            ...(opts.status && { extraFlags: `--status ${opts.status}` }),
           });
         },
       },
