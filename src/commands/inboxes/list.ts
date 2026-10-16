@@ -24,7 +24,7 @@ export const listInboxesCommand = new Command('list')
   .addHelpText(
     'after',
     buildHelpText({
-      output: `  {"object":"list","has_more":false,"data":[{"id":"<uuid>","name":"<name>|null","email_address":"<address>","from_name":"<name>|null","unread":0,"last_received":"<date>|null"}]}`,
+      output: `  {"object":"list","has_more":false,"data":[{"id":"<uuid>","name":"<name>|null","email_address":"<address>","from_name":"<name>|null","unread":0,"last_received":"<date>|null","created_at":"<date>","updated_at":"<date>"}]}`,
       errorCodes: [
         'auth_error',
         'invalid_limit',

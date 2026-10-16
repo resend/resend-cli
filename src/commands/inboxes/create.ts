@@ -29,6 +29,7 @@ export const createInboxCommand = new Command('create')
     'after',
     buildHelpText({
       context: `The address must belong to one of your verified domains.
+The part before the @ can contain letters, numbers, and . _ % -. A + returns an error.
 Receiving must be enabled on the domain, unless you pass --forwarding.
 With --forwarding, Resend generates a receiving address. Run "resend inboxes get <id>"
 to read it.

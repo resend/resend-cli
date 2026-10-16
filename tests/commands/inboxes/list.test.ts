@@ -31,6 +31,8 @@ const mockList = vi.fn(async () => ({
         from_name: null,
         unread: 2,
         last_received: '2026-09-15T00:00:00.000Z',
+        created_at: '2026-09-01T00:00:00.000Z',
+        updated_at: '2026-09-10T00:00:00.000Z',
       },
     ],
   },
@@ -96,6 +98,8 @@ describe('inboxes list command', () => {
     const parsed = JSON.parse(output);
     expect(parsed.object).toBe('list');
     expect(parsed.data[0].email_address).toBe('support@acme.dev');
+    expect(parsed.data[0].created_at).toBe('2026-09-01T00:00:00.000Z');
+    expect(parsed.data[0].updated_at).toBe('2026-09-10T00:00:00.000Z');
   });
 
   it('errors with invalid_limit for out-of-range --limit', async () => {

@@ -11,7 +11,7 @@ export const getInboxCommand = new Command('get')
   .addHelpText(
     'after',
     buildHelpText({
-      output: `  {"object":"inbox","id":"<uuid>","name":"<name>","email_address":"<address>","domain_id":"<uuid>","receiving_address":"<address>|null","from_name":"<name>|null","unread":0,"drafts":0,"last_received":"<date>|null","created_at":"<date>"}`,
+      output: `  {"object":"inbox","id":"<uuid>","name":"<name>","email_address":"<address>","domain_id":"<uuid>","receiving_address":"<address>|null","from_name":"<name>|null","unread":0,"drafts":0,"last_received":"<date>|null","created_at":"<date>","updated_at":"<date>"}`,
       errorCodes: ['auth_error', 'fetch_error'],
       examples: [
         'resend inboxes get 78261eea-8f8b-4381-83c6-79fa7120f1cf',
@@ -42,6 +42,8 @@ export const getInboxCommand = new Command('get')
           if (data.last_received) {
             console.log(`Last received: ${data.last_received}`);
           }
+          console.log(`Created: ${data.created_at}`);
+          console.log(`Updated: ${data.updated_at}`);
         },
       },
       globalOpts,

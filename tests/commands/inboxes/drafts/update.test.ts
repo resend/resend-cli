@@ -24,22 +24,7 @@ const INBOX_ID = '78261eea-8f8b-4381-83c6-79fa7120f1cf';
 const DRAFT_ID = '66666666-7777-8888-9999-aaaaaaaaaaaa';
 
 const mockUpdate = vi.fn(async () => ({
-  data: {
-    object: 'inbox_draft' as const,
-    id: DRAFT_ID,
-    type: 'standalone' as const,
-    to: ['user@example.com'],
-    cc: [],
-    bcc: [],
-    subject: 'Updated',
-    html: null,
-    text: 'New body',
-    thread_id: null,
-    reply_to_email_id: null,
-    email_id: null,
-    created_at: '2026-09-15T00:00:00.000Z',
-    updated_at: '2026-09-15T00:00:00.000Z',
-  },
+  data: { object: 'inbox_draft' as const, id: DRAFT_ID },
   error: null,
 }));
 
@@ -66,6 +51,20 @@ describe('inboxes drafts update command', () => {
     exitSpy?.mockRestore();
     errorSpy = undefined;
     exitSpy = undefined;
+  });
+
+  it('outputs only the object and the draft ID', async () => {
+    const spies = setupOutputSpies();
+
+    await updateInboxDraftCommand.parseAsync(
+      [INBOX_ID, DRAFT_ID, '--subject', 'Updated'],
+      { from: 'user' },
+    );
+
+    expect(JSON.parse(spies.logSpy.mock.calls[0][0] as string)).toStrictEqual({
+      object: 'inbox_draft',
+      id: DRAFT_ID,
+    });
   });
 
   it('updates subject and body', async () => {

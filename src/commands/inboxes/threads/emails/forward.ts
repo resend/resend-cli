@@ -53,10 +53,11 @@ export const forwardInboxThreadEmailCommand = new Command('forward')
 adds an optional note above the quoted original.
 --to, --cc, and --bcc combined cannot exceed 50 recipients.
 The attachments of the original email are sent with the forward, together with
-any files you add. Together they can have up to 10 files and at most 25 MB of
-content. A URL file counts toward the 10 files only.
-An empty file, a blocked file type, or a URL that is not http or https, or that
-points to localhost, returns an error.
+any files you add. Together they can have at most 25 MB of content. A URL file
+does not count toward the 25 MB, because it is fetched when the email is sent.
+An empty file, a blocked file type, or a URL that does not start with http or
+that starts with http://localhost: returns an error. Other URL problems fail
+the email when it is sent.
 An original attachment that was sent from a URL cannot be forwarded, and the
 request returns an error.
 Attachments: --attachment takes a local path or an http:// or https:// URL plus optional
@@ -137,6 +138,7 @@ The output holds the ID of the sent email. Use it with "resend emails get".`,
     await runCreate(
       {
         loading: 'Forwarding email...',
+        permission: 'sending_access',
         sdkCall: (resend) =>
           resend.inboxes.threads.emails.forward(
             {

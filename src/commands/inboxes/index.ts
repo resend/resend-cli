@@ -26,7 +26,9 @@ such as --inbox-id or --thread-id.
 Every command that names an inbox takes its ID or its email address, such as
 support@yourdomain.com. The address match ignores case.
 
-Inboxes require a full-access API key — sending-only keys are rejected.`,
+Most inbox commands need a full-access API key. A sending-access key can run
+"threads emails reply", "threads emails forward", "drafts create" and
+"drafts send". A key limited to one domain must match the domain of the inbox.`,
       examples: [
         'resend inboxes list',
         'resend inboxes create --email-address support@yourdomain.com',

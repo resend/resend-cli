@@ -32,6 +32,7 @@ const mockGet = vi.fn(async () => ({
     drafts: 0,
     last_received: '2026-09-15T00:00:00.000Z',
     created_at: '2026-09-01T00:00:00.000Z',
+    updated_at: '2026-09-10T00:00:00.000Z',
   },
   error: null,
 }));
@@ -81,6 +82,29 @@ describe('inboxes get command', () => {
     const parsed = JSON.parse(output);
     expect(parsed.id).toBe(INBOX_ID);
     expect(parsed.email_address).toBe('support@acme.dev');
+    expect(parsed.created_at).toBe('2026-09-01T00:00:00.000Z');
+    expect(parsed.updated_at).toBe('2026-09-10T00:00:00.000Z');
+  });
+
+  it('prints the timestamps in interactive mode', async () => {
+    for (const stream of [process.stdin, process.stdout]) {
+      Object.defineProperty(stream, 'isTTY', { value: true, writable: true });
+    }
+    delete process.env.CI;
+    delete process.env.GITHUB_ACTIONS;
+    delete process.env.TERM;
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
+
+    await getInboxCommand.parseAsync([INBOX_ID], { from: 'user' });
+
+    const output = logSpy.mock.calls.map((c) => c[0]);
+    logSpy.mockRestore();
+    stderrSpy.mockRestore();
+    expect(output).toContain('Created: 2026-09-01T00:00:00.000Z');
+    expect(output).toContain('Updated: 2026-09-10T00:00:00.000Z');
   });
 
   it('errors with missing_id when no argument in non-interactive mode', async () => {
