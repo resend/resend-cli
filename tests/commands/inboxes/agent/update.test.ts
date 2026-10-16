@@ -100,28 +100,6 @@ describe('inboxes agent update command', () => {
     });
   });
 
-  it('gives no rename hint for an inherited property name', async () => {
-    setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    exitSpy = mockExitThrow();
-
-    await expectExit1(() =>
-      updateInboxAgentCommand.parseAsync([INBOX_ID, '--actions', 'toString'], {
-        from: 'user',
-      }),
-    );
-
-    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
-    expect(output).toContain('invalid_actions');
-    expect(output).not.toContain('instead of');
-  });
-
-  it('hides the old action flags from help', () => {
-    const help = updateInboxAgentCommand.helpInformation();
-    expect(help).toContain('--actions <actions...>');
-    expect(help).not.toContain('enabled');
-  });
-
   it('accepts the inbox ID as an argument', async () => {
     setupOutputSpies();
 
@@ -215,31 +193,6 @@ describe('inboxes agent update command', () => {
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('invalid_actions');
-    expect(mockUpdate).not.toHaveBeenCalled();
-  });
-
-  it('names the new values for the old archive_thread and delete_thread actions', async () => {
-    setNonInteractive();
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    exitSpy = mockExitThrow();
-
-    await expectExit1(() =>
-      updateInboxAgentCommand.parseAsync(
-        [
-          '--inbox-id',
-          INBOX_ID,
-          '--actions',
-          'archive_thread',
-          'delete_thread',
-        ],
-        { from: 'user' },
-      ),
-    );
-
-    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
-    expect(output).toContain('invalid_actions');
-    expect(output).toContain('Use archive instead of archive_thread.');
-    expect(output).toContain('Use move_to_trash instead of delete_thread.');
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 

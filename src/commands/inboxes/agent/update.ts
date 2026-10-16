@@ -14,11 +14,6 @@ import { pickId } from '../../../lib/prompts';
 import { snakeCaseAlias } from '../../../lib/snake-case-alias';
 import { inboxPickerConfig, inboxSelector, resolveIdInputs } from '../utils';
 
-const RENAMED_ACTIONS: Record<string, InboxAgentAction> = {
-  archive_thread: 'archive',
-  delete_thread: 'move_to_trash',
-};
-
 export const updateInboxAgentCommand = new Command('update')
   .description("Update an inbox's agent instructions, tone, or actions")
   .argument('[inboxId]', 'Inbox UUID or email address')
@@ -103,13 +98,9 @@ Pass --instructions "" or --tone "" to clear the value.
       (a) => !(INBOX_AGENT_ACTIONS as readonly string[]).includes(a),
     );
     if (invalid?.length) {
-      const renamed = invalid
-        .filter((a) => Object.hasOwn(RENAMED_ACTIONS, a))
-        .map((a) => ` Use ${RENAMED_ACTIONS[a]} instead of ${a}.`)
-        .join('');
       outputError(
         {
-          message: `Invalid --actions value: ${invalid.join(', ')}. Use: ${INBOX_AGENT_ACTIONS.join(', ')}.${renamed}`,
+          message: `Invalid --actions value: ${invalid.join(', ')}. Use: ${INBOX_AGENT_ACTIONS.join(', ')}.`,
           code: 'invalid_actions',
         },
         { json: globalOpts.json },
