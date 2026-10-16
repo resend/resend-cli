@@ -60,7 +60,22 @@ describe('inboxes delete command', () => {
     expect(mockRemove.mock.calls[0]).toStrictEqual([INBOX_ID]);
   });
 
-  it('outputs synthesized JSON result when non-interactive', async () => {
+  it('outputs the API result, with the inbox UUID for an address argument', async () => {
+    spies = setupOutputSpies();
+
+    await deleteInboxCommand.parseAsync(['support@acme.dev', '--yes'], {
+      from: 'user',
+    });
+
+    expect(mockRemove.mock.calls[0]).toStrictEqual(['support@acme.dev']);
+    expect(JSON.parse(spies.logSpy.mock.calls[0][0] as string)).toStrictEqual({
+      object: 'inbox',
+      id: INBOX_ID,
+      deleted: true,
+    });
+  });
+
+  it('outputs the JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
     await deleteInboxCommand.parseAsync([INBOX_ID, '--yes'], { from: 'user' });

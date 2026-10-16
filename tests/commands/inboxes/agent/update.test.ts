@@ -103,6 +103,36 @@ describe('inboxes agent update command', () => {
     });
   });
 
+  it('removes duplicate actions', async () => {
+    setupOutputSpies();
+
+    await updateInboxAgentCommand.parseAsync(
+      [INBOX_ID, '--actions', 'archive,draft_reply', 'archive'],
+      { from: 'user' },
+    );
+
+    expect(mockUpdate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      actions: ['archive', 'draft_reply'],
+    });
+  });
+
+  it('gives no rename hint for an inherited property name', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    await expectExit1(() =>
+      updateInboxAgentCommand.parseAsync([INBOX_ID, '--actions', 'toString'], {
+        from: 'user',
+      }),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_actions');
+    expect(output).not.toContain('instead of');
+  });
+
   it('hides the old action flags from help', () => {
     const help = updateInboxAgentCommand.helpInformation();
     expect(help).toContain('--actions <actions...>');

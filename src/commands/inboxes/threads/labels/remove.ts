@@ -28,7 +28,12 @@ To delete the label from the inbox, use "resend inboxes labels delete".
 A label that is not on the thread changes nothing.
 The output lists every label on the thread after the change.`,
       output: `  {"object":"list","data":[{"id":"<uuid>","name":"<name>","color":"#RRGGBB"}]}`,
-      errorCodes: ['auth_error', 'missing_id', 'update_error'],
+      errorCodes: [
+        'auth_error',
+        'missing_id',
+        'invalid_options',
+        'update_error',
+      ],
       examples: [
         'resend inboxes threads labels remove <inbox-id> <thread-id> <label-id>',
         'resend inboxes threads labels remove <inbox-id> <thread-id> <label-id> --json',

@@ -25,7 +25,13 @@ Each label must be a label of the inbox, from "resend inboxes labels list".
 An unknown label returns an error and changes nothing.
 The output lists every label on the thread after the change.`,
       output: `  {"object":"list","data":[{"id":"<uuid>","name":"<name>","color":"#RRGGBB"}]}`,
-      errorCodes: ['auth_error', 'missing_labels', 'update_error'],
+      errorCodes: [
+        'auth_error',
+        'missing_id',
+        'missing_labels',
+        'invalid_options',
+        'update_error',
+      ],
       examples: [
         'resend inboxes threads labels add <inbox-id> <thread-id> --labels <label-id>',
         'resend inboxes threads labels add support@yourdomain.com <thread-id> --labels <label-id> <other-label-id> --json',
@@ -34,7 +40,9 @@ The output lists every label on the thread after the change.`,
   )
   .action(async (inboxIdArg, threadIdArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
-    const labels = requireLabelIds(opts.labels, globalOpts);
+    const labels = requireLabelIds(opts.labels, globalOpts, {
+      allowEmpty: false,
+    });
     const ids = resolveIdInputs(
       {
         inbox: [inboxIdArg, opts.inboxId],

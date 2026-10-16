@@ -97,16 +97,20 @@ Pass --instructions "" or --tone "" to clear the value.
       );
     }
 
-    const actions = opts.actions
-      ?.flatMap((a) => a.split(','))
-      .map((a) => a.trim())
-      .filter(Boolean);
+    const actions = opts.actions && [
+      ...new Set(
+        opts.actions
+          .flatMap((a) => a.split(','))
+          .map((a) => a.trim())
+          .filter(Boolean),
+      ),
+    ];
     const invalid = actions?.filter(
       (a) => !(INBOX_AGENT_ACTIONS as readonly string[]).includes(a),
     );
     if (invalid?.length) {
       const renamed = invalid
-        .filter((a) => a in RENAMED_ACTIONS)
+        .filter((a) => Object.hasOwn(RENAMED_ACTIONS, a))
         .map((a) => ` Use ${RENAMED_ACTIONS[a]} instead of ${a}.`)
         .join('');
       outputError(

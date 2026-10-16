@@ -76,7 +76,7 @@ and clears its deletion deadline.`,
       outputError(
         {
           message:
-            'threads update no longer changes labels. Use "resend inboxes threads labels add <inbox-id> <thread-id> --labels <label-id>..." to add labels, "threads labels remove <inbox-id> <thread-id> <label-id>" to remove one, or "threads labels set" to replace them all.',
+            'threads update no longer changes labels. To add labels, run "resend inboxes threads labels add <inbox-id> <thread-id> --labels <label-id>". To remove one, run "resend inboxes threads labels remove <inbox-id> <thread-id> <label-id>". To replace them all, run "resend inboxes threads labels set <inbox-id> <thread-id> --labels <label-id>".',
           code: 'invalid_options',
         },
         { json: globalOpts.json },

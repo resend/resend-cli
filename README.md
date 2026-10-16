@@ -868,7 +868,7 @@ resend inboxes drafts list <inbox-id>
 
 #### **`resend inboxes drafts create`**
 
-Creates a draft that starts a new thread. Pass `--thread-id` and `--reply-to-email-id` together for a reply draft. A reply draft without `--subject` is sent with the subject of the thread, prefixed with `Re:`. Takes `--to`, `--cc`, `--bcc`, `--subject`, `--text`, `--html`, `--attachment`, and `--attachments-file`. **At least one** of them is required. `--idempotency-key` deduplicates the request.
+Creates a draft that starts a new thread. Pass `--thread-id` and `--reply-to-email-id` together for a reply draft. A reply draft without `--subject` is sent with the subject of the thread, prefixed with `Re:` when it does not already start with it. Takes `--to`, `--cc`, `--bcc`, `--subject`, `--text`, `--html`, `--attachment`, and `--attachments-file`. **At least one** of them is required. `--idempotency-key` deduplicates the request.
 
 Draft attachments need `content`, `filename`, and `content_type`, so `--attachment` takes a local file with `;type=<MIME type>`. The files on a draft can total at most 25 MB.
 

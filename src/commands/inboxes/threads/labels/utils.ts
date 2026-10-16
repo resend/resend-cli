@@ -6,8 +6,10 @@ import { renderTable } from '../../../../lib/table';
 export function requireLabelIds(
   labels: string[] | undefined,
   globalOpts: GlobalOpts,
+  opts: { allowEmpty: boolean },
 ): string[] {
-  if (labels === undefined) {
+  const ids = labels?.filter(Boolean);
+  if (ids === undefined || (!opts.allowEmpty && ids.length === 0)) {
     outputError(
       {
         message: 'Missing --labels flag. Pass one or more label IDs.',
@@ -16,7 +18,7 @@ export function requireLabelIds(
       { json: globalOpts.json },
     );
   }
-  return labels.filter(Boolean);
+  return ids;
 }
 
 export function printThreadLabels(

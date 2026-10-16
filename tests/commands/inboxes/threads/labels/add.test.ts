@@ -138,6 +138,23 @@ describe('inboxes threads labels add command', () => {
     ]);
   });
 
+  it('errors with missing_labels for --labels ""', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    await expectExit1(() =>
+      addInboxThreadLabelsCommand.parseAsync(
+        [INBOX_ID, THREAD_ID, '--labels', ''],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('missing_labels');
+    expect(mockAdd).not.toHaveBeenCalled();
+  });
+
   it('errors with missing_labels without --labels', async () => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});

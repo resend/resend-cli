@@ -512,7 +512,7 @@ Send a draft from the inbox address. A reply draft is sent in its thread. A
 draft without a thread starts a new thread. The draft must have at least one
 `to` recipient and `html` or `text`. A standalone draft also needs a non-empty
 subject. A reply draft without a subject is sent with the subject of the thread,
-prefixed with `Re:`. A draft that was already sent returns an error.
+prefixed with `Re:` when it does not already start with it. A draft that was already sent returns an error.
 
 **Arguments:** `[inboxId]` `[draftId]` (or `--inbox-id <id>`, `--draft-id <id>`) — required in non-interactive mode
 

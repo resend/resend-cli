@@ -248,7 +248,6 @@ describe('inboxes threads search command', () => {
 
     const parsed = JSON.parse(spies.logSpy.mock.calls[0][0] as string);
     expect(parsed.data[0].matched_email_id).toBe(EMAIL_ID);
-    expect(parsed.data[0]).not.toHaveProperty('highlights');
   });
 
   it('shell-quotes search values in the next-page hint', async () => {

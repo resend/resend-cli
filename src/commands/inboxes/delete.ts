@@ -1,8 +1,11 @@
 import { Command } from '@commander-js/extra-typings';
-import { runDelete } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
+import { requireClient } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
-import { pickItem } from '../../lib/prompts';
+import { outputResult } from '../../lib/output';
+import { confirmDelete, pickItem } from '../../lib/prompts';
+import { withSpinner } from '../../lib/spinner';
+import { isInteractive } from '../../lib/tty';
 import { inboxPickerConfig } from './utils';
 
 export const deleteInboxCommand = new Command('delete')
@@ -31,16 +34,24 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
   .action(async (idArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const picked = await pickItem(idArg, inboxPickerConfig, globalOpts);
-    await runDelete(
-      picked.id,
-      !!opts.yes,
-      {
-        confirmMessage: `Delete inbox "${picked.label}"?\nID: ${picked.id}\nAll threads and messages in this inbox will be removed.`,
-        loading: 'Deleting inbox...',
-        object: 'inbox',
-        successMsg: 'Inbox deleted',
-        sdkCall: (resend) => resend.inboxes.remove(picked.id),
-      },
+    const resend = await requireClient(globalOpts);
+    if (!opts.yes) {
+      await confirmDelete(
+        picked.id,
+        `Delete inbox "${picked.label}"?\nID: ${picked.id}\nAll threads and messages in this inbox will be removed.`,
+        globalOpts,
+      );
+    }
+    // The output comes from the API so an address argument still prints the inbox UUID.
+    const data = await withSpinner(
+      'Deleting inbox...',
+      () => resend.inboxes.remove(picked.id),
+      'delete_error',
       globalOpts,
     );
+    if (!globalOpts.json && isInteractive()) {
+      console.log('Inbox deleted');
+    } else {
+      outputResult(data, { json: globalOpts.json });
+    }
   });
