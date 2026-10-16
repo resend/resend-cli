@@ -2,7 +2,6 @@ import type {
   InboxMessage,
   InboxMessageFolder,
   InboxThread,
-  InboxThreadSearchHighlightKey,
   InboxThreadSearchResult,
   ListInboxThreadsOptions,
 } from 'resend';
@@ -80,46 +79,19 @@ export function renderThreadsTable(threads: InboxThread[]): string {
   );
 }
 
-const MATCH_SNIPPET_MAX_LENGTH = 60;
-
-const MATCH_FIELD_ORDER: InboxThreadSearchHighlightKey[] = [
-  'body',
-  'attachments',
-  'from',
-  'to',
-  'cc',
-  'bcc',
-  'subject',
-];
-
-export function firstMatchSnippet(
-  highlights: InboxThreadSearchResult['highlights'],
-): string {
-  const field = MATCH_FIELD_ORDER.find(
-    (key) => (highlights[key]?.length ?? 0) > 0,
-  );
-  if (!field) {
-    return '';
-  }
-  const snippet = `${field}: ${highlights[field]?.[0].replaceAll('**', '')}`;
-  return snippet.length > MATCH_SNIPPET_MAX_LENGTH
-    ? `${snippet.slice(0, MATCH_SNIPPET_MAX_LENGTH - 3)}...`
-    : snippet;
-}
-
 export function renderThreadSearchTable(
   results: InboxThreadSearchResult[],
 ): string {
   const rows = results.map((t) => [
     t.from ?? '',
     t.subject ?? '(no subject)',
-    firstMatchSnippet(t.highlights),
     t.read ? 'yes' : 'no',
     t.received_at,
     t.id,
+    t.matched_email_id ?? '',
   ]);
   return renderTable(
-    ['From', 'Subject', 'Match', 'Read', 'Received', 'ID'],
+    ['From', 'Subject', 'Read', 'Received', 'ID', 'Matched email'],
     rows,
     '(no threads)',
   );

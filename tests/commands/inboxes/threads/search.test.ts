@@ -42,7 +42,6 @@ const mockSearch = vi.fn(async () => ({
         received_at: '2026-09-15T00:00:00.000Z',
         folder: 'inbox' as const,
         matched_email_id: EMAIL_ID,
-        highlights: { subject: ['**Billing** question'] },
       },
     ],
   },
@@ -239,7 +238,7 @@ describe('inboxes threads search command', () => {
     });
   });
 
-  it('outputs the match and highlights as JSON when non-interactive', async () => {
+  it('outputs the matched email ID as JSON when non-interactive', async () => {
     spies = setupOutputSpies();
 
     await searchInboxThreadsCommand.parseAsync(
@@ -249,7 +248,7 @@ describe('inboxes threads search command', () => {
 
     const parsed = JSON.parse(spies.logSpy.mock.calls[0][0] as string);
     expect(parsed.data[0].matched_email_id).toBe(EMAIL_ID);
-    expect(parsed.data[0].highlights.subject).toEqual(['**Billing** question']);
+    expect(parsed.data[0]).not.toHaveProperty('highlights');
   });
 
   it('shell-quotes search values in the next-page hint', async () => {

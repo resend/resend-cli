@@ -1,4 +1,4 @@
-import type { Inbox } from 'resend';
+import type { Inbox, InboxSelector } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
 import { outputError } from '../../lib/output';
 import type { PickerConfig } from '../../lib/prompts';
@@ -11,6 +11,10 @@ export const inboxPickerConfig: PickerConfig<Inbox> = {
     resend.inboxes.list({ limit, ...(after && { after }) }),
   display: (i) => ({ label: i.email_address, hint: i.id }),
 };
+
+export function inboxSelector(inbox: string): InboxSelector {
+  return inbox.includes('@') ? { emailAddress: inbox } : { inboxId: inbox };
+}
 
 type IdInput = [arg: string | undefined, flag: string | undefined];
 
