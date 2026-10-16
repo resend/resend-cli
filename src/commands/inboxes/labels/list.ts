@@ -17,7 +17,7 @@ export const listInboxLabelsCommand = new Command('list')
     'after',
     buildHelpText({
       context:
-        'Returns all labels in the inbox (not paginated). Use the label IDs with "threads update --add-label-ids" and "threads list --labels".',
+        'Returns all labels in the inbox (not paginated). Use the label IDs with "threads labels add", "threads labels set" and "threads list --labels".',
       output: `  {"object":"list","data":[{"id":"<uuid>","name":"<name>","color":"#RRGGBB","created_at":"<date>"}]}`,
       errorCodes: ['auth_error', 'list_error'],
       examples: [

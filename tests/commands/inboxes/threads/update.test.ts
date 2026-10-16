@@ -101,30 +101,34 @@ describe('inboxes threads update command', () => {
     });
   });
 
-  it('passes --add-label-ids and --remove-label-ids', async () => {
-    setupOutputSpies();
+  it.each([
+    ['--add-label-ids'],
+    ['--remove-label-ids'],
+    ['--add_label_ids'],
+    ['--remove_label_ids'],
+  ])('rejects the removed %s flag and names the threads labels commands', async (flag) => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
 
-    await updateInboxThreadCommand.parseAsync(
-      [
-        '--inbox-id',
-        INBOX_ID,
-        '--thread-id',
-        THREAD_ID,
-        '--add-label-ids',
-        'label-1',
-        'label-2',
-        '--remove-label-ids',
-        'label-3',
-      ],
-      { from: 'user' },
+    await expectExit1(() =>
+      updateInboxThreadCommand.parseAsync(
+        [INBOX_ID, THREAD_ID, '--read', flag, 'label-1'],
+        { from: 'user' },
+      ),
     );
 
-    expect(mockUpdate.mock.calls[0][0]).toStrictEqual({
-      inboxId: INBOX_ID,
-      threadId: THREAD_ID,
-      addLabelIds: ['label-1', 'label-2'],
-      removeLabelIds: ['label-3'],
-    });
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_options');
+    expect(output).toContain('threads labels add');
+    expect(output).toContain('threads labels remove');
+    expect(output).toContain('threads labels set');
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it('hides the removed label flags from help', () => {
+    const help = updateInboxThreadCommand.helpInformation();
+    expect(help).not.toContain('label');
   });
 
   it('takes the IDs as positional arguments', async () => {
@@ -145,25 +149,14 @@ describe('inboxes threads update command', () => {
     setupOutputSpies();
 
     await updateInboxThreadCommand.parseAsync(
-      [
-        '--inbox_id',
-        INBOX_ID,
-        '--thread_id',
-        THREAD_ID,
-        '--add_label_ids',
-        'label-1',
-        'label-2',
-        '--remove_label_ids',
-        'label-3',
-      ],
+      ['--inbox_id', INBOX_ID, '--thread_id', THREAD_ID, '--folder', 'inbox'],
       { from: 'user' },
     );
 
     expect(mockUpdate.mock.calls[0][0]).toStrictEqual({
       inboxId: INBOX_ID,
       threadId: THREAD_ID,
-      addLabelIds: ['label-1', 'label-2'],
-      removeLabelIds: ['label-3'],
+      folder: 'inbox',
     });
   });
 

@@ -80,9 +80,10 @@ describe('inboxes agent update command', () => {
       tone: 'expanded_professional',
       actions: ['draft_reply', 'add_labels', 'archive', 'move_to_trash'],
     });
-    expect(
-      JSON.parse(spies.logSpy.mock.calls[0][0] as string),
-    ).toStrictEqual({ object: 'inbox_agent', id: AGENT_ID });
+    expect(JSON.parse(spies.logSpy.mock.calls[0][0] as string)).toStrictEqual({
+      object: 'inbox_agent',
+      id: AGENT_ID,
+    });
   });
 
   it.each([
@@ -211,7 +212,13 @@ describe('inboxes agent update command', () => {
 
     await expectExit1(() =>
       updateInboxAgentCommand.parseAsync(
-        ['--inbox-id', INBOX_ID, '--actions', 'archive_thread', 'delete_thread'],
+        [
+          '--inbox-id',
+          INBOX_ID,
+          '--actions',
+          'archive_thread',
+          'delete_thread',
+        ],
         { from: 'user' },
       ),
     );

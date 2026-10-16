@@ -5,14 +5,12 @@ import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { outputError } from '../../../lib/output';
 import { pickId } from '../../../lib/prompts';
-import { snakeCaseAlias } from '../../../lib/snake-case-alias';
+import { hiddenAlias, snakeCaseAlias } from '../../../lib/snake-case-alias';
 import { inboxPickerConfig, resolveIdInputs } from '../utils';
 import { inboxThreadPickerConfig } from './utils';
 
 export const updateInboxThreadCommand = new Command('update')
-  .description(
-    'Mark a thread read or unread, move it, or add and remove labels',
-  )
+  .description('Mark a thread read or unread, or move it to a folder')
   .argument('[inboxId]', 'Inbox UUID')
   .argument('[threadId]', 'Thread UUID')
   .option('--inbox-id <id>', 'Inbox UUID')
@@ -26,26 +24,26 @@ export const updateInboxThreadCommand = new Command('update')
       MOVE_THREAD_FOLDERS,
     ),
   )
-  .option(
-    '--add-label-ids <label-ids...>',
-    'Label UUIDs to apply to the thread, 1 to 10',
+  .addOption(new Option('--add-label-ids <label-ids...>').hideHelp())
+  .addOption(
+    hiddenAlias(
+      '--add_label_ids <label-ids...>',
+      '--add-label-ids <label-ids...>',
+    ),
   )
-  .addOption(snakeCaseAlias('--add-label-ids <label-ids...>'))
-  .option(
-    '--remove-label-ids <label-ids...>',
-    'Label UUIDs to remove from the thread, 1 to 10',
+  .addOption(new Option('--remove-label-ids <label-ids...>').hideHelp())
+  .addOption(
+    hiddenAlias(
+      '--remove_label_ids <label-ids...>',
+      '--remove-label-ids <label-ids...>',
+    ),
   )
-  .addOption(snakeCaseAlias('--remove-label-ids <label-ids...>'))
   .addHelpText(
     'after',
     buildHelpText({
-      context: `At least one of --read/--unread, --folder, --add-label-ids, or --remove-label-ids
-is required.
-A label ID cannot be both added and removed in the same request.
-A label ID that does not exist in the inbox returns an error.
-Removing a label from a thread keeps the label itself.
-The changes apply in this order: read, folder, added labels, removed labels.
-They are not atomic, so an unknown label leaves the earlier changes applied.
+      context: `At least one of --read/--unread or --folder is required.
+To change the labels of a thread, use "resend inboxes threads labels add",
+"set" or "remove".
 Threads cannot be moved to "sent". Moving a thread out of "trash" restores it
 and clears its deletion deadline.`,
       output: `  {"object":"inbox_thread","id":"<uuid>","subject":"<subject>|null","folder":"inbox|archive|spam|sent|trash","labels":[],"read":true}`,
@@ -58,8 +56,6 @@ and clears its deletion deadline.`,
       examples: [
         'resend inboxes threads update <inbox-id> <thread-id> --read',
         'resend inboxes threads update <inbox-id> <thread-id> --folder archive --json',
-        'resend inboxes threads update <inbox-id> <thread-id> --add-label-ids <label-id> --json',
-        'resend inboxes threads update <inbox-id> <thread-id> --add-label-ids <label-id> --remove-label-ids <other-label-id>',
       ],
     }),
   )
@@ -76,17 +72,23 @@ and clears its deletion deadline.`,
       );
     }
 
-    const read = opts.read ? true : opts.unread ? false : undefined;
-    if (
-      read === undefined &&
-      !opts.folder &&
-      !opts.addLabelIds &&
-      !opts.removeLabelIds
-    ) {
+    if (opts.addLabelIds || opts.removeLabelIds) {
       outputError(
         {
           message:
-            'Provide at least one option to update: --read/--unread, --folder, --add-label-ids, or --remove-label-ids.',
+            'threads update no longer changes labels. Use "resend inboxes threads labels add <inbox-id> <thread-id> --labels <label-id>..." to add labels, "threads labels remove <inbox-id> <thread-id> <label-id>" to remove one, or "threads labels set" to replace them all.',
+          code: 'invalid_options',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
+    const read = opts.read ? true : opts.unread ? false : undefined;
+    if (read === undefined && !opts.folder) {
+      outputError(
+        {
+          message:
+            'Provide at least one option to update: --read/--unread or --folder.',
           code: 'no_changes',
         },
         { json: globalOpts.json },
@@ -115,8 +117,6 @@ and clears its deletion deadline.`,
       threadId,
       ...(read !== undefined && { read }),
       ...(opts.folder && { folder: opts.folder }),
-      ...(opts.addLabelIds && { addLabelIds: opts.addLabelIds }),
-      ...(opts.removeLabelIds && { removeLabelIds: opts.removeLabelIds }),
     } as UpdateInboxThreadOptions;
 
     await runWrite(
