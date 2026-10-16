@@ -642,10 +642,6 @@ Every command that names an inbox takes its ID or its email address, such as `su
 
 In an interactive terminal without `--json` or `-q`, omit an ID to pick from a list. The exception is the email ID of `threads emails get`, `reply`, and `forward`. There, these commands ask you to type it. Get it from `threads emails list`.
 
-Version 2.24.0 used snake_case flags, such as `--inbox_id` and `--start_date`. They still work, but help does not show them. Use the kebab-case flags.
-
-Version 2.26.0 renamed `agent update --enabled-actions` to `--actions`. The old flag still works, but help does not show it. It also moved the labels of a thread from `threads update --add-label-ids` and `--remove-label-ids` to the `threads labels` commands. The old `threads update` flags now return an error that names the new commands.
-
 ---
 
 #### **`resend inboxes list`**

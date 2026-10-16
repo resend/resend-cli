@@ -1,6 +1,6 @@
 import { Command } from '@commander-js/extra-typings';
 import { describe, expect, it } from 'vitest';
-import { hiddenAlias, snakeCaseAlias } from '../../src/lib/snake-case-alias';
+import { snakeCaseAlias } from '../../src/lib/snake-case-alias';
 
 function buildCommand() {
   return new Command('test')
@@ -53,41 +53,5 @@ describe('snakeCaseAlias', () => {
     expect(help).toContain('--inbox-id <id>');
     expect(help).toContain('--add-label-ids <ids...>');
     expect(help).not.toContain('_');
-  });
-});
-
-describe('hiddenAlias', () => {
-  function buildRenamedCommand() {
-    return new Command('test')
-      .exitOverride()
-      .option('--actions <actions...>', 'Actions')
-      .addOption(
-        hiddenAlias('--enabled-actions <actions...>', '--actions <actions...>'),
-      )
-      .addOption(
-        hiddenAlias('--enabled_actions <actions...>', '--actions <actions...>'),
-      );
-  }
-
-  it('sets the target attribute from each old spelling', () => {
-    for (const flag of ['--enabled-actions', '--enabled_actions']) {
-      const command = buildRenamedCommand();
-      command.parse([flag, 'a', 'b'], { from: 'user' });
-      expect(command.opts()).toStrictEqual({ actions: ['a', 'b'] });
-    }
-  });
-
-  it('merges a variadic value given with the new and the old flag', () => {
-    const command = buildRenamedCommand();
-    command.parse(['--actions', 'a', '--enabled-actions', 'b'], {
-      from: 'user',
-    });
-    expect(command.opts()).toStrictEqual({ actions: ['a', 'b'] });
-  });
-
-  it('hides the old spellings from help', () => {
-    const help = buildRenamedCommand().helpInformation();
-    expect(help).toContain('--actions <actions...>');
-    expect(help).not.toContain('enabled');
   });
 });

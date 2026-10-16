@@ -11,7 +11,7 @@ import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { outputError } from '../../../lib/output';
 import { pickId } from '../../../lib/prompts';
-import { hiddenAlias, snakeCaseAlias } from '../../../lib/snake-case-alias';
+import { snakeCaseAlias } from '../../../lib/snake-case-alias';
 import { inboxPickerConfig, inboxSelector, resolveIdInputs } from '../utils';
 
 const RENAMED_ACTIONS: Record<string, InboxAgentAction> = {
@@ -35,12 +35,6 @@ export const updateInboxAgentCommand = new Command('update')
   .option(
     '--actions <actions...>',
     `Replace the actions the agent can take (comma or space-separated): ${INBOX_AGENT_ACTIONS.join(', ')}`,
-  )
-  .addOption(
-    hiddenAlias('--enabled-actions <actions...>', '--actions <actions...>'),
-  )
-  .addOption(
-    hiddenAlias('--enabled_actions <actions...>', '--actions <actions...>'),
   )
   .addHelpText(
     'after',

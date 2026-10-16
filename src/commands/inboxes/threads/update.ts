@@ -5,7 +5,7 @@ import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { outputError } from '../../../lib/output';
 import { pickId } from '../../../lib/prompts';
-import { hiddenAlias, snakeCaseAlias } from '../../../lib/snake-case-alias';
+import { snakeCaseAlias } from '../../../lib/snake-case-alias';
 import { inboxPickerConfig, inboxSelector, resolveIdInputs } from '../utils';
 import { inboxThreadPickerConfig } from './utils';
 
@@ -22,20 +22,6 @@ export const updateInboxThreadCommand = new Command('update')
   .addOption(
     new Option('--folder <folder>', 'Move the thread to a folder').choices(
       MOVE_THREAD_FOLDERS,
-    ),
-  )
-  .addOption(new Option('--add-label-ids <label-ids...>').hideHelp())
-  .addOption(
-    hiddenAlias(
-      '--add_label_ids <label-ids...>',
-      '--add-label-ids <label-ids...>',
-    ),
-  )
-  .addOption(new Option('--remove-label-ids <label-ids...>').hideHelp())
-  .addOption(
-    hiddenAlias(
-      '--remove_label_ids <label-ids...>',
-      '--remove-label-ids <label-ids...>',
     ),
   )
   .addHelpText(
@@ -66,17 +52,6 @@ and clears its deletion deadline.`,
       outputError(
         {
           message: 'Use either --read or --unread, not both.',
-          code: 'invalid_options',
-        },
-        { json: globalOpts.json },
-      );
-    }
-
-    if (opts.addLabelIds || opts.removeLabelIds) {
-      outputError(
-        {
-          message:
-            'threads update no longer changes labels. To add labels, run "resend inboxes threads labels add <inbox-id> <thread-id> --labels <label-id>". To remove one, run "resend inboxes threads labels remove <inbox-id> <thread-id> <label-id>". To replace them all, run "resend inboxes threads labels set <inbox-id> <thread-id> --labels <label-id>".',
           code: 'invalid_options',
         },
         { json: globalOpts.json },

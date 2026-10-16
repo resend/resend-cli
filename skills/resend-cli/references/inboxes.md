@@ -15,17 +15,10 @@ inbox ID, then the thread, draft, or label ID, then the email ID. Each ID also
 has a flag, such as `--inbox-id`. Pass an ID as an argument or as a flag, not
 both, or the command returns `invalid_options`. The IDs are required in
 non-interactive mode. Put the arguments before variadic flags such as `--to`.
-CLI 2.24.0 used snake_case flags (`--inbox_id`, `--start_date`). They still
-work but are hidden from help. Use the kebab-case flags.
 
 Every command that names an inbox takes its ID or its email address, such as
 `support@yourdomain.com`, as `[inboxId]` or `--inbox-id`. The address match
 ignores case. An unknown address returns an error.
-
-CLI 2.26.0 renamed `agent update --enabled-actions` to `--actions` (the old
-spelling is a hidden alias) and moved thread labels from `threads update
---add-label-ids`/`--remove-label-ids` to `threads labels add|set|remove`. The
-old `threads update` flags return `invalid_options`.
 
 ---
 
@@ -164,8 +157,7 @@ Retrieve a thread's summary. To read its messages, use
 
 Mark a thread read/unread or move it. At least one option is required. Moving
 a thread out of `trash` restores it and clears its deletion deadline. To change
-the labels of a thread, use `threads labels add`, `set`, or `remove`. The old
-`--add-label-ids` and `--remove-label-ids` flags return `invalid_options`.
+the labels of a thread, use `threads labels add`, `set`, or `remove`.
 
 **Arguments:** `[inboxId]` `[threadId]` (or `--inbox-id <id>`, `--thread-id <id>`) — required in non-interactive mode
 
@@ -549,7 +541,7 @@ fields keep their current value.
 |------|------|-------------|
 | `--instructions <text>` | string | Instructions the agent follows (max 4000 chars). Pass `""` to clear them |
 | `--tone <tone>` | string | Tone the agent writes in. One of the presets `concise_professional`, `concise_casual`, `expanded_professional`, `expanded_casual`. Pass `""` to clear it. Other text returns `invalid_tone` |
-| `--actions <actions...>` | string[] | Replaces the whole set (comma or space-separated). Duplicates are removed. One or more of `draft_reply`, `forward_thread`, `add_labels`, `assign_thread`, `mark_as_spam`, `archive`, `move_to_trash`. Pass `""` to disable all actions. Other values return `invalid_actions`. `--enabled-actions` is a hidden alias |
+| `--actions <actions...>` | string[] | Replaces the whole set (comma or space-separated). Duplicates are removed. One or more of `draft_reply`, `forward_thread`, `add_labels`, `assign_thread`, `mark_as_spam`, `archive`, `move_to_trash`. Pass `""` to disable all actions. Other values return `invalid_actions` |
 
 **Output:** `{"object":"inbox_agent","id":"<uuid>"}`
 

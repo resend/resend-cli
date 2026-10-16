@@ -86,23 +86,6 @@ describe('inboxes agent update command', () => {
     });
   });
 
-  it.each([
-    '--enabled-actions',
-    '--enabled_actions',
-  ])('accepts the hidden %s alias of --actions', async (flag) => {
-    setupOutputSpies();
-
-    await updateInboxAgentCommand.parseAsync(
-      ['--inbox-id', INBOX_ID, flag, 'draft_reply', 'archive'],
-      { from: 'user' },
-    );
-
-    expect(mockUpdate.mock.calls[0][0]).toStrictEqual({
-      inboxId: INBOX_ID,
-      actions: ['draft_reply', 'archive'],
-    });
-  });
-
   it('removes duplicate actions', async () => {
     setupOutputSpies();
 
