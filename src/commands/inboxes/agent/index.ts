@@ -12,7 +12,7 @@ export const inboxAgentCommand = new Command('agent')
 and which actions it is allowed to take.`,
       examples: [
         'resend inboxes agent get <inbox-id>',
-        'resend inboxes agent update <inbox-id> --tone "friendly and concise"',
+        'resend inboxes agent update <inbox-id> --tone concise_casual',
       ],
     }),
   )

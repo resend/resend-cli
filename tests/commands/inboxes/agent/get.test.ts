@@ -23,8 +23,8 @@ const mockGet = vi.fn(async () => ({
   data: {
     object: 'inbox_agent' as const,
     instructions: 'Answer refund questions yourself.',
-    tone: 'friendly and concise',
-    enabled_actions: ['draft_reply' as const],
+    tone: 'concise_casual' as const,
+    actions: ['draft_reply' as const, 'archive' as const],
   },
   error: null,
 }));
@@ -63,8 +63,38 @@ describe('inboxes agent get command', () => {
 
     expect(mockGet.mock.calls[0][0]).toStrictEqual({ inboxId: INBOX_ID });
     const parsed = JSON.parse(spies.logSpy.mock.calls[0][0] as string);
-    expect(parsed.object).toBe('inbox_agent');
-    expect(parsed.enabled_actions).toEqual(['draft_reply']);
+    expect(parsed).toStrictEqual({
+      object: 'inbox_agent',
+      instructions: 'Answer refund questions yourself.',
+      tone: 'concise_casual',
+      actions: ['draft_reply', 'archive'],
+    });
+  });
+
+  it('prints the actions in interactive mode', async () => {
+    for (const stream of [process.stdin, process.stdout]) {
+      Object.defineProperty(stream, 'isTTY', { value: true, writable: true });
+    }
+    delete process.env.CI;
+    delete process.env.GITHUB_ACTIONS;
+    delete process.env.TERM;
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
+
+    await getInboxAgentCommand.parseAsync([INBOX_ID], { from: 'user' });
+
+    const output = logSpy.mock.calls.map((c) => c[0]).join('\n');
+    logSpy.mockRestore();
+    stderrSpy.mockRestore();
+    expect(output).toBe(
+      [
+        'Instructions: Answer refund questions yourself.',
+        'Tone: concise_casual',
+        'Actions: draft_reply, archive',
+      ].join('\n'),
+    );
   });
 
   it('accepts the inbox ID as an argument', async () => {
