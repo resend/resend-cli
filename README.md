@@ -612,7 +612,7 @@ resend webhooks events replay wh_abc123 msg_1srOrx2ZWZBpBUvZwXKQmoEYga2
 
 With the Resend CLI, you can manage inboxes. An inbox is an email address at one of your verified domains that sends and receives email. Received emails are grouped into threads inside the inbox.
 
-Inbox commands need a full-access API key.
+Most inbox commands need a full-access API key. A sending-access key can run `threads emails reply`, `threads emails forward`, `drafts create`, and `drafts send`. A key limited to one domain must match the domain of the inbox.
 
 #### Subcommands
 
@@ -622,6 +622,7 @@ Inbox commands need a full-access API key.
 - `update`
 - `delete`
 - `threads` (`list`, `search`, `get`, `update`, `delete`)
+- `threads labels` (`add`, `set`, `remove`)
 - `threads emails` (`list`, `get`, `reply`, `forward`)
 - `labels` (`list`, `create`, `update`, `delete`)
 - `drafts` (`list`, `create`, `get`, `update`, `delete`, `send`)
@@ -633,13 +634,17 @@ Inbox commands need a full-access API key.
 - `inboxes rm` → `delete`
 - `ls` and `rm` also work on `threads`, `threads emails` (`ls` only), `labels`, and `drafts`
 
-Running a group with no subcommand runs its `list`, or `get` for `agent`.
+Running a group with no subcommand runs its `list`, or `get` for `agent`. `threads labels` shows its help.
 
 The nested commands take their IDs as positional arguments, parent first: the inbox ID, then the thread, draft, or label ID, then the email ID. For example, `resend inboxes threads emails get <inbox-id> <thread-id> <email-id>`. Each ID also has a flag, such as `--inbox-id` or `--thread-id`. Pass an ID as an argument or as a flag, not both.
+
+Every command that names an inbox takes its ID or its email address, such as `support@yourdomain.com`. The address match ignores case.
 
 In an interactive terminal without `--json` or `-q`, omit an ID to pick from a list. The exception is the email ID of `threads emails get`, `reply`, and `forward`. There, these commands ask you to type it. Get it from `threads emails list`.
 
 Version 2.24.0 used snake_case flags, such as `--inbox_id` and `--start_date`. They still work, but help does not show them. Use the kebab-case flags.
+
+Version 2.26.0 renamed `agent update --enabled-actions` to `--actions`. The old flag still works, but help does not show it. It also moved the labels of a thread from `threads update --add-label-ids` and `--remove-label-ids` to the `threads labels` commands. The old `threads update` flags now return an error that names the new commands.
 
 ---
 
@@ -654,7 +659,7 @@ resend inboxes list --limit 25 --json
 
 #### **`resend inboxes create`**
 
-Creates an inbox at an address on one of your domains. Without `--forwarding`, the domain must have receiving enabled. With `--forwarding`, Resend generates a receiving address, so you can receive mail without an MX record.
+Creates an inbox at an address on one of your domains. The part before the `@` can contain letters, numbers, and `. _ % -`, but not `+`. Without `--forwarding`, the domain must have receiving enabled. With `--forwarding`, Resend generates a receiving address, so you can receive mail without an MX record.
 
 The output holds only `{"object":"inbox","id":"<uuid>"}`. Run `resend inboxes get <id>` to read the other fields, such as `receiving_address`.
 
@@ -702,7 +707,7 @@ Lists the threads in an inbox, most recently active first.
 
 | Flag                      | Description                                                                 |
 | ------------------------- | --------------------------------------------------------------------------- |
-| `[inboxId]` or `--inbox-id <id>` | Inbox UUID                                                           |
+| `[inboxId]` or `--inbox-id <id>` | Inbox UUID or email address                                          |
 | `--folders <folders...>`  | `inbox`, `archive`, `spam`, `sent`, `trash` (default `inbox`, or `inbox archive sent` with `--labels`) |
 | `--labels <label-ids...>` | Label UUIDs. Returns threads with any of them                               |
 | `--read` / `--unread`     | Only threads where every email is read, or with at least one unread email   |
@@ -715,7 +720,7 @@ resend inboxes threads list <inbox-id> --folders inbox archive --unread --json
 
 #### **`resend inboxes threads search`**
 
-Finds threads by the text of their emails, who sent or received them, attachments, and dates. Takes `--query`, `--from`, `--to`, `--cc`, `--bcc`, `--has-attachment`, `--without-attachment`, `--start-date`, and `--end-date`, plus the filters and pagination of `threads list`. Search can be up to about a minute behind new emails.
+Finds threads by the text of their emails, who sent or received them, attachments, and dates. Takes `--query`, `--from`, `--to`, `--cc`, `--bcc`, `--has-attachment`, `--without-attachment`, `--start-date`, and `--end-date`, plus the filters and pagination of `threads list`. Each result has a `matched_email_id`, the ID of the email that matched. Pass it as the email ID of `threads emails get`, `reply`, and `forward`. Search can be up to about a minute behind new emails.
 
 ```bash
 resend inboxes threads search <inbox-id> --query invoice
@@ -732,18 +737,15 @@ resend inboxes threads get <inbox-id> <thread-id>
 
 #### **`resend inboxes threads update`**
 
-Marks a thread read or unread, moves it to a folder, or adds and removes labels. **At least one** option is required.
+Marks a thread read or unread, or moves it to a folder. **At least one** option is required. To change the labels of a thread, use `threads labels`.
 
 | Flag                                 | Description                                              |
 | ------------------------------------ | -------------------------------------------------------- |
 | `--read` / `--unread`                | Mark every email in the thread read or unread            |
 | `--folder <folder>`                  | `inbox`, `archive`, `spam`, or `trash`                   |
-| `--add-label-ids <label-ids...>`     | Label UUIDs to apply, 1 to 10                            |
-| `--remove-label-ids <label-ids...>`  | Label UUIDs to remove, 1 to 10                           |
 
 ```bash
 resend inboxes threads update <inbox-id> <thread-id> --read --folder archive
-resend inboxes threads update <inbox-id> <thread-id> --add-label-ids <label-id>
 ```
 
 #### **`resend inboxes threads delete`**
@@ -752,6 +754,31 @@ Moves a thread to `trash` and schedules it for deletion in 30 days. To restore i
 
 ```bash
 resend inboxes threads delete <inbox-id> <thread-id> --yes
+```
+
+#### **`resend inboxes threads labels add`**
+
+Adds labels to a thread. Labels already on the thread stay. **`--labels` is required** and takes 1 to 10 label IDs from `labels list`. The output lists every label on the thread after the change.
+
+```bash
+resend inboxes threads labels add <inbox-id> <thread-id> --labels <label-id> <other-label-id>
+```
+
+#### **`resend inboxes threads labels set`**
+
+Replaces every label on a thread in one atomic change. **`--labels` is required** and takes 0 to 100 label IDs. Pass `--labels ""` to remove every label. The labels themselves are kept. The output lists every label on the thread after the change.
+
+```bash
+resend inboxes threads labels set <inbox-id> <thread-id> --labels <label-id>
+resend inboxes threads labels set <inbox-id> <thread-id> --labels ""
+```
+
+#### **`resend inboxes threads labels remove`**
+
+Removes one label from a thread. The label itself is kept. The output lists every label on the thread after the change.
+
+```bash
+resend inboxes threads labels remove <inbox-id> <thread-id> <label-id>
 ```
 
 #### **`resend inboxes threads emails list`**
@@ -781,7 +808,7 @@ Sends a reply from the inbox address. The reply goes to the `Reply-To` addresses
 | `--cc`, `--bcc <addresses...>` | Extra recipients, one or more                             |
 | `--subject <subject>`       | Override the subject                                         |
 | `--reply-all`               | Reply to everyone on the original email                      |
-| `--attachment <specs...>`   | File path or URL to attach, as on `resend emails send`       |
+| `--attachment <specs...>`   | File path or URL to attach, as on `resend emails send`. The content of all files can total at most 25 MB |
 | `--attachments-file <path>` | JSON array of attachment objects                             |
 | `--headers <key=value...>`  | Custom headers. `In-Reply-To`, `References` and `Reply-To` are reserved. Names and values cannot contain line breaks |
 | `--idempotency-key <key>`   | Deduplicate the send                                         |
@@ -793,7 +820,7 @@ resend inboxes threads emails reply <inbox-id> <thread-id> <email-id> --text "In
 
 #### **`resend inboxes threads emails forward`**
 
-Forwards an email from the inbox address. **`--to` is required.** The attachments of the original email are sent with the forward. An original attachment that was sent from a URL cannot be forwarded. Takes `--cc`, `--bcc`, `--text`, `--html`, `--subject`, `--attachment`, `--attachments-file`, `--headers`, and `--idempotency-key`. The output holds the ID of the sent email.
+Forwards an email from the inbox address. **`--to` is required.** The attachments of the original email are sent with the forward. Together with the files you add, they can have at most 25 MB of content. An original attachment that was sent from a URL cannot be forwarded. Takes `--cc`, `--bcc`, `--text`, `--html`, `--subject`, `--attachment`, `--attachments-file`, `--headers`, and `--idempotency-key`. The output holds the ID of the sent email.
 
 ```bash
 resend inboxes threads emails forward <inbox-id> <thread-id> <email-id> --to teammate@example.com --text "FYI"
@@ -841,7 +868,7 @@ resend inboxes drafts list <inbox-id>
 
 #### **`resend inboxes drafts create`**
 
-Creates a draft that starts a new thread. Pass `--thread-id` and `--reply-to-email-id` together for a reply draft. Takes `--to`, `--cc`, `--bcc`, `--subject`, `--text`, `--html`, `--attachment`, and `--attachments-file`. **At least one** of them is required. `--idempotency-key` deduplicates the request.
+Creates a draft that starts a new thread. Pass `--thread-id` and `--reply-to-email-id` together for a reply draft. A reply draft without `--subject` is sent with the subject of the thread, prefixed with `Re:`. Takes `--to`, `--cc`, `--bcc`, `--subject`, `--text`, `--html`, `--attachment`, and `--attachments-file`. **At least one** of them is required. `--idempotency-key` deduplicates the request.
 
 Draft attachments need `content`, `filename`, and `content_type`, so `--attachment` takes a local file with `;type=<MIME type>`. The files on a draft can total at most 25 MB.
 
@@ -861,7 +888,7 @@ resend inboxes drafts get <inbox-id> <draft-id>
 
 #### **`resend inboxes drafts update`**
 
-Updates the recipients, subject, body, or attachments of an unsent draft. Setting `--text` or `--html` replaces the whole body. `--attachment` and `--attachments-file` replace every attachment on the draft, and `--clear-attachments` removes them all. `--clear-to`, `--clear-cc`, `--clear-bcc`, `--clear-subject`, `--clear-text`, and `--clear-html` remove the value of that field. A clear flag and a value for the same field return an error.
+Updates the recipients, subject, body, or attachments of an unsent draft. Setting `--text` or `--html` replaces the whole body. `--attachment` and `--attachments-file` replace every attachment on the draft, and `--clear-attachments` removes them all. `--clear-to`, `--clear-cc`, `--clear-bcc`, `--clear-subject`, `--clear-text`, and `--clear-html` remove the value of that field. A clear flag and a value for the same field return an error. The output holds only `{"object":"inbox_draft","id":"<uuid>"}`. Run `drafts get` to read the draft.
 
 ```bash
 resend inboxes drafts update <inbox-id> <draft-id> --subject "Updated subject"
@@ -879,7 +906,7 @@ resend inboxes drafts delete <inbox-id> <draft-id> --yes
 
 #### **`resend inboxes drafts send`**
 
-Sends a draft from the inbox address. The draft needs at least one `to` recipient, a non-empty subject, and `html` or `text`. A reply draft created without `--subject` has an empty subject, so set one before you send it. `--headers` adds custom headers, except the reserved `In-Reply-To`, `References` and `Reply-To`. `--idempotency-key` deduplicates the send. The output holds the ID of the sent email.
+Sends a draft from the inbox address. The draft needs at least one `to` recipient and `html` or `text`. A standalone draft also needs a non-empty subject. A reply draft without a subject is sent with the subject of the thread, prefixed with `Re:` when it does not already start with it. `--headers` adds custom headers, except the reserved `In-Reply-To`, `References` and `Reply-To`. `--idempotency-key` deduplicates the send. The output holds the ID of the sent email.
 
 ```bash
 resend inboxes drafts send <inbox-id> <draft-id>
@@ -887,7 +914,7 @@ resend inboxes drafts send <inbox-id> <draft-id>
 
 #### **`resend inboxes agent get`**
 
-Fetches the agent settings of an inbox: `instructions`, `tone`, and `enabled_actions`.
+Fetches the agent settings of an inbox: `instructions`, `tone`, and `actions`.
 
 ```bash
 resend inboxes agent get <inbox-id>
@@ -895,14 +922,13 @@ resend inboxes agent get <inbox-id>
 
 #### **`resend inboxes agent update`**
 
-Updates the agent settings. **At least one** of `--instructions`, `--tone`, or `--enabled-actions` is required. Omitted fields keep their current value. `--enabled-actions` replaces the whole set.
+Updates the agent settings. **At least one** of `--instructions`, `--tone`, or `--actions` is required. Omitted fields keep their current value. `--actions` replaces the whole set. It takes `draft_reply`, `forward_thread`, `add_labels`, `assign_thread`, `mark_as_spam`, `archive`, and `move_to_trash`.
 
-`--tone` takes one of the presets `concise_professional`, `concise_casual`, `expanded_professional`, or `expanded_casual`, or custom text in your own words (max 64 characters).
+`--tone` takes one of the presets `concise_professional`, `concise_casual`, `expanded_professional`, or `expanded_casual`. Pass `--tone ""` to clear it. Other text returns `invalid_tone`.
 
 ```bash
 resend inboxes agent update <inbox-id> --tone concise_professional
-resend inboxes agent update <inbox-id> --tone "friendly and concise"
-resend inboxes agent update <inbox-id> --enabled-actions draft_reply add_labels
+resend inboxes agent update <inbox-id> --actions draft_reply add_labels archive
 ```
 
 ---
