@@ -16,7 +16,7 @@ export const addInboxThreadLabelsCommand = new Command('add')
   .addOption(snakeCaseAlias('--inbox-id <id>'))
   .option('--thread-id <id>', 'Thread UUID')
   .addOption(snakeCaseAlias('--thread-id <id>'))
-  .option('--labels <label-ids...>', 'Label IDs to add, 1 to 10 (required)')
+  .option('--labels <label-ids...>', 'Label UUIDs to add, 1 to 10 (required)')
   .addHelpText(
     'after',
     buildHelpText({
