@@ -8,7 +8,7 @@ import { inboxPickerConfig } from './utils';
 export const deleteInboxCommand = new Command('delete')
   .alias('rm')
   .description('Delete an inbox')
-  .argument('[id]', 'Inbox UUID')
+  .argument('[id]', 'Inbox UUID or email address')
   .option(
     '--yes',
     'Skip the confirmation prompt (required in non-interactive mode)',

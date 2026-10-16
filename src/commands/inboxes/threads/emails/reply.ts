@@ -7,15 +7,15 @@ import { buildHelpText } from '../../../../lib/help-text';
 import { outputError } from '../../../../lib/output';
 import { pickId, requireText } from '../../../../lib/prompts';
 import { snakeCaseAlias } from '../../../../lib/snake-case-alias';
-import { inboxPickerConfig, resolveIdInputs } from '../../utils';
+import { inboxPickerConfig, inboxSelector, resolveIdInputs } from '../../utils';
 import { inboxThreadPickerConfig } from '../utils';
 
 export const replyInboxThreadEmailCommand = new Command('reply')
   .description('Reply to an email in a thread')
-  .argument('[inboxId]', 'Inbox UUID')
+  .argument('[inboxId]', 'Inbox UUID or email address')
   .argument('[threadId]', 'Thread UUID')
   .argument('[emailId]', 'Email UUID to reply to (from "threads emails list")')
-  .option('--inbox-id <id>', 'Inbox UUID')
+  .option('--inbox-id <id>', 'Inbox UUID or email address')
   .addOption(snakeCaseAlias('--inbox-id <id>'))
   .option('--thread-id <id>', 'Thread UUID')
   .addOption(snakeCaseAlias('--thread-id <id>'))
@@ -160,7 +160,7 @@ The output holds the ID of the sent email. Use it with "resend emails get".`,
         sdkCall: (resend) =>
           resend.inboxes.threads.emails.reply(
             {
-              inboxId,
+              ...inboxSelector(inboxId),
               threadId,
               emailId,
               ...body,

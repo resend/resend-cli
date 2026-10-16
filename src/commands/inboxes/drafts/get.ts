@@ -4,14 +4,14 @@ import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { pickId } from '../../../lib/prompts';
 import { snakeCaseAlias } from '../../../lib/snake-case-alias';
-import { inboxPickerConfig, resolveIdInputs } from '../utils';
+import { inboxPickerConfig, inboxSelector, resolveIdInputs } from '../utils';
 import { inboxDraftPickerConfig } from './utils';
 
 export const getInboxDraftCommand = new Command('get')
   .description('Retrieve a draft by ID')
-  .argument('[inboxId]', 'Inbox UUID')
+  .argument('[inboxId]', 'Inbox UUID or email address')
   .argument('[draftId]', 'Draft UUID')
-  .option('--inbox-id <id>', 'Inbox UUID')
+  .option('--inbox-id <id>', 'Inbox UUID or email address')
   .addOption(snakeCaseAlias('--inbox-id <id>'))
   .option('--draft-id <id>', 'Draft UUID')
   .addOption(snakeCaseAlias('--draft-id <id>'))
@@ -44,7 +44,8 @@ export const getInboxDraftCommand = new Command('get')
     await runGet(
       {
         loading: 'Fetching draft...',
-        sdkCall: (resend) => resend.inboxes.drafts.get({ inboxId, draftId }),
+        sdkCall: (resend) =>
+          resend.inboxes.drafts.get({ ...inboxSelector(inboxId), draftId }),
         onInteractive: (data) => {
           console.log(`${data.subject ?? '(no subject)'}`);
           console.log(`ID: ${data.id}`);

@@ -4,15 +4,15 @@ import type { GlobalOpts } from '../../../../lib/client';
 import { buildHelpText } from '../../../../lib/help-text';
 import { pickId, requireText } from '../../../../lib/prompts';
 import { snakeCaseAlias } from '../../../../lib/snake-case-alias';
-import { inboxPickerConfig, resolveIdInputs } from '../../utils';
+import { inboxPickerConfig, inboxSelector, resolveIdInputs } from '../../utils';
 import { inboxThreadPickerConfig } from '../utils';
 
 export const getInboxThreadEmailCommand = new Command('get')
   .description('Retrieve a single email from a thread')
-  .argument('[inboxId]', 'Inbox UUID')
+  .argument('[inboxId]', 'Inbox UUID or email address')
   .argument('[threadId]', 'Thread UUID')
   .argument('[emailId]', 'Email UUID (from "threads emails list")')
-  .option('--inbox-id <id>', 'Inbox UUID')
+  .option('--inbox-id <id>', 'Inbox UUID or email address')
   .addOption(snakeCaseAlias('--inbox-id <id>'))
   .option('--thread-id <id>', 'Thread UUID')
   .addOption(snakeCaseAlias('--thread-id <id>'))
@@ -59,7 +59,11 @@ export const getInboxThreadEmailCommand = new Command('get')
       {
         loading: 'Fetching email...',
         sdkCall: (resend) =>
-          resend.inboxes.threads.emails.get({ inboxId, threadId, emailId }),
+          resend.inboxes.threads.emails.get({
+            ...inboxSelector(inboxId),
+            threadId,
+            emailId,
+          }),
         onInteractive: (data) => {
           console.log(`${data.subject ?? '(no subject)'}`);
           console.log(`ID: ${data.id}`);

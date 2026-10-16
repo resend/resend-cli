@@ -11,10 +11,10 @@ import { printThreadLabels } from './utils';
 
 export const removeInboxThreadLabelCommand = new Command('remove')
   .description('Remove a label from a thread')
-  .argument('[inboxId]', 'Inbox ID or email address')
+  .argument('[inboxId]', 'Inbox UUID or email address')
   .argument('[threadId]', 'Thread UUID')
   .argument('[labelId]', 'Label UUID')
-  .option('--inbox-id <id>', 'Inbox ID or email address')
+  .option('--inbox-id <id>', 'Inbox UUID or email address')
   .addOption(snakeCaseAlias('--inbox-id <id>'))
   .option('--thread-id <id>', 'Thread UUID')
   .addOption(snakeCaseAlias('--thread-id <id>'))

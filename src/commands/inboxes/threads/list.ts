@@ -10,14 +10,14 @@ import {
 } from '../../../lib/pagination';
 import { pickId } from '../../../lib/prompts';
 import { snakeCaseAlias } from '../../../lib/snake-case-alias';
-import { inboxPickerConfig, resolveIdInputs } from '../utils';
+import { inboxPickerConfig, inboxSelector, resolveIdInputs } from '../utils';
 import { renderThreadsTable, threadFilterFlags, threadFilters } from './utils';
 
 export const listInboxThreadsCommand = new Command('list')
   .alias('ls')
   .description('List threads in an inbox')
-  .argument('[inboxId]', 'Inbox UUID')
-  .option('--inbox-id <id>', 'Inbox UUID')
+  .argument('[inboxId]', 'Inbox UUID or email address')
+  .option('--inbox-id <id>', 'Inbox UUID or email address')
   .addOption(snakeCaseAlias('--inbox-id <id>'))
   .addOption(
     new Option(
@@ -86,7 +86,7 @@ To find threads by text, people, attachments, or dates, use
         loading: 'Fetching threads...',
         sdkCall: (resend) =>
           resend.inboxes.threads.list({
-            inboxId,
+            ...inboxSelector(inboxId),
             ...filters,
             ...paginationOpts,
           }),

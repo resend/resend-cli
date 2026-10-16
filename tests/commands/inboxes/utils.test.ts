@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, type MockInstance, vi } from 'vitest';
-import { resolveIdInputs } from '../../../src/commands/inboxes/utils';
+import {
+  inboxSelector,
+  resolveIdInputs,
+} from '../../../src/commands/inboxes/utils';
 import {
   captureTestEnv,
   expectExit1,
@@ -56,5 +59,19 @@ describe('resolveIdInputs', () => {
     expect(output).toContain('invalid_options');
     expect(output).toContain('--thread-id');
     expect(output).toContain('<inboxId> <threadId>');
+  });
+});
+
+describe('inboxSelector', () => {
+  it('passes a value with @ as the email address', () => {
+    expect(inboxSelector('support@example.com')).toStrictEqual({
+      emailAddress: 'support@example.com',
+    });
+  });
+
+  it('passes any other value as the inbox ID', () => {
+    expect(inboxSelector('78261eea-8f8b-4381-83c6-79fa7120f1cf')).toStrictEqual(
+      { inboxId: '78261eea-8f8b-4381-83c6-79fa7120f1cf' },
+    );
   });
 });

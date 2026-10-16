@@ -7,15 +7,15 @@ import { confirmDelete, pickId, pickItem } from '../../../lib/prompts';
 import { snakeCaseAlias } from '../../../lib/snake-case-alias';
 import { withSpinner } from '../../../lib/spinner';
 import { isInteractive } from '../../../lib/tty';
-import { inboxPickerConfig, resolveIdInputs } from '../utils';
+import { inboxPickerConfig, inboxSelector, resolveIdInputs } from '../utils';
 import { inboxThreadPickerConfig } from './utils';
 
 export const deleteInboxThreadCommand = new Command('delete')
   .alias('rm')
   .description('Move a thread to trash and schedule it for deletion in 30 days')
-  .argument('[inboxId]', 'Inbox UUID')
+  .argument('[inboxId]', 'Inbox UUID or email address')
   .argument('[threadId]', 'Thread UUID')
-  .option('--inbox-id <id>', 'Inbox UUID')
+  .option('--inbox-id <id>', 'Inbox UUID or email address')
   .addOption(snakeCaseAlias('--inbox-id <id>'))
   .option('--thread-id <id>', 'Thread UUID')
   .addOption(snakeCaseAlias('--thread-id <id>'))
@@ -65,7 +65,11 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
     }
     const data = await withSpinner(
       'Moving thread to trash...',
-      () => resend.inboxes.threads.remove({ inboxId, threadId: picked.id }),
+      () =>
+        resend.inboxes.threads.remove({
+          ...inboxSelector(inboxId),
+          threadId: picked.id,
+        }),
       'delete_error',
       globalOpts,
     );

@@ -4,14 +4,14 @@ import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { pickId } from '../../../lib/prompts';
 import { snakeCaseAlias } from '../../../lib/snake-case-alias';
-import { inboxPickerConfig, resolveIdInputs } from '../utils';
+import { inboxPickerConfig, inboxSelector, resolveIdInputs } from '../utils';
 import { renderLabelsTable } from './utils';
 
 export const listInboxLabelsCommand = new Command('list')
   .alias('ls')
   .description('List labels in an inbox')
-  .argument('[inboxId]', 'Inbox UUID')
-  .option('--inbox-id <id>', 'Inbox UUID')
+  .argument('[inboxId]', 'Inbox UUID or email address')
+  .option('--inbox-id <id>', 'Inbox UUID or email address')
   .addOption(snakeCaseAlias('--inbox-id <id>'))
   .addHelpText(
     'after',
@@ -36,7 +36,7 @@ export const listInboxLabelsCommand = new Command('list')
     await runList(
       {
         loading: 'Fetching labels...',
-        sdkCall: (resend) => resend.inboxes.labels.list({ inboxId }),
+        sdkCall: (resend) => resend.inboxes.labels.list(inboxSelector(inboxId)),
         onInteractive: (list) => console.log(renderLabelsTable(list.data)),
       },
       globalOpts,

@@ -12,7 +12,7 @@ import { buildHelpText } from '../../../lib/help-text';
 import { outputError } from '../../../lib/output';
 import { pickId } from '../../../lib/prompts';
 import { hiddenAlias, snakeCaseAlias } from '../../../lib/snake-case-alias';
-import { inboxPickerConfig, resolveIdInputs } from '../utils';
+import { inboxPickerConfig, inboxSelector, resolveIdInputs } from '../utils';
 
 const RENAMED_ACTIONS: Record<string, InboxAgentAction> = {
   archive_thread: 'archive',
@@ -21,8 +21,8 @@ const RENAMED_ACTIONS: Record<string, InboxAgentAction> = {
 
 export const updateInboxAgentCommand = new Command('update')
   .description("Update an inbox's agent instructions, tone, or actions")
-  .argument('[inboxId]', 'Inbox UUID')
-  .option('--inbox-id <id>', 'Inbox UUID')
+  .argument('[inboxId]', 'Inbox UUID or email address')
+  .option('--inbox-id <id>', 'Inbox UUID or email address')
   .addOption(snakeCaseAlias('--inbox-id <id>'))
   .option(
     '--instructions <text>',
@@ -126,7 +126,7 @@ Pass --instructions "" or --tone "" to clear the value.
 
     // The no_changes guard ensures one field is set; tsc cannot prove it.
     const payload = {
-      inboxId,
+      ...inboxSelector(inboxId),
       ...(opts.instructions !== undefined && {
         instructions: opts.instructions || null,
       }),

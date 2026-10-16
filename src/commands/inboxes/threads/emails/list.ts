@@ -9,15 +9,15 @@ import {
 } from '../../../../lib/pagination';
 import { pickId } from '../../../../lib/prompts';
 import { snakeCaseAlias } from '../../../../lib/snake-case-alias';
-import { inboxPickerConfig, resolveIdInputs } from '../../utils';
+import { inboxPickerConfig, inboxSelector, resolveIdInputs } from '../../utils';
 import { inboxThreadPickerConfig, renderThreadEmailsTable } from '../utils';
 
 export const listInboxThreadEmailsCommand = new Command('list')
   .alias('ls')
   .description('List the emails in a thread')
-  .argument('[inboxId]', 'Inbox UUID')
+  .argument('[inboxId]', 'Inbox UUID or email address')
   .argument('[threadId]', 'Thread UUID')
-  .option('--inbox-id <id>', 'Inbox UUID')
+  .option('--inbox-id <id>', 'Inbox UUID or email address')
   .addOption(snakeCaseAlias('--inbox-id <id>'))
   .option('--thread-id <id>', 'Thread UUID')
   .addOption(snakeCaseAlias('--thread-id <id>'))
@@ -77,7 +77,7 @@ A cursor that is not an email of the thread returns an error.`,
         loading: 'Fetching emails...',
         sdkCall: (resend) =>
           resend.inboxes.threads.emails.list({
-            inboxId,
+            ...inboxSelector(inboxId),
             threadId,
             ...paginationOpts,
           }),

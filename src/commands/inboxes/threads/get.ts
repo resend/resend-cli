@@ -4,14 +4,14 @@ import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { pickId } from '../../../lib/prompts';
 import { snakeCaseAlias } from '../../../lib/snake-case-alias';
-import { inboxPickerConfig, resolveIdInputs } from '../utils';
+import { inboxPickerConfig, inboxSelector, resolveIdInputs } from '../utils';
 import { inboxThreadPickerConfig } from './utils';
 
 export const getInboxThreadCommand = new Command('get')
   .description('Retrieve a thread')
-  .argument('[inboxId]', 'Inbox UUID')
+  .argument('[inboxId]', 'Inbox UUID or email address')
   .argument('[threadId]', 'Thread UUID')
-  .option('--inbox-id <id>', 'Inbox UUID')
+  .option('--inbox-id <id>', 'Inbox UUID or email address')
   .addOption(snakeCaseAlias('--inbox-id <id>'))
   .option('--thread-id <id>', 'Thread UUID')
   .addOption(snakeCaseAlias('--thread-id <id>'))
@@ -46,7 +46,8 @@ export const getInboxThreadCommand = new Command('get')
     await runGet(
       {
         loading: 'Fetching thread...',
-        sdkCall: (resend) => resend.inboxes.threads.get({ inboxId, threadId }),
+        sdkCall: (resend) =>
+          resend.inboxes.threads.get({ ...inboxSelector(inboxId), threadId }),
         onInteractive: (data) => {
           console.log(`${data.subject ?? '(no subject)'}`);
           console.log(`ID: ${data.id}`);

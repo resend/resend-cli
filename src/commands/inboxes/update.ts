@@ -10,7 +10,7 @@ import { inboxPickerConfig } from './utils';
 
 export const updateInboxCommand = new Command('update')
   .description("Update an inbox's name or from name")
-  .argument('[id]', 'Inbox UUID')
+  .argument('[id]', 'Inbox UUID or email address')
   .option(
     '--name <name>',
     'New internal name for the inbox. Recipients do not see it',

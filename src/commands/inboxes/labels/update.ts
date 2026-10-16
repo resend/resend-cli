@@ -5,14 +5,14 @@ import { buildHelpText } from '../../../lib/help-text';
 import { outputError } from '../../../lib/output';
 import { pickId } from '../../../lib/prompts';
 import { snakeCaseAlias } from '../../../lib/snake-case-alias';
-import { inboxPickerConfig, resolveIdInputs } from '../utils';
+import { inboxPickerConfig, inboxSelector, resolveIdInputs } from '../utils';
 import { inboxLabelPickerConfig, parseLabelColor } from './utils';
 
 export const updateInboxLabelCommand = new Command('update')
   .description("Update a label's name or color")
-  .argument('[inboxId]', 'Inbox UUID')
+  .argument('[inboxId]', 'Inbox UUID or email address')
   .argument('[labelId]', 'Label UUID')
-  .option('--inbox-id <id>', 'Inbox UUID')
+  .option('--inbox-id <id>', 'Inbox UUID or email address')
   .addOption(snakeCaseAlias('--inbox-id <id>'))
   .option('--label-id <id>', 'Label UUID')
   .addOption(snakeCaseAlias('--label-id <id>'))
@@ -67,7 +67,7 @@ export const updateInboxLabelCommand = new Command('update')
         loading: 'Updating label...',
         sdkCall: (resend) =>
           resend.inboxes.labels.update({
-            inboxId,
+            ...inboxSelector(inboxId),
             labelId,
             ...(opts.name !== undefined && { name: opts.name }),
             ...(opts.color !== undefined && { color: opts.color }),

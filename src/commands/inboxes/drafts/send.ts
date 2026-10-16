@@ -5,14 +5,14 @@ import { parseHeaderPairs } from '../../../lib/headers';
 import { buildHelpText } from '../../../lib/help-text';
 import { pickId } from '../../../lib/prompts';
 import { snakeCaseAlias } from '../../../lib/snake-case-alias';
-import { inboxPickerConfig, resolveIdInputs } from '../utils';
+import { inboxPickerConfig, inboxSelector, resolveIdInputs } from '../utils';
 import { inboxDraftPickerConfig } from './utils';
 
 export const sendInboxDraftCommand = new Command('send')
   .description('Send a draft')
-  .argument('[inboxId]', 'Inbox UUID')
+  .argument('[inboxId]', 'Inbox UUID or email address')
   .argument('[draftId]', 'Draft UUID')
-  .option('--inbox-id <id>', 'Inbox UUID')
+  .option('--inbox-id <id>', 'Inbox UUID or email address')
   .addOption(snakeCaseAlias('--inbox-id <id>'))
   .option('--draft-id <id>', 'Draft UUID')
   .addOption(snakeCaseAlias('--draft-id <id>'))
@@ -65,7 +65,7 @@ The output holds the ID of the sent email. Use it with "resend emails get".`,
         loading: 'Sending draft...',
         sdkCall: (resend) =>
           resend.inboxes.drafts.send(
-            { inboxId, draftId, ...(headers && { headers }) },
+            { ...inboxSelector(inboxId), draftId, ...(headers && { headers }) },
             opts.idempotencyKey !== undefined
               ? { idempotencyKey: opts.idempotencyKey }
               : undefined,

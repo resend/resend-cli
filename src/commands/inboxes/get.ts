@@ -7,7 +7,7 @@ import { inboxPickerConfig } from './utils';
 
 export const getInboxCommand = new Command('get')
   .description('Retrieve an inbox by ID or email address')
-  .argument('[id]', 'Inbox UUID or inbox email address')
+  .argument('[id]', 'Inbox UUID or email address')
   .addHelpText(
     'after',
     buildHelpText({

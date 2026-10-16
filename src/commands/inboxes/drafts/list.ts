@@ -9,14 +9,14 @@ import {
 } from '../../../lib/pagination';
 import { pickId } from '../../../lib/prompts';
 import { snakeCaseAlias } from '../../../lib/snake-case-alias';
-import { inboxPickerConfig, resolveIdInputs } from '../utils';
+import { inboxPickerConfig, inboxSelector, resolveIdInputs } from '../utils';
 import { renderDraftsTable } from './utils';
 
 export const listInboxDraftsCommand = new Command('list')
   .alias('ls')
   .description('List drafts in an inbox')
-  .argument('[inboxId]', 'Inbox UUID')
-  .option('--inbox-id <id>', 'Inbox UUID')
+  .argument('[inboxId]', 'Inbox UUID or email address')
+  .option('--inbox-id <id>', 'Inbox UUID or email address')
   .addOption(snakeCaseAlias('--inbox-id <id>'))
   .option('--limit <n>', 'Maximum number of drafts to return (1-100)', '10')
   .option(
@@ -65,7 +65,7 @@ export const listInboxDraftsCommand = new Command('list')
         loading: 'Fetching drafts...',
         sdkCall: (resend) =>
           resend.inboxes.drafts.list({
-            inboxId,
+            ...inboxSelector(inboxId),
             ...paginationOpts,
           }),
         onInteractive: (list) => {

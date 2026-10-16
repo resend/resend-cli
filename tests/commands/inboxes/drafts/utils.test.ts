@@ -1,5 +1,5 @@
 import type { InboxDraftListItem } from 'resend';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { inboxDraftPickerConfig } from '../../../../src/commands/inboxes/drafts/utils';
 
 const draft = (overrides: Partial<InboxDraftListItem>): InboxDraftListItem =>
@@ -29,5 +29,20 @@ describe('inboxDraftPickerConfig', () => {
 
   it('shows (no subject) when the subject and recipients are empty', () => {
     expect(display(draft({ subject: '', to: [] })).label).toBe('(no subject)');
+  });
+});
+
+describe('inboxDraftPickerConfig fetchItems', () => {
+  it('lists the drafts of an inbox email address', async () => {
+    const list = vi.fn(async () => ({ data: null, error: null }));
+
+    await inboxDraftPickerConfig('support@example.com').fetchItems(
+      { inboxes: { drafts: { list } } } as never,
+      { limit: 5 },
+    );
+
+    expect(list.mock.calls[0]).toStrictEqual([
+      { emailAddress: 'support@example.com', limit: 5 },
+    ]);
   });
 });

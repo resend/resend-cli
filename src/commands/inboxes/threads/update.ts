@@ -6,14 +6,14 @@ import { buildHelpText } from '../../../lib/help-text';
 import { outputError } from '../../../lib/output';
 import { pickId } from '../../../lib/prompts';
 import { hiddenAlias, snakeCaseAlias } from '../../../lib/snake-case-alias';
-import { inboxPickerConfig, resolveIdInputs } from '../utils';
+import { inboxPickerConfig, inboxSelector, resolveIdInputs } from '../utils';
 import { inboxThreadPickerConfig } from './utils';
 
 export const updateInboxThreadCommand = new Command('update')
   .description('Mark a thread read or unread, or move it to a folder')
-  .argument('[inboxId]', 'Inbox UUID')
+  .argument('[inboxId]', 'Inbox UUID or email address')
   .argument('[threadId]', 'Thread UUID')
-  .option('--inbox-id <id>', 'Inbox UUID')
+  .option('--inbox-id <id>', 'Inbox UUID or email address')
   .addOption(snakeCaseAlias('--inbox-id <id>'))
   .option('--thread-id <id>', 'Thread UUID')
   .addOption(snakeCaseAlias('--thread-id <id>'))
@@ -113,7 +113,7 @@ and clears its deletion deadline.`,
     // no_changes guard above guarantees but tsc cannot prove across the
     // conditional spreads.
     const payload = {
-      inboxId,
+      ...inboxSelector(inboxId),
       threadId,
       ...(read !== undefined && { read }),
       ...(opts.folder && { folder: opts.folder }),

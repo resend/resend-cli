@@ -2,6 +2,7 @@ import { InvalidArgumentError } from '@commander-js/extra-typings';
 import type { InboxLabel, InboxLabelColor } from 'resend';
 import type { PickerConfig } from '../../../lib/prompts';
 import { renderTable } from '../../../lib/table';
+import { inboxSelector } from '../utils';
 
 export function inboxLabelPickerConfig(
   inboxId: string,
@@ -10,7 +11,7 @@ export function inboxLabelPickerConfig(
     resource: 'label',
     resourcePlural: 'labels',
     fetchItems: (resend) =>
-      resend.inboxes.labels.list({ inboxId }).then((r) => ({
+      resend.inboxes.labels.list(inboxSelector(inboxId)).then((r) => ({
         ...r,
         data: r.data ? { data: r.data.data, has_more: false } : null,
       })),

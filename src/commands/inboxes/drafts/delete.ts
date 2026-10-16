@@ -4,15 +4,15 @@ import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { pickId, pickItem } from '../../../lib/prompts';
 import { snakeCaseAlias } from '../../../lib/snake-case-alias';
-import { inboxPickerConfig, resolveIdInputs } from '../utils';
+import { inboxPickerConfig, inboxSelector, resolveIdInputs } from '../utils';
 import { inboxDraftPickerConfig } from './utils';
 
 export const deleteInboxDraftCommand = new Command('delete')
   .alias('rm')
   .description('Delete a draft')
-  .argument('[inboxId]', 'Inbox UUID')
+  .argument('[inboxId]', 'Inbox UUID or email address')
   .argument('[draftId]', 'Draft UUID')
-  .option('--inbox-id <id>', 'Inbox UUID')
+  .option('--inbox-id <id>', 'Inbox UUID or email address')
   .addOption(snakeCaseAlias('--inbox-id <id>'))
   .option('--draft-id <id>', 'Draft UUID')
   .addOption(snakeCaseAlias('--draft-id <id>'))
@@ -58,7 +58,10 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
         object: 'inbox_draft',
         successMsg: 'Draft deleted',
         sdkCall: (resend) =>
-          resend.inboxes.drafts.remove({ inboxId, draftId: picked.id }),
+          resend.inboxes.drafts.remove({
+            ...inboxSelector(inboxId),
+            draftId: picked.id,
+          }),
       },
       globalOpts,
     );

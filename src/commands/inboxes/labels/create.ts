@@ -4,13 +4,13 @@ import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { pickId, requireText } from '../../../lib/prompts';
 import { snakeCaseAlias } from '../../../lib/snake-case-alias';
-import { inboxPickerConfig, resolveIdInputs } from '../utils';
+import { inboxPickerConfig, inboxSelector, resolveIdInputs } from '../utils';
 import { parseLabelColor } from './utils';
 
 export const createInboxLabelCommand = new Command('create')
   .description('Create a label in an inbox')
-  .argument('[inboxId]', 'Inbox UUID')
-  .option('--inbox-id <id>', 'Inbox UUID')
+  .argument('[inboxId]', 'Inbox UUID or email address')
+  .option('--inbox-id <id>', 'Inbox UUID or email address')
   .addOption(snakeCaseAlias('--inbox-id <id>'))
   .option('--name <name>', 'Label name (required, max 64 characters)')
   .addOption(
@@ -54,7 +54,7 @@ Non-interactive: --name is required.`,
         loading: 'Creating label...',
         sdkCall: (resend) =>
           resend.inboxes.labels.create({
-            inboxId,
+            ...inboxSelector(inboxId),
             name,
             ...(opts.color && { color: opts.color }),
           }),

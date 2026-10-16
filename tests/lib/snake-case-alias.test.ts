@@ -1,9 +1,6 @@
 import { Command } from '@commander-js/extra-typings';
 import { describe, expect, it } from 'vitest';
-import {
-  hiddenAlias,
-  snakeCaseAlias,
-} from '../../src/lib/snake-case-alias';
+import { hiddenAlias, snakeCaseAlias } from '../../src/lib/snake-case-alias';
 
 function buildCommand() {
   return new Command('test')

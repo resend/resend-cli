@@ -4,15 +4,15 @@ import type { GlobalOpts } from '../../../lib/client';
 import { buildHelpText } from '../../../lib/help-text';
 import { pickId, pickItem } from '../../../lib/prompts';
 import { snakeCaseAlias } from '../../../lib/snake-case-alias';
-import { inboxPickerConfig, resolveIdInputs } from '../utils';
+import { inboxPickerConfig, inboxSelector, resolveIdInputs } from '../utils';
 import { inboxLabelPickerConfig } from './utils';
 
 export const deleteInboxLabelCommand = new Command('delete')
   .alias('rm')
   .description('Delete a label')
-  .argument('[inboxId]', 'Inbox UUID')
+  .argument('[inboxId]', 'Inbox UUID or email address')
   .argument('[labelId]', 'Label UUID')
-  .option('--inbox-id <id>', 'Inbox UUID')
+  .option('--inbox-id <id>', 'Inbox UUID or email address')
   .addOption(snakeCaseAlias('--inbox-id <id>'))
   .option('--label-id <id>', 'Label UUID')
   .addOption(snakeCaseAlias('--label-id <id>'))
@@ -59,7 +59,10 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
         object: 'inbox_label',
         successMsg: 'Label deleted',
         sdkCall: (resend) =>
-          resend.inboxes.labels.remove({ inboxId, labelId: picked.id }),
+          resend.inboxes.labels.remove({
+            ...inboxSelector(inboxId),
+            labelId: picked.id,
+          }),
       },
       globalOpts,
     );

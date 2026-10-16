@@ -1,6 +1,7 @@
 import type { InboxDraftListItem } from 'resend';
 import type { PickerConfig } from '../../../lib/prompts';
 import { renderTable } from '../../../lib/table';
+import { inboxSelector } from '../utils';
 
 export function inboxDraftPickerConfig(
   inboxId: string,
@@ -9,7 +10,11 @@ export function inboxDraftPickerConfig(
     resource: 'draft',
     resourcePlural: 'drafts',
     fetchItems: (resend, { limit, after }) =>
-      resend.inboxes.drafts.list({ inboxId, limit, ...(after && { after }) }),
+      resend.inboxes.drafts.list({
+        ...inboxSelector(inboxId),
+        limit,
+        ...(after && { after }),
+      }),
     display: (d) => ({
       label: d.subject || d.to?.join(', ') || '(no subject)',
       hint: d.id,

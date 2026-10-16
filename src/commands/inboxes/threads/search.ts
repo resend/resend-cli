@@ -11,7 +11,7 @@ import {
 } from '../../../lib/pagination';
 import { pickId } from '../../../lib/prompts';
 import { snakeCaseAlias } from '../../../lib/snake-case-alias';
-import { inboxPickerConfig, resolveIdInputs } from '../utils';
+import { inboxPickerConfig, inboxSelector, resolveIdInputs } from '../utils';
 import {
   renderThreadSearchTable,
   threadFilterFlags,
@@ -25,8 +25,8 @@ export const searchInboxThreadsCommand = new Command('search')
   .description(
     'Search threads in an inbox by text, people, attachments, and dates',
   )
-  .argument('[inboxId]', 'Inbox UUID')
-  .option('--inbox-id <id>', 'Inbox UUID')
+  .argument('[inboxId]', 'Inbox UUID or email address')
+  .option('--inbox-id <id>', 'Inbox UUID or email address')
   .addOption(snakeCaseAlias('--inbox-id <id>'))
   .option(
     '--query <text>',
@@ -146,7 +146,7 @@ exactly and up to date, use "resend inboxes threads list".`,
         loading: 'Searching threads...',
         sdkCall: (resend) =>
           resend.inboxes.threads.search({
-            inboxId,
+            ...inboxSelector(inboxId),
             ...filters,
             query: opts.query,
             from: opts.from,

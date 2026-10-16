@@ -1,5 +1,5 @@
 import type { InboxThreadSearchResult } from 'resend';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   inboxThreadPickerConfig,
   renderThreadSearchTable,
@@ -52,5 +52,20 @@ describe('inboxThreadPickerConfig', () => {
     expect(display({ ...result(), subject: '\u001b[2J\u0007' }).label).toBe(
       '(no subject)',
     );
+  });
+});
+
+describe('inboxThreadPickerConfig fetchItems', () => {
+  it('lists the threads of an inbox email address', async () => {
+    const list = vi.fn(async () => ({ data: null, error: null }));
+
+    await inboxThreadPickerConfig('support@example.com').fetchItems(
+      { inboxes: { threads: { list } } } as never,
+      { limit: 5, after: 'cursor' },
+    );
+
+    expect(list.mock.calls[0]).toStrictEqual([
+      { emailAddress: 'support@example.com', limit: 5, after: 'cursor' },
+    ]);
   });
 });

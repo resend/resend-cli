@@ -10,9 +10,9 @@ import { printThreadLabels, requireLabelIds } from './utils';
 
 export const addInboxThreadLabelsCommand = new Command('add')
   .description('Add labels to a thread')
-  .argument('[inboxId]', 'Inbox ID or email address')
+  .argument('[inboxId]', 'Inbox UUID or email address')
   .argument('[threadId]', 'Thread UUID')
-  .option('--inbox-id <id>', 'Inbox ID or email address')
+  .option('--inbox-id <id>', 'Inbox UUID or email address')
   .addOption(snakeCaseAlias('--inbox-id <id>'))
   .option('--thread-id <id>', 'Thread UUID')
   .addOption(snakeCaseAlias('--thread-id <id>'))

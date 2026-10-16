@@ -10,6 +10,7 @@ import { outputError } from '../../../lib/output';
 import type { PickerConfig } from '../../../lib/prompts';
 import { safeTerminalText } from '../../../lib/safe-terminal-text';
 import { renderTable } from '../../../lib/table';
+import { inboxSelector } from '../utils';
 
 type ThreadFilterOpts = {
   folders?: InboxMessageFolder[];
@@ -55,7 +56,11 @@ export function inboxThreadPickerConfig(
     resource: 'thread',
     resourcePlural: 'threads',
     fetchItems: (resend, { limit, after }) =>
-      resend.inboxes.threads.list({ inboxId, limit, ...(after && { after }) }),
+      resend.inboxes.threads.list({
+        ...inboxSelector(inboxId),
+        limit,
+        ...(after && { after }),
+      }),
     display: (t) => ({
       label: safeTerminalText(t.subject ?? '') || '(no subject)',
       hint: t.id,
