@@ -612,7 +612,7 @@ resend webhooks events replay wh_abc123 msg_1srOrx2ZWZBpBUvZwXKQmoEYga2
 
 With the Resend CLI, you can manage inboxes. An inbox is an email address at one of your verified domains that sends and receives email. Received emails are grouped into threads inside the inbox.
 
-Most inbox commands need a full-access API key. A sending-access key can run `threads emails reply`, `threads emails forward`, `drafts create`, and `drafts send`. A key limited to one domain must match the domain of the inbox.
+Most inbox commands need a full-access API key. A sending-access key can run `threads emails reply`, `threads emails forward`, `drafts create`, and `drafts send`. A key limited to one domain must match the domain of the inbox. A sending-access key must pass every ID, because the ID pickers need full access.
 
 #### Subcommands
 

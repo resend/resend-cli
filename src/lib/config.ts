@@ -20,7 +20,7 @@ import { writeFileAtomic } from './write-file-atomic';
 export type ApiKeyPermission = 'full_access' | 'sending_access';
 
 export const SENDING_KEY_MESSAGE =
-  'Sending-only keys work with: emails send, emails batch, broadcasts send.\nCreate a full access key at https://resend.com/api-keys';
+  'Sending-only keys work with: emails send, emails batch, broadcasts send, inboxes threads emails reply, inboxes threads emails forward, inboxes drafts create, inboxes drafts send.\nCreate a full access key at https://resend.com/api-keys';
 export type ApiKeySource = 'flag' | 'env' | 'config' | 'secure_storage';
 
 export type ResolvedApiKey = {

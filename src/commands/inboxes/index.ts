@@ -28,7 +28,8 @@ support@yourdomain.com. The address match ignores case.
 
 Most inbox commands need a full-access API key. A sending-access key can run
 "threads emails reply", "threads emails forward", "drafts create" and
-"drafts send". A key limited to one domain must match the domain of the inbox.`,
+"drafts send". A key limited to one domain must match the domain of the inbox.
+A sending-access key must pass every ID, because the ID pickers need full access.`,
       examples: [
         'resend inboxes list',
         'resend inboxes create --email-address support@yourdomain.com',
