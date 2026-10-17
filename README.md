@@ -554,17 +554,20 @@ resend webhooks rotate-signing-secret wh_abc123 --json
 
 Built-in local development helper. It:
 
-- Starts a small HTTP server
+- Starts a small HTTP server on `127.0.0.1` by default
 - Registers a temporary Resend webhook pointing at your public tunnel URL
-- Prints events in the terminal
+- Verifies Svix signatures before it prints or forwards events
+- Rejects request bodies over 1 MiB by default
 - Deletes the webhook on exit
 
 Your tunnel must forward to the same port as `--port`, e.g. `ngrok http 4318`.
+Set `RESEND_WEBHOOK_MAX_BODY_BYTES` to a positive byte count to change the body limit. Requests with missing or invalid signatures receive HTTP 400. Oversized requests receive HTTP 413 and the connection closes. Use `--host` only when the listener must bind to another address.
 
 | Flag                   | Description                                                  |
 | ---------------------- | ------------------------------------------------------------ |
 | `--url <url>`          | Public URL (tunnel) that reaches this machine — **required** |
 | `--port <port>`        | Local server port (default `4318`)                           |
+| `--host <address>`     | Local bind address (default `127.0.0.1`)                     |
 | `--events <events...>` | Events to subscribe to (default: all)                        |
 | `--forward-to <url>`   | Also POST each payload to this URL (Svix headers preserved)  |
 

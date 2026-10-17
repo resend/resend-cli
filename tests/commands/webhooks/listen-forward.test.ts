@@ -1,4 +1,6 @@
-import { createServer, type Server } from 'node:http';
+import { createHmac } from 'node:crypto';
+import { createServer, request as httpRequest, type Server } from 'node:http';
+import { networkInterfaces } from 'node:os';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { listenWebhookCommand } from '../../../src/commands/webhooks/listen';
 import {
@@ -8,50 +10,136 @@ import {
 } from '../../helpers';
 
 const mockCreate = vi.fn(async () => ({
-  data: { object: 'webhook' as const, id: 'wh_test', signing_secret: 'sec' },
+  data: {
+    object: 'webhook' as const,
+    id: 'wh_test',
+    signing_secret: 'whsec_dGVzdF9zZWNyZXQ=',
+  },
   error: null,
 }));
 const mockRemove = vi.fn(async () => ({ data: null, error: null }));
 
-vi.mock('resend', () => ({
-  Resend: class MockResend {
-    constructor(public key: string) {}
-    webhooks = { create: mockCreate, remove: mockRemove };
-  },
-}));
+vi.mock('resend', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('resend')>();
+  return {
+    ...actual,
+    Resend: class MockResend extends actual.Resend {
+      constructor(key: string) {
+        super(key);
+        this.webhooks.create = mockCreate as typeof this.webhooks.create;
+        this.webhooks.remove = mockRemove as typeof this.webhooks.remove;
+      }
+    },
+  };
+});
 
 const postJSON = async (
   port: number,
   body: Record<string, unknown>,
+  options: { signed?: boolean; host?: string } = {},
 ): Promise<{ status: number; body: string }> => {
-  const resp = await fetch(`http://127.0.0.1:${port}`, {
+  const rawBody = JSON.stringify(body);
+  const headers: Record<string, string> = {
+    'content-type': 'application/json',
+  };
+  if (options.signed !== false) {
+    Object.assign(headers, signedHeaders(rawBody));
+  }
+  const resp = await fetch(`http://${options.host ?? '127.0.0.1'}:${port}`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(body),
+    headers,
+    body: rawBody,
   });
   return { status: resp.status, body: await resp.text() };
 };
 
+const WEBHOOK_SECRET = 'whsec_dGVzdF9zZWNyZXQ=';
+const signedHeaders = (rawBody: string) => {
+  const id = 'msg_test';
+  const timestamp = String(Math.floor(Date.now() / 1000));
+  const secret = Buffer.from(WEBHOOK_SECRET.slice('whsec_'.length), 'base64');
+  const signature = createHmac('sha256', secret)
+    .update(`${id}.${timestamp}.${rawBody}`)
+    .digest('base64');
+  return {
+    'svix-id': id,
+    'svix-timestamp': timestamp,
+    'svix-signature': `v1,${signature}`,
+  };
+};
+
+const nonLoopbackIpv4Address = (): string | undefined =>
+  Object.values(networkInterfaces())
+    .flatMap((addresses) => addresses ?? [])
+    .find((address) => address.family === 'IPv4' && !address.internal)?.address;
+
 const startTargetServer = (
   responseStatus: number,
-): Promise<{ server: Server; port: number }> =>
+): Promise<{
+  server: Server;
+  port: number;
+  requests: {
+    count: number;
+    headers?: Record<string, string | string[] | undefined>;
+  };
+}> =>
   new Promise((resolve) => {
-    const server = createServer((_req, res) => {
+    const requests: {
+      count: number;
+      headers?: Record<string, string | string[] | undefined>;
+    } = { count: 0 };
+    const server = createServer((req, res) => {
+      requests.count += 1;
+      requests.headers = req.headers;
       res.writeHead(responseStatus).end('target response');
     });
     server.listen(0, '127.0.0.1', () => {
       const addr = server.address();
       const port = typeof addr === 'object' && addr ? addr.port : 0;
-      resolve({ server, port });
+      resolve({ server, port, requests });
     });
+  });
+
+const postChunkedBody = (
+  port: number,
+  body: string,
+): Promise<{ status: number; body: string; connection: string | undefined }> =>
+  new Promise((resolve, reject) => {
+    const req = httpRequest(
+      {
+        host: '127.0.0.1',
+        port,
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'transfer-encoding': 'chunked',
+        },
+      },
+      (res) => {
+        const chunks: Buffer[] = [];
+        res.on('data', (chunk: Buffer) => chunks.push(chunk));
+        res.on('end', () =>
+          resolve({
+            status: res.statusCode ?? 0,
+            body: Buffer.concat(chunks).toString(),
+            connection: res.headers.connection,
+          }),
+        );
+      },
+    );
+    req.on('error', reject);
+    req.flushHeaders();
+    req.write(body);
   });
 
 describe('webhook listen --forward-to status propagation', () => {
   const restoreEnv = captureTestEnv();
   let targetServer: Server | undefined;
+  let outputLogSpy: ReturnType<typeof vi.spyOn> | undefined;
 
   beforeEach(() => {
     process.env.RESEND_API_KEY = 're_test_key';
+    delete process.env.RESEND_WEBHOOK_MAX_BODY_BYTES;
     mockCreate.mockClear();
     mockRemove.mockClear();
   });
@@ -72,9 +160,12 @@ describe('webhook listen --forward-to status propagation', () => {
     process.removeAllListeners('SIGTERM');
   });
 
-  const startListener = async (forwardPort: number): Promise<number> => {
+  const startListener = async (
+    forwardPort: number,
+    options: { host?: string } = {},
+  ): Promise<number> => {
     setNonInteractive();
-    setupOutputSpies();
+    outputLogSpy = setupOutputSpies().logSpy;
 
     const listenerPort = 10_000 + Math.floor(Math.random() * 50_000);
 
@@ -85,6 +176,7 @@ describe('webhook listen --forward-to status propagation', () => {
           'https://tunnel.example.com',
           '--port',
           String(listenerPort),
+          ...(options.host ? ['--host', options.host] : []),
           '--forward-to',
           `http://127.0.0.1:${forwardPort}/webhook`,
         ],
@@ -109,6 +201,9 @@ describe('webhook listen --forward-to status propagation', () => {
 
     expect(result.status).toBe(200);
     expect(result.body).toBe('OK');
+    expect(target.requests.headers?.['svix-id']).toBe('msg_test');
+    expect(target.requests.headers?.['svix-timestamp']).toBeTruthy();
+    expect(target.requests.headers?.['svix-signature']).toMatch(/^v1,/);
   });
 
   it('propagates 500 when forward target responds 500', async () => {
@@ -168,5 +263,98 @@ describe('webhook listen --forward-to status propagation', () => {
 
     expect(result.status).toBe(502);
     expect(result.body).toBe('Forward target unreachable');
+  });
+
+  it('rejects requests without a signature before forwarding', async () => {
+    const target = await startTargetServer(200);
+    targetServer = target.server;
+    const listenerPort = await startListener(target.port);
+
+    const result = await postJSON(
+      listenerPort,
+      { type: 'email.sent', data: { id: 'evt_unsigned' } },
+      { signed: false },
+    );
+
+    expect(result.status).toBe(400);
+    expect(result.body).toBe('Invalid signature');
+    expect(target.requests.count).toBe(0);
+    expect(outputLogSpy).not.toHaveBeenCalled();
+  });
+
+  it('rejects an invalid signature before forwarding', async () => {
+    const target = await startTargetServer(200);
+    targetServer = target.server;
+    const listenerPort = await startListener(target.port);
+
+    const rawBody = JSON.stringify({
+      type: 'email.sent',
+      data: { id: 'evt_invalid' },
+    });
+    const headers = signedHeaders(rawBody);
+    headers['svix-signature'] = 'v1,invalid';
+    const invalidResponse = await fetch(`http://127.0.0.1:${listenerPort}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', ...headers },
+      body: rawBody,
+    });
+
+    expect(invalidResponse.status).toBe(400);
+    expect(await invalidResponse.text()).toBe('Invalid signature');
+    expect(target.requests.count).toBe(0);
+    expect(outputLogSpy).not.toHaveBeenCalled();
+  });
+
+  it('rejects a body above the configured byte limit', async () => {
+    process.env.RESEND_WEBHOOK_MAX_BODY_BYTES = '16';
+    const target = await startTargetServer(200);
+    targetServer = target.server;
+    const listenerPort = await startListener(target.port);
+
+    const response = await postChunkedBody(
+      listenerPort,
+      JSON.stringify({ type: 'email.sent', data: { id: 'too-large' } }),
+    );
+
+    expect(response.status).toBe(413);
+    expect(response.body).toBe('Payload too large');
+    expect(response.connection).toBe('close');
+    expect(target.requests.count).toBe(0);
+  });
+
+  it('binds to loopback by default', async () => {
+    const hostOption = listenWebhookCommand.options.find(
+      (option) => option.long === '--host',
+    );
+    expect(hostOption?.defaultValue).toBe('127.0.0.1');
+
+    const target = await startTargetServer(200);
+    targetServer = target.server;
+    const listenerPort = await startListener(target.port);
+    const address = nonLoopbackIpv4Address();
+    if (!address) {
+      return;
+    }
+
+    const response = await fetch(`http://${address}:${listenerPort}`, {
+      signal: AbortSignal.timeout(500),
+    }).catch(() => undefined);
+
+    expect(response).toBeUndefined();
+  });
+
+  it('supports an explicit bind host', async () => {
+    const target = await startTargetServer(200);
+    targetServer = target.server;
+    const listenerPort = await startListener(target.port, { host: '0.0.0.0' });
+
+    const response = await postJSON(
+      listenerPort,
+      { type: 'email.sent', data: { id: 'evt_host' } },
+      { host: '127.0.0.1' },
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body).toBe('OK');
   });
 });

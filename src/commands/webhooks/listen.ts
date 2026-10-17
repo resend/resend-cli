@@ -21,6 +21,24 @@ import { ALL_WEBHOOK_EVENTS, normalizeEvents } from './utils';
 const SVIX_HEADERS = ['svix-id', 'svix-timestamp', 'svix-signature'];
 
 const FORWARD_TIMEOUT_MS = 30_000;
+const DEFAULT_MAX_BODY_BYTES = 1024 * 1024;
+
+class PayloadTooLargeError extends Error {}
+
+function maxBodyBytesFromEnv(): number {
+  const value = process.env.RESEND_WEBHOOK_MAX_BODY_BYTES;
+  if (value === undefined) {
+    return DEFAULT_MAX_BODY_BYTES;
+  }
+
+  const maxBodyBytes = Number(value);
+  if (!Number.isSafeInteger(maxBodyBytes) || maxBodyBytes < 1) {
+    throw new Error(
+      'RESEND_WEBHOOK_MAX_BODY_BYTES must be a positive safe integer.',
+    );
+  }
+  return maxBodyBytes;
+}
 
 function timestamp(): string {
   return new Date().toLocaleTimeString('en-GB', { hour12: false });
@@ -146,12 +164,32 @@ async function forwardPayload(
   return { status: resp.status };
 }
 
-function readBody(req: IncomingMessage): Promise<string> {
+function readBody(req: IncomingMessage, maxBytes: number): Promise<string> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
-    req.on('data', (chunk: Buffer) => chunks.push(chunk));
+    let size = 0;
+    let tooLarge = false;
+    req.on('data', (chunk: Buffer) => {
+      if (tooLarge) {
+        return;
+      }
+      size += chunk.length;
+      if (size > maxBytes) {
+        tooLarge = true;
+        chunks.length = 0;
+        reject(new PayloadTooLargeError());
+        return;
+      }
+      chunks.push(chunk);
+    });
     req.on('end', () => resolve(Buffer.concat(chunks).toString()));
     req.on('error', reject);
+
+    const contentLength = Number(req.headers['content-length']);
+    if (Number.isFinite(contentLength) && contentLength > maxBytes) {
+      tooLarge = true;
+      reject(new PayloadTooLargeError());
+    }
   });
 }
 
@@ -176,6 +214,7 @@ export const listenWebhookCommand = new Command('listen')
   .option('--forward-to <url>', 'Forward payloads to this local URL')
   .option('--events <events...>', 'Event types to listen for (default: all)')
   .option('--port <port>', 'Local server port', '4318')
+  .option('--host <address>', 'Local server bind address', '127.0.0.1')
   .addHelpText(
     'after',
     buildHelpText({
@@ -189,7 +228,12 @@ points to the local server port. The CLI will:
   4. Optionally forward payloads to --forward-to (with original Svix headers)
   5. Delete the temporary webhook on exit (Ctrl+C)
 
+The listener verifies each request with the temporary webhook signing secret.
+It accepts request bodies up to 1 MiB by default. Set
+RESEND_WEBHOOK_MAX_BODY_BYTES to a positive byte count to change this limit.
+
 Important: your tunnel must forward traffic to the same port as --port (default 4318).
+The listener binds to 127.0.0.1 by default. Use --host to select another address.
 For example, if using ngrok: ngrok http 4318`,
       examples: [
         'resend webhooks listen --url https://example.ngrok-free.app',
@@ -229,6 +273,19 @@ For example, if using ngrok: ngrok http 4318`,
       );
     }
 
+    let maxBodyBytes: number;
+    try {
+      maxBodyBytes = maxBodyBytesFromEnv();
+    } catch (err) {
+      outputError(
+        {
+          message: err instanceof Error ? err.message : 'Invalid body limit.',
+          code: 'invalid_body_limit',
+        },
+        { json: globalOpts.json },
+      );
+    }
+
     const normalized = opts.events?.length
       ? normalizeEvents(opts.events)
       : undefined;
@@ -244,6 +301,7 @@ For example, if using ngrok: ngrok http 4318`,
 
     const resend = await requireClient(globalOpts);
     const jsonMode = globalOpts.json || !isInteractive();
+    let webhookSecret: string | undefined;
 
     // Start local server
     const server = createServer(
@@ -254,19 +312,50 @@ For example, if using ngrok: ngrok http 4318`,
             return;
           }
 
-          const rawBody = await readBody(req);
-          let body: Record<string, unknown>;
+          let rawBody: string;
           try {
-            body = JSON.parse(rawBody);
-          } catch {
-            res.writeHead(400).end('Invalid JSON');
-            return;
+            rawBody = await readBody(req, maxBodyBytes);
+          } catch (err) {
+            if (err instanceof PayloadTooLargeError) {
+              res.shouldKeepAlive = false;
+              res
+                .writeHead(413, { connection: 'close' })
+                .end('Payload too large');
+              req.socket.destroySoon();
+              return;
+            }
+            throw err;
           }
 
           const svixHeaders: Record<string, string | undefined> = {};
           for (const h of SVIX_HEADERS) {
             const val = req.headers[h];
             svixHeaders[h] = Array.isArray(val) ? val[0] : val;
+          }
+
+          if (!webhookSecret) {
+            res.writeHead(503).end('Webhook setup incomplete');
+            return;
+          }
+
+          const id = svixHeaders['svix-id'];
+          const timestampHeader = svixHeaders['svix-timestamp'];
+          const signature = svixHeaders['svix-signature'];
+          if (!id || !timestampHeader || !signature) {
+            res.writeHead(400).end('Invalid signature');
+            return;
+          }
+
+          let body: Record<string, unknown>;
+          try {
+            body = resend.webhooks.verify({
+              payload: rawBody,
+              headers: { id, timestamp: timestampHeader, signature },
+              webhookSecret,
+            }) as unknown as Record<string, unknown>;
+          } catch {
+            res.writeHead(400).end('Invalid signature');
+            return;
           }
 
           const { type, resourceId, detail } = summarizeEvent(body);
@@ -344,7 +433,7 @@ For example, if using ngrok: ngrok http 4318`,
     try {
       await new Promise<void>((resolve, reject) => {
         server.on('error', reject);
-        server.listen(port, resolve);
+        server.listen(port, opts.host, resolve);
       });
     } catch (err) {
       outputError(
@@ -383,6 +472,7 @@ For example, if using ngrok: ngrok http 4318`,
         );
       }
       webhookId = data.id;
+      webhookSecret = data.signing_secret;
     } catch (err) {
       spinner.fail('Failed to create webhook');
       server.close();
