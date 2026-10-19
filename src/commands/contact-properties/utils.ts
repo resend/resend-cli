@@ -28,3 +28,14 @@ export function renderContactPropertiesTable(props: ContactProperty[]): string {
     '(no contact properties)',
   );
 }
+
+// parseFloat accepts any numeric prefix ("1,000" is 1, "12abc" is 12), so a
+// typo would be saved as a different number. Require the whole string to be
+// a finite number instead.
+export function parseNumberFallback(raw: string): number | undefined {
+  if (raw.trim() === '') {
+    return undefined;
+  }
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}

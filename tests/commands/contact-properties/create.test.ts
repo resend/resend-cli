@@ -180,6 +180,44 @@ describe('contact-properties create command', () => {
     expect(output).toContain('invalid_fallback_value');
   });
 
+  it.each([
+    '1,000',
+    '12abc',
+    'Infinity',
+    ' ',
+  ])('rejects partially numeric fallback-value %j for number-type properties', async (value) => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    await expectExit1(() =>
+      createContactPropertyCommand.parseAsync(
+        ['--key', 'score', '--type', 'number', '--fallback-value', value],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('invalid_fallback_value');
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['-2.5', -2.5],
+    ['1e3', 1000],
+    ['0', 0],
+  ])('coerces fallback-value %j to %d for number-type properties', async (value, expected) => {
+    spies = setupOutputSpies();
+
+    await createContactPropertyCommand.parseAsync(
+      ['--key', 'score', '--type', 'number', '--fallback-value', value],
+      { from: 'user' },
+    );
+
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.fallbackValue).toBe(expected);
+  });
+
   it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;
