@@ -7,6 +7,7 @@ import { getWebhookCommand } from './get';
 import { listWebhooksCommand } from './list';
 import { listenWebhookCommand } from './listen';
 import { rotateWebhookSigningSecretCommand } from './rotate-signing-secret';
+import { triggerWebhookCommand } from './trigger';
 import { updateWebhookCommand } from './update';
 
 export const webhooksCommand = new Command('webhooks')
@@ -38,13 +39,21 @@ Signature verification (Svix):
   Rotate a secret with "resend webhooks rotate-signing-secret <id>"; "resend webhooks get" returns the current one.
 
 Delivery history:
-  Inspect what Resend sent and what your endpoint returned with "resend webhooks events".`,
+  Inspect what Resend sent and what your endpoint returned with "resend webhooks events".
+
+Local synthetic testing:
+  "resend webhooks trigger" generates a Resend-shaped synthetic event, applies
+  field-level overrides, signs it, and POSTs it to an endpoint. It does not
+  create resources or call the Resend API.
+  Configure RESEND_WEBHOOK_SECRET in the same environment as your app.
+  Supported fixtures: email.delivered, email.bounced, email.complained.`,
       examples: [
         'resend webhooks list',
         'resend webhooks create --endpoint https://app.example.com/hooks/resend --events all',
         'resend webhooks get wh_abc123',
         'resend webhooks update wh_abc123 --status disabled',
         'resend webhooks rotate-signing-secret wh_abc123',
+        'resend webhooks trigger email.delivered --forward-to http://localhost:3000/webhooks/resend',
         'resend webhooks delete wh_abc123 --yes',
         'resend webhooks events list wh_abc123',
       ],
@@ -54,6 +63,7 @@ Delivery history:
   .addCommand(getWebhookCommand)
   .addCommand(webhookEventsCommand)
   .addCommand(listenWebhookCommand)
+  .addCommand(triggerWebhookCommand)
   .addCommand(listWebhooksCommand, { isDefault: true })
   .addCommand(updateWebhookCommand)
   .addCommand(rotateWebhookSigningSecretCommand)

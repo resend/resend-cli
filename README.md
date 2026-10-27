@@ -578,6 +578,136 @@ resend webhooks listen --url https://xxxx.ngrok-free.app --forward-to localhost:
 resend webhooks listen --url https://xxxx.ngrok-free.app --port 8080 --events email.sent email.bounced
 ```
 
+#### **`resend webhooks trigger`**
+
+Sends one signed, synthetic webhook event directly to an HTTP(S) endpoint. It is
+useful for exercising a local handler in development or CI without sending an
+email, creating a Resend resource, or opening a public tunnel. It does not call
+the Resend API and does not emulate the full Resend service.
+
+For a copy-paste local receiver that verifies signatures with the Resend SDK,
+see the [webhooks trigger demo](examples/webhooks-trigger-pr-demo.md).
+
+Use a development-only signing secret and make it available to both the app and
+the CLI. The CLI does not load `.env` files automatically; pass the variable to
+each process through your shell, process manager, or CI secret store. Generate
+the secret once and give both processes that same value.
+
+```bash
+# Create a development-only Svix-compatible secret in this shell.
+export RESEND_WEBHOOK_SECRET="whsec_$(openssl rand -base64 32 | tr -d '\n')"
+
+# Start the app with this environment in one terminal.
+npm run dev
+
+# In the CLI terminal, set the same value through your local secret manager.
+export RESEND_WEBHOOK_SECRET="whsec_<same-development-secret>"
+resend webhooks trigger email.delivered \
+  --forward-to http://localhost:3000/webhooks/resend
+```
+
+The application should verify the raw request body and the three Svix headers
+with `resend.webhooks.verify()`, using `RESEND_WEBHOOK_SECRET`. Do not use a
+production signing secret for local testing.
+
+Built-in fixtures are limited to these email events:
+
+```bash
+resend webhooks trigger email.delivered --forward-to http://localhost:3000/webhooks/resend
+resend webhooks trigger email.bounced --forward-to http://localhost:3000/webhooks/resend
+resend webhooks trigger email.complained --forward-to http://localhost:3000/webhooks/resend
+```
+
+Each event includes the Resend webhook envelope and email data fields from the
+documented event examples, with fake IDs, timestamps, addresses, subject,
+broadcast/template IDs, tags, and bounce details. Override individual values
+with flags when your handler looks up records from its development database:
+
+```bash
+resend webhooks trigger email.delivered \
+  --forward-to http://localhost:3000/webhooks/resend \
+  --email-id 56761188-7520-42d8-8898-ff6fc54ce618 \
+  --message-id '<order-123@example.test>' \
+  --from 'QA <qa@example.test>' \
+  --to customer@example.test \
+  --subject 'Order 123 is ready' \
+  --tag category=transactional \
+  --tag order_id=123
+```
+
+Use `--to <addresses...>` for more than one recipient. `--tag <name=value...>`
+replaces the generated tag map, and can be repeated for multiple tags. The
+`--email-id`, `--message-id`, `--broadcast-id`, and `--template-id` values are
+generated when omitted. `--event-created-at` and `--email-created-at` accept ISO
+8601 timestamps when a test needs fixed dates. Bounce fields can also be
+overridden for `email.bounced`:
+
+```bash
+resend webhooks trigger email.bounced \
+  --forward-to http://localhost:3000/webhooks/resend \
+  --email-id 56761188-7520-42d8-8898-ff6fc54ce618 \
+  --to customer@example.test \
+  --bounce-type Transient \
+  --bounce-sub-type MailboxFull \
+  --bounce-message 'Synthetic mailbox full condition'
+```
+
+These flags customize individual values while keeping the command responsible
+for building a typed event body and signing the exact bytes it sends. The
+fixtures follow the current Resend webhook event examples and installed SDK
+types; they do not emulate Resend's delivery infrastructure or every optional
+service-side behavior.
+
+Reuse a delivery ID to exercise your handler's duplicate detection. The CLI
+sends the same ID each time, but it does not provide deduplication or guarantee
+exactly-once behavior for your application.
+
+```bash
+resend webhooks trigger email.bounced \
+  --forward-to http://localhost:3000/webhooks/resend \
+  --delivery-id msg_local_repeatable_1
+```
+
+`--dry-run` prepares the body and signature and prints the URL, method, headers,
+and body without sending a POST. The signing secret itself is never displayed.
+
+```bash
+resend webhooks trigger email.complained \
+  --forward-to http://localhost:3000/webhooks/resend \
+  --dry-run
+```
+
+In CI, pass the development secret through the CI secret store and disable the
+CLI's optional telemetry and update check if you want to avoid those auxiliary
+network requests. `--json` produces a stable result object on stdout:
+
+```bash
+RESEND_WEBHOOK_SECRET="$WEBHOOK_SECRET" \
+RESEND_TELEMETRY_DISABLED=1 \
+RESEND_NO_UPDATE_NOTIFIER=1 \
+resend webhooks trigger email.delivered \
+  --forward-to http://127.0.0.1:3000/webhooks/resend --json
+```
+
+Successful output includes `synthetic`, `event_type`, `delivery_id`,
+`http_status`, `duration_ms`, `response_body`, and `response_truncated`. An HTTP
+2xx only confirms that the endpoint returned a successful HTTP response; check
+your application's business effects separately.
+
+`trigger`, `listen`, and `events replay` serve different workflows: `trigger`
+creates a synthetic event locally and sends it directly to a URL; `listen`
+registers a temporary webhook with Resend and receives real events through a
+public tunnel; `events replay` asks Resend to redeliver an existing event.
+
+This command does not validate actual email delivery, DNS, a public HTTPS
+endpoint, tunnel setup, or reachability from Resend. It does not reproduce
+Resend's retry policy or create resources that can be queried through the API.
+If your handler looks up a synthetic email or other resource through the Resend
+API, use a mock or a real test resource. A handler can still perform real side
+effects if connected to real data or services, so run it in a development
+environment and verify those effects explicitly. `email.received` and inbox
+events are outside this command's supported fixtures.
+
 #### **`resend webhooks events`**
 
 Inspects what Resend already delivered to a webhook. Use it to debug an endpoint that is missing events:

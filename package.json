@@ -46,7 +46,8 @@
     "esbuild": "0.28.1",
     "esbuild-wasm": "0.28.0",
     "picocolors": "1.1.1",
-    "resend": "6.34.1"
+    "resend": "6.34.1",
+    "standardwebhooks": "1.1.1"
   },
   "pkg": {
     "scripts": [

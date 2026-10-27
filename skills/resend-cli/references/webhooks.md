@@ -4,6 +4,85 @@ Detailed flag specifications for `resend webhooks` commands.
 
 ---
 
+## webhooks trigger
+
+Generate a Resend-shaped synthetic email event, sign it with
+`RESEND_WEBHOOK_SECRET`, and POST it directly to an HTTP(S) endpoint. This
+command does not call the Resend API or require `RESEND_API_KEY`, stored
+credentials, login, or a profile.
+
+Set a development-only secret explicitly in both the application and CLI
+process environments. Generate it once and pass the same value to both; do not
+generate a different secret for each process. The CLI does not automatically
+load `.env` files:
+
+```sh
+export RESEND_WEBHOOK_SECRET="whsec_$(openssl rand -base64 32 | tr -d '\n')"
+```
+
+Never reuse a production webhook secret for local testing.
+
+**Argument:** `<event-type>` — required. Supported fixtures are
+`email.delivered`, `email.bounced`, and `email.complained`.
+
+| Flag | Type | Required | Description |
+|------|------|----------|-------------|
+| `--forward-to <url>` | string | Yes | HTTP(S) endpoint; credentials in the URL are rejected |
+| `--email-id <id>` | string | No | Override the generated email ID |
+| `--message-id <id>` | string | No | Override the generated message ID |
+| `--from <address>` | string | No | Override the sender address |
+| `--to <addresses...>` | string[] | No | Override recipient addresses |
+| `--subject <subject>` | string | No | Override the email subject |
+| `--broadcast-id <id>` | string | No | Override the generated broadcast ID |
+| `--template-id <id>` | string | No | Override the generated template ID |
+| `--tag <name=value...>` | string[] | No | Replace generated tags; repeat for multiple tags |
+| `--event-created-at <timestamp>` | ISO 8601 | No | Override the event creation time |
+| `--email-created-at <timestamp>` | ISO 8601 | No | Override the email creation time |
+| `--bounce-type <type>` | string | No | Override bounce type (`email.bounced` only) |
+| `--bounce-sub-type <subtype>` | string | No | Override bounce subtype (`email.bounced` only) |
+| `--bounce-message <message>` | string | No | Override bounce message (`email.bounced` only) |
+| `--delivery-id <id>` | string | No | Reuse a delivery ID to exercise app-level deduplication |
+| `--dry-run` | boolean | No | Show the prepared POST without sending it |
+
+The generated event uses fake, coherent values for email and message IDs,
+sender, recipient, subject, timestamps, broadcast/template IDs, and tags. Bounce
+events also get synthetic bounce details. The payload follows the event examples
+and SDK event types; it does not emulate Resend's service-side delivery process.
+When `--tag` is supplied, it replaces the generated tag map. Bounce options are
+only valid with `email.bounced`.
+
+```sh
+resend webhooks trigger email.delivered --forward-to http://localhost:3000/webhooks/resend
+resend webhooks trigger email.bounced --forward-to http://localhost:3000/webhooks/resend
+resend webhooks trigger email.complained --forward-to http://localhost:3000/webhooks/resend
+resend webhooks trigger email.delivered --forward-to http://localhost:3000/webhooks/resend --email-id 56761188-7520-42d8-8898-ff6fc54ce618 --to user@example.test
+resend webhooks trigger email.delivered --forward-to http://localhost:3000/webhooks/resend --tag category=transactional --tag order_id=123
+resend webhooks trigger email.bounced --forward-to http://localhost:3000/webhooks/resend --bounce-type Transient --bounce-sub-type MailboxFull
+resend webhooks trigger email.bounced --forward-to http://localhost:3000/webhooks/resend --delivery-id msg_local_repeatable_1
+resend webhooks trigger email.delivered --forward-to http://localhost:3000/webhooks/resend --dry-run
+```
+
+For CI, provide the same development secret to the app and the CLI. Set
+`RESEND_TELEMETRY_DISABLED=1` and `RESEND_NO_UPDATE_NOTIFIER=1` to disable the
+CLI's optional telemetry and update-check network requests. `--json` returns a
+result with `synthetic`, `event_type`, `delivery_id`, `http_status`,
+`duration_ms`, `response_body`, and `response_truncated`.
+
+An HTTP 2xx only confirms the endpoint's HTTP response, not completion of the
+application's business logic. The command does not send or validate real email,
+test DNS, a public HTTPS endpoint, tunnels, or Resend reachability; it does not
+reproduce Resend retries or create API-queryable resources. If the handler
+fetches the synthetic email or related resource from the API, provide a mock or
+a real test resource. Handlers can still create real side effects if connected
+to real data or services, so use a development environment. This MVP does not
+include `email.received` or inbox event fixtures.
+
+`trigger` sends a synthetic event directly to a URL. `listen` creates a
+temporary Resend webhook and receives actual events through a public tunnel.
+`events replay` asks Resend to redeliver an existing event.
+
+---
+
 ## webhooks list
 
 | Flag | Type | Default | Description |
