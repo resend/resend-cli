@@ -9,7 +9,7 @@ export type CareerFieldOption = {
 export type CareerField = {
   path: string;
   title: string;
-  type: string;
+  type: "String" | "LongText" | "Email" | "Number" | "Boolean" | "Location" | "File";
   required: boolean;
   description?: string;
   selectable_values?: CareerFieldOption[];
