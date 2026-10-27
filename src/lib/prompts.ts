@@ -1,3 +1,4 @@
+import { Writable } from 'node:stream';
 import * as p from '@clack/prompts';
 import type { Resend } from 'resend';
 import { getCancelExitCode } from './cli-exit';
@@ -24,6 +25,29 @@ export interface FieldSpec {
 export function cancelAndExit(message: string): never {
   p.cancel(message);
   process.exit(getCancelExitCode());
+}
+
+// clack hardcodes the multiline prompt's button label as "[ submit ]", which
+// reads like final submission mid-form. Route the prompt's output through a
+// stream that relabels it, instead of forking the whole renderer.
+function relabeledOutput(): Writable {
+  const output = new Writable({
+    write(chunk, _encoding, callback) {
+      const text = String(chunk).replaceAll('[ submit ]', '[ continue ]');
+      process.stdout.write(text, callback);
+    },
+  });
+  Object.defineProperty(output, 'columns', {
+    get: () => process.stdout.columns,
+  });
+  return output;
+}
+
+/** p.multiline, with the showSubmit button relabeled "[ continue ]". */
+export function multiline(
+  opts: Parameters<typeof p.multiline>[0],
+): ReturnType<typeof p.multiline> {
+  return p.multiline({ ...opts, output: relabeledOutput() });
 }
 
 /**

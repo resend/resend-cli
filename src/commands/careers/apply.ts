@@ -6,7 +6,7 @@ import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError, outputResult } from '../../lib/output';
-import { cancelAndExit, pickItem } from '../../lib/prompts';
+import { cancelAndExit, multiline, pickItem } from '../../lib/prompts';
 import { withSpinner } from '../../lib/spinner';
 import { isInteractive } from '../../lib/tty';
 import { COUNTRY_NAMES } from './countries';
@@ -266,23 +266,34 @@ async function promptField(field: CareerField): Promise<string | undefined> {
     return result === SKIP_OPTION ? undefined : result;
   }
 
-  const result = await p.text({
-    message,
-    ...(field.description ? { placeholder: field.description } : {}),
-    validate: (value) => {
-      const trimmed = value?.trim() ?? '';
-      if (field.required && trimmed.length === 0) {
-        return `${field.title} is required`;
-      }
-      if (trimmed && field.type === 'Email' && !trimmed.includes('@')) {
-        return 'Enter a valid email address';
-      }
-      if (trimmed && field.type === 'Number' && Number.isNaN(Number(trimmed))) {
-        return 'Enter a number';
-      }
-      return undefined;
-    },
-  });
+  // Prose answers (type "LongText") get the multiline prompt — pasted text
+  // isn't submitted early by its own newlines. Submit with tab + enter.
+  const validate = (value: string | undefined) => {
+    const trimmed = value?.trim() ?? '';
+    if (field.required && trimmed.length === 0) {
+      return `${field.title} is required`;
+    }
+    if (trimmed && field.type === 'Email' && !trimmed.includes('@')) {
+      return 'Enter a valid email address';
+    }
+    if (trimmed && field.type === 'Number' && Number.isNaN(Number(trimmed))) {
+      return 'Enter a number';
+    }
+    return undefined;
+  };
+
+  const result = await (field.type === 'LongText'
+    ? multiline({
+        message,
+        ...(field.description ? { placeholder: field.description } : {}),
+        validate,
+        showSubmit: true,
+      })
+    : p.text({
+        message,
+        ...(field.description ? { placeholder: field.description } : {}),
+        validate,
+      }));
   if (p.isCancel(result)) {
     cancelAndExit('Application cancelled.');
   }
