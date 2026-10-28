@@ -189,6 +189,10 @@ points to the local server port. The CLI will:
   4. Optionally forward payloads to --forward-to (with original Svix headers)
   5. Delete the temporary webhook on exit (Ctrl+C)
 
+The listener verifies each request with the temporary webhook signing secret.
+The signing secret is printed in the banner so the --forward-to app can verify
+the Svix headers too.
+
 Important: your tunnel must forward traffic to the same port as --port (default 4318).
 For example, if using ngrok: ngrok http 4318`,
       examples: [
@@ -244,6 +248,7 @@ For example, if using ngrok: ngrok http 4318`,
 
     const resend = await requireClient(globalOpts);
     const jsonMode = globalOpts.json || !isInteractive();
+    let webhookSecret: string | undefined;
 
     // Start local server
     const server = createServer(
@@ -255,18 +260,36 @@ For example, if using ngrok: ngrok http 4318`,
           }
 
           const rawBody = await readBody(req);
-          let body: Record<string, unknown>;
-          try {
-            body = JSON.parse(rawBody);
-          } catch {
-            res.writeHead(400).end('Invalid JSON');
-            return;
-          }
 
           const svixHeaders: Record<string, string | undefined> = {};
           for (const h of SVIX_HEADERS) {
             const val = req.headers[h];
             svixHeaders[h] = Array.isArray(val) ? val[0] : val;
+          }
+
+          if (!webhookSecret) {
+            res.writeHead(503).end('Webhook setup incomplete');
+            return;
+          }
+
+          const id = svixHeaders['svix-id'];
+          const timestampHeader = svixHeaders['svix-timestamp'];
+          const signature = svixHeaders['svix-signature'];
+          if (!id || !timestampHeader || !signature) {
+            res.writeHead(400).end('Invalid signature');
+            return;
+          }
+
+          let body: Record<string, unknown>;
+          try {
+            body = resend.webhooks.verify({
+              payload: rawBody,
+              headers: { id, timestamp: timestampHeader, signature },
+              webhookSecret,
+            }) as unknown as Record<string, unknown>;
+          } catch {
+            res.writeHead(400).end('Invalid signature');
+            return;
           }
 
           const { type, resourceId, detail } = summarizeEvent(body);
@@ -383,6 +406,7 @@ For example, if using ngrok: ngrok http 4318`,
         );
       }
       webhookId = data.id;
+      webhookSecret = data.signing_secret;
     } catch (err) {
       spinner.fail('Failed to create webhook');
       server.close();
@@ -397,7 +421,7 @@ For example, if using ngrok: ngrok http 4318`,
 
     spinner.stop('Webhook listener ready');
 
-    // Print banner
+    // Print banner (the signing secret lets --forward-to apps verify Svix headers)
     if (!jsonMode) {
       const eventsDisplay =
         selectedEvents.length === ALL_WEBHOOK_EVENTS.length
@@ -408,6 +432,7 @@ For example, if using ngrok: ngrok http 4318`,
 
       process.stderr.write('\n');
       process.stderr.write(`  ${pc.bold('Webhook:')}  ${webhookId}\n`);
+      process.stderr.write(`  ${pc.bold('Secret:')}   ${webhookSecret}\n`);
       process.stderr.write(`  ${pc.bold('Endpoint:')} ${url}\n`);
       process.stderr.write(`  ${pc.bold('Events:')}   ${eventsDisplay}\n`);
       process.stderr.write(
