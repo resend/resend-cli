@@ -6,7 +6,7 @@ import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
 import { pickId } from '../../lib/prompts';
 import { withSpinner } from '../../lib/spinner';
-import { contactPropertyPickerConfig } from './utils';
+import { contactPropertyPickerConfig, parseNumberFallback } from './utils';
 
 export const updateContactPropertyCommand = new Command('update')
   .description('Update a contact property definition')
@@ -87,8 +87,8 @@ The fallback value is used in broadcast template interpolation when a contact ha
       );
 
       if (property.type === 'number') {
-        const parsed = parseFloat(fallbackValue);
-        if (Number.isNaN(parsed)) {
+        const parsed = parseNumberFallback(fallbackValue);
+        if (parsed === undefined) {
           outputError(
             {
               message:
