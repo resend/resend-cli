@@ -1,3 +1,4 @@
+import { Resend } from 'resend';
 import {
   afterEach,
   beforeEach,
@@ -132,6 +133,35 @@ describe('withSpinner retry on rate_limit_exceeded', () => {
     });
     expect(result).toEqual({ id: 'ok' });
     expect(calls).toBe(2);
+  });
+
+  it('retries a gateway 502 page through the real SDK when retryTransient is true', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response('<html><body><h1>502 Bad Gateway</h1></body></html>', {
+          status: 502,
+          headers: { 'content-type': 'text/html', 'retry-after': '0' },
+        }),
+      )
+      .mockResolvedValueOnce(
+        Response.json({ object: 'list', has_more: false, data: [] }),
+      );
+    vi.stubGlobal('fetch', fetchMock);
+    try {
+      const resend = new Resend('re_test_key');
+      const result = await withSpinner(
+        loading,
+        () => resend.domains.list(),
+        'list_error',
+        globalOpts,
+        { retryTransient: true },
+      );
+      expect(result).toEqual({ object: 'list', has_more: false, data: [] });
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it('exits with timeout error when the call hangs past the deadline', async () => {
