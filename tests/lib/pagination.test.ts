@@ -10,6 +10,7 @@ import {
 import type { GlobalOpts } from '../../src/lib/client';
 import {
   buildPaginationOpts,
+  parseLimitOpt,
   printPaginationHint,
 } from '../../src/lib/pagination';
 import { captureTestEnv, mockExitThrow, setNonInteractive } from '../helpers';
@@ -64,6 +65,45 @@ describe('buildPaginationOpts', () => {
 
     const output = logSpy.mock.calls.map((call) => call[0]).join(' ');
     expect(output).toContain('invalid_pagination');
+  });
+});
+
+describe('parseLimitOpt', () => {
+  const restoreEnv = captureTestEnv();
+  let exitSpy: MockInstance | undefined;
+  let logSpy: MockInstance | undefined;
+
+  afterEach(() => {
+    restoreEnv();
+    exitSpy?.mockRestore();
+    logSpy?.mockRestore();
+    exitSpy = undefined;
+    logSpy = undefined;
+  });
+
+  const globalOpts = {} as GlobalOpts;
+
+  it.each(['1', '10', '100'])('accepts %s', (raw) => {
+    expect(parseLimitOpt(raw, globalOpts)).toBe(Number(raw));
+  });
+
+  it.each([
+    '0',
+    '101',
+    '',
+    'abc',
+    '2.5',
+    '25abc',
+    '1,000',
+  ])('errors with invalid_limit for %j', (raw) => {
+    setNonInteractive();
+    logSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    expect(() => parseLimitOpt(raw, globalOpts)).toThrow();
+
+    const output = logSpy.mock.calls.map((call) => call[0]).join(' ');
+    expect(output).toContain('invalid_limit');
   });
 });
 
