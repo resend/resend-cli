@@ -557,9 +557,12 @@ Built-in local development helper. It:
 - Starts a small HTTP server
 - Registers a temporary Resend webhook pointing at your public tunnel URL
 - Prints events in the terminal
+- Prints the temporary webhook's signing secret in the banner, so your `--forward-to` app can verify the Svix headers
+- Verifies Svix signatures before it prints or forwards events
 - Deletes the webhook on exit
 
 Your tunnel must forward to the same port as `--port`, e.g. `ngrok http 4318`.
+Requests with missing or invalid signatures receive HTTP 400.
 
 | Flag                   | Description                                                  |
 | ---------------------- | ------------------------------------------------------------ |
