@@ -176,6 +176,14 @@ export function resolveAttachments(
   }
 }
 
+function urlBasename(url: string): string | undefined {
+  try {
+    return basename(new URL(url).pathname) || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export function resolveDraftAttachments(
   specs: string[] | undefined,
   attachmentsFile: string | undefined,
@@ -192,11 +200,27 @@ export function resolveDraftAttachments(
           },
           { json: globalOpts.json },
         );
-      if (path || content === undefined) {
-        return fail('needs file content. A URL or path is not accepted');
-      }
       if (contentId) {
         return fail('does not take a content ID (;cid= or content_id)');
+      }
+      if (path !== undefined && content !== undefined) {
+        return fail('takes content or path, not both');
+      }
+      if (content === undefined) {
+        if (path === undefined) {
+          return fail('needs file content or a URL');
+        }
+        // The API requires a filename, so default it from the URL like a local
+        // file defaults to its basename.
+        const pathFilename = filename ?? urlBasename(path);
+        if (!pathFilename) {
+          return fail('needs a filename. Add ;filename=<name>');
+        }
+        return {
+          path,
+          filename: pathFilename,
+          ...(contentType && { contentType }),
+        };
       }
       if (!contentType) {
         return fail(
