@@ -432,11 +432,13 @@ subject of the thread, prefixed with `Re:` when it does not already start with i
 | `--thread-id <id>` | string | Thread to reply to (pairs with `--reply-to-email-id`) |
 | `--reply-to-email-id <id>` | string | Email the draft replies to (pairs with `--thread-id`) |
 | `--idempotency-key <key>` | string | Deduplicate request |
-| `--attachment <specs...>` | string[] | Local file to attach with `;type=<MIME type>` and an optional `;filename=`. Quote values that contain `;` |
-| `--attachments-file <path>` | string | JSON array of objects with `content` (base64), `filename`, and `content_type` (`-` for stdin) |
+| `--attachment <specs...>` | string[] | Local file to attach with `;type=<MIME type>`, or an `http://` or `https://` URL, with an optional `;filename=`. Quote values that contain `;` |
+| `--attachments-file <path>` | string | JSON array of objects with either `content` (base64) plus `content_type` and `filename`, or `path` (an `http://` or `https://` URL) with an optional `filename` (`-` for stdin) |
 
-Draft attachments need `content`, `filename`, and `content_type`. A URL or a
-`;cid=` returns an error. The files on a draft can total at most 25 MB. An
+A URL's filename defaults to the decoded last segment of its path, and its MIME type
+to the type of the downloaded file. The URLs are downloaded when the draft is
+saved, so a URL that cannot be downloaded returns an error. A `;cid=` returns an
+error. The files on a draft can total at most 25 MB, downloads included. An
 empty file or a blocked file type, such as `.exe`, returns an error.
 
 **Output:** `{"object":"inbox_draft","id":"<uuid>"}`

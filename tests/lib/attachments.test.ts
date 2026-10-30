@@ -222,23 +222,75 @@ describe('resolveDraftAttachments', () => {
     ]);
   });
 
-  it('rejects a URL', async () => {
-    await expectRejection(
-      ['https://example.com/a.pdf;type=application/pdf'],
-      undefined,
-      'needs file content',
-    );
+  it('returns path and filename for a URL, keeping an optional MIME type', () => {
+    expect(
+      resolveDraftAttachments(
+        [
+          'https://example.com/files/report.pdf;filename=q3.pdf',
+          'https://example.com/files/logo.png;type=image/png',
+        ],
+        undefined,
+        {},
+      ),
+    ).toStrictEqual([
+      { path: 'https://example.com/files/report.pdf', filename: 'q3.pdf' },
+      {
+        path: 'https://example.com/files/logo.png',
+        filename: 'logo.png',
+        contentType: 'image/png',
+      },
+    ]);
   });
 
-  it('rejects a path entry in the attachments file', async () => {
-    const file = writeJson('path.json', [
+  it('decodes the filename it takes from a URL', () => {
+    expect(
+      resolveDraftAttachments(
+        ['https://example.com/files/q3%20report.pdf'],
+        undefined,
+        {},
+      ),
+    ).toStrictEqual([
       {
+        path: 'https://example.com/files/q3%20report.pdf',
+        filename: 'q3 report.pdf',
+      },
+    ]);
+  });
+
+  it('returns a path entry from the attachments file', () => {
+    const file = writeJson('path.json', [
+      { path: 'https://example.com/a.pdf', filename: 'a.pdf' },
+    ]);
+    expect(resolveDraftAttachments(undefined, file, {})).toStrictEqual([
+      { path: 'https://example.com/a.pdf', filename: 'a.pdf' },
+    ]);
+  });
+
+  it('rejects an entry with both content and path', async () => {
+    const file = writeJson('both.json', [
+      {
+        content: 'aGVsbG8=',
         path: 'https://example.com/a.pdf',
         filename: 'a.pdf',
         content_type: 'application/pdf',
       },
     ]);
-    await expectRejection(undefined, file, 'needs file content');
+    await expectRejection(undefined, file, 'takes content or path, not both');
+  });
+
+  it('rejects a path that is not an http or https URL', async () => {
+    const file = writeJson('local-path.json', [
+      { path: './invoice.pdf', filename: 'invoice.pdf' },
+    ]);
+    await expectRejection(undefined, file, 'needs an http:// or https:// URL');
+  });
+
+  it('rejects a URL without a filename in its path', async () => {
+    await expectRejection(
+      ['https://example.com/'],
+      undefined,
+      'needs a filename',
+    );
   });
 
   it('rejects a content ID', async () => {
