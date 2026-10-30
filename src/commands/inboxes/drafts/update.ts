@@ -57,8 +57,9 @@ A draft that was already sent returns an error.
 Attachments: --attachment takes a local file path plus ;type= (the MIME type),
 or an http:// or https:// URL, with an optional ;filename=, as on "resend emails send".
 Quote values that contain ";". --attachments-file takes a JSON array of objects
-with filename and either content (base64) plus content_type, or path (a URL).
-A URL's filename defaults to the last segment of its path, and its MIME type to
+with either content (base64) plus content_type and filename, or path (an http://
+or https:// URL) with an optional filename. A URL's filename defaults to the
+decoded last segment of its path, and its MIME type to
 the type of the downloaded file. The URLs are downloaded when the draft is saved,
 so a URL that cannot be downloaded returns an error. A ;cid= returns an error.
 The files on a draft can total at most 25 MB, downloads included.

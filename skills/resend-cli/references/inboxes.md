@@ -433,9 +433,9 @@ subject of the thread, prefixed with `Re:` when it does not already start with i
 | `--reply-to-email-id <id>` | string | Email the draft replies to (pairs with `--thread-id`) |
 | `--idempotency-key <key>` | string | Deduplicate request |
 | `--attachment <specs...>` | string[] | Local file to attach with `;type=<MIME type>`, or an `http://` or `https://` URL, with an optional `;filename=`. Quote values that contain `;` |
-| `--attachments-file <path>` | string | JSON array of objects with `filename` and either `content` (base64) plus `content_type`, or `path` (a URL) (`-` for stdin) |
+| `--attachments-file <path>` | string | JSON array of objects with either `content` (base64) plus `content_type` and `filename`, or `path` (an `http://` or `https://` URL) with an optional `filename` (`-` for stdin) |
 
-A URL's filename defaults to the last segment of its path, and its MIME type
+A URL's filename defaults to the decoded last segment of its path, and its MIME type
 to the type of the downloaded file. The URLs are downloaded when the draft is
 saved, so a URL that cannot be downloaded returns an error. A `;cid=` returns an
 error. The files on a draft can total at most 25 MB, downloads included. An
