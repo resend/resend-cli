@@ -32,7 +32,7 @@ export const updateInboxDraftCommand = new Command('update')
   .option('--clear-html', 'Remove the HTML body from the draft')
   .option(
     '--attachment <specs...>',
-    'Local file to attach, replacing every attachment on the draft, with ;type= (MIME type) and optional ;filename= params (quote the value)',
+    'Local file (with ;type= MIME type) or URL to attach, replacing every attachment on the draft, with an optional ;filename= param (quote the value)',
   )
   .option(
     '--attachments-file <path>',
@@ -54,11 +54,14 @@ body, so the body part you omit becomes null.
 A draft that was already sent returns an error.
 --attachment and --attachments-file replace every attachment on the draft.
 --clear-attachments removes them all. Omit all three to keep them.
-Attachments: --attachment takes a local file path plus ;type= (the MIME type)
-and an optional ;filename=, as on "resend emails send". Quote values that contain ";".
---attachments-file takes a JSON array of objects with content (base64), filename
-and content_type. Draft attachments need content, filename and content_type.
-A URL or a ;cid= returns an error. The files on a draft can total at most 25 MB.
+Attachments: --attachment takes a local file path plus ;type= (the MIME type),
+or an http:// or https:// URL, with an optional ;filename=, as on "resend emails send".
+Quote values that contain ";". --attachments-file takes a JSON array of objects
+with filename and either content (base64) plus content_type, or path (a URL).
+A URL's filename defaults to the last segment of its path, and its MIME type to
+the type of the downloaded file. The URLs are downloaded when the draft is saved,
+so a URL that cannot be downloaded returns an error. A ;cid= returns an error.
+The files on a draft can total at most 25 MB, downloads included.
 An empty file or a blocked file type, such as .exe, returns an error.
 The output holds only the draft ID. Run "resend inboxes drafts get" to read the draft.`,
       output: `  {"object":"inbox_draft","id":"<uuid>"}`,

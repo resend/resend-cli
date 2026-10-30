@@ -869,12 +869,13 @@ resend inboxes drafts list <inbox-id>
 
 Creates a draft that starts a new thread. Pass `--thread-id` and `--reply-to-email-id` together for a reply draft. A reply draft without `--subject` is sent with the subject of the thread, prefixed with `Re:` when it does not already start with it. Takes `--to`, `--cc`, `--bcc`, `--subject`, `--text`, `--html`, `--attachment`, and `--attachments-file`. **At least one** of them is required. `--idempotency-key` deduplicates the request.
 
-Draft attachments need `content`, `filename`, and `content_type`, so `--attachment` takes a local file with `;type=<MIME type>`. The files on a draft can total at most 25 MB.
+`--attachment` takes a local file with `;type=<MIME type>`, or an `http://` or `https://` URL. A URL's filename defaults to the last segment of its path and its MIME type to the type of the downloaded file. The URLs are downloaded when the draft is saved, so a URL that cannot be downloaded returns an error. The files on a draft can total at most 25 MB, downloads included.
 
 ```bash
 resend inboxes drafts create <inbox-id> --to user@example.com --subject "Hello" --text "Draft body"
 resend inboxes drafts create <inbox-id> --thread-id <thread-id> --reply-to-email-id <email-id> --text "Reply draft"
 resend inboxes drafts create <inbox-id> --to user@example.com --text "Report attached" --attachment "./report.pdf;type=application/pdf"
+resend inboxes drafts create <inbox-id> --to user@example.com --text "Invoice attached" --attachment "https://example.com/invoice.pdf"
 ```
 
 #### **`resend inboxes drafts get`**
