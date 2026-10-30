@@ -178,7 +178,7 @@ export function resolveAttachments(
 
 function urlBasename(url: string): string | undefined {
   try {
-    return basename(new URL(url).pathname) || undefined;
+    return decodeURIComponent(basename(new URL(url).pathname)) || undefined;
   } catch {
     return undefined;
   }

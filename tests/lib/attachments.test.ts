@@ -242,6 +242,21 @@ describe('resolveDraftAttachments', () => {
     ]);
   });
 
+  it('decodes the filename it takes from a URL', () => {
+    expect(
+      resolveDraftAttachments(
+        ['https://example.com/files/q3%20report.pdf'],
+        undefined,
+        {},
+      ),
+    ).toStrictEqual([
+      {
+        path: 'https://example.com/files/q3%20report.pdf',
+        filename: 'q3 report.pdf',
+      },
+    ]);
+  });
+
   it('returns a path entry from the attachments file', () => {
     const file = writeJson('path.json', [
       { path: 'https://example.com/a.pdf', filename: 'a.pdf' },
