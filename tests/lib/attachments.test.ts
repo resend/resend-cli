@@ -278,6 +278,13 @@ describe('resolveDraftAttachments', () => {
     await expectRejection(undefined, file, 'takes content or path, not both');
   });
 
+  it('rejects a path that is not an http or https URL', async () => {
+    const file = writeJson('local-path.json', [
+      { path: './invoice.pdf', filename: 'invoice.pdf' },
+    ]);
+    await expectRejection(undefined, file, 'needs an http:// or https:// URL');
+  });
+
   it('rejects a URL without a filename in its path', async () => {
     await expectRejection(
       ['https://example.com/'],

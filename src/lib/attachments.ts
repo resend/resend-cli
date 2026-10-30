@@ -210,6 +210,9 @@ export function resolveDraftAttachments(
         if (path === undefined) {
           return fail('needs file content or a URL');
         }
+        if (!/^https?:\/\//.test(path)) {
+          return fail('needs an http:// or https:// URL as its path');
+        }
         // The API requires a filename, so default it from the URL like a local
         // file defaults to its basename.
         const pathFilename = filename ?? urlBasename(path);
