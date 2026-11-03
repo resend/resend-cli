@@ -58,15 +58,10 @@ existing draft.
 A reply draft created without --subject is sent with the subject of the thread,
 prefixed with "Re:" when it does not already start with it.
 
-Attachments: --attachment takes a local file path plus ;type= (the MIME type),
-or an http:// or https:// URL, with an optional ;filename=, as on "resend emails send".
-Quote values that contain ";". --attachments-file takes a JSON array of objects
-with either content (base64) plus content_type and filename, or path (an http://
-or https:// URL) with an optional filename. A URL's filename defaults to the
-decoded last segment of its path, and its MIME type to
-the type of the downloaded file. The URLs are downloaded when the draft is saved,
-so a URL that cannot be downloaded returns an error. A ;cid= returns an error.
-The files on a draft can total at most 25 MB, downloads included.
+Attachments: --attachment takes a local file plus ;type= (the MIME type), or a
+URL, with an optional ;filename=. Quote values that contain ";".
+--attachments-file takes a JSON array of {content, filename, content_type} or
+{path, filename?} objects. The files on a draft can total at most 25 MB.
 An empty file or a blocked file type, such as .exe, returns an error.
 
 Send the draft later with "resend inboxes drafts send".`,
