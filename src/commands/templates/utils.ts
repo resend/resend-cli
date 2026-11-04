@@ -2,6 +2,7 @@ import type {
   CreateTemplateOptions,
   ListTemplatesResponseSuccess,
 } from 'resend';
+import { parseFiniteNumber } from '../../lib/parse-number';
 import type { PickerConfig } from '../../lib/prompts';
 
 type TemplateVariableCreationOptions = NonNullable<
@@ -35,16 +36,16 @@ export function parseVariables(
     const fallback = raw;
 
     if (type === 'number') {
-      if (fallback != null && Number.isNaN(Number(fallback))) {
+      if (fallback == null) {
+        return { key, type: 'number' as const };
+      }
+      const fallbackValue = parseFiniteNumber(fallback);
+      if (fallbackValue === undefined) {
         throw new Error(
           `Invalid --var "${v}": fallback "${fallback}" is not a valid number.`,
         );
       }
-      return {
-        key,
-        type: 'number' as const,
-        ...(fallback != null ? { fallbackValue: Number(fallback) } : {}),
-      };
+      return { key, type: 'number' as const, fallbackValue };
     }
     return {
       key,

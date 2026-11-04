@@ -4,6 +4,7 @@ import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
+import { parseFiniteNumber } from '../../lib/parse-number';
 import { pickId } from '../../lib/prompts';
 import { withSpinner } from '../../lib/spinner';
 import { contactPropertyPickerConfig } from './utils';
@@ -87,8 +88,8 @@ The fallback value is used in broadcast template interpolation when a contact ha
       );
 
       if (property.type === 'number') {
-        const parsed = parseFloat(fallbackValue);
-        if (Number.isNaN(parsed)) {
+        const parsed = parseFiniteNumber(fallbackValue);
+        if (parsed === undefined) {
           outputError(
             {
               message:
