@@ -286,12 +286,13 @@ describe('contact-properties update command', () => {
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('invalid_fallback_value');
   });
+
   it.each([
     '1,000',
     '12abc',
     'Infinity',
     ' ',
-  ])('rejects partially numeric fallback-value %j for number-type properties', async (value) => {
+  ])('rejects non-numeric fallback-value %j for number-type properties', async (value) => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = vi
@@ -320,5 +321,32 @@ describe('contact-properties update command', () => {
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('invalid_fallback_value');
     expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['-2.5', -2.5],
+    ['1e3', 1000],
+    ['0', 0],
+  ])('coerces fallback-value %j to %d for number-type properties', async (value, expected) => {
+    spies = setupOutputSpies();
+    mockGet.mockResolvedValueOnce({
+      data: {
+        object: 'contact_property' as const,
+        id: 'b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d',
+        key: 'score',
+        type: 'number' as const,
+        fallbackValue: 0,
+        createdAt: '2026-01-01 00:00:00+00',
+      },
+      error: null,
+    });
+
+    await updateContactPropertyCommand.parseAsync(
+      ['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d', '--fallback-value', value],
+      { from: 'user' },
+    );
+
+    const args = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.fallbackValue).toBe(expected);
   });
 });

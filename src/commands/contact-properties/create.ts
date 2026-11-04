@@ -4,8 +4,8 @@ import { runCreate } from '../../lib/actions';
 import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
 import { outputError } from '../../lib/output';
+import { parseFiniteNumber } from '../../lib/parse-number';
 import { requireSelect, requireText } from '../../lib/prompts';
-import { parseNumberFallback } from './utils';
 
 export const createContactPropertyCommand = new Command('create')
   .description('Create a new contact property definition')
@@ -79,7 +79,7 @@ built-in contact fields and may cause unexpected behavior in broadcasts.`,
     let fallbackValue: string | number | undefined;
     if (opts.fallbackValue !== undefined) {
       if (type === 'number') {
-        const parsed = parseNumberFallback(opts.fallbackValue);
+        const parsed = parseFiniteNumber(opts.fallbackValue);
         if (parsed === undefined) {
           outputError(
             {

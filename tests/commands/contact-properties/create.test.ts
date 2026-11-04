@@ -185,7 +185,7 @@ describe('contact-properties create command', () => {
     '12abc',
     'Infinity',
     ' ',
-  ])('rejects partially numeric fallback-value %j for number-type properties', async (value) => {
+  ])('rejects non-numeric fallback-value %j for number-type properties', async (value) => {
     setNonInteractive();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
