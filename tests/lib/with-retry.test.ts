@@ -422,3 +422,68 @@ describe('withRetry transient 5xx', () => {
     expect(call).toHaveBeenCalledTimes(2);
   });
 });
+
+describe('withRetry transient status codes', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  // What the SDK returns when the error body is not JSON (a gateway or load
+  // balancer page), and the name the API documents for its own 500.
+  const statusError = (statusCode: number, name = 'application_error') => ({
+    data: null,
+    error: { message: 'Internal server error', name, statusCode },
+    headers: { 'content-type': 'text/html' },
+  });
+  const success = { data: { id: '1' }, error: null, headers: null };
+
+  it.each([
+    500, 502, 503, 504,
+  ])('retries application_error with status %i when retryTransient is true', async (status) => {
+    vi.useFakeTimers();
+
+    const call = vi
+      .fn()
+      .mockResolvedValueOnce(statusError(status))
+      .mockResolvedValueOnce(success);
+
+    const resultPromise = withRetry(call, { retryTransient: true });
+    await vi.advanceTimersByTimeAsync(1000);
+
+    const result = await resultPromise;
+    expect(result.data).toEqual({ id: '1' });
+    expect(call).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not retry a 5xx status when retryTransient is false', async () => {
+    const call = vi.fn().mockResolvedValue(statusError(502));
+
+    const result = await withRetry(call);
+
+    expect(result.error?.statusCode).toBe(502);
+    expect(call).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    400, 404, 409, 422,
+  ])('does not retry application_error with status %i', async (status) => {
+    const call = vi.fn().mockResolvedValue(statusError(status));
+
+    const result = await withRetry(call, { retryTransient: true });
+
+    expect(result.error?.statusCode).toBe(status);
+    expect(call).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    'daily_quota_exceeded',
+    'monthly_quota_exceeded',
+  ])('does not retry %s, which the API sends with status 429', async (name) => {
+    const call = vi.fn().mockResolvedValue(statusError(429, name));
+
+    const result = await withRetry(call, { retryTransient: true });
+
+    expect(result.error?.name).toBe(name);
+    expect(call).toHaveBeenCalledTimes(1);
+  });
+});
