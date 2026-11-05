@@ -250,7 +250,7 @@ describe('login command', () => {
   });
 
   it('stores valid key to credentials.json and sets active_profile', async () => {
-    setupOutputSpies();
+    const { logSpy } = setupOutputSpies();
 
     await loginCommand.parseAsync(['--key', 're_valid_test_key_123'], {
       from: 'user',
@@ -260,6 +260,11 @@ describe('login command', () => {
     const data = JSON.parse(readFileSync(configPath, 'utf-8'));
     expect(data.profiles.default.api_key).toBe('re_valid_test_key_123');
     expect(data.active_profile).toBe('default');
+    expect(JSON.parse(logSpy.mock.calls.flat().join('\n'))).toMatchObject({
+      success: true,
+      profile: 'default',
+      permission: 'full_access',
+    });
   });
 
   it('requires --key in non-interactive mode', async () => {
@@ -276,11 +281,16 @@ describe('login command', () => {
   });
 
   it('--web logs in through the browser without a TTY', async () => {
-    setupOutputSpies();
+    const { logSpy } = setupOutputSpies();
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     await loginCommand.parseAsync(['--web'], { from: 'user' });
 
+    expect(JSON.parse(logSpy.mock.calls.flat().join('\n'))).toMatchObject({
+      success: true,
+      profile: 'default',
+      scope: 'full_access',
+    });
     const stderr = errorSpy.mock.calls.flat().join('\n');
     expect(stderr).toContain('/oauth/authorize?');
     expect(stderr).toContain(

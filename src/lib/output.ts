@@ -17,7 +17,7 @@ export interface ErrorOutput {
   body?: string | null;
 }
 
-function shouldOutputJson(json?: boolean): boolean {
+export function shouldOutputJson(json?: boolean): boolean {
   if (json) {
     return true;
   }

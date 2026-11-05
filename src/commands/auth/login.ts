@@ -23,7 +23,12 @@ import {
   OAUTH_CLIENT_ID,
   OAUTH_TIMEOUT_ERROR_NAME,
 } from '../../lib/oauth';
-import { errorMessage, outputError, outputResult } from '../../lib/output';
+import {
+  errorMessage,
+  outputError,
+  outputResult,
+  shouldOutputJson,
+} from '../../lib/output';
 import { cancelAndExit, promptRenameIfInvalid } from '../../lib/prompts';
 import { createSpinner } from '../../lib/spinner';
 import { isInteractive } from '../../lib/tty';
@@ -325,7 +330,7 @@ async function handleOAuthLogin(
     }
   }
 
-  if (globalOpts.json) {
+  if (shouldOutputJson(globalOpts.json)) {
     outputResult(
       {
         success: true,
@@ -555,7 +560,7 @@ export const loginCommand = new Command('login')
       }
     }
 
-    if (globalOpts.json) {
+    if (shouldOutputJson(globalOpts.json)) {
       outputResult(
         {
           success: true,

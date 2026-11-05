@@ -199,10 +199,14 @@ Omitting both flags in non-interactive mode exits with error code `missing_key`.
 
 On success, credentials are saved to `~/.config/resend/credentials.json` with `0600` permissions (owner read/write only). The config directory is created with `0700` permissions.
 
+With `--json`, or when stdout is not a TTY, the result is JSON on stdout:
+
 ```bash
-# JSON output
 resend login --key re_xxx --json
-# => {"success":true,"config_path":"/Users/you/.config/resend/credentials.json"}
+# => {"success":true,"config_path":"...","profile":"default","storage":"...","permission":"full_access"}
+
+resend login --web --json
+# => {"success":true,"config_path":"...","profile":"default","storage":"...","scope":"full_access"}
 ```
 
 #### Error codes
