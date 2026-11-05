@@ -12,11 +12,11 @@ pnpm build
 
 ## 2. Start a local receiver
 
-In terminal A, use a development-only secret. Set the same value in terminal B and in the app under test.
-This fixed example secret is public and must never be used outside local testing.
+In terminal A, generate a development-only secret. Set the same value in terminal B and in the app under test.
 
 ```sh
-export RESEND_WEBHOOK_SECRET='whsec_bG9jYWwtZGV2ZWxvcG1lbnQtc2VjcmV0'
+export RESEND_WEBHOOK_SECRET="whsec_$(openssl rand -base64 24)"
+echo "$RESEND_WEBHOOK_SECRET"
 node --input-type=module <<'NODE'
 import { createServer } from 'node:http';
 import { Resend } from 'resend';
@@ -56,7 +56,7 @@ NODE
 In terminal B:
 
 ```sh
-export RESEND_WEBHOOK_SECRET='whsec_bG9jYWwtZGV2ZWxvcG1lbnQtc2VjcmV0'
+export RESEND_WEBHOOK_SECRET='<value printed in terminal A>'
 node dist/cli.cjs --json webhooks trigger email.delivered \
   --forward-to http://127.0.0.1:8787/webhooks/resend \
   --email-id email_pr_demo_42 \
