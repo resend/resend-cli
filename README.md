@@ -168,15 +168,17 @@ Enter the key via a masked password input. Your key must start with `re_`.
 
 #### Non-interactive mode (CI, pipes, scripts)
 
-When stdin is not a TTY, pass `--web` or `--key`.
+The CLI is non-interactive when stdin or stdout is not a TTY, when `CI` or `GITHUB_ACTIONS` is set, or when `TERM=dumb`. In that mode, pass `--web` or `--key`.
 
-`--web` logs in through the browser with no prompts, so AI agents can run it. The command prints an authorize URL to stderr and tries to open it. It waits up to 5 minutes for you to approve the login, then stores an OAuth grant:
+`--web` logs in through the browser with no prompts in any mode, so AI agents can run it. The command tries to open the browser, then prints the authorize URL and the target profile to stderr. It waits up to 5 minutes for you to approve the login, then stores an OAuth grant:
 
 ```bash
 resend login --web
 ```
 
-The browser must run on the same machine as the CLI, because Resend redirects to a local callback on `127.0.0.1`.
+- The browser must run on the same machine as the CLI, because Resend redirects to a local callback on `127.0.0.1`.
+- Without `--profile`, the login goes to the `default` profile and replaces its saved credentials.
+- The status text on stderr comes before any JSON error.
 
 `--key` stores an API key:
 
@@ -188,9 +190,9 @@ Omitting both flags in non-interactive mode exits with error code `missing_key`.
 
 #### Options
 
-| Flag          | Description                                                          |
-| ------------- | -------------------------------------------------------------------- |
-| `--web`       | Log in through the browser with no prompts                           |
+| Flag          | Description                                                         |
+| ------------- | ------------------------------------------------------------------- |
+| `--web`       | Log in through the browser with no prompts                          |
 | `--key <key>` | API key to store (required in non-interactive mode, unless `--web`) |
 
 #### Output
@@ -205,13 +207,16 @@ resend login --key re_xxx --json
 
 #### Error codes
 
-| Code                 | Cause                                       |
-| -------------------- | ------------------------------------------- |
-| `missing_key`        | No `--key` or `--web` in non-interactive mode |
-| `conflicting_flags`  | `--web` and `--key` are both set              |
-| `invalid_key_format` | Key does not start with `re_`                 |
-| `validation_failed`  | Resend API rejected the key                   |
-| `oauth_error`        | Browser login failed or timed out             |
+| Code                   | Cause                                                                                                                 |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `missing_key`          | No `--key` or `--web` in non-interactive mode                                                                         |
+| `conflicting_flags`    | `--web` and `--key` are both set                                                                                      |
+| `invalid_key_format`   | Key does not start with `re_`                                                                                         |
+| `validation_failed`    | Resend API rejected the key                                                                                           |
+| `invalid_profile_name` | The `--profile` name is not valid                                                                                     |
+| `write_failed`         | The credentials could not be saved                                                                                    |
+| `oauth_error`          | Browser login failed: the local callback did not start, access was denied, it timed out, or the token exchange failed |
+| `oauth_state_mismatch` | The browser callback did not match this login request                                                                 |
 
 #### Switch between teams and accounts
 

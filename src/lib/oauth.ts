@@ -8,7 +8,7 @@ import { AUTH_BACKGROUND_DATA_URI } from './oauth-background';
 export const OAUTH_CLIENT_ID = '7136aa0b-625c-4c9c-8820-e9784c8eb141';
 
 const INVALID_TOKEN_MESSAGE =
-  'Received an invalid access token from Resend. Please run `resend login` to authenticate again.';
+  'Received an invalid access token from Resend. Please run `resend login --web` to authenticate again.';
 
 export function getJwtExp(token: string): number {
   const parts = token.split('.');
@@ -48,7 +48,7 @@ export type TokenResponse = {
 // we depend on before persisting a grant.
 export function parseTokenResponse(json: unknown): TokenResponse {
   const invalid = new Error(
-    'Received an unexpected response from Resend while authenticating. Please run `resend login` again.',
+    'Received an unexpected response from Resend while authenticating. Please run `resend login --web` again.',
   );
 
   if (typeof json !== 'object' || json === null) {
@@ -76,6 +76,8 @@ const TOKEN_EXPIRY_LEEWAY_SECONDS = 60;
 // Marks errors from a timed-out or unreachable token request (vs. the server
 // rejecting the request), so callers can treat them as transient.
 export const OAUTH_NETWORK_ERROR_NAME = 'OAuthNetworkError';
+
+export const OAUTH_TIMEOUT_ERROR_NAME = 'OAuthTimeoutError';
 
 // fetch has no default timeout; abort after 30s so a hung connection can't hang
 // the CLI.
@@ -133,7 +135,7 @@ export async function refreshOAuthGrant(
 
   if (!response.ok) {
     throw new Error(
-      `Token refresh failed (${response.status}). Please run \`resend login\` again.`,
+      `Token refresh failed (${response.status}). Please run \`resend login --web\` again.`,
     );
   }
 
@@ -326,9 +328,11 @@ export function createCallbackServer(): Promise<{
     const timeout = setTimeout(
       () => {
         server.close();
-        rejectCallback(
-          new Error('OAuth login timed out after 5 minutes. Please try again.'),
+        const timeoutError = new Error(
+          'OAuth login timed out after 5 minutes. Please try again.',
         );
+        timeoutError.name = OAUTH_TIMEOUT_ERROR_NAME;
+        rejectCallback(timeoutError);
       },
       5 * 60 * 1000,
     );

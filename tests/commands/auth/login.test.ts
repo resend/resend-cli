@@ -18,6 +18,7 @@ import {
   vi,
 } from 'vitest';
 import { loginCommand } from '../../../src/commands/auth/login';
+import { openInBrowser } from '../../../src/lib/browser';
 import {
   captureTestEnv,
   expectExit1,
@@ -53,6 +54,75 @@ vi.mock('../../../src/lib/browser', async (importOriginal) => ({
   openInBrowser: vi.fn(async () => false),
 }));
 
+const storeFailure = vi.hoisted(() => ({ error: null as Error | null }));
+
+vi.mock('../../../src/lib/config', async (importOriginal) => {
+  const original =
+    await importOriginal<typeof import('../../../src/lib/config')>();
+  return {
+    ...original,
+    storeOAuthGrant: (...args: Parameters<typeof original.storeOAuthGrant>) =>
+      storeFailure.error
+        ? Promise.reject(storeFailure.error)
+        : original.storeOAuthGrant(...args),
+  };
+});
+
+vi.mock('@clack/prompts', async (importOriginal) => {
+  const prompted = () => {
+    throw new Error('unexpected prompt');
+  };
+  return {
+    ...(await importOriginal<typeof import('@clack/prompts')>()),
+    select: prompted,
+    text: prompted,
+    confirm: prompted,
+    password: prompted,
+  };
+});
+
+function setInteractive(): void {
+  Object.defineProperty(process.stdin, 'isTTY', {
+    value: true,
+    writable: true,
+  });
+  Object.defineProperty(process.stdout, 'isTTY', {
+    value: true,
+    writable: true,
+  });
+  delete process.env.CI;
+  delete process.env.GITHUB_ACTIONS;
+  delete process.env.TERM;
+}
+
+function webProgram() {
+  return new Command()
+    .option('--profile <name>')
+    .option('--json')
+    .option('--api-key <key>')
+    .option('-q, --quiet')
+    .addCommand(loginCommand);
+}
+
+function writeProfiles(
+  tmpDir: string,
+  activeProfile: string,
+  profiles: Record<string, unknown>,
+): void {
+  const configDir = join(tmpDir, 'resend');
+  mkdirSync(configDir, { recursive: true });
+  writeFileSync(
+    join(configDir, 'credentials.json'),
+    JSON.stringify({ active_profile: activeProfile, profiles }),
+  );
+}
+
+function rejectedCallback(error: Error) {
+  const waitForCallback = Promise.reject(error);
+  waitForCallback.catch(() => {});
+  return { port: 4321, waitForCallback };
+}
+
 function fakeJwt(exp: number): string {
   const encode = (value: object) =>
     Buffer.from(JSON.stringify(value)).toString('base64url');
@@ -76,6 +146,7 @@ describe('login command', () => {
 
   beforeEach(() => {
     mockDomainListResult = { data: { data: [] }, error: null };
+    storeFailure.error = null;
     oauthMocks.createCallbackServer.mockReset().mockResolvedValue({
       port: 4321,
       waitForCallback: Promise.resolve({
@@ -233,26 +304,14 @@ describe('login command', () => {
   });
 
   it('--web --json keeps the URL on stderr and only JSON on stdout', async () => {
-    Object.defineProperty(process.stdin, 'isTTY', {
-      value: true,
-      writable: true,
-    });
-    Object.defineProperty(process.stdout, 'isTTY', {
-      value: true,
-      writable: true,
-    });
+    setInteractive();
     vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const program = new Command()
-      .option('--profile <name>')
-      .option('--json')
-      .option('--api-key <key>')
-      .option('-q, --quiet')
-      .addCommand(loginCommand);
-
-    await program.parseAsync(['login', '--web', '--json'], { from: 'user' });
+    await webProgram().parseAsync(['login', '--web', '--json'], {
+      from: 'user',
+    });
 
     expect(errorSpy.mock.calls.flat().join('\n')).toContain(
       '/oauth/authorize?',
@@ -276,6 +335,164 @@ describe('login command', () => {
 
     expect(errorSpy.mock.calls.flat().join(' ')).toContain('conflicting_flags');
     expect(oauthMocks.createCallbackServer).not.toHaveBeenCalled();
+  });
+
+  it('--web in a terminal saves to default without prompting', async () => {
+    writeProfiles(tmpDir, 'default', { default: { api_key: 're_old_key' } });
+    setInteractive();
+    vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.mocked(openInBrowser).mockResolvedValueOnce(true);
+
+    await loginCommand.parseAsync(['--web'], { from: 'user' });
+
+    const stderr = errorSpy.mock.calls.flat().join('\n');
+    expect(stderr).toContain('Opened the browser');
+    expect(stderr).toContain('/oauth/authorize?');
+    expect(stderr).toContain(
+      "saved to profile 'default', replacing its saved credentials",
+    );
+    const data = JSON.parse(
+      readFileSync(join(tmpDir, 'resend', 'credentials.json'), 'utf-8'),
+    );
+    expect(data.profiles.default.type).toBe('oauth_grant');
+  });
+
+  it('--web warns when other commands use a different profile', async () => {
+    writeProfiles(tmpDir, 'production', {
+      production: { api_key: 're_prod_key' },
+    });
+    setupOutputSpies();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await loginCommand.parseAsync(['--web'], { from: 'user' });
+
+    expect(errorSpy.mock.calls.flat().join('\n')).toContain(
+      "Other commands use profile 'production'. Pass --profile production",
+    );
+  });
+
+  it('--web --profile saves to that profile and makes it active', async () => {
+    writeProfiles(tmpDir, 'default', { default: { api_key: 're_old_key' } });
+    setupOutputSpies();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await webProgram().parseAsync(['login', '--web', '--profile', 'prod'], {
+      from: 'user',
+    });
+
+    const data = JSON.parse(
+      readFileSync(join(tmpDir, 'resend', 'credentials.json'), 'utf-8'),
+    );
+    expect(data.profiles.prod.type).toBe('oauth_grant');
+    expect(data.profiles.default.api_key).toBe('re_old_key');
+    expect(data.active_profile).toBe('prod');
+  });
+
+  it('--web rejects an invalid --profile before opening the browser', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    await expectExit1(() =>
+      webProgram().parseAsync(['login', '--web', '--profile', 'bad name'], {
+        from: 'user',
+      }),
+    );
+
+    expect(errorSpy.mock.calls.flat().join(' ')).toContain(
+      'invalid_profile_name',
+    );
+    expect(oauthMocks.createCallbackServer).not.toHaveBeenCalled();
+  });
+
+  it('--web explains a timeout and saves nothing', async () => {
+    const timeout = new Error('OAuth login timed out after 5 minutes.');
+    timeout.name = 'OAuthTimeoutError';
+    oauthMocks.createCallbackServer.mockResolvedValue(
+      rejectedCallback(timeout),
+    );
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    await expectExit1(() =>
+      loginCommand.parseAsync(['--web'], { from: 'user' }),
+    );
+
+    const stderr = errorSpy.mock.calls.flat().join(' ');
+    expect(stderr).toContain('oauth_error');
+    expect(stderr).toContain('same machine as the CLI');
+    expect(existsSync(join(tmpDir, 'resend', 'credentials.json'))).toBe(false);
+  });
+
+  it('--web reports a denied login without the timeout hint', async () => {
+    oauthMocks.createCallbackServer.mockResolvedValue(
+      rejectedCallback(new Error('Authorization denied: access_denied')),
+    );
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    await expectExit1(() =>
+      loginCommand.parseAsync(['--web'], { from: 'user' }),
+    );
+
+    const stderr = errorSpy.mock.calls.flat().join(' ');
+    expect(stderr).toContain('Authorization denied');
+    expect(stderr).not.toContain('same machine');
+  });
+
+  it('--web rejects a callback with the wrong state', async () => {
+    oauthMocks.createCallbackServer.mockResolvedValue({
+      port: 4321,
+      waitForCallback: Promise.resolve({ code: 'test_code', state: 'other' }),
+    });
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    await expectExit1(() =>
+      loginCommand.parseAsync(['--web'], { from: 'user' }),
+    );
+
+    expect(errorSpy.mock.calls.flat().join(' ')).toContain(
+      'oauth_state_mismatch',
+    );
+    expect(oauthMocks.exchangeAuthorizationCode).not.toHaveBeenCalled();
+  });
+
+  it('--web --json reports a failed token exchange as oauth_error', async () => {
+    oauthMocks.exchangeAuthorizationCode.mockRejectedValue(
+      new Error('Token exchange failed (500)'),
+    );
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    await expectExit1(() =>
+      webProgram().parseAsync(['login', '--web', '--json'], { from: 'user' }),
+    );
+
+    const envelope = JSON.parse(errorSpy.mock.calls.at(-1)?.[0] as string);
+    expect(envelope.error.code).toBe('oauth_error');
+    expect(existsSync(join(tmpDir, 'resend', 'credentials.json'))).toBe(false);
+  });
+
+  it('--web reports a failed save as write_failed', async () => {
+    storeFailure.error = new Error('keychain locked');
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    await expectExit1(() =>
+      loginCommand.parseAsync(['--web'], { from: 'user' }),
+    );
+
+    const stderr = errorSpy.mock.calls.flat().join(' ');
+    expect(stderr).toContain('write_failed');
+    expect(stderr).toContain('keychain locked');
   });
 
   it('errors with missing_key when --json is set but --key is omitted even in TTY', async () => {
