@@ -6,6 +6,7 @@ import type { GlobalOpts } from '../../lib/client';
 import {
   type ApiKeyPermission,
   listProfiles,
+  resolveProfileName,
   SENDING_KEY_MESSAGE,
   setActiveProfile,
   storeApiKeyAsync,
@@ -20,33 +21,42 @@ import {
   generatePKCE,
   getJwtExp,
   OAUTH_CLIENT_ID,
+  OAUTH_TIMEOUT_ERROR_NAME,
 } from '../../lib/oauth';
-import { errorMessage, outputError, outputResult } from '../../lib/output';
+import {
+  errorMessage,
+  outputError,
+  outputResult,
+  shouldOutputJson,
+} from '../../lib/output';
 import { cancelAndExit, promptRenameIfInvalid } from '../../lib/prompts';
 import { createSpinner } from '../../lib/spinner';
 import { isInteractive } from '../../lib/tty';
 
 const RESEND_API_KEYS_URL = 'https://resend.com/api-keys?new=true';
 
+function profileFromFlag(globalOpts: GlobalOpts): string | undefined {
+  if (globalOpts.profile === undefined) {
+    return undefined;
+  }
+  const profileName = globalOpts.profile.trim();
+  const profileError = validateProfileName(profileName);
+  if (profileError) {
+    outputError(
+      { message: profileError, code: 'invalid_profile_name' },
+      { json: globalOpts.json },
+    );
+  }
+  return profileName;
+}
+
 async function selectProfile(
   globalOpts: GlobalOpts,
   promptLabel: string,
 ): Promise<string | undefined> {
-  let profileName =
-    globalOpts.profile !== undefined ? globalOpts.profile.trim() : undefined;
+  let profileName = profileFromFlag(globalOpts);
 
-  if (profileName !== undefined) {
-    const profileError = validateProfileName(profileName);
-    if (profileError) {
-      outputError(
-        { message: profileError, code: 'invalid_profile_name' },
-        { json: globalOpts.json },
-      );
-    }
-    return profileName;
-  }
-
-  if (!isInteractive() || globalOpts.json) {
+  if (profileName !== undefined || !isInteractive() || globalOpts.json) {
     return profileName;
   }
 
@@ -131,7 +141,11 @@ function reportStorageLocation(opts: {
   }
 }
 
-async function handleOAuthLogin(globalOpts: GlobalOpts): Promise<void> {
+async function handleOAuthLogin(
+  globalOpts: GlobalOpts,
+  { noPrompt }: { noPrompt: boolean },
+): Promise<void> {
+  const flagProfile = noPrompt ? profileFromFlag(globalOpts) : undefined;
   const { codeVerifier, codeChallenge, state } = generatePKCE();
 
   const serverSpinner = createSpinner(
@@ -169,7 +183,23 @@ async function handleOAuthLogin(globalOpts: GlobalOpts): Promise<void> {
   }).toString();
 
   const opened = await openInBrowser(authUrl.toString());
-  if (opened) {
+  if (noPrompt) {
+    const target = flagProfile ?? 'default';
+    const replaces = listProfiles().some((pr) => pr.name === target);
+    const lines = [
+      `${opened ? 'Opened the browser to log in to Resend.' : 'Could not open the browser.'} Open this URL to approve the login:`,
+      authUrl.toString(),
+      `The login will be saved to profile '${target}'${replaces ? ', replacing its saved credentials' : ''}.`,
+    ];
+    const nextProfile = flagProfile ?? resolveProfileName();
+    if (nextProfile !== target) {
+      lines.push(
+        `Other commands use profile '${nextProfile}'. Pass --profile ${nextProfile} to save the login there instead.`,
+      );
+    }
+    lines.push('Waiting for approval (times out in 5 minutes)...');
+    console.error(lines.join('\n'));
+  } else if (opened) {
     p.log.info('Browser opened. Complete authentication to continue.');
   } else {
     p.log.warn(
@@ -187,9 +217,15 @@ async function handleOAuthLogin(globalOpts: GlobalOpts): Promise<void> {
     callbackResult = await waitForCallback;
   } catch (err) {
     waitSpinner.fail('Authentication failed');
+    const message = errorMessage(err, 'Authentication failed');
     outputError(
       {
-        message: errorMessage(err, 'Authentication failed'),
+        message:
+          noPrompt &&
+          err instanceof Error &&
+          err.name === OAUTH_TIMEOUT_ERROR_NAME
+            ? `${message} No callback reached 127.0.0.1, so the browser must run on the same machine as the CLI. On a remote host, use --key instead.`
+            : message,
         code: 'oauth_error',
       },
       { json: globalOpts.json },
@@ -234,23 +270,51 @@ async function handleOAuthLogin(globalOpts: GlobalOpts): Promise<void> {
     );
   }
 
+  let accessTokenExpiresAt: number;
+  try {
+    accessTokenExpiresAt = getJwtExp(tokenResponse.access_token);
+  } catch (err) {
+    exchangeSpinner.fail('Token exchange failed');
+    outputError(
+      {
+        message: errorMessage(err, 'Token exchange failed'),
+        code: 'oauth_error',
+      },
+      { json: globalOpts.json },
+    );
+  }
+
   exchangeSpinner.stop('Authenticated successfully');
 
-  const profileName = await selectProfile(
-    globalOpts,
-    'Save credentials to which profile?',
-  );
+  const profileName = noPrompt
+    ? flagProfile
+    : await selectProfile(globalOpts, 'Save credentials to which profile?');
   const profileLabel = profileName || 'default';
 
-  const { configPath, backend } = await storeOAuthGrant(
-    {
-      access_token: tokenResponse.access_token,
-      access_token_expires_at: getJwtExp(tokenResponse.access_token),
-      refresh_token: tokenResponse.refresh_token,
-      scope: tokenResponse.scope,
-    },
-    profileName,
-  );
+  let stored: Awaited<ReturnType<typeof storeOAuthGrant>>;
+  try {
+    stored = await storeOAuthGrant(
+      {
+        access_token: tokenResponse.access_token,
+        access_token_expires_at: accessTokenExpiresAt,
+        refresh_token: tokenResponse.refresh_token,
+        scope: tokenResponse.scope,
+      },
+      profileName,
+    );
+  } catch (err) {
+    outputError(
+      {
+        message: errorMessage(
+          err,
+          `Failed to save credentials for profile '${profileLabel}'`,
+        ),
+        code: 'write_failed',
+      },
+      { json: globalOpts.json },
+    );
+  }
+  const { configPath, backend } = stored;
 
   if (profileName) {
     try {
@@ -266,7 +330,7 @@ async function handleOAuthLogin(globalOpts: GlobalOpts): Promise<void> {
     }
   }
 
-  if (globalOpts.json) {
+  if (shouldOutputJson(globalOpts.json)) {
     outputResult(
       {
         success: true,
@@ -289,16 +353,24 @@ async function handleOAuthLogin(globalOpts: GlobalOpts): Promise<void> {
 
 export const loginCommand = new Command('login')
   .description('Save a Resend API key')
-  .option('--key <key>', 'API key to store (required in non-interactive mode)')
+  .option(
+    '--key <key>',
+    'API key to store (required in non-interactive mode, unless --web is set)',
+  )
+  .option(
+    '--web',
+    'Log in through the browser with no prompts (works in non-interactive mode)',
+  )
   .addHelpText(
     'after',
     buildHelpText({
       setup: true,
       context:
-        'Non-interactive: --key is required (no prompts will appear when stdin/stdout is not a TTY).',
+        'Non-interactive: pass --web or --key (no prompts will appear when stdin/stdout is not a TTY).\n  --web prints a URL to stderr and waits up to 5 minutes for you to approve the login in the browser.',
       output: `  {"success":true,"config_path":"<path>","profile":"<name>"}`,
       errorCodes: [
         'missing_key',
+        'conflicting_flags',
         'invalid_key_format',
         'validation_failed',
         'invalid_profile_name',
@@ -308,6 +380,7 @@ export const loginCommand = new Command('login')
         'oauth_state_mismatch',
       ],
       examples: [
+        'resend login --web                (opens browser, no prompts)',
         'resend login --key re_123456789',
         'resend login                      (interactive — prompts and opens browser)',
         'RESEND_API_KEY=re_123 resend emails send ...  (skip login; use env var directly)',
@@ -318,12 +391,26 @@ export const loginCommand = new Command('login')
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     let apiKey = typeof opts.key === 'string' ? opts.key.trim() : opts.key;
 
+    if (opts.web) {
+      if (opts.key !== undefined) {
+        outputError(
+          {
+            message: '--web and --key are mutually exclusive.',
+            code: 'conflicting_flags',
+          },
+          { json: globalOpts.json },
+        );
+      }
+      await handleOAuthLogin(globalOpts, { noPrompt: true });
+      return;
+    }
+
     if (!apiKey) {
       if (!isInteractive() || globalOpts.json) {
         outputError(
           {
             message:
-              'Missing --key flag. Provide your API key in non-interactive mode.',
+              'Missing --key flag. In non-interactive mode, run `resend login --web` to log in through the browser, or pass --key.',
             code: 'missing_key',
           },
           { json: globalOpts.json },
@@ -352,7 +439,7 @@ export const loginCommand = new Command('login')
       }
 
       if (method === 'oauth') {
-        await handleOAuthLogin(globalOpts);
+        await handleOAuthLogin(globalOpts, { noPrompt: false });
         return;
       }
 
@@ -441,12 +528,23 @@ export const loginCommand = new Command('login')
       'Save API key to which profile?',
     );
 
-    const { configPath, backend } = await storeApiKeyAsync(
-      apiKey,
-      profileName,
-      detectedPermission,
-    );
     const profileLabel = profileName || 'default';
+    let stored: Awaited<ReturnType<typeof storeApiKeyAsync>>;
+    try {
+      stored = await storeApiKeyAsync(apiKey, profileName, detectedPermission);
+    } catch (err) {
+      outputError(
+        {
+          message: errorMessage(
+            err,
+            `Failed to save API key for profile '${profileLabel}'`,
+          ),
+          code: 'write_failed',
+        },
+        { json: globalOpts.json },
+      );
+    }
+    const { configPath, backend } = stored;
 
     if (profileName) {
       try {
@@ -462,7 +560,7 @@ export const loginCommand = new Command('login')
       }
     }
 
-    if (globalOpts.json) {
+    if (shouldOutputJson(globalOpts.json)) {
       outputResult(
         {
           success: true,

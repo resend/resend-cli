@@ -168,37 +168,59 @@ Enter the key via a masked password input. Your key must start with `re_`.
 
 #### Non-interactive mode (CI, pipes, scripts)
 
-When stdin is not a TTY, the `--key` flag is required:
+The CLI is non-interactive when stdin or stdout is not a TTY, when `CI` or `GITHUB_ACTIONS` is set, or when `TERM=dumb`. In that mode, pass `--web` or `--key`.
+
+`--web` logs in through the browser with no prompts in any mode, so AI agents can run it. The command tries to open the browser, then prints the authorize URL and the target profile to stderr. It waits up to 5 minutes for you to approve the login, then stores an OAuth grant:
+
+```bash
+resend login --web
+```
+
+- The browser must run on the same machine as the CLI, because Resend redirects to a local callback on `127.0.0.1`.
+- Without `--profile`, the login goes to the `default` profile and replaces its saved credentials.
+- The status text on stderr comes before any JSON error.
+
+`--key` stores an API key:
 
 ```bash
 resend login --key re_xxxxxxxxxxxxx
 ```
 
-Omitting `--key` in non-interactive mode exits with error code `missing_key`.
+Omitting both flags in non-interactive mode exits with error code `missing_key`.
 
 #### Options
 
-| Flag          | Description                                         |
-| ------------- | --------------------------------------------------- |
-| `--key <key>` | API key to store (required in non-interactive mode) |
+| Flag          | Description                                                         |
+| ------------- | ------------------------------------------------------------------- |
+| `--web`       | Log in through the browser with no prompts                          |
+| `--key <key>` | API key to store (required in non-interactive mode, unless `--web`) |
 
 #### Output
 
 On success, credentials are saved to `~/.config/resend/credentials.json` with `0600` permissions (owner read/write only). The config directory is created with `0700` permissions.
 
+With `--json`, or when stdout is not a TTY, the result is JSON on stdout:
+
 ```bash
-# JSON output
 resend login --key re_xxx --json
-# => {"success":true,"config_path":"/Users/you/.config/resend/credentials.json"}
+# => {"success":true,"config_path":"...","profile":"default","storage":"...","permission":"full_access"}
+
+resend login --web --json
+# => {"success":true,"config_path":"...","profile":"default","storage":"...","scope":"full_access"}
 ```
 
 #### Error codes
 
-| Code                 | Cause                                       |
-| -------------------- | ------------------------------------------- |
-| `missing_key`        | No `--key` provided in non-interactive mode |
-| `invalid_key_format` | Key does not start with `re_`               |
-| `validation_failed`  | Resend API rejected the key                 |
+| Code                   | Cause                                                                                                                 |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `missing_key`          | No `--key` or `--web` in non-interactive mode                                                                         |
+| `conflicting_flags`    | `--web` and `--key` are both set                                                                                      |
+| `invalid_key_format`   | Key does not start with `re_`                                                                                         |
+| `validation_failed`    | Resend API rejected the key                                                                                           |
+| `invalid_profile_name` | The `--profile` name is not valid                                                                                     |
+| `write_failed`         | The credentials could not be saved                                                                                    |
+| `oauth_error`          | Browser login failed: the local callback did not start, access was denied, it timed out, or the token exchange failed |
+| `oauth_state_mismatch` | The browser callback did not match this login request                                                                 |
 
 #### Switch between teams and accounts
 
