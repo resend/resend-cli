@@ -32,6 +32,33 @@ let mockDomainListResult: { data: unknown; error: unknown } = {
   error: null,
 };
 
+const oauthMocks = vi.hoisted(() => ({
+  createCallbackServer: vi.fn(),
+  exchangeAuthorizationCode: vi.fn(),
+}));
+
+vi.mock('../../../src/lib/oauth', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../src/lib/oauth')>()),
+  generatePKCE: () => ({
+    codeVerifier: 'test_verifier',
+    codeChallenge: 'test_challenge',
+    state: 'test_state',
+  }),
+  createCallbackServer: oauthMocks.createCallbackServer,
+  exchangeAuthorizationCode: oauthMocks.exchangeAuthorizationCode,
+}));
+
+vi.mock('../../../src/lib/browser', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../src/lib/browser')>()),
+  openInBrowser: vi.fn(async () => false),
+}));
+
+function fakeJwt(exp: number): string {
+  const encode = (value: object) =>
+    Buffer.from(JSON.stringify(value)).toString('base64url');
+  return `${encode({ alg: 'none' })}.${encode({ exp })}.sig`;
+}
+
 vi.mock('resend', () => ({
   Resend: class MockResend {
     constructor(public key: string) {}
@@ -49,6 +76,18 @@ describe('login command', () => {
 
   beforeEach(() => {
     mockDomainListResult = { data: { data: [] }, error: null };
+    oauthMocks.createCallbackServer.mockReset().mockResolvedValue({
+      port: 4321,
+      waitForCallback: Promise.resolve({
+        code: 'test_code',
+        state: 'test_state',
+      }),
+    });
+    oauthMocks.exchangeAuthorizationCode.mockReset().mockResolvedValue({
+      access_token: fakeJwt(2_000_000_000),
+      refresh_token: 'test_refresh_token',
+      scope: 'full_access',
+    });
     tmpDir = join(
       tmpdir(),
       `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -162,6 +201,81 @@ describe('login command', () => {
     expect(errorSpy).toBeDefined();
     const output = errorSpy?.mock.calls[0][0] as string;
     expect(output).toContain('missing_key');
+    expect(output).toContain('resend login --web');
+  });
+
+  it('--web logs in through the browser without a TTY', async () => {
+    setupOutputSpies();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await loginCommand.parseAsync(['--web'], { from: 'user' });
+
+    const stderr = errorSpy.mock.calls.flat().join('\n');
+    expect(stderr).toContain('/oauth/authorize?');
+    expect(stderr).toContain(
+      'redirect_uri=http%3A%2F%2F127.0.0.1%3A4321%2Foauth%2Fcallback',
+    );
+    expect(oauthMocks.exchangeAuthorizationCode).toHaveBeenCalledWith(
+      expect.objectContaining({
+        code: 'test_code',
+        codeVerifier: 'test_verifier',
+      }),
+    );
+
+    const configPath = join(tmpDir, 'resend', 'credentials.json');
+    const data = JSON.parse(readFileSync(configPath, 'utf-8'));
+    expect(data.profiles.default).toMatchObject({
+      type: 'oauth_grant',
+      refresh_token: 'test_refresh_token',
+      scope: 'full_access',
+      access_token_expires_at: 2_000_000_000,
+    });
+  });
+
+  it('--web --json keeps the URL on stderr and only JSON on stdout', async () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const program = new Command()
+      .option('--profile <name>')
+      .option('--json')
+      .option('--api-key <key>')
+      .option('-q, --quiet')
+      .addCommand(loginCommand);
+
+    await program.parseAsync(['login', '--web', '--json'], { from: 'user' });
+
+    expect(errorSpy.mock.calls.flat().join('\n')).toContain(
+      '/oauth/authorize?',
+    );
+    const parsed = JSON.parse(logSpy.mock.calls.flat().join('\n'));
+    expect(parsed).toMatchObject({
+      success: true,
+      profile: 'default',
+      scope: 'full_access',
+    });
+  });
+
+  it('rejects --web with --key', async () => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitSpy = mockExitThrow();
+
+    await expectExit1(() =>
+      loginCommand.parseAsync(['--web', '--key', 're_abc'], { from: 'user' }),
+    );
+
+    expect(errorSpy.mock.calls.flat().join(' ')).toContain('conflicting_flags');
+    expect(oauthMocks.createCallbackServer).not.toHaveBeenCalled();
   });
 
   it('errors with missing_key when --json is set but --key is omitted even in TTY', async () => {

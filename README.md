@@ -168,19 +168,30 @@ Enter the key via a masked password input. Your key must start with `re_`.
 
 #### Non-interactive mode (CI, pipes, scripts)
 
-When stdin is not a TTY, the `--key` flag is required:
+When stdin is not a TTY, pass `--web` or `--key`.
+
+`--web` logs in through the browser with no prompts, so AI agents can run it. The command prints an authorize URL to stderr and tries to open it. It waits up to 5 minutes for you to approve the login, then stores an OAuth grant:
+
+```bash
+resend login --web
+```
+
+The browser must run on the same machine as the CLI, because Resend redirects to a local callback on `127.0.0.1`.
+
+`--key` stores an API key:
 
 ```bash
 resend login --key re_xxxxxxxxxxxxx
 ```
 
-Omitting `--key` in non-interactive mode exits with error code `missing_key`.
+Omitting both flags in non-interactive mode exits with error code `missing_key`.
 
 #### Options
 
-| Flag          | Description                                         |
-| ------------- | --------------------------------------------------- |
-| `--key <key>` | API key to store (required in non-interactive mode) |
+| Flag          | Description                                                          |
+| ------------- | -------------------------------------------------------------------- |
+| `--web`       | Log in through the browser with no prompts                           |
+| `--key <key>` | API key to store (required in non-interactive mode, unless `--web`) |
 
 #### Output
 
@@ -196,9 +207,11 @@ resend login --key re_xxx --json
 
 | Code                 | Cause                                       |
 | -------------------- | ------------------------------------------- |
-| `missing_key`        | No `--key` provided in non-interactive mode |
-| `invalid_key_format` | Key does not start with `re_`               |
-| `validation_failed`  | Resend API rejected the key                 |
+| `missing_key`        | No `--key` or `--web` in non-interactive mode |
+| `conflicting_flags`  | `--web` and `--key` are both set              |
+| `invalid_key_format` | Key does not start with `re_`                 |
+| `validation_failed`  | Resend API rejected the key                   |
+| `oauth_error`        | Browser login failed or timed out             |
 
 #### Switch between teams and accounts
 

@@ -8,9 +8,12 @@ Detailed flag specifications for `resend auth` and utility commands.
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
-| `--key <key>` | string | Yes (non-interactive) | API key (must start with `re_`) |
+| `--web` | boolean | No | Log in through the browser with no prompts. Cannot be combined with `--key` |
+| `--key <key>` | string | Yes (non-interactive, unless `--web`) | API key (must start with `re_`) |
 
 Pass the key from an environment variable (e.g. `--key "$RESEND_API_KEY"`) or a secret manager — never as a literal, which would persist in shell history and logs.
+
+When no key is available, use `--web`. The command prints an authorize URL to stderr, then waits up to 5 minutes for the user to approve it in the browser. Run it in the background, or with a timeout above 5 minutes. Show the user the URL and ask them to approve the login. The browser must run on the same machine as the CLI.
 
 ---
 

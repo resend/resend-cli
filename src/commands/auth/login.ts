@@ -169,7 +169,11 @@ async function handleOAuthLogin(globalOpts: GlobalOpts): Promise<void> {
   }).toString();
 
   const opened = await openInBrowser(authUrl.toString());
-  if (opened) {
+  if (!isInteractive() || globalOpts.json) {
+    console.error(
+      `${opened ? 'Opened the browser to log in to Resend.' : 'Could not open the browser.'} Open this URL to approve the login:\n${authUrl.toString()}\nWaiting for approval (times out in 5 minutes)...`,
+    );
+  } else if (opened) {
     p.log.info('Browser opened. Complete authentication to continue.');
   } else {
     p.log.warn(
@@ -289,16 +293,24 @@ async function handleOAuthLogin(globalOpts: GlobalOpts): Promise<void> {
 
 export const loginCommand = new Command('login')
   .description('Save a Resend API key')
-  .option('--key <key>', 'API key to store (required in non-interactive mode)')
+  .option(
+    '--key <key>',
+    'API key to store (required in non-interactive mode, unless --web is set)',
+  )
+  .option(
+    '--web',
+    'Log in through the browser with no prompts (works in non-interactive mode)',
+  )
   .addHelpText(
     'after',
     buildHelpText({
       setup: true,
       context:
-        'Non-interactive: --key is required (no prompts will appear when stdin/stdout is not a TTY).',
+        'Non-interactive: pass --web or --key (no prompts will appear when stdin/stdout is not a TTY).\n  --web prints a URL to stderr and waits up to 5 minutes for you to approve the login in the browser.',
       output: `  {"success":true,"config_path":"<path>","profile":"<name>"}`,
       errorCodes: [
         'missing_key',
+        'conflicting_flags',
         'invalid_key_format',
         'validation_failed',
         'invalid_profile_name',
@@ -308,6 +320,7 @@ export const loginCommand = new Command('login')
         'oauth_state_mismatch',
       ],
       examples: [
+        'resend login --web                (opens browser, no prompts)',
         'resend login --key re_123456789',
         'resend login                      (interactive — prompts and opens browser)',
         'RESEND_API_KEY=re_123 resend emails send ...  (skip login; use env var directly)',
@@ -318,12 +331,26 @@ export const loginCommand = new Command('login')
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     let apiKey = typeof opts.key === 'string' ? opts.key.trim() : opts.key;
 
+    if (opts.web) {
+      if (opts.key !== undefined) {
+        outputError(
+          {
+            message: '--web and --key are mutually exclusive.',
+            code: 'conflicting_flags',
+          },
+          { json: globalOpts.json },
+        );
+      }
+      await handleOAuthLogin(globalOpts);
+      return;
+    }
+
     if (!apiKey) {
       if (!isInteractive() || globalOpts.json) {
         outputError(
           {
             message:
-              'Missing --key flag. Provide your API key in non-interactive mode.',
+              'Missing --key flag. In non-interactive mode, run `resend login --web` to log in through the browser, or pass --key.',
             code: 'missing_key',
           },
           { json: globalOpts.json },
