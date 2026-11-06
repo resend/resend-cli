@@ -27,8 +27,8 @@ importers:
         specifier: 1.1.1
         version: 1.1.1
       resend:
-        specifier: 6.36.0
-        version: 6.36.0
+        specifier: 6.37.0
+        version: 6.37.0
     devDependencies:
       '@biomejs/biome':
         specifier: 2.4.11
@@ -1060,8 +1060,8 @@ packages:
     resolution: {integrity: sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q==}
     engines: {node: '>=0.10.0'}
 
-  resend@6.36.0:
-    resolution: {integrity: sha512-DLKFlSA8b1Nyc3N56CxUVwdK/Li76pkEaTuwX+J+6iFU7pbJE59Ww5Rz3F6vqVDk3EgfURclT5aGqgXfTm2HnQ==}
+  resend@6.37.0:
+    resolution: {integrity: sha512-iYNhmhfXVomZr+TMIxf6oqj7kTeGqPDE+wGcYw1H4g8WMBR59NsbShnUz43dSYpStW16iEA6dZs+egqQmdm0zA==}
     engines: {node: '>=20'}
     peerDependencies:
       '@react-email/render': '*'
@@ -2147,7 +2147,7 @@ snapshots:
 
   require-directory@2.1.1: {}
 
-  resend@6.36.0:
+  resend@6.37.0:
     dependencies:
       postal-mime: 2.7.6
       standardwebhooks: 1.1.1
