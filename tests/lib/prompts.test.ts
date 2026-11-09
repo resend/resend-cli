@@ -1,6 +1,8 @@
+import { PassThrough, Writable } from 'node:stream';
 import { afterEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 import {
   confirmDelete,
+  multiline,
   pickId,
   pickItem,
   promptForMissing,
@@ -244,5 +246,43 @@ describe('confirmDelete', () => {
 
     const parsed = JSON.parse(spyOutput());
     expect(parsed.error.code).toBe('confirmation_required');
+  });
+});
+
+describe('multiline', () => {
+  function fakeTerminal() {
+    const input = Object.assign(new PassThrough(), {
+      isTTY: true,
+      setRawMode: () => {},
+    });
+    const written: string[] = [];
+    const output = Object.assign(
+      new Writable({
+        write(chunk, _encoding, callback) {
+          written.push(String(chunk));
+          callback();
+        },
+      }),
+      { columns: 80, rows: 24, isTTY: true },
+    );
+    return { input, output, written };
+  }
+
+  it('keeps every line of a multi-line paste', async () => {
+    const { input, output } = fakeTerminal();
+    const answer = multiline({
+      message: 'Why Resend?',
+      showSubmit: true,
+      input,
+      output,
+    });
+
+    input.write('First line.\nSecond Line, With Caps.\nThird line.');
+    input.write('\t');
+    input.write('\r');
+
+    await expect(answer).resolves.toBe(
+      'First line.\nSecond Line, With Caps.\nThird line.',
+    );
   });
 });
