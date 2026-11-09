@@ -22,7 +22,7 @@ export const createInboxDraftCommand = new Command('create')
   .option('--html <html>', 'HTML body')
   .option(
     '--attachment <specs...>',
-    'Local file to attach, with ;type= (MIME type) and optional ;filename= params (quote the value)',
+    'Local file (with ;type= MIME type) or URL to attach, with an optional ;filename= param (quote the value)',
   )
   .option(
     '--attachments-file <path>',
@@ -58,11 +58,10 @@ existing draft.
 A reply draft created without --subject is sent with the subject of the thread,
 prefixed with "Re:" when it does not already start with it.
 
-Attachments: --attachment takes a local file path plus ;type= (the MIME type)
-and an optional ;filename=, as on "resend emails send". Quote values that contain ";".
---attachments-file takes a JSON array of objects with content (base64), filename
-and content_type. Draft attachments need content, filename and content_type.
-A URL or a ;cid= returns an error. The files on a draft can total at most 25 MB.
+Attachments: --attachment takes a local file plus ;type= (the MIME type), or a
+URL, with an optional ;filename=. Quote values that contain ";".
+--attachments-file takes a JSON array of {content, filename, content_type} or
+{path, filename?} objects. The files on a draft can total at most 25 MB.
 An empty file or a blocked file type, such as .exe, returns an error.
 
 Send the draft later with "resend inboxes drafts send".`,
@@ -80,6 +79,7 @@ Send the draft later with "resend inboxes drafts send".`,
         'resend inboxes drafts create <inbox-id> --to user@example.com --subject "Hello" --text "Draft body"',
         'resend inboxes drafts create <inbox-id> --thread-id <thread-id> --reply-to-email-id <email-id> --text "Reply draft" --json',
         'resend inboxes drafts create <inbox-id> --to user@example.com --text "Report attached" --attachment "./report.pdf;type=application/pdf"',
+        'resend inboxes drafts create <inbox-id> --to user@example.com --text "Invoice attached" --attachment "https://example.com/invoice.pdf;filename=invoice.pdf"',
       ],
     }),
   )
