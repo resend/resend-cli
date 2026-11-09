@@ -1,3 +1,4 @@
+import { Writable } from 'node:stream';
 import * as p from '@clack/prompts';
 import type { Resend } from 'resend';
 import { getCancelExitCode } from './cli-exit';
@@ -24,6 +25,43 @@ export interface FieldSpec {
 export function cancelAndExit(message: string): never {
   p.cancel(message);
   process.exit(getCancelExitCode());
+}
+
+// clack hardcodes the multiline prompt's button label as "[ submit ]", which
+// reads like final submission mid-form. Route the prompt's output through a
+// stream that relabels it, instead of forking the whole renderer.
+function relabeledOutput(target: Writable): Writable {
+  const terminal = target as Partial<
+    Pick<NodeJS.WriteStream, 'columns' | 'rows'>
+  >;
+  const output = new Writable({
+    write(chunk, _encoding, callback) {
+      const text = String(chunk).replaceAll('[ submit ]', '[ continue ]');
+      target.write(text, callback);
+    },
+  });
+  Object.defineProperties(output, {
+    columns: { get: () => terminal.columns },
+    rows: { get: () => terminal.rows },
+  });
+  return output;
+}
+
+/** p.multiline, with the showSubmit button relabeled "[ continue ]". */
+export async function multiline(
+  opts: Parameters<typeof p.multiline>[0],
+): ReturnType<typeof p.multiline> {
+  const target = opts.output ?? process.stdout;
+  const output = relabeledOutput(target);
+  // clack redraws on the output's "resize" event, which only the real
+  // terminal emits.
+  const forwardResize = () => output.emit('resize');
+  target.on('resize', forwardResize);
+  try {
+    return await p.multiline({ ...opts, output });
+  } finally {
+    target.off('resize', forwardResize);
+  }
 }
 
 /**
