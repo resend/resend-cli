@@ -168,37 +168,59 @@ Enter the key via a masked password input. Your key must start with `re_`.
 
 #### Non-interactive mode (CI, pipes, scripts)
 
-When stdin is not a TTY, the `--key` flag is required:
+The CLI is non-interactive when stdin or stdout is not a TTY, when `CI` or `GITHUB_ACTIONS` is set, or when `TERM=dumb`. In that mode, pass `--web` or `--key`.
+
+`--web` logs in through the browser with no prompts in any mode, so AI agents can run it. The command tries to open the browser, then prints the authorize URL and the target profile to stderr. It waits up to 5 minutes for you to approve the login, then stores an OAuth grant:
+
+```bash
+resend login --web
+```
+
+- The browser must run on the same machine as the CLI, because Resend redirects to a local callback on `127.0.0.1`.
+- Without `--profile`, the login goes to the `default` profile and replaces its saved credentials.
+- The status text on stderr comes before any JSON error.
+
+`--key` stores an API key:
 
 ```bash
 resend login --key re_xxxxxxxxxxxxx
 ```
 
-Omitting `--key` in non-interactive mode exits with error code `missing_key`.
+Omitting both flags in non-interactive mode exits with error code `missing_key`.
 
 #### Options
 
-| Flag          | Description                                         |
-| ------------- | --------------------------------------------------- |
-| `--key <key>` | API key to store (required in non-interactive mode) |
+| Flag          | Description                                                         |
+| ------------- | ------------------------------------------------------------------- |
+| `--web`       | Log in through the browser with no prompts                          |
+| `--key <key>` | API key to store (required in non-interactive mode, unless `--web`) |
 
 #### Output
 
 On success, credentials are saved to `~/.config/resend/credentials.json` with `0600` permissions (owner read/write only). The config directory is created with `0700` permissions.
 
+With `--json`, or when stdout is not a TTY, the result is JSON on stdout:
+
 ```bash
-# JSON output
 resend login --key re_xxx --json
-# => {"success":true,"config_path":"/Users/you/.config/resend/credentials.json"}
+# => {"success":true,"config_path":"...","profile":"default","storage":"...","permission":"full_access"}
+
+resend login --web --json
+# => {"success":true,"config_path":"...","profile":"default","storage":"...","scope":"full_access"}
 ```
 
 #### Error codes
 
-| Code                 | Cause                                       |
-| -------------------- | ------------------------------------------- |
-| `missing_key`        | No `--key` provided in non-interactive mode |
-| `invalid_key_format` | Key does not start with `re_`               |
-| `validation_failed`  | Resend API rejected the key                 |
+| Code                   | Cause                                                                                                                 |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `missing_key`          | No `--key` or `--web` in non-interactive mode                                                                         |
+| `conflicting_flags`    | `--web` and `--key` are both set                                                                                      |
+| `invalid_key_format`   | Key does not start with `re_`                                                                                         |
+| `validation_failed`    | Resend API rejected the key                                                                                           |
+| `invalid_profile_name` | The `--profile` name is not valid                                                                                     |
+| `write_failed`         | The credentials could not be saved                                                                                    |
+| `oauth_error`          | Browser login failed: the local callback did not start, access was denied, it timed out, or the token exchange failed |
+| `oauth_state_mismatch` | The browser callback did not match this login request                                                                 |
 
 #### Switch between teams and accounts
 
@@ -557,9 +579,12 @@ Built-in local development helper. It:
 - Starts a small HTTP server
 - Registers a temporary Resend webhook pointing at your public tunnel URL
 - Prints events in the terminal
+- Prints the temporary webhook's signing secret in the banner, so your `--forward-to` app can verify the Svix headers
+- Verifies Svix signatures before it prints or forwards events
 - Deletes the webhook on exit
 
 Your tunnel must forward to the same port as `--port`, e.g. `ngrok http 4318`.
+Requests with missing or invalid signatures receive HTTP 400.
 
 | Flag                   | Description                                                  |
 | ---------------------- | ------------------------------------------------------------ |
@@ -866,12 +891,13 @@ resend inboxes drafts list <inbox-id>
 
 Creates a draft that starts a new thread. Pass `--thread-id` and `--reply-to-email-id` together for a reply draft. A reply draft without `--subject` is sent with the subject of the thread, prefixed with `Re:` when it does not already start with it. Takes `--to`, `--cc`, `--bcc`, `--subject`, `--text`, `--html`, `--attachment`, and `--attachments-file`. **At least one** of them is required. `--idempotency-key` deduplicates the request.
 
-Draft attachments need `content`, `filename`, and `content_type`, so `--attachment` takes a local file with `;type=<MIME type>`. The files on a draft can total at most 25 MB.
+`--attachment` takes a local file with `;type=<MIME type>`, or an `http://` or `https://` URL. A URL's filename defaults to the decoded last segment of its path and its MIME type to the type of the downloaded file. The URLs are downloaded when the draft is saved, so a URL that cannot be downloaded returns an error. The files on a draft can total at most 25 MB, downloads included.
 
 ```bash
 resend inboxes drafts create <inbox-id> --to user@example.com --subject "Hello" --text "Draft body"
 resend inboxes drafts create <inbox-id> --thread-id <thread-id> --reply-to-email-id <email-id> --text "Reply draft"
 resend inboxes drafts create <inbox-id> --to user@example.com --text "Report attached" --attachment "./report.pdf;type=application/pdf"
+resend inboxes drafts create <inbox-id> --to user@example.com --text "Invoice attached" --attachment "https://example.com/invoice.pdf"
 ```
 
 #### **`resend inboxes drafts get`**
@@ -884,7 +910,7 @@ resend inboxes drafts get <inbox-id> <draft-id>
 
 #### **`resend inboxes drafts update`**
 
-Updates the recipients, subject, body, or attachments of an unsent draft. Setting `--text` or `--html` replaces the whole body. `--attachment` and `--attachments-file` replace every attachment on the draft, and `--clear-attachments` removes them all. `--clear-to`, `--clear-cc`, `--clear-bcc`, `--clear-subject`, `--clear-text`, and `--clear-html` remove the value of that field. A clear flag and a value for the same field return an error. The output holds only `{"object":"inbox_draft","id":"<uuid>"}`. Run `drafts get` to read the draft.
+Updates the recipients, subject, body, or attachments of an unsent draft. Setting `--text` or `--html` replaces the whole body. `--attachment` and `--attachments-file` replace every attachment on the draft, and `--clear-attachments` removes them all. `--attachment` and `--attachments-file` take the same local files and URLs as `drafts create`. `--clear-to`, `--clear-cc`, `--clear-bcc`, `--clear-subject`, `--clear-text`, and `--clear-html` remove the value of that field. A clear flag and a value for the same field return an error. The output holds only `{"object":"inbox_draft","id":"<uuid>"}`. Run `drafts get` to read the draft.
 
 ```bash
 resend inboxes drafts update <inbox-id> <draft-id> --subject "Updated subject"

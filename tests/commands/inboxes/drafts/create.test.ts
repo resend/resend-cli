@@ -307,8 +307,29 @@ describe('inboxes drafts create command', () => {
     expect(mockCreate.mock.calls[0][1]).toBeUndefined();
   });
 
+  it('sends a URL --attachment as a path attachment', async () => {
+    setupOutputSpies();
+
+    await createInboxDraftCommand.parseAsync(
+      [
+        '--inbox-id',
+        INBOX_ID,
+        '--attachment',
+        'https://example.com/report.pdf',
+      ],
+      { from: 'user' },
+    );
+
+    expect(mockCreate.mock.calls[0][0]).toStrictEqual({
+      inboxId: INBOX_ID,
+      attachments: [
+        { path: 'https://example.com/report.pdf', filename: 'report.pdf' },
+      ],
+    });
+  });
+
   it.each([
-    ['a URL', 'https://example.com/report.pdf;type=application/pdf'],
+    ['a content ID', './notes.txt;type=text/plain;cid=logo'],
     ['no ;type=', './notes.txt'],
   ])('errors with invalid_attachment for %s', async (_case, spec) => {
     setNonInteractive();

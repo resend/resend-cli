@@ -37,6 +37,7 @@ export const listAutomationRunsCommand = new Command('list')
   )
   .action(async (automationIdArg, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
+    const status = opts.status?.replace(/\s+/g, '');
     const automationId = await pickId(
       automationIdArg,
       automationPickerConfig,
@@ -56,9 +57,9 @@ export const listAutomationRunsCommand = new Command('list')
           resend.automations.runs.list({
             automationId,
             ...paginationOpts,
-            ...(opts.status
+            ...(status
               ? {
-                  status: opts.status as Parameters<
+                  status: status as Parameters<
                     typeof resend.automations.runs.list
                   >[0]['status'],
                 }
@@ -83,6 +84,7 @@ export const listAutomationRunsCommand = new Command('list')
             before: opts.before,
             apiKey: globalOpts.apiKey,
             profile: globalOpts.profile,
+            ...(status && { extraFlags: `--status ${status}` }),
           });
         },
       },

@@ -80,6 +80,36 @@ describe('contacts imports list command', () => {
     expect(mockList).toHaveBeenCalledWith({ limit: 10, status: 'completed' });
   });
 
+  it('preserves --status in the next-page hint', async () => {
+    mockList.mockResolvedValueOnce({
+      data: { object: 'list', has_more: true, data: [contactImport] },
+      error: null,
+    });
+    // Interactive mode: the hint only prints when TTY and not a CI env.
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    delete process.env.CI;
+    delete process.env.GITHUB_ACTIONS;
+    delete process.env.TERM;
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    await listContactImportsCommand.parseAsync(['--status', 'failed'], {
+      from: 'user',
+    });
+
+    const output = logSpy.mock.calls.map((c) => c[0]).join('\n');
+    logSpy.mockRestore();
+    expect(output).toContain(
+      'contacts imports list --after 479e3145-dd38-476b-932c-529ceb705947 --limit 10 --status failed',
+    );
+  });
+
   it('passes --after cursor to the SDK', async () => {
     spies = setupOutputSpies();
 

@@ -208,6 +208,58 @@ describe('templates create command', () => {
     expect(args.text).toBe('From file');
   });
 
+  it('passes a numeric --var fallback to the SDK as a number', async () => {
+    spies = setupOutputSpies();
+
+    await createTemplateCommand.parseAsync(
+      [
+        '--name',
+        'Order',
+        '--html',
+        '<p>{{{PRICE}}}</p>',
+        '--var',
+        'PRICE:number:25',
+      ],
+      { from: 'user' },
+    );
+
+    const args = mockCreate.mock.calls[0][0] as Record<string, unknown>;
+    expect(args.variables).toEqual([
+      { key: 'PRICE', type: 'number', fallbackValue: 25 },
+    ]);
+  });
+
+  it.each([
+    'Infinity',
+    ' ',
+    '12abc',
+  ])('rejects non-numeric --var number fallback %j', async (value) => {
+    setNonInteractive();
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
+    exitSpy = mockExitThrow();
+
+    await expectExit1(() =>
+      createTemplateCommand.parseAsync(
+        [
+          '--name',
+          'Order',
+          '--html',
+          '<p>{{{PRICE}}}</p>',
+          '--var',
+          `PRICE:number:${value}`,
+        ],
+        { from: 'user' },
+      ),
+    );
+
+    const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
+    expect(output).toContain('is not a valid number');
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
   it('errors with auth_error when no API key', async () => {
     setNonInteractive();
     delete process.env.RESEND_API_KEY;

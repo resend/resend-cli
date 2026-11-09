@@ -17,22 +17,32 @@ const TRANSIENT_ERROR_NAMES: ReadonlySet<string> = new Set([
   'gateway_timeout',
 ]);
 
+// A gateway or load balancer answering with a non-JSON page reaches us as
+// application_error with the real status, so the name can't identify it.
+// 500 is left out: an unnamed 500 is usually a deterministic server bug, and
+// retrying it only delays the error.
+const TRANSIENT_STATUS_CODES: ReadonlySet<number> = new Set([502, 503, 504]);
+
 type RetryOptions = {
   retryTransient?: boolean;
   onRetry?: (attempt: number, delaySeconds: number, errorName: string) => void;
 };
 
 const isRetryable = (
-  name: string | undefined,
+  error: NonNullable<SdkResponse<unknown>['error']>,
   retryTransient: boolean,
 ): boolean => {
-  if (name === 'rate_limit_exceeded') {
+  if (error.name === 'rate_limit_exceeded') {
     return true;
   }
-  if (retryTransient && name !== undefined && TRANSIENT_ERROR_NAMES.has(name)) {
-    return true;
+  if (!retryTransient) {
+    return false;
   }
-  return false;
+  return (
+    (error.name !== undefined && TRANSIENT_ERROR_NAMES.has(error.name)) ||
+    (typeof error.statusCode === 'number' &&
+      TRANSIENT_STATUS_CODES.has(error.statusCode))
+  );
 };
 
 const parseRetryDelay = (
@@ -71,7 +81,7 @@ const withRetry = async <T>(
   if (
     response.error &&
     attempt < MAX_RETRIES &&
-    isRetryable(response.error.name, retryTransient)
+    isRetryable(response.error, retryTransient)
   ) {
     const delay =
       parseRetryDelay(response.headers) ?? DEFAULT_RETRY_DELAYS[attempt];
