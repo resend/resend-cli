@@ -3,8 +3,8 @@ import { maskKey } from './config';
 import { outputError } from './output';
 
 export function parseLimitOpt(raw: string, globalOpts: GlobalOpts): number {
-  const limit = parseInt(raw, 10);
-  if (Number.isNaN(limit) || limit < 1 || limit > 100) {
+  const limit = Number(raw);
+  if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
     outputError(
       {
         message: '--limit must be an integer between 1 and 100',
