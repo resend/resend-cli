@@ -268,6 +268,8 @@ describe('multiline', () => {
     return { input, output, written };
   }
 
+  const flushOutput = () => new Promise((resolve) => setImmediate(resolve));
+
   it('keeps every line of a multi-line paste', async () => {
     const { input, output } = fakeTerminal();
     const answer = multiline({
@@ -284,5 +286,60 @@ describe('multiline', () => {
     await expect(answer).resolves.toBe(
       'First line.\nSecond Line, With Caps.\nThird line.',
     );
+  });
+
+  it('labels the submit button "[ continue ]"', async () => {
+    const { input, output, written } = fakeTerminal();
+    const answer = multiline({
+      message: 'Why Resend?',
+      showSubmit: true,
+      input,
+      output,
+    });
+
+    input.write('\t');
+    input.write('\r');
+    await answer;
+    await flushOutput();
+
+    const rendered = written.join('');
+    expect(rendered).toContain('[ continue ]');
+    expect(rendered).not.toContain('[ submit ]');
+  });
+
+  it('redraws when the terminal is resized', async () => {
+    // clack wraps each frame to process.stdout's width, so a resize only
+    // changes the frame when the real stdout width changes.
+    const originalColumns = process.stdout.columns;
+    const setColumns = (value: number | undefined) =>
+      Object.defineProperty(process.stdout, 'columns', {
+        value,
+        writable: true,
+        configurable: true,
+      });
+    setColumns(80);
+    const { input, output, written } = fakeTerminal();
+    const answer = multiline({
+      message:
+        'Tell us about a hard problem you solved and how you approached it',
+      showSubmit: true,
+      input,
+      output,
+    });
+
+    try {
+      await flushOutput();
+      const writesBeforeResize = written.length;
+      setColumns(40);
+      output.emit('resize');
+      await flushOutput();
+
+      expect(written.length).toBeGreaterThan(writesBeforeResize);
+    } finally {
+      input.write('\t');
+      input.write('\r');
+      await answer;
+      setColumns(originalColumns);
+    }
   });
 });
