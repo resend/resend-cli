@@ -17,13 +17,11 @@ const TRANSIENT_ERROR_NAMES: ReadonlySet<string> = new Set([
   'gateway_timeout',
 ]);
 
-// The name alone misses most transient failures: the API's own 500 is named
-// application_error, and when a gateway or load balancer answers with a non-JSON
-// page the SDK reports application_error with the real status. The status is
-// what says "try again".
-const TRANSIENT_STATUS_CODES: ReadonlySet<number> = new Set([
-  500, 502, 503, 504,
-]);
+// A gateway or load balancer answering with a non-JSON page reaches us as
+// application_error with the real status, so the name can't identify it.
+// 500 is left out: an unnamed 500 is usually a deterministic server bug, and
+// retrying it only delays the error.
+const TRANSIENT_STATUS_CODES: ReadonlySet<number> = new Set([502, 503, 504]);
 
 type RetryOptions = {
   retryTransient?: boolean;

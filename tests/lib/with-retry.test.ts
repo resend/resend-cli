@@ -429,7 +429,7 @@ describe('withRetry transient status codes', () => {
   });
 
   // What the SDK returns when the error body is not JSON (a gateway or load
-  // balancer page), and the name the API documents for its own 500.
+  // balancer page).
   const statusError = (statusCode: number, name = 'application_error') => ({
     data: null,
     error: { message: 'Internal server error', name, statusCode },
@@ -438,7 +438,7 @@ describe('withRetry transient status codes', () => {
   const success = { data: { id: '1' }, error: null, headers: null };
 
   it.each([
-    500, 502, 503, 504,
+    502, 503, 504,
   ])('retries application_error with status %i when retryTransient is true', async (status) => {
     vi.useFakeTimers();
 
@@ -465,7 +465,7 @@ describe('withRetry transient status codes', () => {
   });
 
   it.each([
-    400, 404, 409, 422,
+    400, 404, 409, 422, 500,
   ])('does not retry application_error with status %i', async (status) => {
     const call = vi.fn().mockResolvedValue(statusError(status));
 
