@@ -1,4 +1,12 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"]
+  "extends": ["config:recommended"],
+  "minimumReleaseAge": "3 days",
+  "packageRules": [
+    {
+      "description": "The Resend SDK ships from our own pipeline, so CLI updates to it do not wait.",
+      "matchPackageNames": ["resend"],
+      "minimumReleaseAge": null
+    }
+  ]
 }

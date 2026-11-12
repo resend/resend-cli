@@ -1,5 +1,9 @@
 allowBuilds:
   esbuild: true
   '@biomejs/biome': true
+
+minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
   - resend
+
+trustPolicy: no-downgrade
