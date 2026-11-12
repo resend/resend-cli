@@ -174,6 +174,19 @@ jobs:
             dist/resend-linux-x64.tar.gz
             dist/resend-linux-arm64.tar.gz
             dist/resend-windows-x64.zip
+      - name: Pack the npm tarball
+        run: |
+          mkdir -p npm-tarball
+          npm pack --pack-destination npm-tarball
+        env:
+          POSTHOG_PUBLIC_KEY: ${{ secrets.POSTHOG_PUBLIC_KEY }}
+      - name: Upload the npm tarball
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: npm-tarball
+          path: npm-tarball
+          if-no-files-found: error
+          retention-days: 1
   release:
     if: github.event_name != 'workflow_dispatch'
     needs: [build-macos, build-linux-windows]
@@ -185,10 +198,11 @@ jobs:
     outputs:
       prerelease: ${{ steps.meta.outputs.prerelease }}
     steps:
-      - name: Download all artifacts
+      - name: Download all archives
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           path: dist
+          pattern: '*-archives'
           merge-multiple: true
       - name: Verify all archives exist
         run: |
@@ -265,29 +279,53 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: 24
           registry-url: 'https://registry.npmjs.org'
-          cache: 'pnpm'
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Download the npm tarball
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: npm-tarball
+          path: npm-tarball
+      - name: Verify the npm tarball
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          TARBALL="npm-tarball/resend-cli-$VERSION.tgz"
+          if [ "$(ls -A npm-tarball)" != "resend-cli-$VERSION.tgz" ] || [ ! -f "$TARBALL" ] || [ -L "$TARBALL" ]; then
+            echo "::error::The artifact must hold only resend-cli-$VERSION.tgz"
+            exit 1
+          fi
+          tar -xOzf "$TARBALL" package/package.json | node -e '
+            let input = "";
+            process.stdin.on("data", (chunk) => { input += chunk; });
+            process.stdin.on("end", () => {
+              const { name, version } = JSON.parse(input);
+              if (name !== "resend-cli" || version !== process.argv[1]) {
+                console.log(`::error::The tarball holds ${name}@${version}, expected resend-cli@${process.argv[1]}`);
+                process.exit(1);
+              }
+            });
+          ' "$VERSION"
       - name: Determine npm tag
         id: npm-tag
         run: |
-          TAG="${{ github.ref_name }}"
-          if [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          if [[ "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "tag=latest" >> "$GITHUB_OUTPUT"
           else
-            PRERELEASE="${TAG#v[0-9]*.[0-9]*.[0-9]*-}"
+            PRERELEASE="${GITHUB_REF_NAME#v[0-9]*.[0-9]*.[0-9]*-}"
             echo "tag=${PRERELEASE%%[-.]*}" >> "$GITHUB_OUTPUT"
           fi
       - name: Publish to npm
-        run: npm publish --provenance --tag ${{ steps.npm-tag.outputs.tag }}
         env:
-          POSTHOG_PUBLIC_KEY: ${{ secrets.POSTHOG_PUBLIC_KEY }}
+          NPM_TAG: ${{ steps.npm-tag.outputs.tag }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          if [ "$(npm view "resend-cli@$VERSION" version 2>/dev/null)" = "$VERSION" ]; then
+            echo "resend-cli@$VERSION is already published"
+            exit 0
+          fi
+          npm publish "$PWD/npm-tarball/resend-cli-$VERSION.tgz" --ignore-scripts --provenance --tag "$NPM_TAG"
   notify-tap:
     if: github.event_name != 'workflow_dispatch' && needs.release.outputs.prerelease == 'false'
     name: Trigger Homebrew Tap Update
