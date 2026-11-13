@@ -64,6 +64,7 @@ describe('topics update command', () => {
     const payload = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
     expect(payload.id).toBe('top_abc123');
     expect(payload.name).toBe('Security Alerts');
+    expect(payload.description).toBeUndefined();
   });
 
   it('calls SDK with id and description when --description is provided', async () => {
@@ -78,6 +79,35 @@ describe('topics update command', () => {
     expect(payload.id).toBe('top_abc123');
     expect(payload.description).toBe('Updated desc');
     expect(payload.name).toBeUndefined();
+  });
+
+  it('clears the description with an empty --description', async () => {
+    spies = setupOutputSpies();
+
+    await updateTopicCommand.parseAsync(['top_abc123', '--description', ''], {
+      from: 'user',
+    });
+
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
+    const payload = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
+    expect(payload).toStrictEqual({ id: 'top_abc123', description: '' });
+  });
+
+  it('sends an empty description together with a new name', async () => {
+    spies = setupOutputSpies();
+
+    await updateTopicCommand.parseAsync(
+      ['top_abc123', '--name', 'Newsletter', '--description', ''],
+      { from: 'user' },
+    );
+
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
+    const payload = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
+    expect(payload).toStrictEqual({
+      id: 'top_abc123',
+      name: 'Newsletter',
+      description: '',
+    });
   });
 
   it('outputs JSON with id when non-interactive', async () => {
