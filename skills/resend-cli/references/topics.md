@@ -33,9 +33,9 @@ Lists all topics. No pagination flags.
 | Flag | Type | Description |
 |------|------|-------------|
 | `--name <name>` | string | New name |
-| `--description <desc>` | string | New description |
+| `--description <desc>` | string | New description. Pass `""` to clear it |
 
-At least one of `--name` or `--description` is required — otherwise the CLI errors with `no_changes`.
+At least one of `--name` or `--description` is required — otherwise the CLI errors with `no_changes`. An empty `--description` is sent as-is and clears the description shown to contacts.
 
 `default_subscription` cannot be changed after creation.
 
