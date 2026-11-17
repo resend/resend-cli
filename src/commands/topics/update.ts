@@ -15,6 +15,7 @@ export const updateTopicCommand = new Command('update')
     'after',
     buildHelpText({
       context: `At least one of --name or --description must be provided to update the topic.
+Pass --description "" to clear the description shown to contacts.
 
 Note: --default-subscription cannot be changed after creation.
 To change the default subscription, delete the topic and recreate it.`,
@@ -30,7 +31,9 @@ To change the default subscription, delete the topic and recreate it.`,
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const id = await pickId(idArg, topicPickerConfig, globalOpts);
 
-    if (!opts.name && !opts.description) {
+    // --description "" clears the text shown to contacts, so a defined
+    // description is a change even when it is empty.
+    if (!opts.name && opts.description === undefined) {
       outputError(
         {
           message:
@@ -48,7 +51,9 @@ To change the default subscription, delete the topic and recreate it.`,
           resend.topics.update({
             id,
             ...(opts.name && { name: opts.name }),
-            ...(opts.description && { description: opts.description }),
+            ...(opts.description !== undefined && {
+              description: opts.description,
+            }),
           }),
         errorCode: 'update_error',
         successMsg: `Topic updated: ${id}`,
