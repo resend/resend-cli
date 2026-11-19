@@ -3,6 +3,7 @@ import { buildHelpText } from '../../lib/help-text';
 import { claimCommand } from './claim';
 import { createDomainCommand } from './create';
 import { deleteDomainCommand } from './delete';
+import { forgeCommand } from './forge';
 import { getDomainCommand } from './get';
 import { listDomainsCommand } from './list';
 import { updateDomainCommand } from './update';
@@ -26,6 +27,7 @@ export const domainsCommand = new Command('domains')
         'resend domains update <id> --tls enforced --open-tracking',
         'resend domains delete <id> --yes',
         'resend domains claim create --name example.com',
+        'resend domains forge enable <id>',
       ],
     }),
   )
@@ -35,4 +37,5 @@ export const domainsCommand = new Command('domains')
   .addCommand(listDomainsCommand, { isDefault: true })
   .addCommand(updateDomainCommand)
   .addCommand(deleteDomainCommand)
-  .addCommand(claimCommand);
+  .addCommand(claimCommand)
+  .addCommand(forgeCommand);

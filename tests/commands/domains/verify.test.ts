@@ -104,4 +104,17 @@ describe('domains verify command', () => {
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('verify_error');
   });
+
+  it('passes --scope forge to the SDK', async () => {
+    spies = setupOutputSpies();
+
+    await verifyDomainCommand.parseAsync(
+      ['test-domain-id', '--scope', 'forge'],
+      { from: 'user' },
+    );
+
+    expect(mockVerify).toHaveBeenCalledWith('test-domain-id', {
+      scope: ['forge'],
+    });
+  });
 });

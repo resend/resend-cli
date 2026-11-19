@@ -50,6 +50,10 @@ Trigger async DNS verification.
 
 **Argument:** `<id>` — Domain ID
 
+| Flag | Type | Description |
+|------|------|-------------|
+| `--scope <scope>` | string | `forge`: check only the Forge record. The other records keep their current status. Requires Forge to be enabled |
+
 **Output:** `{"object":"domain","id":"..."}`
 
 ---
@@ -120,3 +124,25 @@ Claim status values: `pending` | `verified` | `completed` | `blocked` | `expired
 **Argument:** `<id>` — Domain ID (the placeholder domain created by the claim)
 
 Triggers async verification + transfer. Poll `domains claim get <id>` for status. After `completed`, fetch the new DKIM records with `domains get <id>`, update DNS, then run `domains verify <id>`.
+
+---
+
+## domains forge
+
+Put a domain's sending and receiving on Resend Forge. The domain keeps sending through its current records while the Forge record verifies.
+
+**Lifecycle:**
+1. `resend domains forge enable <domain-id>` — returns the DNS records to add
+2. Add the records at your DNS provider: the Forge `CNAME` (an `SPF` record), and the new `MX` value of the `Receiving` record when the domain also receives email
+3. `resend domains verify <domain-id> --scope forge` — check only the Forge record
+4. `resend domains get <domain-id>` — poll until those records are `verified`
+
+### domains forge enable
+
+**Argument:** `<id>` — Domain ID
+
+| Flag | Type | Required | Description |
+|------|------|----------|-------------|
+| `--custom-return-path <subdomain>` | string | No | Subdomain for the Forge Return-Path address (e.g., `forge`). When omitted, Resend picks a free subdomain. Set once, it cannot be changed afterwards |
+
+**Output:** the full domain object, with the Forge record in `records[]`. Calling it again on a domain already on Forge returns its current state.
