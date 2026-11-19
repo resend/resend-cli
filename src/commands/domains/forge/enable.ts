@@ -42,8 +42,13 @@ Calling it again on a domain already on Forge returns its current state.`,
           }),
         onInteractive: (d) => {
           console.log(`Forge enabled for ${d.name} (id: ${d.id})`);
+          const toConfigure = d.records.filter((r) => r.status !== 'verified');
+          if (toConfigure.length === 0) {
+            console.log('\nAll DNS records are verified. Nothing to add.');
+            return;
+          }
           console.log('\nDNS Records to configure:');
-          console.log(renderDnsRecordsTable(d.records, d.name));
+          console.log(renderDnsRecordsTable(toConfigure, d.name));
           console.log(
             `\nAfter you add them, run \`resend domains verify ${d.id} --scope forge\`.`,
           );

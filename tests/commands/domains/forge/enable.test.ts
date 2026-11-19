@@ -118,4 +118,44 @@ describe('domains forge enable command', () => {
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('create_error');
   });
+
+  it('prints only the records that are not verified in interactive mode', async () => {
+    Object.defineProperty(process.stdin, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+    });
+    stderrSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
+    mockEnable.mockResolvedValueOnce({
+      data: {
+        ...domain,
+        records: [
+          {
+            record: 'DKIM',
+            name: 'resend._domainkey',
+            value: 'p=MIGf...',
+            type: 'TXT',
+            ttl: 'Auto',
+            status: 'verified',
+          },
+          ...domain.records,
+        ],
+      },
+      error: null,
+    });
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    await forgeEnableCommand.parseAsync(['domain-id'], { from: 'user' });
+
+    const output = logSpy.mock.calls.map((c) => c[0]).join('\n');
+    logSpy.mockRestore();
+    expect(output).toContain('send.forge.rmta.net');
+    expect(output).not.toContain('resend._domainkey');
+    expect(output).toContain('--scope forge');
+  });
 });

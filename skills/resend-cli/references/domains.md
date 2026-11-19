@@ -133,7 +133,7 @@ Put a domain's sending and receiving on Resend Forge. The domain keeps sending t
 
 **Lifecycle:**
 1. `resend domains forge enable <domain-id>` — returns the DNS records to add
-2. Add the records at your DNS provider: the Forge `CNAME` (an `SPF` record), and the new `MX` value of the `Receiving` record when the domain also receives email
+2. Add the records at your DNS provider: the Forge `CNAME` record (labeled `SPF` in the response), and the new `MX` value of the `Receiving` record when the domain also receives email
 3. `resend domains verify <domain-id> --scope forge` — check only the Forge record
 4. `resend domains get <domain-id>` — poll until those records are `verified`
 
