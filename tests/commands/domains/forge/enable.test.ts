@@ -128,6 +128,9 @@ describe('domains forge enable command', () => {
       value: true,
       writable: true,
     });
+    delete process.env.CI;
+    delete process.env.GITHUB_ACTIONS;
+    delete process.env.TERM;
     stderrSpy = vi
       .spyOn(process.stderr, 'write')
       .mockImplementation(() => true);
