@@ -21,11 +21,16 @@ export function renderDnsRecordsTable(
       : domainName;
 
     const separator = `${h}${h} ${r.type} ${h.repeat(40)}`;
+    const priority =
+      'priority' in r && r.priority !== undefined
+        ? [`  Priority ${r.priority}`]
+        : [];
     return [
       separator,
       `  Name   ${displayName}`,
       `  TTL    ${r.ttl}`,
       `  Value  ${r.value}`,
+      ...priority,
     ].join('\n');
   });
 

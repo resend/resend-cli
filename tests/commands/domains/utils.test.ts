@@ -26,6 +26,25 @@ describe('renderDnsRecordsTable', () => {
     expect(output).toContain('Name   send.example.com');
     expect(output).toContain('TTL    Auto');
     expect(output).toContain('Value  feedback-smtp.us-east-1.amazonses.com');
+    expect(output).toContain('Priority 10');
+  });
+
+  it('omits the priority line for records without one', () => {
+    const output = renderDnsRecordsTable(
+      [
+        {
+          record: 'SPF',
+          type: 'CNAME',
+          name: 'forge',
+          ttl: 'Auto',
+          status: 'pending',
+          value: 'send.forge.rmta.net',
+        },
+      ],
+      'example.com',
+    );
+
+    expect(output).not.toContain('Priority');
   });
 
   it('expands short name with domain suffix', () => {
