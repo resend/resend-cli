@@ -99,6 +99,7 @@ export type CommandContext = {
   json?: boolean;
   flags?: string[];
   globalFlags?: string[];
+  agent?: string;
 };
 
 function toOutcome(exitCode: number, error?: ReportedError): CommandOutcome {
@@ -151,6 +152,7 @@ export function trackCommand(
     flags?: string[];
     globalFlags?: string[];
     outcome: CommandOutcome;
+    agent?: string;
   },
 ): void {
   if (isDisabled()) {
@@ -173,6 +175,9 @@ export function trackCommand(
       ...outcomeProperties(opts.outcome),
     };
 
+    if (opts.agent) {
+      properties.agent = opts.agent;
+    }
     if (opts.flags?.length) {
       properties.flags = opts.flags;
     }

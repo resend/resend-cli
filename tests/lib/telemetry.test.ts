@@ -257,6 +257,19 @@ describe('trackCommand', () => {
     expect(body.properties.global_flags).toEqual(['json']);
   });
 
+  it('includes the agent that ran the command', () => {
+    trackCommand('emails send', {
+      agent: 'claude-code_2-1-331_agent',
+      outcome: SUCCEEDED,
+    });
+    expect(parsePayload().properties.agent).toBe('claude-code_2-1-331_agent');
+  });
+
+  it('omits the agent when no agent ran the command', () => {
+    trackCommand('emails send', { outcome: SUCCEEDED });
+    expect(parsePayload().properties).not.toHaveProperty('agent');
+  });
+
   it('omits flags from payload when empty', () => {
     trackCommand('emails list', { outcome: SUCCEEDED });
     const body = parsePayload();
@@ -437,6 +450,15 @@ describe('trackCommandExit', () => {
       error_code: 'validation_error',
       status_code: 422,
     });
+  });
+
+  it('records the agent that ran the command', () => {
+    trackCommandExit(0, {
+      command: 'domains list',
+      agent: 'claude-code_2-1-331_agent',
+    });
+
+    expect(lastPayload().properties.agent).toBe('claude-code_2-1-331_agent');
   });
 
   it('records a crash without a reported error as a failure', () => {

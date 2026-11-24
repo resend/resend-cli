@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { Command } from '@commander-js/extra-typings';
+import { determineAgent } from '@vercel/detect-agent';
 import pc from 'picocolors';
 import { apiKeysCommand } from './commands/api-keys/index';
 import { authCommand } from './commands/auth/index';
@@ -69,7 +70,7 @@ const program = new Command()
     '--insecure-storage',
     'Save API key as plaintext instead of secure storage',
   )
-  .hook('preAction', (thisCommand, actionCommand) => {
+  .hook('preAction', async (thisCommand, actionCommand) => {
     const parts: string[] = [];
     for (
       let cmd = actionCommand;
@@ -99,6 +100,7 @@ const program = new Command()
         json: Boolean(thisCommand.opts().json),
         flags: extractFlags(actionCommand),
         globalFlags: extractFlags(thisCommand),
+        agent: (await determineAgent()).agent?.name,
       };
     }
     if (actionCommand.optsWithGlobals().insecureStorage) {
