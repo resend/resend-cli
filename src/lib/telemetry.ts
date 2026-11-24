@@ -13,6 +13,7 @@ import {
 } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { getConfigDir } from './config';
+import type { ReportedError } from './output';
 import { isInteractive } from './tty';
 import { detectInstallMethodName } from './update-check';
 import { VERSION } from './version';
@@ -82,9 +83,69 @@ function showFirstRunNotice(interactive: boolean): void {
   );
 }
 
+export type CommandOutcome =
+  | { success: true }
+  | {
+      success: false;
+      exitCode: number;
+      errorCode?: string;
+      statusCode?: number;
+    };
+
+type CommandContext = {
+  command: string;
+  json?: boolean;
+  flags?: string[];
+  globalFlags?: string[];
+};
+
+let commandContext: CommandContext | undefined;
+
+export function setCommandContext(context: CommandContext): void {
+  commandContext = context;
+}
+
+export function trackCommandExit(
+  exitCode: number,
+  error?: ReportedError,
+): void {
+  if (!commandContext) {
+    return;
+  }
+  const outcome: CommandOutcome =
+    exitCode === 0
+      ? { success: true }
+      : {
+          success: false,
+          exitCode,
+          errorCode: error?.code,
+          statusCode: error?.statusCode,
+        };
+  trackCommand(commandContext.command, { ...commandContext, outcome });
+}
+
+function outcomeProperties(outcome: CommandOutcome): Record<string, unknown> {
+  if (outcome.success) {
+    return { success: true };
+  }
+  return {
+    success: false,
+    exit_code: outcome.exitCode,
+    ...(outcome.errorCode !== undefined && { error_code: outcome.errorCode }),
+    ...(outcome.statusCode !== undefined && {
+      status_code: outcome.statusCode,
+    }),
+  };
+}
+
 export function trackCommand(
   command: string,
-  opts: { json?: boolean; flags?: string[]; globalFlags?: string[] },
+  opts: {
+    json?: boolean;
+    flags?: string[];
+    globalFlags?: string[];
+    outcome: CommandOutcome;
+  },
 ): void {
   if (isDisabled()) {
     return;
@@ -103,6 +164,7 @@ export function trackCommand(
       node_version: process.version,
       interactive,
       install_method: detectInstallMethodName(),
+      ...outcomeProperties(opts.outcome),
     };
 
     if (opts.flags?.length) {

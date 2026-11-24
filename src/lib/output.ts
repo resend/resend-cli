@@ -63,11 +63,25 @@ function filterDiagnosticHeaders(
   return out;
 }
 
+export type ReportedError = { code: string; statusCode?: number };
+
+let reportedError: ReportedError | undefined;
+
+export function getReportedError(): ReportedError | undefined {
+  return reportedError;
+}
+
 export function outputError(
   error: ErrorOutput,
   opts: OutputOptions = {},
 ): never {
   const exitCode = opts.exitCode ?? 1;
+  reportedError = {
+    code: error.code ?? 'unknown',
+    ...(typeof error.statusCode === 'number' && {
+      statusCode: error.statusCode,
+    }),
+  };
   const filteredHeaders =
     error.headers && Object.keys(error.headers).length > 0
       ? filterDiagnosticHeaders(error.headers)
