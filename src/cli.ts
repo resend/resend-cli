@@ -33,12 +33,15 @@ import { setupCliExitHandler } from './lib/cli-exit';
 import { installCommandSuggestions } from './lib/command-suggestions';
 import { printBannerPlain } from './lib/logo';
 import { errorMessage, getReportedError, outputError } from './lib/output';
-import { setCommandContext, trackCommandExit } from './lib/telemetry';
+import { type CommandContext, trackCommandExit } from './lib/telemetry';
 import { checkForUpdates } from './lib/update-check';
 import { PACKAGE_NAME, VERSION } from './lib/version';
 
 setupCliExitHandler();
-process.on('exit', (code) => trackCommandExit(code, getReportedError()));
+let commandContext: CommandContext | undefined;
+process.on('exit', (code) =>
+  trackCommandExit(code, commandContext, getReportedError()),
+);
 
 const program = new Command()
   .name('resend')
@@ -90,13 +93,13 @@ const program = new Command()
       thisCommand.setOptionValue('json', true);
     }
 
-    if (parts[0] !== 'update' && parts[0] !== 'telemetry') {
-      setCommandContext({
+    if (parts.length > 0 && parts[0] !== 'update' && parts[0] !== 'telemetry') {
+      commandContext = {
         command: parts.join(' '),
         json: Boolean(thisCommand.opts().json),
         flags: extractFlags(actionCommand),
         globalFlags: extractFlags(thisCommand),
-      });
+      };
     }
     if (actionCommand.optsWithGlobals().insecureStorage) {
       process.env.RESEND_CREDENTIAL_STORE = 'file';

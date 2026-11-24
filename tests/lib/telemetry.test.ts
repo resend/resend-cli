@@ -30,13 +30,12 @@ import {
   getOrCreateAnonymousId,
   getSpoolDir,
   isDisabled,
-  setCommandContext,
   trackCommand,
   trackCommandExit,
 } from '../../src/lib/telemetry';
 import { captureTestEnv } from '../helpers';
 
-const SUCCEEDED = { success: true } as const;
+const SUCCEEDED = { status: 'succeeded' } as const;
 
 const testConfigDir = join(tmpdir(), `resend-telemetry-test-${process.pid}`);
 const testResendDir = join(testConfigDir, 'resend');
@@ -352,7 +351,7 @@ describe('trackCommand', () => {
     trackCommand('emails send', { outcome: SUCCEEDED });
 
     const { properties } = parsePayload();
-    expect(properties.success).toBe(true);
+    expect(properties.outcome).toBe('succeeded');
     expect(properties).not.toHaveProperty('exit_code');
     expect(properties).not.toHaveProperty('error_code');
     expect(properties).not.toHaveProperty('status_code');
@@ -361,7 +360,7 @@ describe('trackCommand', () => {
   it('records a failed command with its exit code, error code and status', () => {
     trackCommand('emails send', {
       outcome: {
-        success: false,
+        status: 'failed',
         exitCode: 1,
         errorCode: 'validation_error',
         statusCode: 422,
@@ -369,7 +368,7 @@ describe('trackCommand', () => {
     });
 
     expect(parsePayload().properties).toMatchObject({
-      success: false,
+      outcome: 'failed',
       exit_code: 1,
       error_code: 'validation_error',
       status_code: 422,
@@ -402,31 +401,51 @@ describe('trackCommandExit', () => {
   }
 
   it('sends nothing when no command ran', () => {
-    trackCommandExit(1);
+    trackCommandExit(1, undefined);
     expect(cp.spawn).not.toHaveBeenCalled();
   });
 
-  it('records the command that ran as a success on exit code 0', () => {
-    setCommandContext({ command: 'domains list', flags: ['limit'] });
-    trackCommandExit(0);
+  it('records a success on exit code 0', () => {
+    trackCommandExit(0, { command: 'domains list', flags: ['limit'] });
 
     expect(lastPayload().properties).toMatchObject({
       command: 'domains list',
       flags: ['limit'],
-      success: true,
+      outcome: 'succeeded',
     });
   });
 
-  it('records the command that ran as a failure with the reported error', () => {
-    setCommandContext({ command: 'emails send' });
-    trackCommandExit(1, { code: 'missing_api_key' });
+  it('records a cancellation on Ctrl+C, not a failure', () => {
+    trackCommandExit(130, { command: 'webhooks listen' });
+
+    const { properties } = lastPayload();
+    expect(properties.outcome).toBe('cancelled');
+    expect(properties).not.toHaveProperty('exit_code');
+  });
+
+  it('records a failure with the reported error code and status', () => {
+    trackCommandExit(
+      1,
+      { command: 'emails send' },
+      { code: 'validation_error', statusCode: 422 },
+    );
 
     expect(lastPayload().properties).toMatchObject({
       command: 'emails send',
-      success: false,
+      outcome: 'failed',
       exit_code: 1,
-      error_code: 'missing_api_key',
+      error_code: 'validation_error',
+      status_code: 422,
     });
+  });
+
+  it('records a crash without a reported error as a failure', () => {
+    trackCommandExit(1, { command: 'emails send' });
+
+    const { properties } = lastPayload();
+    expect(properties).toMatchObject({ outcome: 'failed', exit_code: 1 });
+    expect(properties).not.toHaveProperty('error_code');
+    expect(properties).not.toHaveProperty('status_code');
   });
 });
 
