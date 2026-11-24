@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it, type MockInstance, vi } from 'vitest';
-import { outputError, outputResult } from '../../src/lib/output';
+import {
+  getReportedError,
+  outputError,
+  outputResult,
+} from '../../src/lib/output';
 
 describe('outputResult', () => {
   let logSpy: MockInstance;
@@ -264,5 +268,30 @@ describe('outputError', () => {
     expect(hintLine).not.toMatch(/HTTP/);
     expect(hintLine).toMatch(/x-trace-id: abc123/);
     expect(hintLine).toMatch(/content-type: text\/plain/);
+  });
+});
+
+describe('getReportedError', () => {
+  it('returns the code and status of the error passed to outputError, without the message', () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const exitSpy = vi
+      .spyOn(process, 'exit')
+      .mockImplementation(() => undefined as never);
+
+    outputError(
+      {
+        message: 'to: jane@example.com is invalid',
+        code: 'validation_error',
+        statusCode: 422,
+      },
+      { json: true },
+    );
+
+    expect(getReportedError()).toEqual({
+      code: 'validation_error',
+      statusCode: 422,
+    });
+    errorSpy.mockRestore();
+    exitSpy.mockRestore();
   });
 });

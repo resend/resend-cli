@@ -12,7 +12,9 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
+import { getCancelExitCode } from './cli-exit';
 import { getConfigDir } from './config';
+import type { ReportedError } from './output';
 import { isInteractive } from './tty';
 import { detectInstallMethodName } from './update-check';
 import { VERSION } from './version';
@@ -82,9 +84,74 @@ function showFirstRunNotice(interactive: boolean): void {
   );
 }
 
+export type CommandOutcome =
+  | { status: 'succeeded' }
+  | { status: 'cancelled' }
+  | {
+      status: 'failed';
+      exitCode: number;
+      errorCode?: string;
+      statusCode?: number;
+    };
+
+export type CommandContext = {
+  command: string;
+  json?: boolean;
+  flags?: string[];
+  globalFlags?: string[];
+};
+
+function toOutcome(exitCode: number, error?: ReportedError): CommandOutcome {
+  if (exitCode === 0) {
+    return { status: 'succeeded' };
+  }
+  if (exitCode === getCancelExitCode()) {
+    return { status: 'cancelled' };
+  }
+  return {
+    status: 'failed',
+    exitCode,
+    errorCode: error?.code,
+    statusCode: error?.statusCode,
+  };
+}
+
+export function trackCommandExit(
+  exitCode: number,
+  context: CommandContext | undefined,
+  error?: ReportedError,
+): void {
+  if (!context) {
+    return;
+  }
+  trackCommand(context.command, {
+    ...context,
+    outcome: toOutcome(exitCode, error),
+  });
+}
+
+function outcomeProperties(outcome: CommandOutcome): Record<string, unknown> {
+  if (outcome.status !== 'failed') {
+    return { outcome: outcome.status };
+  }
+  return {
+    outcome: 'failed',
+    exit_code: outcome.exitCode,
+    ...(outcome.errorCode !== undefined && { error_code: outcome.errorCode }),
+    ...(outcome.statusCode !== undefined && {
+      status_code: outcome.statusCode,
+    }),
+  };
+}
+
 export function trackCommand(
   command: string,
-  opts: { json?: boolean; flags?: string[]; globalFlags?: string[] },
+  opts: {
+    json?: boolean;
+    flags?: string[];
+    globalFlags?: string[];
+    outcome: CommandOutcome;
+  },
 ): void {
   if (isDisabled()) {
     return;
@@ -103,6 +170,7 @@ export function trackCommand(
       node_version: process.version,
       interactive,
       install_method: detectInstallMethodName(),
+      ...outcomeProperties(opts.outcome),
     };
 
     if (opts.flags?.length) {

@@ -32,16 +32,16 @@ import { whoamiCommand } from './commands/whoami';
 import { setupCliExitHandler } from './lib/cli-exit';
 import { installCommandSuggestions } from './lib/command-suggestions';
 import { printBannerPlain } from './lib/logo';
-import { errorMessage, outputError } from './lib/output';
-import { trackCommand } from './lib/telemetry';
+import { errorMessage, getReportedError, outputError } from './lib/output';
+import { type CommandContext, trackCommandExit } from './lib/telemetry';
 import { checkForUpdates } from './lib/update-check';
 import { PACKAGE_NAME, VERSION } from './lib/version';
 
 setupCliExitHandler();
-
-let lastCommandName = '';
-let lastFlags: string[] = [];
-let lastGlobalFlags: string[] = [];
+let commandContext: CommandContext | undefined;
+process.on('exit', (code) =>
+  trackCommandExit(code, commandContext, getReportedError()),
+);
 
 const program = new Command()
   .name('resend')
@@ -78,8 +78,6 @@ const program = new Command()
     ) {
       parts.unshift(cmd.name());
     }
-    lastCommandName = parts.join(' ');
-
     const extractFlags = (cmd: typeof actionCommand) =>
       cmd.options
         .filter(
@@ -91,11 +89,17 @@ const program = new Command()
         )
         .filter(Boolean);
 
-    lastFlags = extractFlags(actionCommand);
-    lastGlobalFlags = extractFlags(thisCommand);
-
     if (actionCommand.optsWithGlobals().quiet) {
       thisCommand.setOptionValue('json', true);
+    }
+
+    if (parts.length > 0 && parts[0] !== 'update' && parts[0] !== 'telemetry') {
+      commandContext = {
+        command: parts.join(' '),
+        json: Boolean(thisCommand.opts().json),
+        flags: extractFlags(actionCommand),
+        globalFlags: extractFlags(thisCommand),
+      };
     }
     if (actionCommand.optsWithGlobals().insecureStorage) {
       process.env.RESEND_CREDENTIAL_STORE = 'file';
@@ -183,14 +187,6 @@ program
     const ran = program.args[0];
     if (ran === 'update' || ran === 'telemetry') {
       return;
-    }
-
-    if (lastCommandName) {
-      trackCommand(lastCommandName, {
-        ...program.opts(),
-        flags: lastFlags,
-        globalFlags: lastGlobalFlags,
-      });
     }
 
     const globals = program.opts();

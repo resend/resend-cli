@@ -31,8 +31,11 @@ import {
   getSpoolDir,
   isDisabled,
   trackCommand,
+  trackCommandExit,
 } from '../../src/lib/telemetry';
 import { captureTestEnv } from '../helpers';
+
+const SUCCEEDED = { status: 'succeeded' } as const;
 
 const testConfigDir = join(tmpdir(), `resend-telemetry-test-${process.pid}`);
 const testResendDir = join(testConfigDir, 'resend');
@@ -147,7 +150,7 @@ describe('trackCommand', () => {
   }
 
   it('spawns detached process with payload in temp file', () => {
-    trackCommand('emails send', { json: true });
+    trackCommand('emails send', { json: true, outcome: SUCCEEDED });
 
     expect(spawnMock).toHaveBeenCalledOnce();
     const [execPath, args, options] = spawnMock.mock.calls[0];
@@ -177,7 +180,7 @@ describe('trackCommand', () => {
   });
 
   it('calls child.unref()', () => {
-    trackCommand('emails send', {});
+    trackCommand('emails send', { outcome: SUCCEEDED });
     expect(unrefMock).toHaveBeenCalledOnce();
   });
 
@@ -193,7 +196,7 @@ describe('trackCommand', () => {
     delete process.env.CI;
     delete process.env.GITHUB_ACTIONS;
 
-    trackCommand('emails send', { json: true });
+    trackCommand('emails send', { json: true, outcome: SUCCEEDED });
     expect(parsePayload().properties.interactive).toBe(false);
   });
 
@@ -207,7 +210,7 @@ describe('trackCommand', () => {
       writable: true,
     });
 
-    trackCommand('emails list', {});
+    trackCommand('emails list', { outcome: SUCCEEDED });
     expect(parsePayload().properties.interactive).toBe(false);
   });
 
@@ -222,7 +225,7 @@ describe('trackCommand', () => {
     });
     process.env.CI = 'true';
 
-    trackCommand('emails list', {});
+    trackCommand('emails list', { outcome: SUCCEEDED });
     expect(parsePayload().properties.interactive).toBe(false);
   });
 
@@ -239,7 +242,7 @@ describe('trackCommand', () => {
     delete process.env.GITHUB_ACTIONS;
     delete process.env.TERM;
 
-    trackCommand('emails list', {});
+    trackCommand('emails list', { outcome: SUCCEEDED });
     expect(parsePayload().properties.interactive).toBe(true);
   });
 
@@ -247,6 +250,7 @@ describe('trackCommand', () => {
     trackCommand('emails send', {
       flags: ['to', 'subject'],
       globalFlags: ['json'],
+      outcome: SUCCEEDED,
     });
     const body = parsePayload();
     expect(body.properties.flags).toEqual(['to', 'subject']);
@@ -254,14 +258,18 @@ describe('trackCommand', () => {
   });
 
   it('omits flags from payload when empty', () => {
-    trackCommand('emails list', {});
+    trackCommand('emails list', { outcome: SUCCEEDED });
     const body = parsePayload();
     expect(body.properties.flags).toBeUndefined();
     expect(body.properties.global_flags).toBeUndefined();
   });
 
   it('omits flags from payload when arrays are empty', () => {
-    trackCommand('emails list', { flags: [], globalFlags: [] });
+    trackCommand('emails list', {
+      flags: [],
+      globalFlags: [],
+      outcome: SUCCEEDED,
+    });
     const body = parsePayload();
     expect(body.properties.flags).toBeUndefined();
     expect(body.properties.global_flags).toBeUndefined();
@@ -269,7 +277,7 @@ describe('trackCommand', () => {
 
   it('does nothing when disabled', () => {
     process.env.RESEND_TELEMETRY_DISABLED = '1';
-    trackCommand('emails send', {});
+    trackCommand('emails send', { outcome: SUCCEEDED });
     expect(spawnMock).not.toHaveBeenCalled();
   });
 
@@ -277,7 +285,9 @@ describe('trackCommand', () => {
     spawnMock.mockImplementation(() => {
       throw new Error('spawn error');
     });
-    expect(() => trackCommand('emails send', {})).not.toThrow();
+    expect(() =>
+      trackCommand('emails send', { outcome: SUCCEEDED }),
+    ).not.toThrow();
   });
 
   it('does not follow symlinks when writing temp file', () => {
@@ -297,7 +307,7 @@ describe('trackCommand', () => {
     symlinkSync(targetFile, symlinkPath);
 
     try {
-      trackCommand('emails send', {});
+      trackCommand('emails send', { outcome: SUCCEEDED });
       expect(readFileSync(targetFile, 'utf-8')).toBe('original content');
     } finally {
       uuidMock.mockRestore();
@@ -323,10 +333,10 @@ describe('trackCommand', () => {
     delete process.env.GITHUB_ACTIONS;
     delete process.env.TERM;
 
-    trackCommand('emails send', {});
+    trackCommand('emails send', { outcome: SUCCEEDED });
     const notice1 = stderrSpy.mock.calls.length;
 
-    trackCommand('domains list', {});
+    trackCommand('domains list', { outcome: SUCCEEDED });
     const notice2 = stderrSpy.mock.calls.length;
 
     expect(notice1).toBe(1);
@@ -335,6 +345,107 @@ describe('trackCommand', () => {
     expect(existsSync(join(testResendDir, 'telemetry-notice-shown'))).toBe(
       true,
     );
+  });
+
+  it('records a successful command', () => {
+    trackCommand('emails send', { outcome: SUCCEEDED });
+
+    const { properties } = parsePayload();
+    expect(properties.outcome).toBe('succeeded');
+    expect(properties).not.toHaveProperty('exit_code');
+    expect(properties).not.toHaveProperty('error_code');
+    expect(properties).not.toHaveProperty('status_code');
+  });
+
+  it('records a failed command with its exit code, error code and status', () => {
+    trackCommand('emails send', {
+      outcome: {
+        status: 'failed',
+        exitCode: 1,
+        errorCode: 'validation_error',
+        statusCode: 422,
+      },
+    });
+
+    expect(parsePayload().properties).toMatchObject({
+      outcome: 'failed',
+      exit_code: 1,
+      error_code: 'validation_error',
+      status_code: 422,
+    });
+  });
+});
+
+describe('trackCommandExit', () => {
+  const restoreEnv = captureTestEnv();
+
+  beforeEach(() => {
+    mkdirSync(testResendDir, { recursive: true });
+    process.env.XDG_CONFIG_HOME = testConfigDir;
+    delete process.env.DO_NOT_TRACK;
+    delete process.env.RESEND_TELEMETRY_DISABLED;
+    vi.mocked(cp.spawn).mockClear();
+    vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    restoreEnv();
+    rmSync(testConfigDir, { recursive: true, force: true });
+  });
+
+  function lastPayload() {
+    const calls = vi.mocked(cp.spawn).mock.calls;
+    const args = calls[calls.length - 1][1] as string[];
+    return JSON.parse(readFileSync(args[args.length - 1], 'utf-8'));
+  }
+
+  it('sends nothing when no command ran', () => {
+    trackCommandExit(1, undefined);
+    expect(cp.spawn).not.toHaveBeenCalled();
+  });
+
+  it('records a success on exit code 0', () => {
+    trackCommandExit(0, { command: 'domains list', flags: ['limit'] });
+
+    expect(lastPayload().properties).toMatchObject({
+      command: 'domains list',
+      flags: ['limit'],
+      outcome: 'succeeded',
+    });
+  });
+
+  it('records a cancellation on Ctrl+C, not a failure', () => {
+    trackCommandExit(130, { command: 'webhooks listen' });
+
+    const { properties } = lastPayload();
+    expect(properties.outcome).toBe('cancelled');
+    expect(properties).not.toHaveProperty('exit_code');
+  });
+
+  it('records a failure with the reported error code and status', () => {
+    trackCommandExit(
+      1,
+      { command: 'emails send' },
+      { code: 'validation_error', statusCode: 422 },
+    );
+
+    expect(lastPayload().properties).toMatchObject({
+      command: 'emails send',
+      outcome: 'failed',
+      exit_code: 1,
+      error_code: 'validation_error',
+      status_code: 422,
+    });
+  });
+
+  it('records a crash without a reported error as a failure', () => {
+    trackCommandExit(1, { command: 'emails send' });
+
+    const { properties } = lastPayload();
+    expect(properties).toMatchObject({ outcome: 'failed', exit_code: 1 });
+    expect(properties).not.toHaveProperty('error_code');
+    expect(properties).not.toHaveProperty('status_code');
   });
 });
 
