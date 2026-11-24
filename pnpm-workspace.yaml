@@ -7,3 +7,5 @@ minimumReleaseAgeExclude:
   - resend
 
 trustPolicy: no-downgrade
+trustPolicyExclude:
+  - '@vercel/detect-agent@1.2.7'
