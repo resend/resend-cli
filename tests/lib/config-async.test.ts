@@ -300,6 +300,35 @@ describe('storeOAuthGrant', () => {
     });
   });
 
+  it('refreshes a valid grant when the refresh is forced', async () => {
+    vi.resetModules();
+    vi.doUnmock('../../src/lib/credential-store');
+    const { storeOAuthGrant, resolveAuthentication } = await import(
+      '../../src/lib/config'
+    );
+    await storeOAuthGrant(grant, 'staging');
+    const part = (value: object) =>
+      Buffer.from(JSON.stringify(value)).toString('base64url');
+    const fresh = `${part({ alg: 'none' })}.${part({ exp: 9999999999 })}.`;
+    const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          access_token: fresh,
+          refresh_token: 'rt_new',
+          scope: 'full_access',
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const resolved = await resolveAuthentication(undefined, 'staging', {
+      refresh: 'force',
+    });
+
+    expect(fetchSpy).toHaveBeenCalledOnce();
+    expect(resolved).toMatchObject({ access_token: fresh });
+  });
+
   it('stores secrets in the keychain and only metadata in the file when secure', async () => {
     const store = new Map<string, string>();
     const mockBackend = {

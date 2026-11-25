@@ -79,6 +79,15 @@ export const OAUTH_NETWORK_ERROR_NAME = 'OAuthNetworkError';
 
 export const OAUTH_TIMEOUT_ERROR_NAME = 'OAuthTimeoutError';
 
+export class OAuthRefreshError extends Error {
+  constructor(readonly status: number) {
+    super(
+      `Token refresh failed (${status}). Please run \`resend login --web\` again.`,
+    );
+    this.name = 'OAuthRefreshError';
+  }
+}
+
 // fetch has no default timeout; abort after 30s so a hung connection can't hang
 // the CLI.
 async function fetchOAuthToken(
@@ -135,9 +144,7 @@ export async function refreshOAuthGrant(
   );
 
   if (!response.ok) {
-    throw new Error(
-      `Token refresh failed (${response.status}). Please run \`resend login --web\` again.`,
-    );
+    throw new OAuthRefreshError(response.status);
   }
 
   const data = parseTokenResponse(await response.json());

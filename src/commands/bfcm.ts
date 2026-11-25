@@ -1,6 +1,8 @@
 import { Command, Option } from '@commander-js/extra-typings';
 import {
   BFCM_THEMES,
+  BfcmRequestError,
+  BfcmTokenUnavailableError,
   BfcmUnauthorizedError,
   runBfcmBoard,
 } from '../lib/bfcm-board';
@@ -9,6 +11,7 @@ import { setSigintHandler } from '../lib/cli-exit';
 import type { GlobalOpts } from '../lib/client';
 import { type ApiKeySource, resolveAuthentication } from '../lib/config';
 import { buildHelpText } from '../lib/help-text';
+import { OAUTH_NETWORK_ERROR_NAME, OAuthRefreshError } from '../lib/oauth';
 import { errorMessage, outputError } from '../lib/output';
 import { isInteractive } from '../lib/tty';
 
@@ -23,6 +26,13 @@ const API_KEY_HINTS: Record<ApiKeySource, string> = {
   secure_storage: '',
 };
 
+function isTemporaryRefreshFailure(err: unknown): boolean {
+  if (err instanceof OAuthRefreshError) {
+    return err.status >= 500 || err.status === 408 || err.status === 429;
+  }
+  return err instanceof Error && err.name === OAUTH_NETWORK_ERROR_NAME;
+}
+
 export const bfcmCommand = new Command('bfcm')
   .description('Watch the live BFCM board for your team')
   .addOption(
@@ -35,9 +45,10 @@ export const bfcmCommand = new Command('bfcm')
     buildHelpText({
       setup: true,
       context: `Streams the live Black Friday / Cyber Monday board for the team you logged in to.
-Needs an interactive terminal and a browser login from \`resend login --web\`. API keys do not work.
+Needs an interactive terminal and a full access browser login from \`resend login --web\`. API keys do not work.
 
-Keys: M theme, S sound, R popup, X close popup, H F E G T open pages, Q quit.
+Keys: M next theme, S sound, R popup, X close popup, Q quit.
+Open in your browser: H home, F Forge, E enterprise, G sign up, T Resend Studio.
 
 Set BFCM_URL to stream the board from another host (default: ${DEFAULT_BFCM_URL}).`,
       errorCodes: [
@@ -48,6 +59,7 @@ Set BFCM_URL to stream the board from another host (default: ${DEFAULT_BFCM_URL}
         'insufficient_permissions',
         'auth_error',
         'bfcm_unauthorized',
+        'board_error',
       ],
       examples: ['resend bfcm', 'resend bfcm --theme amber'],
     }),
@@ -59,7 +71,9 @@ Set BFCM_URL to stream the board from another host (default: ${DEFAULT_BFCM_URL}
     if (json || !isInteractive()) {
       outputError(
         {
-          message: 'The BFCM board needs an interactive terminal.',
+          message: json
+            ? 'The BFCM board is interactive and does not support --json.'
+            : 'The BFCM board needs an interactive terminal.',
           code: 'not_interactive',
         },
         { json },
@@ -139,14 +153,19 @@ Set BFCM_URL to stream the board from another host (default: ${DEFAULT_BFCM_URL}
           void openInBrowser(url);
         },
         getAccessToken: async ({ force }) => {
-          if (!force) {
-            return grant.access_token;
+          let refreshed: Awaited<ReturnType<typeof resolveAuthentication>>;
+          try {
+            refreshed = await resolveAuthentication(
+              undefined,
+              grant.profile,
+              force ? { refresh: 'force' } : undefined,
+            );
+          } catch (err) {
+            if (isTemporaryRefreshFailure(err)) {
+              throw new BfcmTokenUnavailableError(err);
+            }
+            throw err;
           }
-          const refreshed = await resolveAuthentication(
-            undefined,
-            grant.profile,
-            { refresh: 'force' },
-          );
           if (refreshed?.type !== 'oauth_grant') {
             throw new Error(`Your login changed. ${LOGIN_HINT}`);
           }
@@ -157,10 +176,12 @@ Set BFCM_URL to stream the board from another host (default: ${DEFAULT_BFCM_URL}
       outputError(
         err instanceof BfcmUnauthorizedError
           ? { message: err.message, code: 'bfcm_unauthorized' }
-          : {
-              message: errorMessage(err, 'The BFCM board stopped'),
-              code: 'auth_error',
-            },
+          : err instanceof BfcmRequestError
+            ? { message: err.message, code: 'board_error' }
+            : {
+                message: errorMessage(err, 'The BFCM board stopped'),
+                code: 'auth_error',
+              },
         { json },
       );
     } finally {

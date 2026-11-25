@@ -1,6 +1,14 @@
 import { VERSION } from './version';
 
-export const BFCM_THEMES = ['classic', 'green', 'amber', 'turbo', 'cga'];
+export const BFCM_THEMES = [
+  'classic',
+  'green',
+  'amber',
+  'turbo',
+  'cga',
+] as const;
+
+export type BfcmTheme = (typeof BFCM_THEMES)[number];
 
 const BFCM_PAGES: Record<string, string> = {
   h: '/home',
@@ -18,9 +26,10 @@ const RESIZE_DEBOUNCE_MS = 150;
 const RESTART_DELAY_MS = 1000;
 const ERROR_RETRY_DELAY_MS = 5000;
 const MAX_MESSAGE_LENGTH = 500;
+const RETRYABLE_STATUSES = new Set([408, 429]);
 
 export type BfcmBoardState = {
-  theme: string;
+  theme: BfcmTheme;
   sound: boolean;
   popup: boolean;
   closed: number;
@@ -45,7 +54,7 @@ export type BfcmBoardOutput = {
 
 export type BfcmBoardOptions = {
   baseUrl: string;
-  theme: string;
+  theme: BfcmTheme;
   input: BfcmBoardInput;
   output: BfcmBoardOutput;
   getAccessToken: (options: { force: boolean }) => Promise<string>;
@@ -65,7 +74,31 @@ export class BfcmUnauthorizedError extends Error {
   }
 }
 
-export function nextBfcmTheme(theme: string): string {
+export class BfcmTokenError extends Error {
+  constructor(cause: unknown) {
+    super(cause instanceof Error ? cause.message : String(cause), { cause });
+    this.name = 'BfcmTokenError';
+  }
+}
+
+export class BfcmTokenUnavailableError extends Error {
+  constructor(cause?: unknown) {
+    super('Could not refresh your login. Trying again...', { cause });
+    this.name = 'BfcmTokenUnavailableError';
+  }
+}
+
+export class BfcmRequestError extends Error {
+  constructor(
+    readonly status: number,
+    detail: string,
+  ) {
+    super(`The BFCM board returned ${status}${detail ? `: ${detail}` : '.'}`);
+    this.name = 'BfcmRequestError';
+  }
+}
+
+export function nextBfcmTheme(theme: BfcmTheme): BfcmTheme {
   const at = BFCM_THEMES.indexOf(theme);
   return BFCM_THEMES[(at + 1) % BFCM_THEMES.length];
 }
@@ -90,7 +123,32 @@ export function bfcmBoardUrl(
 }
 
 function screenMessage(text: string): string {
-  return `\x1b[0m\x1b[H\x1b[2J\n  ${text.trim().slice(0, MAX_MESSAGE_LENGTH)}\n`;
+  return `\x1b[0m\x1b[H\x1b[2J\n  ${text}\n`;
+}
+
+async function responseDetail(response: Response): Promise<string> {
+  const text = await response.text();
+  if (response.headers.get('content-type')?.includes('text/html')) {
+    return '';
+  }
+  return text.trim().slice(0, MAX_MESSAGE_LENGTH);
+}
+
+function isRetryableStatus(status: number): boolean {
+  return status >= 500 || RETRYABLE_STATUSES.has(status);
+}
+
+function networkErrorDetail(error: unknown): string {
+  const cause = error instanceof Error ? error.cause : undefined;
+  if (
+    typeof cause === 'object' &&
+    cause !== null &&
+    'code' in cause &&
+    typeof cause.code === 'string'
+  ) {
+    return cause.code;
+  }
+  return error instanceof Error ? error.message : String(error);
 }
 
 export function runBfcmBoard(options: BfcmBoardOptions): Promise<void> {
@@ -112,15 +170,21 @@ export function runBfcmBoard(options: BfcmBoardOptions): Promise<void> {
     let restartTimer: ReturnType<typeof setTimeout> | undefined;
     let resizeTimer: ReturnType<typeof setTimeout> | undefined;
     let token: Promise<string> | undefined;
-    const fatalErrors = new WeakSet<object>();
 
-    const fetchToken = (force: boolean) =>
-      options.getAccessToken({ force }).catch((error: unknown) => {
-        if (typeof error === 'object' && error !== null) {
-          fatalErrors.add(error);
-        }
-        throw error;
-      });
+    const fetchToken = (force: boolean): Promise<string> => {
+      const pending = options
+        .getAccessToken({ force })
+        .catch((error: unknown) => {
+          if (error instanceof BfcmTokenUnavailableError) {
+            if (token === pending) {
+              token = undefined;
+            }
+            throw error;
+          }
+          throw new BfcmTokenError(error);
+        });
+      return pending;
+    };
 
     const accessToken = () => {
       token ??= fetchToken(false);
@@ -164,12 +228,14 @@ export function runBfcmBoard(options: BfcmBoardOptions): Promise<void> {
         }
         state.boot = false;
         if (!response.ok || !response.body) {
-          const text = await response.text();
+          const detail = await responseDetail(response);
+          if (!isRetryableStatus(response.status) && !response.ok) {
+            throw new BfcmRequestError(response.status, detail);
+          }
           if (!abort.aborted) {
             output.write(
               screenMessage(
-                text ||
-                  `The BFCM board returned ${response.status}. Trying again...`,
+                `${detail || `The BFCM board returned ${response.status}.`} Trying again...`,
               ),
             );
           }
@@ -186,14 +252,17 @@ export function runBfcmBoard(options: BfcmBoardOptions): Promise<void> {
         if (
           abort.aborted ||
           error instanceof BfcmUnauthorizedError ||
-          (typeof error === 'object' &&
-            error !== null &&
-            fatalErrors.has(error))
+          error instanceof BfcmTokenError ||
+          error instanceof BfcmRequestError
         ) {
           throw error;
         }
         output.write(
-          screenMessage(`Could not reach ${baseUrl}. Trying again...`),
+          screenMessage(
+            error instanceof BfcmTokenUnavailableError
+              ? error.message
+              : `Could not reach ${baseUrl} (${networkErrorDetail(error)}). Trying again...`,
+          ),
         );
         return errorRetryDelayMs;
       }

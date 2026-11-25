@@ -1,3 +1,4 @@
+import { Command } from '@commander-js/extra-typings';
 import {
   afterEach,
   beforeEach,
@@ -10,10 +11,13 @@ import {
 import { bfcmCommand } from '../../src/commands/bfcm';
 import {
   type BfcmBoardOptions,
+  BfcmRequestError,
+  BfcmTokenUnavailableError,
   BfcmUnauthorizedError,
   runBfcmBoard,
 } from '../../src/lib/bfcm-board';
 import { resolveAuthentication } from '../../src/lib/config';
+import { OAuthRefreshError } from '../../src/lib/oauth';
 import {
   captureTestEnv,
   expectExit1,
@@ -87,6 +91,36 @@ describe('bfcm command', () => {
     expect(resolveMock).not.toHaveBeenCalled();
   });
 
+  it('says --json is not supported in a real terminal', async () => {
+    setInteractive();
+    vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    vi.resetModules();
+    const { bfcmCommand: freshCommand } = await import(
+      '../../src/commands/bfcm'
+    );
+    const program = new Command('resend')
+      .option('--json')
+      .addCommand(freshCommand);
+
+    await expectExit1(() =>
+      program.parseAsync(['--json', 'bfcm'], { from: 'user' }),
+    );
+
+    expect(JSON.parse(errorOutput()).error.message).toContain(
+      'does not support --json',
+    );
+  });
+
+  it('refuses an invalid BFCM_URL', async () => {
+    setInteractive();
+    process.env.BFCM_URL = 'not a url';
+
+    await expectExit1(() => bfcmCommand.parseAsync([], { from: 'user' }));
+
+    expect(errorOutput()).toContain('BFCM_URL is not a valid URL');
+    expect(runMock).not.toHaveBeenCalled();
+  });
+
   it('asks to log in when there is no login', async () => {
     setInteractive();
     resolveMock.mockResolvedValue(null);
@@ -128,6 +162,7 @@ describe('bfcm command', () => {
     process.env.BFCM_URL = 'http://localhost:3000';
     resolveMock
       .mockResolvedValueOnce(oauthGrant())
+      .mockResolvedValueOnce(oauthGrant())
       .mockResolvedValueOnce(oauthGrant('full_access', 'access_2'));
     runMock.mockResolvedValue(undefined);
 
@@ -137,6 +172,11 @@ describe('bfcm command', () => {
     expect(options.baseUrl).toBe('http://localhost:3000');
     expect(options.theme).toBe('amber');
     expect(await options.getAccessToken({ force: false })).toBe('access_1');
+    expect(resolveMock).toHaveBeenLastCalledWith(
+      undefined,
+      'default',
+      undefined,
+    );
     expect(await options.getAccessToken({ force: true })).toBe('access_2');
     expect(resolveMock).toHaveBeenLastCalledWith(undefined, 'default', {
       refresh: 'force',
@@ -162,5 +202,79 @@ describe('bfcm command', () => {
 
     expect(errorOutput()).toContain('did not accept your login');
     expect(errorOutput()).toContain('resend login --web');
+  });
+
+  it('reports a board error that a retry cannot fix', async () => {
+    setInteractive();
+    vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    resolveMock.mockResolvedValue(oauthGrant());
+    runMock.mockRejectedValue(new BfcmRequestError(404, ''));
+
+    await expectExit1(() => bfcmCommand.parseAsync([], { from: 'user' }));
+
+    expect(errorOutput()).toContain('The BFCM board returned 404.');
+  });
+
+  it.each([
+    [
+      'a timeout',
+      Object.assign(new Error('timed out'), { name: 'OAuthNetworkError' }),
+    ],
+    ['a 503', new OAuthRefreshError(503)],
+    ['a 429', new OAuthRefreshError(429)],
+  ])('marks %s during a refresh as temporary', async (_label, failure) => {
+    setInteractive();
+    resolveMock
+      .mockResolvedValueOnce(oauthGrant())
+      .mockRejectedValueOnce(failure);
+    runMock.mockResolvedValue(undefined);
+
+    await bfcmCommand.parseAsync([], { from: 'user' });
+
+    const options = runMock.mock.calls[0][0] as BfcmBoardOptions;
+    await expect(
+      options.getAccessToken({ force: true }),
+    ).rejects.toBeInstanceOf(BfcmTokenUnavailableError);
+  });
+
+  it('keeps a rejected refresh token fatal', async () => {
+    setInteractive();
+    const failure = new OAuthRefreshError(400);
+    resolveMock
+      .mockResolvedValueOnce(oauthGrant())
+      .mockRejectedValueOnce(failure);
+    runMock.mockResolvedValue(undefined);
+
+    await bfcmCommand.parseAsync([], { from: 'user' });
+
+    const options = runMock.mock.calls[0][0] as BfcmBoardOptions;
+    await expect(options.getAccessToken({ force: true })).rejects.toBe(failure);
+  });
+
+  it('stops when the profile is no longer a browser login', async () => {
+    setInteractive();
+    resolveMock.mockResolvedValueOnce(oauthGrant()).mockResolvedValueOnce({
+      type: 'api_key',
+      key: 're_123',
+      source: 'config',
+    });
+    runMock.mockResolvedValue(undefined);
+
+    await bfcmCommand.parseAsync([], { from: 'user' });
+
+    const options = runMock.mock.calls[0][0] as BfcmBoardOptions;
+    await expect(options.getAccessToken({ force: true })).rejects.toThrow(
+      'Your login changed',
+    );
+  });
+
+  it('reports other failures as auth_error', async () => {
+    setInteractive();
+    resolveMock.mockResolvedValue(oauthGrant());
+    runMock.mockRejectedValue(new Error('Token refresh failed (400).'));
+
+    await expectExit1(() => bfcmCommand.parseAsync([], { from: 'user' }));
+
+    expect(errorOutput()).toContain('Token refresh failed (400).');
   });
 });
