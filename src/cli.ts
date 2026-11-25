@@ -7,6 +7,7 @@ import { authCommand } from './commands/auth/index';
 import { loginCommand } from './commands/auth/login';
 import { logoutCommand } from './commands/auth/logout';
 import { automationsCommand } from './commands/automations/index';
+import { bfcmCommand } from './commands/bfcm';
 import { broadcastsCommand } from './commands/broadcasts/index';
 import { careersCommand } from './commands/careers/index';
 import { listCommandsCommand } from './commands/commands';
@@ -152,6 +153,7 @@ ${pc.gray('Examples:')}
   .addCommand(logsCommand)
   .addCommand(usageCommand)
   .addCommand(careersCommand)
+  .addCommand(bfcmCommand)
   .addCommand(suppressionsCommand)
   .addCommand(inboxesCommand)
   .addCommand(apiKeysCommand)

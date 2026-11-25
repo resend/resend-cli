@@ -110,12 +110,13 @@ async function fetchOAuthToken(
 export async function refreshOAuthGrant(
   grant: OAuthGrantData,
   profile: string,
+  options?: { force?: boolean },
 ): Promise<{ access_token: string; scope: string }> {
   const nowSeconds = Math.floor(Date.now() / 1000);
 
   if (
-    grant.access_token_expires_at >
-    nowSeconds + TOKEN_EXPIRY_LEEWAY_SECONDS
+    !options?.force &&
+    grant.access_token_expires_at > nowSeconds + TOKEN_EXPIRY_LEEWAY_SECONDS
   ) {
     return { access_token: grant.access_token, scope: grant.scope };
   }

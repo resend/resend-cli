@@ -138,6 +138,27 @@ describe('refreshOAuthGrant', () => {
     expect(storeOAuthGrant).not.toHaveBeenCalled();
   });
 
+  it('refreshes a valid token when forced', async () => {
+    const fresh = makeJwt({ exp: now() + 900 });
+    const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          access_token: fresh,
+          refresh_token: 'rt_new',
+          scope: 'full_access',
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const result = await refreshOAuthGrant(grant(now() + 900), 'default', {
+      force: true,
+    });
+
+    expect(fetchSpy).toHaveBeenCalledOnce();
+    expect(result).toEqual({ access_token: fresh, scope: 'full_access' });
+  });
+
   it('skips the refresh when the token is comfortably valid', async () => {
     const fetchSpy = vi.spyOn(global, 'fetch');
 

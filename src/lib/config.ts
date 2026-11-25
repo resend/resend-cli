@@ -41,6 +41,8 @@ export type ResolvedOAuthGrant = {
 
 export type ResolvedAuthentication = ResolvedApiKey | ResolvedOAuthGrant;
 
+export type ResolveGrantOptions = { refresh?: boolean | 'force' };
+
 export type ApiKeyCredential = {
   type: 'api_key';
   api_key?: string; // absent when stored in OS keychain via secure_storage
@@ -457,7 +459,7 @@ function parseOAuthGrantBlob(secret: string): OAuthGrantData {
 export async function resolveAuthentication(
   flagValue?: string,
   profileName?: string,
-  options?: { refresh?: boolean },
+  options?: ResolveGrantOptions,
 ): Promise<ResolvedAuthentication | null> {
   if (flagValue) {
     return { type: 'api_key', key: flagValue, source: 'flag' };
@@ -520,7 +522,7 @@ async function resolveGrant(
   grant: OAuthGrantData,
   profile: string,
   source: ResolvedOAuthGrant['source'],
-  options?: { refresh?: boolean },
+  options?: ResolveGrantOptions,
 ): Promise<ResolvedOAuthGrant> {
   if (options?.refresh === false) {
     return {
@@ -531,7 +533,9 @@ async function resolveGrant(
       source,
     };
   }
-  const { access_token, scope } = await refreshOAuthGrant(grant, profile);
+  const { access_token, scope } = await refreshOAuthGrant(grant, profile, {
+    force: options?.refresh === 'force',
+  });
   return { type: 'oauth_grant', access_token, profile, scope, source };
 }
 
