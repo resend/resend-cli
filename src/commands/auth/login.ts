@@ -63,12 +63,12 @@ async function selectProfile(
   const existingProfiles = listProfiles();
   if (existingProfiles.length > 0) {
     const options = [
+      { value: '__new__' as const, label: '+ Create new profile' },
       ...existingProfiles.map((t) => ({
         value: t.name,
         label: `${t.name} (overwrite)`,
         hint: validateProfileName(t.name) ? 'invalid name' : undefined,
       })),
-      { value: '__new__' as const, label: '+ Create new profile' },
     ];
 
     const choice = await p.select({ message: promptLabel, options });

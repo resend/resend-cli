@@ -68,16 +68,25 @@ vi.mock('../../../src/lib/config', async (importOriginal) => {
   };
 });
 
-vi.mock('@clack/prompts', async (importOriginal) => {
-  const prompted = () => {
+const promptFns = vi.hoisted(() => {
+  const unexpected = () => {
     throw new Error('unexpected prompt');
   };
   return {
+    select: vi.fn(unexpected),
+    text: vi.fn(unexpected),
+    confirm: vi.fn(unexpected),
+    password: vi.fn(unexpected),
+  };
+});
+
+vi.mock('@clack/prompts', async (importOriginal) => {
+  return {
     ...(await importOriginal<typeof import('@clack/prompts')>()),
-    select: prompted,
-    text: prompted,
-    confirm: prompted,
-    password: prompted,
+    select: promptFns.select,
+    text: promptFns.text,
+    confirm: promptFns.confirm,
+    password: promptFns.password,
   };
 });
 
@@ -145,6 +154,17 @@ describe('login command', () => {
   let tmpDir: string;
 
   beforeEach(() => {
+    for (const fn of [
+      promptFns.select,
+      promptFns.text,
+      promptFns.confirm,
+      promptFns.password,
+    ]) {
+      fn.mockReset();
+      fn.mockImplementation(() => {
+        throw new Error('unexpected prompt');
+      });
+    }
     mockDomainListResult = { data: { data: [] }, error: null };
     storeFailure.error = null;
     oauthMocks.createCallbackServer.mockReset().mockResolvedValue({
@@ -332,6 +352,32 @@ describe('login command', () => {
       profile: 'default',
       scope: 'full_access',
     });
+  });
+
+  it('offers creating a new profile before overwriting existing ones', async () => {
+    writeProfiles(tmpDir, 'production', {
+      production: { api_key: 're_prod_key' },
+      staging: { api_key: 're_staging_key' },
+    });
+    setInteractive();
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    promptFns.select
+      .mockResolvedValueOnce('manual')
+      .mockResolvedValueOnce('production');
+    promptFns.password.mockResolvedValueOnce('re_new_login_key');
+
+    await loginCommand.parseAsync([], { from: 'user' });
+
+    const profilePrompt = promptFns.select.mock.calls[1]?.[0] as {
+      options: Array<{ label: string }>;
+    };
+    expect(profilePrompt.options.map((option) => option.label)).toEqual([
+      '+ Create new profile',
+      'production (overwrite)',
+      'staging (overwrite)',
+    ]);
   });
 
   it('rejects --web with --key', async () => {
