@@ -5,9 +5,6 @@ on:
 permissions:
   contents: read
   pull-requests: read
-concurrency:
-  group: pr-title-${{ github.ref }}
-  cancel-in-progress: true
 jobs:
   pr-title-check:
     runs-on: depot-ubuntu-24.04
