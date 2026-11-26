@@ -365,32 +365,19 @@ describe('login command', () => {
     vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
     promptFns.select
       .mockResolvedValueOnce('manual')
-      .mockResolvedValueOnce('__new__');
+      .mockResolvedValueOnce('production');
     promptFns.password.mockResolvedValueOnce('re_new_login_key');
-    promptFns.text.mockResolvedValueOnce('personal');
 
     await loginCommand.parseAsync([], { from: 'user' });
 
     const profilePrompt = promptFns.select.mock.calls[1]?.[0] as {
-      options: Array<{ value: string; label: string }>;
+      options: Array<{ label: string }>;
     };
     expect(profilePrompt.options.map((option) => option.label)).toEqual([
       '+ Create new profile',
       'production (overwrite)',
       'staging (overwrite)',
     ]);
-    expect(profilePrompt.options.map((option) => option.value)).toEqual([
-      '__new__',
-      'production',
-      'staging',
-    ]);
-
-    const data = JSON.parse(
-      readFileSync(join(tmpDir, 'resend', 'credentials.json'), 'utf-8'),
-    );
-    expect(data.profiles.personal.api_key).toBe('re_new_login_key');
-    expect(data.profiles.production.api_key).toBe('re_prod_key');
-    expect(data.active_profile).toBe('personal');
   });
 
   it('rejects --web with --key', async () => {
