@@ -11,7 +11,7 @@ export const automationRunsCommand = new Command('runs')
       context: `Runs represent individual executions of an automation.
 Each run is triggered by an event and progresses through the automation's steps.
 
-Run status values: running | completed | failed | cancelled`,
+Run status values: running | completed | failed | cancelled | quota_exceeded | skipped`,
       examples: [
         'resend automations runs <automation-id>',
         'resend automations runs list <automation-id> --limit 25',
