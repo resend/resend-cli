@@ -17,7 +17,7 @@ export const listAutomationRunsCommand = new Command('list')
   .argument('[automation-id]', 'Automation ID')
   .option(
     '--status <status>',
-    'Filter by status (running, completed, failed, cancelled). Comma-separated.',
+    'Filter by status (running, completed, failed, cancelled, quota_exceeded, skipped). Comma-separated.',
   )
   .option('--limit <n>', 'Maximum number of runs to return (1-100)', '10')
   .option('--after <cursor>', 'Return runs after this cursor (next page)')
